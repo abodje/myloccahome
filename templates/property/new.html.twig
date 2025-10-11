@@ -1,0 +1,237 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Nouvelle propriété - Gestion Immobilière{% endblock %}
+
+{% block header %}
+<div class="page-header">
+    <div class="container-fluid">
+        <div class="row align-items-center">
+            <div class="col">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb mb-2">
+                        <li class="breadcrumb-item"><a href="{{ path('app_property_index') }}">Propriétés</a></li>
+                        <li class="breadcrumb-item active">Nouvelle propriété</li>
+                    </ol>
+                </nav>
+                <h1 class="h2 mb-0">
+                    <i class="bi bi-plus-circle text-primary"></i>
+                    Ajouter une nouvelle propriété
+                </h1>
+                <p class="text-muted mb-0">Remplissez les informations de votre bien immobilier</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <form method="POST" class="needs-validation" novalidate>
+                <div class="row">
+                    <!-- Informations générales -->
+                    <div class="col-lg-8">
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <h5 class="mb-0">Informations générales</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-12 mb-3">
+                                        {{ form_row(form.title) }}
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    {{ form_row(form.description) }}
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        {{ form_row(form.type) }}
+                                    </div>
+                                    <div class="col-md-3 mb-3">
+                                        {{ form_row(form.surface) }}
+                                    </div>
+                                    <div class="col-md-3 mb-3">
+                                        {{ form_row(form.energyRating) }}
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-4 mb-3">
+                                        {{ form_row(form.rooms) }}
+                                    </div>
+                                    <div class="col-md-4 mb-3">
+                                        {{ form_row(form.bedrooms) }}
+                                    </div>
+                                    <div class="col-md-4 mb-3">
+                                        {{ form_row(form.bathrooms) }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Adresse -->
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <h5 class="mb-0">Localisation</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    {{ form_row(form.address) }}
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-4 mb-3">
+                                        {{ form_row(form.postalCode) }}
+                                    </div>
+                                    <div class="col-md-8 mb-3">
+                                        {{ form_row(form.city) }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Informations financières -->
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <h5 class="mb-0">Informations financières</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-4 mb-3">
+                                        {{ form_row(form.rentAmount) }}
+                                    </div>
+                                    <div class="col-md-4 mb-3">
+                                        {{ form_row(form.charges) }}
+                                    </div>
+                                    <div class="col-md-4 mb-3">
+                                        {{ form_row(form.deposit) }}
+                                    </div>
+                                </div>
+                                <div class="alert alert-info">
+                                    <i class="bi bi-info-circle"></i>
+                                    <strong>Total mensuel :</strong>
+                                    <span id="totalAmount">Calculé automatiquement</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Équipements et options -->
+                    <div class="col-lg-4">
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <h5 class="mb-0">Équipements</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="form-check mb-3">
+                                    {{ form_widget(form.furnished) }}
+                                    {{ form_label(form.furnished) }}
+                                </div>
+                                <div class="form-check mb-3">
+                                    {{ form_widget(form.garage) }}
+                                    {{ form_label(form.garage) }}
+                                </div>
+                                <div class="form-check mb-3">
+                                    {{ form_widget(form.balcony) }}
+                                    {{ form_label(form.balcony) }}
+                                </div>
+                                <div class="form-check mb-3">
+                                    {{ form_widget(form.elevator) }}
+                                    {{ form_label(form.elevator) }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Aperçu -->
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <h6 class="mb-0">Aperçu de la propriété</h6>
+                            </div>
+                            <div class="card-body">
+                                <div id="propertyPreview">
+                                    <div class="text-center text-muted">
+                                        <i class="bi bi-building display-4"></i>
+                                        <p>Remplissez le formulaire pour voir l'aperçu</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Actions -->
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="d-grid gap-2">
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="bi bi-check-lg"></i>
+                                        Enregistrer la propriété
+                                    </button>
+                                    <a href="{{ path('app_property_index') }}" class="btn btn-outline-secondary">
+                                        <i class="bi bi-arrow-left"></i>
+                                        Retour à la liste
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                {{ form_rest(form) }}
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const rentInput = document.getElementById('property_rentAmount');
+    const chargesInput = document.getElementById('property_charges');
+    const totalSpan = document.getElementById('totalAmount');
+    
+    function updateTotal() {
+        const rent = parseFloat(rentInput.value) || 0;
+        const charges = parseFloat(chargesInput.value) || 0;
+        const total = rent + charges;
+        totalSpan.textContent = total.toFixed(2) + ' €';
+    }
+    
+    function updatePreview() {
+        const title = document.getElementById('property_title').value || 'Nouvelle propriété';
+        const type = document.getElementById('property_type').value || '';
+        const surface = document.getElementById('property_surface').value || '';
+        const rooms = document.getElementById('property_rooms').value || '';
+        const rent = document.getElementById('property_rentAmount').value || '';
+        const charges = document.getElementById('property_charges').value || '';
+        
+        const preview = document.getElementById('propertyPreview');
+        
+        if (title || type || surface || rooms) {
+            preview.innerHTML = `
+                <h6>${title}</h6>
+                ${type ? `<p class="text-muted mb-1"><i class="bi bi-house"></i> ${type.charAt(0).toUpperCase() + type.slice(1)}</p>` : ''}
+                ${surface ? `<p class="text-muted mb-1"><i class="bi bi-arrows-move"></i> ${surface} m²</p>` : ''}
+                ${rooms ? `<p class="text-muted mb-1"><i class="bi bi-door-open"></i> ${rooms} pièces</p>` : ''}
+                ${rent ? `<p class="text-success mb-0"><strong>${(parseFloat(rent) + parseFloat(charges || 0)).toFixed(2)} €/mois</strong></p>` : ''}
+            `;
+        }
+    }
+    
+    rentInput.addEventListener('input', updateTotal);
+    chargesInput.addEventListener('input', updateTotal);
+    
+    // Preview update
+    const previewFields = ['property_title', 'property_type', 'property_surface', 'property_rooms', 'property_rentAmount', 'property_charges'];
+    previewFields.forEach(fieldId => {
+        const field = document.getElementById(fieldId);
+        if (field) {
+            field.addEventListener('input', updatePreview);
+        }
+    });
+    
+    updateTotal();
+    updatePreview();
+});
+</script>
+{% endblock %}

@@ -1,0 +1,219 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Propriétés - Gestion Immobilière{% endblock %}
+
+{% block header %}
+<div class="page-header">
+    <div class="container-fluid">
+        <div class="row align-items-center">
+            <div class="col">
+                <h1 class="h2 mb-0">
+                    <i class="bi bi-building text-primary"></i>
+                    Gestion des propriétés
+                </h1>
+                <p class="text-muted mb-0">{{ properties|length }} propriété(s) dans votre parc immobilier</p>
+            </div>
+            <div class="col-auto">
+                <a href="{{ path('app_property_new') }}" class="btn btn-primary">
+                    <i class="bi bi-plus-lg"></i>
+                    Nouvelle propriété
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <!-- Filtres de recherche -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="GET" class="row g-3">
+                <div class="col-md-3">
+                    <label for="search" class="form-label">Recherche</label>
+                    <input type="text" class="form-control" id="search" name="search" 
+                           value="{{ search }}" placeholder="Titre, adresse, description...">
+                </div>
+                <div class="col-md-2">
+                    <label for="city" class="form-label">Ville</label>
+                    <input type="text" class="form-control" id="city" name="city" 
+                           value="{{ city }}" placeholder="Ville">
+                </div>
+                <div class="col-md-2">
+                    <label for="min_rent" class="form-label">Loyer min.</label>
+                    <input type="number" class="form-control" id="min_rent" name="min_rent" 
+                           value="{{ min_rent }}" placeholder="€">
+                </div>
+                <div class="col-md-2">
+                    <label for="max_rent" class="form-label">Loyer max.</label>
+                    <input type="number" class="form-control" id="max_rent" name="max_rent" 
+                           value="{{ max_rent }}" placeholder="€">
+                </div>
+                <div class="col-md-2">
+                    <label for="status" class="form-label">Statut</label>
+                    <select class="form-select" id="status" name="status">
+                        <option value="">Tous les statuts</option>
+                        <option value="available" {{ status == 'available' ? 'selected' : '' }}>Disponible</option>
+                        <option value="occupied" {{ status == 'occupied' ? 'selected' : '' }}>Occupé</option>
+                        <option value="maintenance" {{ status == 'maintenance' ? 'selected' : '' }}>En travaux</option>
+                        <option value="unavailable" {{ status == 'unavailable' ? 'selected' : '' }}>Indisponible</option>
+                    </select>
+                </div>
+                <div class="col-md-1 d-flex align-items-end">
+                    <button type="submit" class="btn btn-outline-primary w-100">
+                        <i class="bi bi-search"></i>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Actions rapides -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <a href="{{ path('app_property_available') }}" class="btn btn-outline-success w-100 mb-2">
+                <i class="bi bi-house-check"></i>
+                Propriétés disponibles
+            </a>
+        </div>
+        <div class="col-md-3">
+            <a href="{{ path('app_property_occupied') }}" class="btn btn-outline-warning w-100 mb-2">
+                <i class="bi bi-house-fill"></i>
+                Propriétés occupées
+            </a>
+        </div>
+        <div class="col-md-3">
+            <a href="?" class="btn btn-outline-info w-100 mb-2">
+                <i class="bi bi-funnel"></i>
+                Toutes les propriétés
+            </a>
+        </div>
+        <div class="col-md-3">
+            <a href="#" class="btn btn-outline-secondary w-100 mb-2">
+                <i class="bi bi-download"></i>
+                Exporter la liste
+            </a>
+        </div>
+    </div>
+
+    <!-- Liste des propriétés -->
+    {% if properties|length > 0 %}
+    <div class="row">
+        {% for property in properties %}
+        <div class="col-xl-4 col-lg-6 col-md-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0">{{ property.title }}</h6>
+                    <span class="badge bg-{{ property.status == 'available' ? 'success' : (property.status == 'occupied' ? 'warning' : 'secondary') }}">
+                        {% if property.status == 'available' %}Disponible
+                        {% elseif property.status == 'occupied' %}Occupé
+                        {% elseif property.status == 'maintenance' %}En travaux
+                        {% else %}{{ property.status|title }}
+                        {% endif %}
+                    </span>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <p class="text-muted mb-1">
+                            <i class="bi bi-geo-alt"></i>
+                            {{ property.fullAddress }}
+                        </p>
+                        <p class="text-muted mb-1">
+                            <i class="bi bi-house"></i>
+                            {{ property.type|title }} - {{ property.surface }} m²
+                        </p>
+                        <p class="text-muted mb-1">
+                            <i class="bi bi-door-open"></i>
+                            {{ property.rooms }} pièces, {{ property.bedrooms }} chambres
+                        </p>
+                    </div>
+                    
+                    <div class="row text-center mb-3">
+                        <div class="col-4">
+                            <div class="border-end">
+                                <h6 class="text-primary mb-0">{{ property.rentAmount }}€</h6>
+                                <small class="text-muted">Loyer</small>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="border-end">
+                                <h6 class="text-info mb-0">{{ property.charges }}€</h6>
+                                <small class="text-muted">Charges</small>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <h6 class="text-success mb-0">{{ property.totalMonthlyAmount }}€</h6>
+                            <small class="text-muted">Total</small>
+                        </div>
+                    </div>
+
+                    <!-- Équipements -->
+                    <div class="mb-3">
+                        {% if property.furnished %}<span class="badge bg-light text-dark me-1">Meublé</span>{% endif %}
+                        {% if property.garage %}<span class="badge bg-light text-dark me-1">Garage</span>{% endif %}
+                        {% if property.balcony %}<span class="badge bg-light text-dark me-1">Balcon</span>{% endif %}
+                        {% if property.elevator %}<span class="badge bg-light text-dark me-1">Ascenseur</span>{% endif %}
+                    </div>
+
+                    <!-- Contrat actuel -->
+                    {% set currentContract = property.currentContract %}
+                    {% if currentContract %}
+                    <div class="alert alert-info py-2 mb-3">
+                        <small>
+                            <i class="bi bi-person"></i>
+                            <strong>{{ currentContract.tenant.fullName }}</strong><br>
+                            Contrat jusqu'au {{ currentContract.endDate ? currentContract.endDate|date('d/m/Y') : 'Indéterminé' }}
+                        </small>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <div class="card-footer">
+                    <div class="d-flex justify-content-between">
+                        <a href="{{ path('app_property_show', {id: property.id}) }}" class="btn btn-outline-primary btn-sm">
+                            <i class="bi bi-eye"></i> Voir
+                        </a>
+                        <a href="{{ path('app_property_edit', {id: property.id}) }}" class="btn btn-outline-secondary btn-sm">
+                            <i class="bi bi-pencil"></i> Modifier
+                        </a>
+                        {% if not currentContract %}
+                        <a href="{{ path('app_contract_new', {property_id: property.id}) }}" class="btn btn-outline-success btn-sm">
+                            <i class="bi bi-plus"></i> Louer
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="text-center py-5">
+        <div class="mb-4">
+            <i class="bi bi-building display-1 text-muted"></i>
+        </div>
+        <h4 class="text-muted">Aucune propriété trouvée</h4>
+        <p class="text-muted mb-4">
+            {% if search or city or min_rent or max_rent or status %}
+                Aucune propriété ne correspond à vos critères de recherche.
+            {% else %}
+                Vous n'avez pas encore ajouté de propriété à votre parc immobilier.
+            {% endif %}
+        </p>
+        <div>
+            {% if search or city or min_rent or max_rent or status %}
+                <a href="{{ path('app_property_index') }}" class="btn btn-outline-primary me-2">
+                    <i class="bi bi-arrow-clockwise"></i>
+                    Effacer les filtres
+                </a>
+            {% endif %}
+            <a href="{{ path('app_property_new') }}" class="btn btn-primary">
+                <i class="bi bi-plus-lg"></i>
+                Ajouter une propriété
+            </a>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
