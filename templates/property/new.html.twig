@@ -1,0 +1,140 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Nouvelle propriété - Gestion Locative{% endblock %}
+
+{% block body %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">Nouvelle propriété</h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <div class="btn-group me-2">
+            <a href="{{ path('app_property_index') }}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-1"></i>Retour à la liste
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-building me-2"></i>Informations de la propriété</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <div class="row mb-3">
+                        <div class="col-md-8">
+                            <label for="address" class="form-label">Adresse *</label>
+                            <input type="text" class="form-control" id="address" name="address" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="postal_code" class="form-label">Code postal *</label>
+                            <input type="text" class="form-control" id="postal_code" name="postal_code" required>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="city" class="form-label">Ville *</label>
+                            <input type="text" class="form-control" id="city" name="city" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="property_type" class="form-label">Type de bien *</label>
+                            <select class="form-select" id="property_type" name="property_type" required>
+                                <option value="">Sélectionner le type</option>
+                                <option value="Appartement">Appartement</option>
+                                <option value="Maison">Maison</option>
+                                <option value="Studio">Studio</option>
+                                <option value="Loft">Loft</option>
+                                <option value="Bureau">Bureau</option>
+                                <option value="Commerce">Commerce</option>
+                                <option value="Garage">Garage</option>
+                                <option value="Autre">Autre</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label for="surface" class="form-label">Surface (m²) *</label>
+                            <input type="number" step="0.01" class="form-control" id="surface" name="surface" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="rooms" class="form-label">Nombre de pièces *</label>
+                            <input type="number" class="form-control" id="rooms" name="rooms" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="status" class="form-label">Statut</label>
+                            <select class="form-select" id="status" name="status">
+                                <option value="Libre" selected>Libre</option>
+                                <option value="Occupé">Occupé</option>
+                                <option value="En travaux">En travaux</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label for="monthly_rent" class="form-label">Loyer mensuel (€) *</label>
+                            <input type="number" step="0.01" class="form-control" id="monthly_rent" name="monthly_rent" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="charges" class="form-label">Charges (€)</label>
+                            <input type="number" step="0.01" class="form-control" id="charges" name="charges">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="deposit" class="form-label">Caution (€)</label>
+                            <input type="number" step="0.01" class="form-control" id="deposit" name="deposit">
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Description</label>
+                        <textarea class="form-control" id="description" name="description" rows="4" placeholder="Description détaillée du bien..."></textarea>
+                    </div>
+
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{{ path('app_property_index') }}" class="btn btn-secondary me-md-2">Annuler</a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-1"></i>Créer la propriété
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-info-circle me-2"></i>Aide</h6>
+            </div>
+            <div class="card-body">
+                <p class="card-text">
+                    <strong>Informations importantes :</strong>
+                </p>
+                <ul class="list-unstyled">
+                    <li><i class="fas fa-check text-success me-1"></i> L'adresse doit être complète</li>
+                    <li><i class="fas fa-check text-success me-1"></i> Le loyer est hors charges</li>
+                    <li><i class="fas fa-check text-success me-1"></i> La caution est généralement de 1 à 2 mois de loyer</li>
+                    <li><i class="fas fa-check text-success me-1"></i> Tous les champs marqués * sont obligatoires</li>
+                </ul>
+                
+                <hr>
+                
+                <p class="card-text">
+                    <strong>Types de biens :</strong>
+                </p>
+                <ul class="list-unstyled small">
+                    <li><i class="fas fa-building me-1"></i> Appartement</li>
+                    <li><i class="fas fa-home me-1"></i> Maison</li>
+                    <li><i class="fas fa-door-open me-1"></i> Studio</li>
+                    <li><i class="fas fa-warehouse me-1"></i> Loft</li>
+                    <li><i class="fas fa-briefcase me-1"></i> Bureau</li>
+                    <li><i class="fas fa-store me-1"></i> Commerce</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
