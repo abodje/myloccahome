@@ -1,0 +1,144 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Propriétés - Gestion Locative{% endblock %}
+
+{% block body %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">Gestion des propriétés</h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <div class="btn-group me-2">
+            <a href="{{ path('app_property_new') }}" class="btn btn-primary">
+                <i class="fas fa-plus me-1"></i>Nouvelle propriété
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Filters -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <form method="GET" class="row g-3">
+                    <div class="col-md-4">
+                        <label for="search" class="form-label">Rechercher par ville</label>
+                        <input type="text" class="form-control" id="search" name="search" value="{{ search }}" placeholder="Nom de la ville...">
+                    </div>
+                    <div class="col-md-3">
+                        <label for="status" class="form-label">Statut</label>
+                        <select class="form-select" id="status" name="status">
+                            <option value="">Tous les statuts</option>
+                            <option value="Libre" {% if status == 'Libre' %}selected{% endif %}>Libre</option>
+                            <option value="Occupé" {% if status == 'Occupé' %}selected{% endif %}>Occupé</option>
+                            <option value="En travaux" {% if status == 'En travaux' %}selected{% endif %}>En travaux</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">&nbsp;</label>
+                        <button type="submit" class="btn btn-outline-primary d-block">
+                            <i class="fas fa-search me-1"></i>Filtrer
+                        </button>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">&nbsp;</label>
+                        <a href="{{ path('app_property_index') }}" class="btn btn-outline-secondary d-block">
+                            <i class="fas fa-times me-1"></i>Réinitialiser
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Properties List -->
+<div class="row">
+    {% for property in properties %}
+    <div class="col-lg-6 col-xl-4 mb-4">
+        <div class="card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h6 class="mb-0">
+                    <i class="fas fa-building me-1"></i>
+                    {{ property.propertyType }}
+                </h6>
+                <span class="badge bg-{% if property.status == 'Libre' %}success{% elseif property.status == 'Occupé' %}primary{% else %}warning{% endif %}">
+                    {{ property.status }}
+                </span>
+            </div>
+            <div class="card-body">
+                <h5 class="card-title">{{ property.fullAddress }}</h5>
+                <p class="card-text text-muted mb-2">
+                    <i class="fas fa-ruler-combined me-1"></i>{{ property.surface }} m² - {{ property.rooms }} pièces
+                </p>
+                <p class="card-text">
+                    <strong class="text-primary">{{ property.monthlyRent|number_format(2, ',', ' ') }} €/mois</strong>
+                    {% if property.charges %}
+                        <br><small class="text-muted">+ {{ property.charges|number_format(2, ',', ' ') }} € de charges</small>
+                    {% endif %}
+                </p>
+                
+                {% set currentLease = property.currentLease %}
+                {% if currentLease %}
+                    <div class="alert alert-info py-2 mb-2">
+                        <small>
+                            <i class="fas fa-user me-1"></i>
+                            Loué à <strong>{{ currentLease.tenant.fullName }}</strong>
+                            <br>Depuis le {{ currentLease.startDate|date('d/m/Y') }}
+                        </small>
+                    </div>
+                {% endif %}
+            </div>
+            <div class="card-footer">
+                <div class="btn-group w-100" role="group">
+                    <a href="{{ path('app_property_show', {id: property.id}) }}" class="btn btn-outline-primary btn-sm">
+                        <i class="fas fa-eye"></i>
+                    </a>
+                    <a href="{{ path('app_property_edit', {id: property.id}) }}" class="btn btn-outline-secondary btn-sm">
+                        <i class="fas fa-edit"></i>
+                    </a>
+                    <button type="button" class="btn btn-outline-danger btn-sm" onclick="confirmDelete({{ property.id }})">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="col-12">
+        <div class="alert alert-info text-center">
+            <i class="fas fa-info-circle me-2"></i>
+            Aucune propriété trouvée. <a href="{{ path('app_property_new') }}">Créer la première propriété</a>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Delete Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirmer la suppression</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                Êtes-vous sûr de vouloir supprimer cette propriété ? Cette action est irréversible.
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                <form id="deleteForm" method="POST" style="display: inline;">
+                    <input type="hidden" name="_token" value="{{ csrf_token('delete') }}">
+                    <button type="submit" class="btn btn-danger">Supprimer</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function confirmDelete(propertyId) {
+    document.getElementById('deleteForm').action = '{{ path('app_property_delete', {id: '__ID__'}) }}'.replace('__ID__', propertyId);
+    new bootstrap.Modal(document.getElementById('deleteModal')).show();
+}
+</script>
+{% endblock %}

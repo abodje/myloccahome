@@ -1,0 +1,190 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ property.fullAddress }} - Gestion Locative{% endblock %}
+
+{% block body %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">{{ property.fullAddress }}</h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <div class="btn-group me-2">
+            <a href="{{ path('app_property_edit', {id: property.id}) }}" class="btn btn-primary">
+                <i class="fas fa-edit me-1"></i>Modifier
+            </a>
+            <a href="{{ path('app_property_index') }}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-1"></i>Retour à la liste
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>Détails de la propriété</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <p><strong>Type :</strong> {{ property.propertyType }}</p>
+                        <p><strong>Surface :</strong> {{ property.surface }} m²</p>
+                        <p><strong>Nombre de pièces :</strong> {{ property.rooms }}</p>
+                        <p><strong>Statut :</strong> 
+                            <span class="badge bg-{% if property.status == 'Libre' %}success{% elseif property.status == 'Occupé' %}primary{% else %}warning{% endif %}">
+                                {{ property.status }}
+                            </span>
+                        </p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>Loyer mensuel :</strong> {{ property.monthlyRent|number_format(2, ',', ' ') }} €</p>
+                        {% if property.charges %}
+                        <p><strong>Charges :</strong> {{ property.charges|number_format(2, ',', ' ') }} €</p>
+                        {% endif %}
+                        {% if property.deposit %}
+                        <p><strong>Caution :</strong> {{ property.deposit|number_format(2, ',', ' ') }} €</p>
+                        {% endif %}
+                        <p><strong>Créé le :</strong> {{ property.createdAt|date('d/m/Y') }}</p>
+                    </div>
+                </div>
+                {% if property.description %}
+                <hr>
+                <h6>Description :</h6>
+                <p>{{ property.description|nl2br }}</p>
+                {% endif %}
+            </div>
+        </div>
+
+        {% if currentLease %}
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-file-contract me-2"></i>Contrat actuel</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <p><strong>Locataire :</strong> 
+                            <a href="{{ path('app_tenant_show', {id: currentLease.tenant.id}) }}">
+                                {{ currentLease.tenant.fullName }}
+                            </a>
+                        </p>
+                        <p><strong>Début :</strong> {{ currentLease.startDate|date('d/m/Y') }}</p>
+                        {% if currentLease.endDate %}
+                        <p><strong>Fin :</strong> {{ currentLease.endDate|date('d/m/Y') }}</p>
+                        {% else %}
+                        <p><strong>Durée :</strong> Indéterminée</p>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>Loyer :</strong> {{ currentLease.monthlyRent|number_format(2, ',', ' ') }} €</p>
+                        {% if currentLease.charges %}
+                        <p><strong>Charges :</strong> {{ currentLease.charges|number_format(2, ',', ' ') }} €</p>
+                        {% endif %}
+                        <p><strong>Total :</strong> {{ currentLease.totalMonthlyAmount|number_format(2, ',', ' ') }} €</p>
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <a href="{{ path('app_lease_show', {id: currentLease.id}) }}" class="btn btn-sm btn-primary">
+                        Voir le contrat complet
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="card">
+            <div class="card-body text-center">
+                <i class="fas fa-home fa-3x text-muted mb-3"></i>
+                <h5>Propriété libre</h5>
+                <p class="text-muted">Cette propriété n'est actuellement pas louée.</p>
+                <a href="{{ path('app_lease_new') }}" class="btn btn-primary">
+                    <i class="fas fa-plus me-1"></i>Créer un contrat de location
+                </a>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-chart-bar me-2"></i>Statistiques</h6>
+            </div>
+            <div class="card-body">
+                <p><strong>Revenus potentiels :</strong><br>
+                {{ property.monthlyRent|number_format(2, ',', ' ') }} € / mois<br>
+                {{ (property.monthlyRent * 12)|number_format(2, ',', ' ') }} € / an</p>
+
+                {% if property.charges %}
+                <p><strong>Charges annuelles :</strong><br>
+                {{ (property.charges * 12)|number_format(2, ',', ' ') }} €</p>
+                {% endif %}
+
+                <p><strong>Rendement brut :</strong><br>
+                {% if property.deposit %}
+                    {% set investment = property.deposit %}
+                    {{ ((property.monthlyRent * 12) / investment * 100)|number_format(2) }}%
+                {% else %}
+                    Non calculable
+                {% endif %}
+                </p>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-cog me-2"></i>Actions</h6>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    {% if not currentLease %}
+                    <a href="{{ path('app_lease_new') }}" class="btn btn-success btn-sm">
+                        <i class="fas fa-file-contract me-1"></i>Nouveau contrat
+                    </a>
+                    {% endif %}
+                    <a href="{{ path('app_payment_index') }}?property={{ property.id }}" class="btn btn-info btn-sm">
+                        <i class="fas fa-euro-sign me-1"></i>Voir les paiements
+                    </a>
+                    <a href="{{ path('app_expense_index') }}?property={{ property.id }}" class="btn btn-warning btn-sm">
+                        <i class="fas fa-receipt me-1"></i>Voir les dépenses
+                    </a>
+                    <hr>
+                    <a href="{{ path('app_property_edit', {id: property.id}) }}" class="btn btn-primary btn-sm">
+                        <i class="fas fa-edit me-1"></i>Modifier
+                    </a>
+                    <button class="btn btn-danger btn-sm" onclick="confirmDelete({{ property.id }})">
+                        <i class="fas fa-trash me-1"></i>Supprimer
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirmer la suppression</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                Êtes-vous sûr de vouloir supprimer cette propriété ? Cette action supprimera également tous les contrats et paiements associés.
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                <form id="deleteForm" method="POST" style="display: inline;">
+                    <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ property.id) }}">
+                    <button type="submit" class="btn btn-danger">Supprimer</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function confirmDelete(propertyId) {
+    document.getElementById('deleteForm').action = '{{ path('app_property_delete', {id: property.id}) }}';
+    new bootstrap.Modal(document.getElementById('deleteModal')).show();
+}
+</script>
+{% endblock %}
