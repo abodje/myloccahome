@@ -1,0 +1,183 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Nouveau Contrat de Location{% endblock %}
+
+{% block body %}
+<div class="p-4">
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pb-2 mb-3 border-bottom">
+        <h1 class="h2"><i class="bi bi-file-plus me-2"></i>Nouveau Contrat de Location</h1>
+        <div class="btn-toolbar mb-2 mb-md-0">
+            <a href="{{ path('app_rental_contract_index') }}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left me-1"></i>Retour à la liste
+            </a>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0">Informations du contrat</h5>
+        </div>
+        <div class="card-body">
+            <form method="POST">
+                <div class="row">
+                    <!-- Sélection propriété et locataire -->
+                    <div class="col-md-6">
+                        <h6 class="text-muted mb-3">Parties contractantes</h6>
+                        
+                        <div class="mb-3">
+                            <label for="property_id" class="form-label">Propriété *</label>
+                            <select class="form-select" id="property_id" name="property_id" required>
+                                <option value="">Choisir une propriété</option>
+                                {% for property in properties %}
+                                <option value="{{ property.id }}" 
+                                        {{ preselectedProperty == property.id ? 'selected' : '' }}
+                                        data-rent="{{ property.monthlyRent }}" 
+                                        data-charges="{{ property.charges }}" 
+                                        data-deposit="{{ property.deposit }}">
+                                    {{ property.title }} - {{ property.city }} ({{ property.monthlyRent|number_format(2, ',', ' ') }}€)
+                                </option>
+                                {% endfor %}
+                            </select>
+                            {% if properties|length == 0 %}
+                            <div class="form-text text-warning">
+                                <i class="bi bi-exclamation-triangle me-1"></i>
+                                Aucune propriété disponible. <a href="{{ path('app_property_new') }}">Créer une propriété</a>
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="tenant_id" class="form-label">Locataire *</label>
+                            <select class="form-select" id="tenant_id" name="tenant_id" required>
+                                <option value="">Choisir un locataire</option>
+                                {% for tenant in tenants %}
+                                <option value="{{ tenant.id }}" {{ preselectedTenant == tenant.id ? 'selected' : '' }}>
+                                    {{ tenant.fullName }} - {{ tenant.email }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                            {% if tenants|length == 0 %}
+                            <div class="form-text text-warning">
+                                <i class="bi bi-exclamation-triangle me-1"></i>
+                                Aucun locataire enregistré. <a href="{{ path('app_tenant_new') }}">Créer un locataire</a>
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="status" class="form-label">Statut *</label>
+                            <select class="form-select" id="status" name="status" required>
+                                <option value="pending">En attente</option>
+                                <option value="active" selected>Actif</option>
+                                <option value="terminated">Terminé</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Dates et durée -->
+                    <div class="col-md-6">
+                        <h6 class="text-muted mb-3">Période du contrat</h6>
+                        
+                        <div class="mb-3">
+                            <label for="start_date" class="form-label">Date de début *</label>
+                            <input type="date" class="form-control" id="start_date" name="start_date" value="{{ 'now'|date('Y-m-d') }}" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="end_date" class="form-label">Date de fin</label>
+                            <input type="date" class="form-control" id="end_date" name="end_date">
+                            <div class="form-text">Laisser vide pour un contrat à durée indéterminée</div>
+                        </div>
+
+                        <h6 class="text-muted mb-3 mt-4">Tarification</h6>
+
+                        <div class="mb-3">
+                            <label for="monthly_rent" class="form-label">Loyer mensuel (€) *</label>
+                            <input type="number" class="form-control" id="monthly_rent" name="monthly_rent" step="0.01" required min="0">
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="charges" class="form-label">Charges (€) *</label>
+                            <input type="number" class="form-control" id="charges" name="charges" step="0.01" required min="0">
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="deposit" class="form-label">Dépôt de garantie (€) *</label>
+                            <input type="number" class="form-control" id="deposit" name="deposit" step="0.01" required min="0">
+                        </div>
+
+                        <!-- Résumé automatique -->
+                        <div class="alert alert-info">
+                            <strong>Loyer total mensuel :</strong>
+                            <span id="total-rent">0,00€</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Conditions et notes -->
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <h6 class="text-muted mb-3">Conditions et notes</h6>
+                        
+                        <div class="mb-3">
+                            <label for="conditions" class="form-label">Conditions spéciales</label>
+                            <textarea class="form-control" id="conditions" name="conditions" rows="3" placeholder="Conditions particulières du contrat..."></textarea>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="notes" class="form-label">Notes internes</label>
+                            <textarea class="form-control" id="notes" name="notes" rows="3" placeholder="Notes internes pour ce contrat..."></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <hr>
+
+                <div class="d-flex justify-content-end gap-2">
+                    <a href="{{ path('app_rental_contract_index') }}" class="btn btn-secondary">Annuler</a>
+                    <button type="submit" class="btn btn-primary" {{ (properties|length == 0 or tenants|length == 0) ? 'disabled' : '' }}>
+                        <i class="bi bi-check-circle me-1"></i>Créer le contrat
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+// Auto-remplissage des montants basés sur la propriété sélectionnée
+document.getElementById('property_id').addEventListener('change', function() {
+    const selectedOption = this.options[this.selectedIndex];
+    if (selectedOption.value) {
+        document.getElementById('monthly_rent').value = selectedOption.dataset.rent || '';
+        document.getElementById('charges').value = selectedOption.dataset.charges || '';
+        document.getElementById('deposit').value = selectedOption.dataset.deposit || '';
+        updateTotalRent();
+    } else {
+        document.getElementById('monthly_rent').value = '';
+        document.getElementById('charges').value = '';
+        document.getElementById('deposit').value = '';
+        updateTotalRent();
+    }
+});
+
+// Calcul automatique du loyer total
+function updateTotalRent() {
+    const rent = parseFloat(document.getElementById('monthly_rent').value) || 0;
+    const charges = parseFloat(document.getElementById('charges').value) || 0;
+    const total = rent + charges;
+    document.getElementById('total-rent').textContent = total.toLocaleString('fr-FR', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    }) + '€';
+}
+
+document.getElementById('monthly_rent').addEventListener('input', updateTotalRent);
+document.getElementById('charges').addEventListener('input', updateTotalRent);
+
+// Initialiser si propriété pré-sélectionnée
+{% if preselectedProperty %}
+document.getElementById('property_id').dispatchEvent(new Event('change'));
+{% endif %}
+</script>
+{% endblock %}

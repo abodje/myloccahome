@@ -1,0 +1,178 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Gestion des Locataires{% endblock %}
+
+{% block body %}
+<div class="p-4">
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pb-2 mb-3 border-bottom">
+        <h1 class="h2"><i class="bi bi-people-fill me-2"></i>Locataires</h1>
+        <div class="btn-toolbar mb-2 mb-md-0">
+            <a href="{{ path('app_tenant_new') }}" class="btn btn-primary">
+                <i class="bi bi-person-plus me-1"></i>Nouveau locataire
+            </a>
+        </div>
+    </div>
+
+    <!-- Filtres -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="GET" class="row g-3">
+                <div class="col-md-4">
+                    <label for="search" class="form-label">Rechercher</label>
+                    <input type="text" class="form-control" id="search" name="search" value="{{ search }}" placeholder="Nom, prénom ou email">
+                </div>
+                <div class="col-md-3">
+                    <label for="active" class="form-label">Statut</label>
+                    <select class="form-select" id="active" name="active">
+                        <option value="">Tous les locataires</option>
+                        <option value="1" {{ active == '1' ? 'selected' : '' }}>Locataires actifs</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">&nbsp;</label>
+                    <div class="d-grid gap-2 d-md-flex">
+                        <button type="submit" class="btn btn-outline-primary">
+                            <i class="bi bi-search me-1"></i>Filtrer
+                        </button>
+                        <a href="{{ path('app_tenant_index') }}" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-clockwise me-1"></i>Reset
+                        </a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Liste des locataires -->
+    {% if tenants|length > 0 %}
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Nom complet</th>
+                            <th>Contact</th>
+                            <th>Adresse</th>
+                            <th>Revenus</th>
+                            <th>Contrats</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for tenant in tenants %}
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center me-2" style="width: 40px; height: 40px;">
+                                        {{ tenant.firstName|first|upper }}{{ tenant.lastName|first|upper }}
+                                    </div>
+                                    <div>
+                                        <div class="fw-bold">{{ tenant.fullName }}</div>
+                                        {% if tenant.profession %}
+                                            <small class="text-muted">{{ tenant.profession }}</small>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <div>
+                                    <i class="bi bi-envelope me-1"></i>
+                                    <a href="mailto:{{ tenant.email }}">{{ tenant.email }}</a>
+                                </div>
+                                {% if tenant.phone %}
+                                <div class="mt-1">
+                                    <i class="bi bi-telephone me-1"></i>
+                                    <a href="tel:{{ tenant.phone }}">{{ tenant.phone }}</a>
+                                </div>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if tenant.fullAddress %}
+                                    <small class="text-muted">{{ tenant.fullAddress }}</small>
+                                {% else %}
+                                    <span class="text-muted">Non renseignée</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if tenant.monthlyIncome %}
+                                    <span class="fw-bold text-success">{{ tenant.monthlyIncome|number_format(0, ',', ' ') }}€</span>
+                                    <small class="text-muted d-block">par mois</small>
+                                {% else %}
+                                    <span class="text-muted">Non renseigné</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% set activeContracts = tenant.rentalContracts|filter(c => c.status == 'active') %}
+                                {% if activeContracts|length > 0 %}
+                                    <span class="badge bg-success">{{ activeContracts|length }} actif(s)</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">Aucun contrat actif</span>
+                                {% endif %}
+                                
+                                {% if tenant.rentalContracts|length > activeContracts|length %}
+                                    <div><small class="text-muted">{{ tenant.rentalContracts|length - activeContracts|length }} terminé(s)</small></div>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="btn-group" role="group">
+                                    <a href="{{ path('app_tenant_show', {id: tenant.id}) }}" class="btn btn-outline-primary btn-sm">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                    <a href="{{ path('app_tenant_edit', {id: tenant.id}) }}" class="btn btn-outline-warning btn-sm">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    <button type="button" class="btn btn-outline-danger btn-sm" data-bs-toggle="modal" data-bs-target="#deleteModal{{ tenant.id }}">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+
+                        <!-- Modal de suppression -->
+                        <div class="modal fade" id="deleteModal{{ tenant.id }}" tabindex="-1">
+                            <div class="modal-dialog">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title">Confirmer la suppression</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        Êtes-vous sûr de vouloir supprimer le locataire "{{ tenant.fullName }}" ?
+                                        {% if tenant.rentalContracts|length > 0 %}
+                                        <div class="alert alert-warning mt-2">
+                                            <strong>Attention :</strong> Ce locataire a {{ tenant.rentalContracts|length }} contrat(s) associé(s).
+                                            La suppression pourrait ne pas être possible.
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                                        <form method="POST" action="{{ path('app_tenant_delete', {id: tenant.id}) }}" style="display: inline;">
+                                            <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ tenant.id) }}">
+                                            <button type="submit" class="btn btn-danger">Supprimer</button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="alert alert-info text-center">
+        <i class="bi bi-info-circle me-2"></i>
+        {% if search or active %}
+            Aucun locataire ne correspond à vos critères de recherche.
+            <a href="{{ path('app_tenant_index') }}" class="alert-link">Voir tous les locataires</a>
+        {% else %}
+            Aucun locataire enregistré. 
+            <a href="{{ path('app_tenant_new') }}" class="alert-link">Créez votre premier locataire !</a>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

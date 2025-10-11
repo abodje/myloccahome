@@ -1,0 +1,261 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Gestion de la Maintenance{% endblock %}
+
+{% block body %}
+<div class="p-4">
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pb-2 mb-3 border-bottom">
+        <h1 class="h2"><i class="bi bi-tools me-2"></i>Demandes de maintenance</h1>
+        <div class="btn-toolbar mb-2 mb-md-0">
+            <a href="{{ path('app_maintenance_request_new') }}" class="btn btn-primary">
+                <i class="bi bi-plus-circle me-1"></i>Nouvelle demande
+            </a>
+        </div>
+    </div>
+
+    <!-- Filtres -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-2">
+                    <a href="{{ path('app_maintenance_request_index') }}" 
+                       class="btn {{ filter is empty and priority is empty and status is empty and property is empty ? 'btn-primary' : 'btn-outline-primary' }} w-100">
+                        Toutes
+                    </a>
+                </div>
+                <div class="col-md-2">
+                    <a href="{{ path('app_maintenance_request_index', {filter: 'pending'}) }}" 
+                       class="btn {{ filter == 'pending' ? 'btn-info' : 'btn-outline-info' }} w-100">
+                        En cours
+                    </a>
+                </div>
+                <div class="col-md-2">
+                    <a href="{{ path('app_maintenance_request_index', {filter: 'urgent'}) }}" 
+                       class="btn {{ filter == 'urgent' ? 'btn-danger' : 'btn-outline-danger' }} w-100">
+                        Urgentes
+                    </a>
+                </div>
+                <div class="col-md-2">
+                    <a href="{{ path('app_maintenance_request_index', {status: 'completed'}) }}" 
+                       class="btn {{ status == 'completed' ? 'btn-success' : 'btn-outline-success' }} w-100">
+                        Terminées
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Liste des demandes -->
+    {% if requests|length > 0 %}
+    <div class="row">
+        {% for request in requests %}
+        <div class="col-lg-6 col-xl-4 mb-4">
+            <div class="card h-100 {{ request.isUrgent ? 'border-danger' : '' }}">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    {% if request.priority == 'urgent' %}
+                        <h6 class="mb-0 text-danger">
+                            <i class="bi bi-exclamation-triangle-fill me-1"></i>
+                            {{ request.title }}
+                        </h6>
+                    {% else %}
+                        <h6 class="mb-0">{{ request.title }}</h6>
+                    {% endif %}
+                    
+                    {% if request.status == 'completed' %}
+                        <span class="badge bg-success">Terminé</span>
+                    {% elseif request.status == 'in_progress' %}
+                        <span class="badge bg-warning">En cours</span>
+                    {% elseif request.status == 'cancelled' %}
+                        <span class="badge bg-secondary">Annulé</span>
+                    {% else %}
+                        <span class="badge bg-info">En attente</span>
+                    {% endif %}
+                </div>
+                <div class="card-body">
+                    <!-- Propriété -->
+                    <div class="mb-3">
+                        <h6 class="card-subtitle mb-2 text-muted">Propriété</h6>
+                        <div class="d-flex align-items-start">
+                            <i class="bi bi-building me-2 mt-1 text-muted"></i>
+                            <div>
+                                <a href="{{ path('app_property_show', {id: request.property.id}) }}" class="text-decoration-none">
+                                    <strong>{{ request.property.title }}</strong>
+                                </a>
+                                <br>
+                                <small class="text-muted">{{ request.property.city }}</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Description -->
+                    <div class="mb-3">
+                        <p class="card-text text-muted">{{ request.description|length > 100 ? request.description|slice(0, 100) ~ '...' : request.description }}</p>
+                    </div>
+
+                    <!-- Priorité et catégorie -->
+                    <div class="mb-3">
+                        <div class="d-flex gap-2 flex-wrap">
+                            {% if request.priority == 'urgent' %}
+                                <span class="badge bg-danger">Urgent</span>
+                            {% elseif request.priority == 'high' %}
+                                <span class="badge bg-warning">Haute</span>
+                            {% elseif request.priority == 'medium' %}
+                                <span class="badge bg-info">Moyenne</span>
+                            {% else %}
+                                <span class="badge bg-secondary">Basse</span>
+                            {% endif %}
+
+                            <span class="badge bg-light text-dark">{{ request.category|title }}</span>
+                        </div>
+                    </div>
+
+                    <!-- Dates -->
+                    <div class="mb-3">
+                        <div class="row text-center">
+                            <div class="col-6">
+                                <small class="text-muted">Créé le</small>
+                                <div class="fw-bold">{{ request.createdAt|date('d/m/Y') }}</div>
+                            </div>
+                            {% if request.scheduledDate %}
+                            <div class="col-6">
+                                <small class="text-muted">Prévu le</small>
+                                <div class="fw-bold {{ request.scheduledDate < date() and request.status != 'completed' ? 'text-danger' : '' }}">
+                                    {{ request.scheduledDate|date('d/m/Y') }}
+                                </div>
+                            </div>
+                            {% elseif request.completedDate %}
+                            <div class="col-6">
+                                <small class="text-muted">Terminé le</small>
+                                <div class="fw-bold text-success">{{ request.completedDate|date('d/m/Y') }}</div>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Coûts -->
+                    {% if request.estimatedCost or request.actualCost %}
+                    <div class="mb-3">
+                        <div class="row text-center">
+                            {% if request.estimatedCost %}
+                            <div class="col-6">
+                                <small class="text-muted">Coût estimé</small>
+                                <div class="fw-bold">{{ request.estimatedCost|number_format(2, ',', ' ') }}€</div>
+                            </div>
+                            {% endif %}
+                            {% if request.actualCost %}
+                            <div class="col-6">
+                                <small class="text-muted">Coût réel</small>
+                                <div class="fw-bold text-success">{{ request.actualCost|number_format(2, ',', ' ') }}€</div>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Assigné à -->
+                    {% if request.assignedTo %}
+                    <div class="mb-3">
+                        <small class="text-muted">Assigné à :</small>
+                        <div class="fw-bold">{{ request.assignedTo }}</div>
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="card-footer bg-transparent">
+                    <div class="btn-group w-100" role="group">
+                        <a href="{{ path('app_maintenance_request_show', {id: request.id}) }}" class="btn btn-outline-primary btn-sm">
+                            <i class="bi bi-eye"></i> Voir
+                        </a>
+                        {% if request.status == 'pending' %}
+                        <button type="button" class="btn btn-outline-warning btn-sm" data-bs-toggle="modal" data-bs-target="#startModal{{ request.id }}">
+                            <i class="bi bi-play-circle"></i> Démarrer
+                        </button>
+                        {% elseif request.status == 'in_progress' %}
+                        <button type="button" class="btn btn-outline-success btn-sm" data-bs-toggle="modal" data-bs-target="#completeModal{{ request.id }}">
+                            <i class="bi bi-check-circle"></i> Terminer
+                        </button>
+                        {% endif %}
+                        <a href="{{ path('app_maintenance_request_edit', {id: request.id}) }}" class="btn btn-outline-secondary btn-sm">
+                            <i class="bi bi-pencil"></i> Modifier
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal démarrer -->
+        {% if request.status == 'pending' %}
+        <div class="modal fade" id="startModal{{ request.id }}" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Démarrer la maintenance</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <form method="POST" action="{{ path('app_maintenance_request_start', {id: request.id}) }}">
+                        <div class="modal-body">
+                            <p>Démarrer la maintenance : <strong>{{ request.title }}</strong> ?</p>
+                            
+                            <div class="mb-3">
+                                <label for="assigned_to{{ request.id }}" class="form-label">Assigné à</label>
+                                <input type="text" class="form-control" id="assigned_to{{ request.id }}" name="assigned_to" value="{{ request.assignedTo }}" placeholder="Nom de l'intervenant">
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <input type="hidden" name="_token" value="{{ csrf_token('start' ~ request.id) }}">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                            <button type="submit" class="btn btn-warning">Démarrer</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Modal terminer -->
+        {% if request.status == 'in_progress' %}
+        <div class="modal fade" id="completeModal{{ request.id }}" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Terminer la maintenance</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <form method="POST" action="{{ path('app_maintenance_request_complete', {id: request.id}) }}">
+                        <div class="modal-body">
+                            <p>Marquer comme terminée : <strong>{{ request.title }}</strong> ?</p>
+                            
+                            <div class="mb-3">
+                                <label for="resolution{{ request.id }}" class="form-label">Solution apportée</label>
+                                <textarea class="form-control" id="resolution{{ request.id }}" name="resolution" rows="3" placeholder="Décrivez la solution apportée..."></textarea>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="actual_cost{{ request.id }}" class="form-label">Coût réel (€)</label>
+                                <input type="number" class="form-control" id="actual_cost{{ request.id }}" name="actual_cost" step="0.01" min="0">
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <input type="hidden" name="_token" value="{{ csrf_token('complete' ~ request.id) }}">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                            <button type="submit" class="btn btn-success">Terminer</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="alert alert-info text-center">
+        <i class="bi bi-info-circle me-2"></i>
+        {% if filter or priority or status or property %}
+            Aucune demande de maintenance ne correspond à vos critères.
+        {% else %}
+            Aucune demande de maintenance enregistrée. 
+        {% endif %}
+        <a href="{{ path('app_maintenance_request_new') }}" class="alert-link">Créez votre première demande !</a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

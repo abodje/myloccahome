@@ -2,16 +2,247 @@
 <html>
     <head>
         <meta charset="UTF-8">
-        <title>{% block title %}Welcome!{% endblock %}</title>
-        <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 128 128%22><text y=%221.2em%22 font-size=%2296%22>⚫️</text><text y=%221.3em%22 x=%220.2em%22 font-size=%2276%22 fill=%22%23fff%22>sf</text></svg>">
-        {% block stylesheets %}
-        {% endblock %}
+        <title>{% block title %}Gestion Locative{% endblock %}</title>
+        <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 128 128%22><text y=%221.2em%22 font-size=%2296%22>🏠</text></svg>">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        
+        <!-- Bootstrap CSS -->
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+        <!-- Bootstrap Icons -->
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+        <!-- Custom CSS -->
+        <style>
+            :root {
+                --primary-color: #2c3e50;
+                --secondary-color: #3498db;
+                --success-color: #27ae60;
+                --danger-color: #e74c3c;
+                --warning-color: #f39c12;
+                --info-color: #17a2b8;
+                --light-color: #f8f9fa;
+                --dark-color: #343a40;
+            }
 
-        {% block javascripts %}
-            {% block importmap %}{{ importmap('app') }}{% endblock %}
-        {% endblock %}
+            body {
+                background-color: #f5f6fa;
+                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            }
+
+            .sidebar {
+                background: linear-gradient(180deg, var(--primary-color) 0%, #34495e 100%);
+                min-height: 100vh;
+                box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+            }
+
+            .sidebar .nav-link {
+                color: rgba(255,255,255,0.8);
+                padding: 0.75rem 1.5rem;
+                border-radius: 0.5rem;
+                margin: 0.2rem 0.5rem;
+                transition: all 0.3s;
+            }
+
+            .sidebar .nav-link:hover,
+            .sidebar .nav-link.active {
+                color: white;
+                background-color: var(--secondary-color);
+                transform: translateX(5px);
+            }
+
+            .sidebar .nav-link i {
+                margin-right: 0.5rem;
+                width: 1.2rem;
+            }
+
+            .content-wrapper {
+                background: white;
+                border-radius: 1rem;
+                box-shadow: 0 0 20px rgba(0,0,0,0.1);
+                margin: 1rem;
+                overflow: hidden;
+            }
+
+            .card {
+                border: none;
+                border-radius: 1rem;
+                box-shadow: 0 2px 15px rgba(0,0,0,0.1);
+                transition: transform 0.3s, box-shadow 0.3s;
+            }
+
+            .card:hover {
+                transform: translateY(-5px);
+                box-shadow: 0 5px 25px rgba(0,0,0,0.15);
+            }
+
+            .card-header {
+                background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+                color: white;
+                border: none;
+                font-weight: 600;
+            }
+
+            .btn-primary {
+                background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+                border: none;
+                border-radius: 0.5rem;
+                padding: 0.5rem 1.5rem;
+                font-weight: 500;
+                transition: all 0.3s;
+            }
+
+            .btn-primary:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 4px 15px rgba(52, 152, 219, 0.4);
+            }
+
+            .alert {
+                border: none;
+                border-radius: 0.75rem;
+                border-left: 4px solid;
+            }
+
+            .alert-info { border-left-color: var(--info-color); }
+            .alert-warning { border-left-color: var(--warning-color); }
+            .alert-danger { border-left-color: var(--danger-color); }
+            .alert-success { border-left-color: var(--success-color); }
+
+            .table {
+                border-radius: 0.5rem;
+                overflow: hidden;
+            }
+
+            .table thead th {
+                background-color: var(--light-color);
+                border: none;
+                font-weight: 600;
+                color: var(--primary-color);
+            }
+
+            .badge {
+                padding: 0.5em 0.75em;
+                font-size: 0.75em;
+                border-radius: 0.5rem;
+            }
+
+            .stat-card {
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+                border-radius: 1rem;
+                padding: 1.5rem;
+                position: relative;
+                overflow: hidden;
+            }
+
+            .stat-card::before {
+                content: '';
+                position: absolute;
+                top: -50%;
+                right: -50%;
+                width: 100%;
+                height: 100%;
+                background: rgba(255,255,255,0.1);
+                border-radius: 50%;
+                transition: all 0.3s;
+            }
+
+            .stat-card:hover::before {
+                top: -25%;
+                right: -25%;
+            }
+
+            .stat-value {
+                font-size: 2.5rem;
+                font-weight: 700;
+                margin-bottom: 0.5rem;
+            }
+
+            .stat-label {
+                font-size: 0.9rem;
+                opacity: 0.9;
+            }
+
+            @media (max-width: 768px) {
+                .sidebar {
+                    position: fixed;
+                    z-index: 1000;
+                    left: -100%;
+                    transition: left 0.3s;
+                }
+
+                .sidebar.show {
+                    left: 0;
+                }
+            }
+        </style>
+
+        {% block stylesheets %}{% endblock %}
     </head>
     <body>
-        {% block body %}{% endblock %}
+        <div class="container-fluid">
+            <div class="row">
+                <!-- Sidebar -->
+                <nav class="col-md-3 col-lg-2 d-md-block bg-dark sidebar collapse">
+                    <div class="position-sticky pt-3">
+                        <div class="text-center mb-4">
+                            <h4 class="text-white">
+                                <i class="bi bi-house-door-fill"></i>
+                                Gestion Locative
+                            </h4>
+                        </div>
+                        
+                        <ul class="nav flex-column">
+                            <li class="nav-item">
+                                <a class="nav-link {{ app.request.get('_route') == 'app_dashboard' ? 'active' : '' }}" href="{{ path('app_dashboard') }}">
+                                    <i class="bi bi-speedometer2"></i>
+                                    Tableau de bord
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link {{ app.request.get('_route') starts with 'app_property' ? 'active' : '' }}" href="{{ path('app_property_index') }}">
+                                    <i class="bi bi-building"></i>
+                                    Propriétés
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link {{ app.request.get('_route') starts with 'app_tenant' ? 'active' : '' }}" href="{{ path('app_tenant_index') }}">
+                                    <i class="bi bi-people-fill"></i>
+                                    Locataires
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link {{ app.request.get('_route') starts with 'app_rental_contract' ? 'active' : '' }}" href="{{ path('app_rental_contract_index') }}">
+                                    <i class="bi bi-file-earmark-text"></i>
+                                    Contrats
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link {{ app.request.get('_route') starts with 'app_payment' ? 'active' : '' }}" href="{{ path('app_payment_index') }}">
+                                    <i class="bi bi-credit-card"></i>
+                                    Paiements
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link {{ app.request.get('_route') starts with 'app_maintenance' ? 'active' : '' }}" href="{{ path('app_maintenance_request_index') }}">
+                                    <i class="bi bi-tools"></i>
+                                    Maintenance
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </nav>
+
+                <!-- Main content -->
+                <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+                    <div class="content-wrapper">
+                        {% block body %}{% endblock %}
+                    </div>
+                </main>
+            </div>
+        </div>
+
+        <!-- Bootstrap JS -->
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+        
+        {% block javascripts %}{% endblock %}
     </body>
 </html>

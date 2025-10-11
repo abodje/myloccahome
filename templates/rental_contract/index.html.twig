@@ -1,0 +1,185 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Gestion des Contrats{% endblock %}
+
+{% block body %}
+<div class="p-4">
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pb-2 mb-3 border-bottom">
+        <h1 class="h2"><i class="bi bi-file-earmark-text me-2"></i>Contrats de location</h1>
+        <div class="btn-toolbar mb-2 mb-md-0">
+            <a href="{{ path('app_rental_contract_new') }}" class="btn btn-primary">
+                <i class="bi bi-file-plus me-1"></i>Nouveau contrat
+            </a>
+        </div>
+    </div>
+
+    <!-- Filtres -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-2">
+                    <a href="{{ path('app_rental_contract_index') }}" 
+                       class="btn {{ status is empty and property is empty and tenant is empty ? 'btn-primary' : 'btn-outline-primary' }} w-100">
+                        Tous
+                    </a>
+                </div>
+                <div class="col-md-2">
+                    <a href="{{ path('app_rental_contract_index', {status: 'active'}) }}" 
+                       class="btn {{ status == 'active' ? 'btn-success' : 'btn-outline-success' }} w-100">
+                        Actifs
+                    </a>
+                </div>
+                <div class="col-md-2">
+                    <a href="{{ path('app_rental_contract_index', {status: 'ending_soon'}) }}" 
+                       class="btn {{ status == 'ending_soon' ? 'btn-warning' : 'btn-outline-warning' }} w-100">
+                        Fin prochaine
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Liste des contrats -->
+    {% if contracts|length > 0 %}
+    <div class="row">
+        {% for contract in contracts %}
+        <div class="col-lg-6 col-xl-4 mb-4">
+            <div class="card h-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0">Contrat #{{ contract.id }}</h6>
+                    {% if contract.status == 'active' %}
+                        <span class="badge bg-success">Actif</span>
+                    {% elseif contract.status == 'terminated' %}
+                        <span class="badge bg-secondary">Terminé</span>
+                    {% elseif contract.status == 'pending' %}
+                        <span class="badge bg-warning">En attente</span>
+                    {% else %}
+                        <span class="badge bg-info">{{ contract.status|title }}</span>
+                    {% endif %}
+                </div>
+                <div class="card-body">
+                    <!-- Propriété -->
+                    <div class="mb-3">
+                        <h6 class="card-subtitle mb-2 text-muted">Propriété</h6>
+                        <div class="d-flex align-items-start">
+                            <i class="bi bi-building me-2 mt-1 text-muted"></i>
+                            <div>
+                                <a href="{{ path('app_property_show', {id: contract.property.id}) }}" class="text-decoration-none">
+                                    <strong>{{ contract.property.title }}</strong>
+                                </a>
+                                <br>
+                                <small class="text-muted">{{ contract.property.city }}</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Locataire -->
+                    <div class="mb-3">
+                        <h6 class="card-subtitle mb-2 text-muted">Locataire</h6>
+                        <div class="d-flex align-items-center">
+                            <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center me-2" style="width: 30px; height: 30px; font-size: 0.8rem;">
+                                {{ contract.tenant.firstName|first|upper }}{{ contract.tenant.lastName|first|upper }}
+                            </div>
+                            <div>
+                                <a href="{{ path('app_tenant_show', {id: contract.tenant.id}) }}" class="text-decoration-none">
+                                    {{ contract.tenant.fullName }}
+                                </a>
+                                <br>
+                                <small class="text-muted">{{ contract.tenant.email }}</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Période -->
+                    <div class="mb-3">
+                        <h6 class="card-subtitle mb-2 text-muted">Période</h6>
+                        <div class="d-flex align-items-center">
+                            <i class="bi bi-calendar3 me-2 text-muted"></i>
+                            <div>
+                                <strong>{{ contract.startDate|date('d/m/Y') }}</strong>
+                                {% if contract.endDate %}
+                                    - {{ contract.endDate|date('d/m/Y') }}
+                                    {% set daysToEnd = date().diff(contract.endDate).days %}
+                                    {% if contract.status == 'active' and contract.endDate > date() %}
+                                        <br><small class="text-warning">Fin dans {{ daysToEnd }} jours</small>
+                                    {% endif %}
+                                {% else %}
+                                    <br><small class="text-success">Durée indéterminée</small>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Loyer -->
+                    <div class="mb-3">
+                        <h6 class="card-subtitle mb-2 text-muted">Loyer mensuel</h6>
+                        <div class="d-flex justify-content-between">
+                            <span>Total :</span>
+                            <span class="fw-bold text-success">{{ contract.totalRent|number_format(2, ',', ' ') }}€</span>
+                        </div>
+                        <small class="text-muted">
+                            {{ contract.monthlyRent|number_format(2, ',', ' ') }}€ + {{ contract.charges|number_format(2, ',', ' ') }}€ charges
+                        </small>
+                    </div>
+                </div>
+                <div class="card-footer bg-transparent">
+                    <div class="btn-group w-100" role="group">
+                        <a href="{{ path('app_rental_contract_show', {id: contract.id}) }}" class="btn btn-outline-primary btn-sm">
+                            <i class="bi bi-eye"></i> Voir
+                        </a>
+                        <a href="{{ path('app_rental_contract_edit', {id: contract.id}) }}" class="btn btn-outline-warning btn-sm">
+                            <i class="bi bi-pencil"></i> Modifier
+                        </a>
+                        {% if contract.status == 'active' %}
+                        <button type="button" class="btn btn-outline-danger btn-sm" data-bs-toggle="modal" data-bs-target="#terminateModal{{ contract.id }}">
+                            <i class="bi bi-stop-circle"></i> Terminer
+                        </button>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal de résiliation -->
+        {% if contract.status == 'active' %}
+        <div class="modal fade" id="terminateModal{{ contract.id }}" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Terminer le contrat</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <form method="POST" action="{{ path('app_rental_contract_terminate', {id: contract.id}) }}">
+                        <div class="modal-body">
+                            <p>Terminer le contrat de <strong>{{ contract.tenant.fullName }}</strong> pour la propriété <strong>{{ contract.property.title }}</strong> ?</p>
+                            
+                            <div class="mb-3">
+                                <label for="end_date{{ contract.id }}" class="form-label">Date de fin</label>
+                                <input type="date" class="form-control" id="end_date{{ contract.id }}" name="end_date" value="{{ 'now'|date('Y-m-d') }}" required>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <input type="hidden" name="_token" value="{{ csrf_token('terminate' ~ contract.id) }}">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                            <button type="submit" class="btn btn-danger">Terminer le contrat</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="alert alert-info text-center">
+        <i class="bi bi-info-circle me-2"></i>
+        {% if status or property or tenant %}
+            Aucun contrat ne correspond à vos critères.
+        {% else %}
+            Aucun contrat de location enregistré. 
+        {% endif %}
+        <a href="{{ path('app_rental_contract_new') }}" class="alert-link">Créez votre premier contrat !</a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

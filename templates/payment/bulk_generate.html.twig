@@ -1,0 +1,96 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Génération de Paiements{% endblock %}
+
+{% block body %}
+<div class="p-4">
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pb-2 mb-3 border-bottom">
+        <h1 class="h2"><i class="bi bi-calendar-plus me-2"></i>Génération de Paiements</h1>
+        <div class="btn-toolbar mb-2 mb-md-0">
+            <a href="{{ path('app_payment_index') }}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left me-1"></i>Retour aux paiements
+            </a>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Génération automatique des loyers</h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle me-2"></i>
+                        <strong>Fonctionnement :</strong> Cette fonction génère automatiquement les paiements de loyer pour tous les contrats actifs du mois sélectionné. 
+                        Les paiements déjà existants ne seront pas dupliqués.
+                    </div>
+
+                    <form method="POST">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="month" class="form-label">Mois et année *</label>
+                                    <input type="month" class="form-control" id="month" name="month" value="{{ 'now'|date('Y-m') }}" required>
+                                    <div class="form-text">Sélectionnez le mois pour lequel générer les paiements</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-end gap-2">
+                            <a href="{{ path('app_payment_index') }}" class="btn btn-secondary">Annuler</a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-magic me-1"></i>Générer les paiements
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">Informations</h6>
+                </div>
+                <div class="card-body">
+                    <h6 class="text-success">✓ Avantages</h6>
+                    <ul class="list-unstyled">
+                        <li><i class="bi bi-check-circle text-success me-1"></i> Gain de temps considérable</li>
+                        <li><i class="bi bi-check-circle text-success me-1"></i> Évite les oublis</li>
+                        <li><i class="bi bi-check-circle text-success me-1"></i> Génération selon les contrats actifs</li>
+                        <li><i class="bi bi-check-circle text-success me-1"></i> Pas de duplication</li>
+                    </ul>
+
+                    <hr>
+
+                    <h6 class="text-muted">Ce qui sera généré :</h6>
+                    <ul class="list-unstyled small text-muted">
+                        <li>• Paiements de type "Loyer"</li>
+                        <li>• Montant = loyer + charges</li>
+                        <li>• Date d'échéance = 1er du mois</li>
+                        <li>• Statut = "En attente"</li>
+                        <li>• Pour tous les contrats actifs</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h6 class="mb-0">Autres options</h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{{ path('app_payment_new') }}" class="btn btn-outline-primary">
+                            <i class="bi bi-plus me-1"></i>Paiement manuel
+                        </a>
+                        <a href="{{ path('app_rental_contract_index') }}" class="btn btn-outline-info">
+                            <i class="bi bi-file-text me-1"></i>Voir les contrats
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

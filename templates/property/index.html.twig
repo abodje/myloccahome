@@ -1,0 +1,156 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Gestion des Propriétés{% endblock %}
+
+{% block body %}
+<div class="p-4">
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pb-2 mb-3 border-bottom">
+        <h1 class="h2"><i class="bi bi-building me-2"></i>Propriétés</h1>
+        <div class="btn-toolbar mb-2 mb-md-0">
+            <a href="{{ path('app_property_new') }}" class="btn btn-primary">
+                <i class="bi bi-plus-circle me-1"></i>Nouvelle propriété
+            </a>
+        </div>
+    </div>
+
+    <!-- Filtres -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="GET" class="row g-3">
+                <div class="col-md-3">
+                    <label for="search" class="form-label">Rechercher par ville</label>
+                    <input type="text" class="form-control" id="search" name="search" value="{{ search }}" placeholder="Nom de la ville">
+                </div>
+                <div class="col-md-2">
+                    <label for="type" class="form-label">Type</label>
+                    <select class="form-select" id="type" name="type">
+                        <option value="">Tous les types</option>
+                        <option value="appartement" {{ type == 'appartement' ? 'selected' : '' }}>Appartement</option>
+                        <option value="maison" {{ type == 'maison' ? 'selected' : '' }}>Maison</option>
+                        <option value="studio" {{ type == 'studio' ? 'selected' : '' }}>Studio</option>
+                        <option value="bureau" {{ type == 'bureau' ? 'selected' : '' }}>Bureau</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label for="available" class="form-label">Disponibilité</label>
+                    <select class="form-select" id="available" name="available">
+                        <option value="">Toutes</option>
+                        <option value="1" {{ available == '1' ? 'selected' : '' }}>Disponibles</option>
+                        <option value="0" {{ available == '0' ? 'selected' : '' }}>Occupées</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">&nbsp;</label>
+                    <div class="d-grid gap-2 d-md-flex">
+                        <button type="submit" class="btn btn-outline-primary">
+                            <i class="bi bi-search me-1"></i>Filtrer
+                        </button>
+                        <a href="{{ path('app_property_index') }}" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-clockwise me-1"></i>Reset
+                        </a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Liste des propriétés -->
+    <div class="row">
+        {% for property in properties %}
+        <div class="col-lg-4 col-md-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header d-flex justify-content-between">
+                    <h6 class="mb-0">{{ property.title }}</h6>
+                    {% if property.available %}
+                        <span class="badge bg-success">Disponible</span>
+                    {% else %}
+                        <span class="badge bg-danger">Occupé</span>
+                    {% endif %}
+                </div>
+                <div class="card-body">
+                    <p class="card-text text-muted mb-2">
+                        <i class="bi bi-geo-alt me-1"></i>{{ property.fullAddress }}
+                    </p>
+                    
+                    <div class="row text-center mb-3">
+                        <div class="col-4">
+                            <small class="text-muted">Surface</small>
+                            <div class="fw-bold">{{ property.surface }}m²</div>
+                        </div>
+                        <div class="col-4">
+                            <small class="text-muted">Pièces</small>
+                            <div class="fw-bold">{{ property.rooms }}</div>
+                        </div>
+                        <div class="col-4">
+                            <small class="text-muted">Chambres</small>
+                            <div class="fw-bold">{{ property.bedrooms }}</div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between">
+                            <span>Loyer mensuel:</span>
+                            <span class="fw-bold text-success">{{ property.totalRent|number_format(2, ',', ' ') }}€</span>
+                        </div>
+                        <small class="text-muted">
+                            {{ property.monthlyRent|number_format(2, ',', ' ') }}€ + {{ property.charges|number_format(2, ',', ' ') }}€ charges
+                        </small>
+                    </div>
+
+                    <div class="mb-3">
+                        <span class="badge bg-info me-1">{{ property.type|title }}</span>
+                        {% if property.furnished %}
+                            <span class="badge bg-secondary">Meublé</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="card-footer bg-transparent">
+                    <div class="btn-group w-100" role="group">
+                        <a href="{{ path('app_property_show', {id: property.id}) }}" class="btn btn-outline-primary btn-sm">
+                            <i class="bi bi-eye"></i> Voir
+                        </a>
+                        <a href="{{ path('app_property_edit', {id: property.id}) }}" class="btn btn-outline-warning btn-sm">
+                            <i class="bi bi-pencil"></i> Modifier
+                        </a>
+                        <button type="button" class="btn btn-outline-danger btn-sm" data-bs-toggle="modal" data-bs-target="#deleteModal{{ property.id }}">
+                            <i class="bi bi-trash"></i> Supprimer
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal de suppression -->
+        <div class="modal fade" id="deleteModal{{ property.id }}" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Confirmer la suppression</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        Êtes-vous sûr de vouloir supprimer la propriété "{{ property.title }}" ?
+                        Cette action est irréversible.
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                        <form method="POST" action="{{ path('app_property_delete', {id: property.id}) }}" style="display: inline;">
+                            <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ property.id) }}">
+                            <button type="submit" class="btn btn-danger">Supprimer</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="col-12">
+            <div class="alert alert-info text-center">
+                <i class="bi bi-info-circle me-2"></i>
+                Aucune propriété trouvée. 
+                <a href="{{ path('app_property_new') }}" class="alert-link">Créez votre première propriété !</a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

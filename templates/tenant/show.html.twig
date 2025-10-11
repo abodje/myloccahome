@@ -1,0 +1,271 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ tenant.fullName }} - Locataire{% endblock %}
+
+{% block body %}
+<div class="p-4">
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pb-2 mb-3 border-bottom">
+        <h1 class="h2">
+            <div class="d-flex align-items-center">
+                <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center me-3" style="width: 50px; height: 50px;">
+                    {{ tenant.firstName|first|upper }}{{ tenant.lastName|first|upper }}
+                </div>
+                {{ tenant.fullName }}
+            </div>
+        </h1>
+        <div class="btn-toolbar mb-2 mb-md-0">
+            <div class="btn-group me-2">
+                <a href="{{ path('app_tenant_edit', {id: tenant.id}) }}" class="btn btn-outline-warning">
+                    <i class="bi bi-pencil me-1"></i>Modifier
+                </a>
+                <a href="{{ path('app_tenant_index') }}" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left me-1"></i>Retour
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Informations personnelles -->
+        <div class="col-lg-8">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Informations personnelles</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="text-muted">Contact</h6>
+                            <div class="mb-3">
+                                <div class="d-flex align-items-center mb-2">
+                                    <i class="bi bi-envelope me-2 text-muted"></i>
+                                    <a href="mailto:{{ tenant.email }}">{{ tenant.email }}</a>
+                                </div>
+                                {% if tenant.phone %}
+                                <div class="d-flex align-items-center mb-2">
+                                    <i class="bi bi-telephone me-2 text-muted"></i>
+                                    <a href="tel:{{ tenant.phone }}">{{ tenant.phone }}</a>
+                                </div>
+                                {% endif %}
+                                {% if tenant.birthDate %}
+                                <div class="d-flex align-items-center">
+                                    <i class="bi bi-calendar me-2 text-muted"></i>
+                                    {{ tenant.birthDate|date('d/m/Y') }}
+                                    <small class="text-muted ms-2">({{ 'now'|date('Y') - tenant.birthDate|date('Y') }} ans)</small>
+                                </div>
+                                {% endif %}
+                            </div>
+
+                            {% if tenant.fullAddress %}
+                            <h6 class="text-muted">Adresse</h6>
+                            <p class="mb-0">
+                                <i class="bi bi-geo-alt me-2 text-muted"></i>
+                                {{ tenant.fullAddress }}
+                            </p>
+                            {% endif %}
+                        </div>
+
+                        <div class="col-md-6">
+                            {% if tenant.profession or tenant.monthlyIncome %}
+                            <h6 class="text-muted">Informations professionnelles</h6>
+                            <div class="mb-3">
+                                {% if tenant.profession %}
+                                <div class="d-flex align-items-center mb-2">
+                                    <i class="bi bi-briefcase me-2 text-muted"></i>
+                                    {{ tenant.profession }}
+                                </div>
+                                {% endif %}
+                                {% if tenant.monthlyIncome %}
+                                <div class="d-flex align-items-center">
+                                    <i class="bi bi-cash me-2 text-muted"></i>
+                                    <span class="fw-bold text-success">{{ tenant.monthlyIncome|number_format(0, ',', ' ') }}€</span>
+                                    <small class="text-muted ms-1">par mois</small>
+                                </div>
+                                {% endif %}
+                            </div>
+                            {% endif %}
+
+                            {% if tenant.emergencyContactName or tenant.emergencyContactPhone %}
+                            <h6 class="text-muted">Contact d'urgence</h6>
+                            <div>
+                                {% if tenant.emergencyContactName %}
+                                <div class="d-flex align-items-center mb-2">
+                                    <i class="bi bi-person me-2 text-muted"></i>
+                                    {{ tenant.emergencyContactName }}
+                                </div>
+                                {% endif %}
+                                {% if tenant.emergencyContactPhone %}
+                                <div class="d-flex align-items-center">
+                                    <i class="bi bi-telephone me-2 text-muted"></i>
+                                    <a href="tel:{{ tenant.emergencyContactPhone }}">{{ tenant.emergencyContactPhone }}</a>
+                                </div>
+                                {% endif %}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    {% if tenant.notes %}
+                    <hr>
+                    <h6 class="text-muted">Notes</h6>
+                    <p class="mb-0">{{ tenant.notes|nl2br }}</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Contrats de location -->
+            <div class="card">
+                <div class="card-header d-flex justify-content-between">
+                    <h5 class="mb-0">Contrats de location</h5>
+                    <a href="{{ path('app_rental_contract_new') }}?tenant={{ tenant.id }}" class="btn btn-sm btn-outline-primary">
+                        <i class="bi bi-plus me-1"></i>Nouveau contrat
+                    </a>
+                </div>
+                <div class="card-body">
+                    {% if tenant.rentalContracts|length > 0 %}
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Propriété</th>
+                                        <th>Période</th>
+                                        <th>Loyer mensuel</th>
+                                        <th>Statut</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for contract in tenant.rentalContracts %}
+                                    <tr>
+                                        <td>
+                                            <a href="{{ path('app_property_show', {id: contract.property.id}) }}">
+                                                {{ contract.property.title }}
+                                            </a>
+                                            <br>
+                                            <small class="text-muted">{{ contract.property.city }}</small>
+                                        </td>
+                                        <td>
+                                            {{ contract.startDate|date('d/m/Y') }}
+                                            {% if contract.endDate %}
+                                                <br>{{ contract.endDate|date('d/m/Y') }}
+                                            {% else %}
+                                                <br><span class="text-success">En cours</span>
+                                            {% endif %}
+                                        </td>
+                                        <td class="fw-bold">{{ contract.totalRent|number_format(2, ',', ' ') }}€</td>
+                                        <td>
+                                            {% if contract.status == 'active' %}
+                                                <span class="badge bg-success">Actif</span>
+                                            {% elseif contract.status == 'terminated' %}
+                                                <span class="badge bg-secondary">Terminé</span>
+                                            {% else %}
+                                                <span class="badge bg-warning">{{ contract.status|title }}</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <a href="{{ path('app_rental_contract_show', {id: contract.id}) }}" class="btn btn-sm btn-outline-primary">
+                                                Voir
+                                            </a>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center text-muted">
+                            <i class="bi bi-file-earmark-text mb-2" style="font-size: 2rem;"></i>
+                            <p>Aucun contrat de location pour ce locataire.</p>
+                            <a href="{{ path('app_rental_contract_new') }}?tenant={{ tenant.id }}" class="btn btn-outline-primary">
+                                Créer un contrat
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Informations complémentaires -->
+        <div class="col-lg-4">
+            <!-- Actions rapides -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0">Actions rapides</h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{{ path('app_rental_contract_new') }}?tenant={{ tenant.id }}" class="btn btn-outline-success">
+                            <i class="bi bi-file-plus me-1"></i>Nouveau contrat
+                        </a>
+                        <a href="mailto:{{ tenant.email }}" class="btn btn-outline-primary">
+                            <i class="bi bi-envelope me-1"></i>Envoyer un email
+                        </a>
+                        {% if tenant.phone %}
+                        <a href="tel:{{ tenant.phone }}" class="btn btn-outline-info">
+                            <i class="bi bi-telephone me-1"></i>Appeler
+                        </a>
+                        {% endif %}
+                        <a href="{{ path('app_tenant_edit', {id: tenant.id}) }}" class="btn btn-outline-warning">
+                            <i class="bi bi-pencil me-1"></i>Modifier profil
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Historique des paiements -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0">Paiements récents</h6>
+                </div>
+                <div class="card-body">
+                    {% if tenant.payments|length > 0 %}
+                        {% for payment in tenant.payments|slice(0, 5) %}
+                        <div class="d-flex justify-content-between align-items-center border-bottom py-2">
+                            <div>
+                                <div class="fw-bold">{{ payment.amount|number_format(2, ',', ' ') }}€</div>
+                                <small class="text-muted">{{ payment.dueDate|date('d/m/Y') }}</small>
+                            </div>
+                            <div>
+                                {% if payment.status == 'paid' %}
+                                    <span class="badge bg-success">Payé</span>
+                                {% elseif payment.status == 'overdue' %}
+                                    <span class="badge bg-danger">En retard</span>
+                                {% else %}
+                                    <span class="badge bg-warning">En attente</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                        
+                        {% if tenant.payments|length > 5 %}
+                        <div class="text-center mt-2">
+                            <a href="{{ path('app_payment_index', {tenant: tenant.id}) }}" class="btn btn-sm btn-outline-primary">
+                                Voir tous ({{ tenant.payments|length }})
+                            </a>
+                        </div>
+                        {% endif %}
+                    {% else %}
+                        <div class="text-center text-muted">
+                            <i class="bi bi-credit-card mb-2"></i>
+                            <p class="mb-0">Aucun historique de paiement</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Informations système -->
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">Informations</h6>
+                </div>
+                <div class="card-body">
+                    <small class="text-muted">
+                        <div class="mb-1">Créé le : {{ tenant.createdAt|date('d/m/Y à H:i') }}</div>
+                        <div>Modifié le : {{ tenant.updatedAt|date('d/m/Y à H:i') }}</div>
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

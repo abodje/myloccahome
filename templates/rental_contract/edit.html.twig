@@ -1,0 +1,212 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Modifier Contrat #{{ contract.id }}{% endblock %}
+
+{% block body %}
+<div class="p-4">
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pb-2 mb-3 border-bottom">
+        <h1 class="h2">
+            <i class="bi bi-pencil me-2"></i>
+            Modifier Contrat #{{ contract.id }}
+        </h1>
+        <div class="btn-toolbar mb-2 mb-md-0">
+            <div class="btn-group me-2">
+                <a href="{{ path('app_rental_contract_show', {id: contract.id}) }}" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left me-1"></i>Retour
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0">Modification du contrat</h5>
+        </div>
+        <div class="card-body">
+            <form method="POST">
+                <div class="row">
+                    <!-- Informations non modifiables -->
+                    <div class="col-md-6">
+                        <h6 class="text-muted mb-3">Parties contractantes <small>(non modifiable)</small></h6>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Propriété</label>
+                            <div class="form-control-plaintext bg-light p-2 rounded">
+                                <strong>{{ contract.property.title }}</strong>
+                                <br>
+                                <small class="text-muted">{{ contract.property.fullAddress }}</small>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Locataire</label>
+                            <div class="form-control-plaintext bg-light p-2 rounded">
+                                <div class="d-flex align-items-center">
+                                    <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center me-2" style="width: 30px; height: 30px; font-size: 0.8rem;">
+                                        {{ contract.tenant.firstName|first|upper }}{{ contract.tenant.lastName|first|upper }}
+                                    </div>
+                                    <div>
+                                        <strong>{{ contract.tenant.fullName }}</strong>
+                                        <br>
+                                        <small class="text-muted">{{ contract.tenant.email }}</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="status" class="form-label">Statut *</label>
+                            <select class="form-select" id="status" name="status" required>
+                                <option value="pending" {{ contract.status == 'pending' ? 'selected' : '' }}>En attente</option>
+                                <option value="active" {{ contract.status == 'active' ? 'selected' : '' }}>Actif</option>
+                                <option value="terminated" {{ contract.status == 'terminated' ? 'selected' : '' }}>Terminé</option>
+                            </select>
+                            {% if contract.status == 'active' %}
+                            <div class="form-text text-warning">
+                                <i class="bi bi-exclamation-triangle me-1"></i>
+                                Changer le statut à "Terminé" rendra la propriété disponible.
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Dates et durée -->
+                    <div class="col-md-6">
+                        <h6 class="text-muted mb-3">Période du contrat</h6>
+                        
+                        <div class="mb-3">
+                            <label for="start_date" class="form-label">Date de début *</label>
+                            <input type="date" class="form-control" id="start_date" name="start_date" value="{{ contract.startDate|date('Y-m-d') }}" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="end_date" class="form-label">Date de fin</label>
+                            <input type="date" class="form-control" id="end_date" name="end_date" value="{{ contract.endDate ? contract.endDate|date('Y-m-d') : '' }}">
+                            <div class="form-text">Laisser vide pour un contrat à durée indéterminée</div>
+                        </div>
+
+                        <h6 class="text-muted mb-3 mt-4">Tarification</h6>
+
+                        <div class="mb-3">
+                            <label for="monthly_rent" class="form-label">Loyer mensuel (€) *</label>
+                            <input type="number" class="form-control" id="monthly_rent" name="monthly_rent" value="{{ contract.monthlyRent }}" step="0.01" required min="0">
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="charges" class="form-label">Charges (€) *</label>
+                            <input type="number" class="form-control" id="charges" name="charges" value="{{ contract.charges }}" step="0.01" required min="0">
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="deposit" class="form-label">Dépôt de garantie (€) *</label>
+                            <input type="number" class="form-control" id="deposit" name="deposit" value="{{ contract.deposit }}" step="0.01" required min="0">
+                        </div>
+
+                        <!-- Résumé automatique -->
+                        <div class="alert alert-info">
+                            <strong>Loyer total mensuel :</strong>
+                            <span id="total-rent">{{ contract.totalRent|number_format(2, ',', ' ') }}€</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Conditions et notes -->
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <h6 class="text-muted mb-3">Conditions et notes</h6>
+                        
+                        <div class="mb-3">
+                            <label for="conditions" class="form-label">Conditions spéciales</label>
+                            <textarea class="form-control" id="conditions" name="conditions" rows="3" placeholder="Conditions particulières du contrat...">{{ contract.conditions }}</textarea>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="notes" class="form-label">Notes internes</label>
+                            <textarea class="form-control" id="notes" name="notes" rows="3" placeholder="Notes internes pour ce contrat...">{{ contract.notes }}</textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <hr>
+
+                <!-- Informations sur les modifications -->
+                {% if contract.payments|length > 0 %}
+                <div class="alert alert-warning">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    <strong>Attention :</strong> Ce contrat a {{ contract.payments|length }} paiement(s) associé(s). 
+                    Les modifications de tarification n'affecteront pas les paiements existants.
+                </div>
+                {% endif %}
+
+                <div class="d-flex justify-content-end gap-2">
+                    <a href="{{ path('app_rental_contract_show', {id: contract.id}) }}" class="btn btn-secondary">Annuler</a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check-circle me-1"></i>Enregistrer les modifications
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Historique des modifications (exemple) -->
+    <div class="card mt-4">
+        <div class="card-header">
+            <h6 class="mb-0">Informations</h6>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <small class="text-muted">
+                        <strong>Contrat créé :</strong> {{ contract.createdAt|date('d/m/Y à H:i') }}
+                    </small>
+                </div>
+                <div class="col-md-6">
+                    <small class="text-muted">
+                        <strong>Dernière modification :</strong> {{ contract.updatedAt|date('d/m/Y à H:i') }}
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Calcul automatique du loyer total
+function updateTotalRent() {
+    const rent = parseFloat(document.getElementById('monthly_rent').value) || 0;
+    const charges = parseFloat(document.getElementById('charges').value) || 0;
+    const total = rent + charges;
+    document.getElementById('total-rent').textContent = total.toLocaleString('fr-FR', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    }) + '€';
+}
+
+document.getElementById('monthly_rent').addEventListener('input', updateTotalRent);
+document.getElementById('charges').addEventListener('input', updateTotalRent);
+
+// Validation des dates
+document.getElementById('end_date').addEventListener('change', function() {
+    const startDate = new Date(document.getElementById('start_date').value);
+    const endDate = new Date(this.value);
+    
+    if (this.value && endDate <= startDate) {
+        alert('La date de fin doit être postérieure à la date de début.');
+        this.value = '';
+    }
+});
+
+document.getElementById('start_date').addEventListener('change', function() {
+    const startDate = new Date(this.value);
+    const endDateInput = document.getElementById('end_date');
+    
+    if (endDateInput.value) {
+        const endDate = new Date(endDateInput.value);
+        if (endDate <= startDate) {
+            alert('La date de fin doit être postérieure à la date de début.');
+            endDateInput.value = '';
+        }
+    }
+});
+</script>
+{% endblock %}

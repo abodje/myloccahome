@@ -1,0 +1,244 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Tableau de bord - Gestion Locative{% endblock %}
+
+{% block body %}
+<div class="p-4">
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pb-2 mb-3 border-bottom">
+        <h1 class="h2"><i class="bi bi-speedometer2 me-2"></i>Tableau de bord</h1>
+        <div class="btn-toolbar mb-2 mb-md-0">
+            <div class="btn-group me-2">
+                <button type="button" class="btn btn-sm btn-outline-secondary">
+                    <i class="bi bi-download"></i> Exporter
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistiques principales -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card stat-card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <div class="stat-value">{{ propertyStats.total ?? 0 }}</div>
+                            <div class="stat-label">Propriétés totales</div>
+                            <small>{{ propertyStats.available ?? 0 }} disponibles</small>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="bi bi-building" style="font-size: 2rem; opacity: 0.3;"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card stat-card" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <div class="stat-value">{{ contractStats.active ?? 0 }}</div>
+                            <div class="stat-label">Contrats actifs</div>
+                            <small>{{ contractStats.total ?? 0 }} au total</small>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="bi bi-file-earmark-text" style="font-size: 2rem; opacity: 0.3;"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card stat-card" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <div class="stat-value">{{ monthlyRevenue|number_format(0, ',', ' ') }}€</div>
+                            <div class="stat-label">Revenus du mois</div>
+                            <small>{{ paymentStats.paid ?? 0 }} paiements reçus</small>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="bi bi-cash-stack" style="font-size: 2rem; opacity: 0.3;"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card stat-card" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <div class="stat-value">{{ maintenanceStats.pending ?? 0 }}</div>
+                            <div class="stat-label">Maintenances en cours</div>
+                            <small>{{ maintenanceStats.urgent ?? 0 }} urgentes</small>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="bi bi-tools" style="font-size: 2rem; opacity: 0.3;"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Alertes et notifications -->
+    <div class="row mb-4">
+        {% if overduePayments|length > 0 %}
+        <div class="col-md-6 mb-3">
+            <div class="alert alert-danger" role="alert">
+                <h6 class="alert-heading"><i class="bi bi-exclamation-triangle-fill me-2"></i>Paiements en retard</h6>
+                <p class="mb-0">{{ overduePayments|length }} paiement(s) en retard nécessitent votre attention.</p>
+                <hr>
+                <a href="{{ path('app_payment_index') }}?filter=overdue" class="btn btn-sm btn-outline-danger">Voir les détails</a>
+            </div>
+        </div>
+        {% endif %}
+
+        {% if contractsEndingSoon|length > 0 %}
+        <div class="col-md-6 mb-3">
+            <div class="alert alert-warning" role="alert">
+                <h6 class="alert-heading"><i class="bi bi-calendar-event me-2"></i>Contrats arrivant à échéance</h6>
+                <p class="mb-0">{{ contractsEndingSoon|length }} contrat(s) se terminent dans les 30 prochains jours.</p>
+                <hr>
+                <a href="{{ path('app_rental_contract_index') }}?filter=ending_soon" class="btn btn-sm btn-outline-warning">Voir les détails</a>
+            </div>
+        </div>
+        {% endif %}
+
+        {% if urgentMaintenance|length > 0 %}
+        <div class="col-md-6 mb-3">
+            <div class="alert alert-info" role="alert">
+                <h6 class="alert-heading"><i class="bi bi-gear-fill me-2"></i>Maintenances urgentes</h6>
+                <p class="mb-0">{{ urgentMaintenance|length }} demande(s) de maintenance urgente(s).</p>
+                <hr>
+                <a href="{{ path('app_maintenance_request_index') }}?filter=urgent" class="btn btn-sm btn-outline-info">Voir les détails</a>
+            </div>
+        </div>
+        {% endif %}
+
+        {% if paymentsDueSoon|length > 0 %}
+        <div class="col-md-6 mb-3">
+            <div class="alert alert-success" role="alert">
+                <h6 class="alert-heading"><i class="bi bi-calendar-check me-2"></i>Paiements à venir</h6>
+                <p class="mb-0">{{ paymentsDueSoon|length }} paiement(s) attendu(s) dans les 7 prochains jours.</p>
+                <hr>
+                <a href="{{ path('app_payment_index') }}?filter=due_soon" class="btn btn-sm btn-outline-success">Voir les détails</a>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Graphiques et données détaillées -->
+    <div class="row">
+        <div class="col-lg-8 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-bar-chart me-2"></i>Aperçu financier mensuel</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-md-4">
+                            <h4 class="text-success">{{ monthlyRevenue|number_format(2, ',', ' ') }}€</h4>
+                            <p class="text-muted">Revenus</p>
+                        </div>
+                        <div class="col-md-4">
+                            <h4 class="text-danger">{{ maintenanceCosts|number_format(2, ',', ' ') }}€</h4>
+                            <p class="text-muted">Coûts maintenance</p>
+                        </div>
+                        <div class="col-md-4">
+                            <h4 class="text-primary">{{ netProfit|number_format(2, ',', ' ') }}€</h4>
+                            <p class="text-muted">Bénéfice net</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-pie-chart me-2"></i>Répartition des propriétés</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between">
+                            <span>Occupées</span>
+                            <span class="fw-bold">{{ propertyStats.occupied ?? 0 }}</span>
+                        </div>
+                        <div class="progress mb-2" style="height: 8px;">
+                            <div class="progress-bar bg-success" 
+                                 style="width: {{ propertyStats.total > 0 ? (propertyStats.occupied / propertyStats.total * 100) : 0 }}%"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="d-flex justify-content-between">
+                            <span>Disponibles</span>
+                            <span class="fw-bold">{{ propertyStats.available ?? 0 }}</span>
+                        </div>
+                        <div class="progress" style="height: 8px;">
+                            <div class="progress-bar bg-warning" 
+                                 style="width: {{ propertyStats.total > 0 ? (propertyStats.available / propertyStats.total * 100) : 0 }}%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Actions rapides -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-lightning me-2"></i>Actions rapides</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-md-2 mb-3">
+                            <a href="{{ path('app_property_new') }}" class="btn btn-outline-primary w-100">
+                                <i class="bi bi-plus-circle d-block mb-2" style="font-size: 1.5rem;"></i>
+                                Nouvelle propriété
+                            </a>
+                        </div>
+                        <div class="col-md-2 mb-3">
+                            <a href="{{ path('app_tenant_new') }}" class="btn btn-outline-success w-100">
+                                <i class="bi bi-person-plus d-block mb-2" style="font-size: 1.5rem;"></i>
+                                Nouveau locataire
+                            </a>
+                        </div>
+                        <div class="col-md-2 mb-3">
+                            <a href="{{ path('app_rental_contract_new') }}" class="btn btn-outline-info w-100">
+                                <i class="bi bi-file-plus d-block mb-2" style="font-size: 1.5rem;"></i>
+                                Nouveau contrat
+                            </a>
+                        </div>
+                        <div class="col-md-2 mb-3">
+                            <a href="{{ path('app_payment_new') }}" class="btn btn-outline-warning w-100">
+                                <i class="bi bi-cash-coin d-block mb-2" style="font-size: 1.5rem;"></i>
+                                Enregistrer paiement
+                            </a>
+                        </div>
+                        <div class="col-md-2 mb-3">
+                            <a href="{{ path('app_maintenance_request_new') }}" class="btn btn-outline-danger w-100">
+                                <i class="bi bi-wrench d-block mb-2" style="font-size: 1.5rem;"></i>
+                                Demande maintenance
+                            </a>
+                        </div>
+                        <div class="col-md-2 mb-3">
+                            <a href="#" class="btn btn-outline-secondary w-100">
+                                <i class="bi bi-graph-up d-block mb-2" style="font-size: 1.5rem;"></i>
+                                Rapports
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
