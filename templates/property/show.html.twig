@@ -1,0 +1,427 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ property.title }} - Gestion Immobilière{% endblock %}
+
+{% block header %}
+<div class="page-header">
+    <div class="container-fluid">
+        <div class="row align-items-center">
+            <div class="col">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb mb-2">
+                        <li class="breadcrumb-item"><a href="{{ path('app_property_index') }}">Propriétés</a></li>
+                        <li class="breadcrumb-item active">{{ property.title }}</li>
+                    </ol>
+                </nav>
+                <h1 class="h2 mb-0">
+                    <i class="bi bi-building text-primary"></i>
+                    {{ property.title }}
+                </h1>
+                <p class="text-muted mb-0">{{ property.fullAddress }}</p>
+            </div>
+            <div class="col-auto">
+                <div class="btn-group">
+                    <a href="{{ path('app_property_edit', {id: property.id}) }}" class="btn btn-outline-primary">
+                        <i class="bi bi-pencil"></i> Modifier
+                    </a>
+                    <button type="button" class="btn btn-outline-secondary dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown">
+                        <span class="visually-hidden">Toggle Dropdown</span>
+                    </button>
+                    <ul class="dropdown-menu">
+                        {% if not currentContract %}
+                        <li><a class="dropdown-item" href="{{ path('app_contract_new', {property_id: property.id}) }}">
+                            <i class="bi bi-plus"></i> Créer un contrat
+                        </a></li>
+                        {% endif %}
+                        <li><a class="dropdown-item" href="{{ path('app_maintenance_new', {property_id: property.id}) }}">
+                            <i class="bi bi-tools"></i> Nouvelle maintenance
+                        </a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li>
+                            <form method="POST" action="{{ path('app_property_delete', {id: property.id}) }}" 
+                                  onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cette propriété ?')" class="d-inline">
+                                <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ property.id) }}">
+                                <button type="submit" class="dropdown-item text-danger">
+                                    <i class="bi bi-trash"></i> Supprimer
+                                </button>
+                            </form>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <div class="row">
+        <!-- Informations principales -->
+        <div class="col-lg-8">
+            <!-- Statut et informations de base -->
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Informations générales</h5>
+                    <div class="d-flex align-items-center">
+                        <span class="badge bg-{{ property.status == 'available' ? 'success' : (property.status == 'occupied' ? 'warning' : 'secondary') }} me-2">
+                            {% if property.status == 'available' %}Disponible
+                            {% elseif property.status == 'occupied' %}Occupé
+                            {% elseif property.status == 'maintenance' %}En travaux
+                            {% else %}{{ property.status|title }}
+                            {% endif %}
+                        </span>
+                        <div class="dropdown">
+                            <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                Changer le statut
+                            </button>
+                            <ul class="dropdown-menu">
+                                {% for status_key, status_label in {
+                                    'available': 'Disponible',
+                                    'occupied': 'Occupé', 
+                                    'maintenance': 'En travaux',
+                                    'unavailable': 'Indisponible'
+                                } %}
+                                    {% if status_key != property.status %}
+                                    <li>
+                                        <form method="POST" action="{{ path('app_property_change_status', {id: property.id}) }}" class="d-inline">
+                                            <input type="hidden" name="_token" value="{{ csrf_token('change_status' ~ property.id) }}">
+                                            <input type="hidden" name="status" value="{{ status_key }}">
+                                            <button type="submit" class="dropdown-item">{{ status_label }}</button>
+                                        </form>
+                                    </li>
+                                    {% endif %}
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td><strong>Type :</strong></td>
+                                    <td>{{ property.type|title }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Surface :</strong></td>
+                                    <td>{{ property.surface }} m²</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Pièces :</strong></td>
+                                    <td>{{ property.rooms }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Chambres :</strong></td>
+                                    <td>{{ property.bedrooms }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Salles de bain :</strong></td>
+                                    <td>{{ property.bathrooms }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td><strong>Loyer :</strong></td>
+                                    <td>{{ property.rentAmount }}€/mois</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Charges :</strong></td>
+                                    <td>{{ property.charges }}€/mois</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Total mensuel :</strong></td>
+                                    <td><strong class="text-success">{{ property.totalMonthlyAmount }}€/mois</strong></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Dépôt de garantie :</strong></td>
+                                    <td>{{ property.deposit }}€</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Classe énergétique :</strong></td>
+                                    <td>
+                                        {% if property.energyRating %}
+                                        <span class="badge bg-secondary">{{ property.energyRating }}</span>
+                                        {% else %}
+                                        <span class="text-muted">Non renseignée</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Équipements -->
+                    <div class="mt-3">
+                        <h6>Équipements :</h6>
+                        <div>
+                            {% if property.furnished %}
+                            <span class="badge bg-primary me-2 mb-1">
+                                <i class="bi bi-house-check"></i> Meublé
+                            </span>
+                            {% endif %}
+                            {% if property.garage %}
+                            <span class="badge bg-primary me-2 mb-1">
+                                <i class="bi bi-car-front"></i> Garage
+                            </span>
+                            {% endif %}
+                            {% if property.balcony %}
+                            <span class="badge bg-primary me-2 mb-1">
+                                <i class="bi bi-tree"></i> Balcon/Terrasse
+                            </span>
+                            {% endif %}
+                            {% if property.elevator %}
+                            <span class="badge bg-primary me-2 mb-1">
+                                <i class="bi bi-arrow-up-down"></i> Ascenseur
+                            </span>
+                            {% endif %}
+                            {% if not property.furnished and not property.garage and not property.balcony and not property.elevator %}
+                            <span class="text-muted">Aucun équipement particulier</span>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    {% if property.description %}
+                    <div class="mt-3">
+                        <h6>Description :</h6>
+                        <p class="text-muted">{{ property.description }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Contrat actuel -->
+            {% if currentContract %}
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Contrat de location actuel</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>Locataire</h6>
+                            <p class="mb-1">
+                                <strong>{{ currentContract.tenant.fullName }}</strong>
+                            </p>
+                            <p class="mb-1">
+                                <i class="bi bi-envelope"></i> {{ currentContract.tenant.email }}
+                            </p>
+                            <p class="mb-1">
+                                <i class="bi bi-telephone"></i> {{ currentContract.tenant.phone }}
+                            </p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Informations du contrat</h6>
+                            <p class="mb-1">
+                                <strong>Contrat :</strong> {{ currentContract.contractNumber }}
+                            </p>
+                            <p class="mb-1">
+                                <strong>Début :</strong> {{ currentContract.startDate|date('d/m/Y') }}
+                            </p>
+                            <p class="mb-1">
+                                <strong>Fin :</strong> 
+                                {% if currentContract.endDate %}
+                                    {{ currentContract.endDate|date('d/m/Y') }}
+                                    {% set remainingDays = currentContract.remainingDays %}
+                                    {% if remainingDays is not null %}
+                                        <small class="text-muted">({{ remainingDays }} jours restants)</small>
+                                    {% endif %}
+                                {% else %}
+                                    <span class="text-muted">Indéterminée</span>
+                                {% endif %}
+                            </p>
+                            <p class="mb-1">
+                                <strong>Échéance :</strong> Le {{ currentContract.rentDueDay }} de chaque mois
+                            </p>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <a href="{{ path('app_contract_show', {id: currentContract.id}) }}" class="btn btn-primary btn-sm">
+                            <i class="bi bi-eye"></i> Voir le contrat complet
+                        </a>
+                        <a href="{{ path('app_payment_index', {contract: currentContract.id}) }}" class="btn btn-outline-info btn-sm">
+                            <i class="bi bi-credit-card"></i> Voir les paiements
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Historique des maintenances -->
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Maintenances récentes</h5>
+                    <a href="{{ path('app_maintenance_new', {property_id: property.id}) }}" class="btn btn-outline-primary btn-sm">
+                        <i class="bi bi-plus"></i> Nouvelle maintenance
+                    </a>
+                </div>
+                <div class="card-body">
+                    {% if maintenances|length > 0 %}
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Intervention</th>
+                                    <th>Priorité</th>
+                                    <th>Statut</th>
+                                    <th>Coût</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for maintenance in maintenances %}
+                                <tr>
+                                    <td>{{ maintenance.reportedDate|date('d/m/Y') }}</td>
+                                    <td>
+                                        <strong>{{ maintenance.title }}</strong>
+                                        {% if maintenance.type %}
+                                        <br><small class="text-muted">{{ maintenance.type|title }}</small>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-{{ maintenance.priority == 'urgent' ? 'danger' : (maintenance.priority == 'high' ? 'warning' : 'secondary') }}">
+                                            {{ maintenance.priority|title }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-{{ maintenance.status == 'completed' ? 'success' : (maintenance.status == 'in_progress' ? 'info' : 'warning') }}">
+                                            {% if maintenance.status == 'pending' %}En attente
+                                            {% elseif maintenance.status == 'in_progress' %}En cours
+                                            {% elseif maintenance.status == 'completed' %}Terminé
+                                            {% else %}{{ maintenance.status|title }}
+                                            {% endif %}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        {% if maintenance.actualCost %}
+                                            {{ maintenance.actualCost }}€
+                                        {% elseif maintenance.estimatedCost %}
+                                            <span class="text-muted">~{{ maintenance.estimatedCost }}€</span>
+                                        {% else %}
+                                            <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <a href="{{ path('app_maintenance_show', {id: maintenance.id}) }}" class="btn btn-outline-primary btn-sm">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p class="text-muted text-center py-3">
+                        <i class="bi bi-tools"></i>
+                        Aucune maintenance enregistrée pour cette propriété.
+                    </p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar avec actions rapides -->
+        <div class="col-lg-4">
+            <!-- Actions rapides -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0">Actions rapides</h6>
+                </div>
+                <div class="card-body">
+                    {% if not currentContract %}
+                    <a href="{{ path('app_contract_new', {property_id: property.id}) }}" class="btn btn-success w-100 mb-2">
+                        <i class="bi bi-plus-circle"></i>
+                        Créer un contrat de location
+                    </a>
+                    {% else %}
+                    <a href="{{ path('app_contract_show', {id: currentContract.id}) }}" class="btn btn-primary w-100 mb-2">
+                        <i class="bi bi-file-earmark-text"></i>
+                        Voir le contrat actuel
+                    </a>
+                    {% endif %}
+                    
+                    <a href="{{ path('app_maintenance_new', {property_id: property.id}) }}" class="btn btn-warning w-100 mb-2">
+                        <i class="bi bi-tools"></i>
+                        Signaler une maintenance
+                    </a>
+                    
+                    {% if currentContract %}
+                    <a href="{{ path('app_payment_new', {contract_id: currentContract.id}) }}" class="btn btn-info w-100 mb-2">
+                        <i class="bi bi-credit-card"></i>
+                        Enregistrer un paiement
+                    </a>
+                    {% endif %}
+                    
+                    <hr>
+                    
+                    <a href="{{ path('app_property_edit', {id: property.id}) }}" class="btn btn-outline-secondary w-100 mb-2">
+                        <i class="bi bi-pencil"></i>
+                        Modifier la propriété
+                    </a>
+                </div>
+            </div>
+
+            <!-- Informations financières -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0">Résumé financier</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-12 mb-3">
+                            <h4 class="text-success mb-0">{{ property.totalMonthlyAmount }}€</h4>
+                            <small class="text-muted">Revenus mensuels potentiels</small>
+                        </div>
+                    </div>
+                    
+                    <div class="progress mb-3" style="height: 20px;">
+                        <div class="progress-bar bg-primary" style="width: {{ (property.rentAmount / property.totalMonthlyAmount * 100)|round }}%">
+                            Loyer
+                        </div>
+                        <div class="progress-bar bg-info" style="width: {{ (property.charges / property.totalMonthlyAmount * 100)|round }}%">
+                            Charges
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between mb-2">
+                        <small>Loyer :</small>
+                        <small>{{ property.rentAmount }}€</small>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <small>Charges :</small>
+                        <small>{{ property.charges }}€</small>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <small><strong>Dépôt de garantie :</strong></small>
+                        <small><strong>{{ property.deposit }}€</strong></small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Informations système -->
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">Informations système</h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between mb-2">
+                        <small>Créée le :</small>
+                        <small>{{ property.createdAt|date('d/m/Y H:i') }}</small>
+                    </div>
+                    {% if property.updatedAt %}
+                    <div class="d-flex justify-content-between">
+                        <small>Dernière modification :</small>
+                        <small>{{ property.updatedAt|date('d/m/Y H:i') }}</small>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
