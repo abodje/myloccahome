@@ -1,0 +1,198 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Nouveau Paiement{% endblock %}
+
+{% block body %}
+<div class="p-4">
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pb-2 mb-3 border-bottom">
+        <h1 class="h2"><i class="bi bi-plus-circle me-2"></i>Nouveau Paiement</h1>
+        <div class="btn-toolbar mb-2 mb-md-0">
+            <a href="{{ path('app_payment_index') }}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left me-1"></i>Retour à la liste
+            </a>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0">Enregistrement d'un paiement</h5>
+        </div>
+        <div class="card-body">
+            <form method="POST">
+                <div class="row">
+                    <!-- Contrat et locataire -->
+                    <div class="col-md-6">
+                        <h6 class="text-muted mb-3">Contrat et locataire</h6>
+                        
+                        <div class="mb-3">
+                            <label for="contract_id" class="form-label">Contrat de location *</label>
+                            <select class="form-select" id="contract_id" name="contract_id" required>
+                                <option value="">Choisir un contrat</option>
+                                {% for contract in contracts %}
+                                <option value="{{ contract.id }}" 
+                                        {{ preselectedContract == contract.id ? 'selected' : '' }}
+                                        data-tenant="{{ contract.tenant.id }}"
+                                        data-amount="{{ contract.totalRent }}">
+                                    {{ contract.property.title }} - {{ contract.tenant.fullName }} ({{ contract.totalRent|number_format(2, ',', ' ') }}€)
+                                </option>
+                                {% endfor %}
+                            </select>
+                            {% if contracts|length == 0 %}
+                            <div class="form-text text-warning">
+                                <i class="bi bi-exclamation-triangle me-1"></i>
+                                Aucun contrat actif. <a href="{{ path('app_rental_contract_new') }}">Créer un contrat</a>
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="tenant_id" class="form-label">Locataire *</label>
+                            <select class="form-select" id="tenant_id" name="tenant_id" required>
+                                <option value="">Choisir un locataire</option>
+                                {% for tenant in tenants %}
+                                <option value="{{ tenant.id }}" {{ preselectedTenant == tenant.id ? 'selected' : '' }}>
+                                    {{ tenant.fullName }} - {{ tenant.email }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="type" class="form-label">Type de paiement *</label>
+                                    <select class="form-select" id="type" name="type" required>
+                                        <option value="rent">Loyer</option>
+                                        <option value="charges">Charges</option>
+                                        <option value="deposit">Dépôt de garantie</option>
+                                        <option value="fees">Frais divers</option>
+                                        <option value="other">Autre</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="amount" class="form-label">Montant (€) *</label>
+                                    <input type="number" class="form-control" id="amount" name="amount" step="0.01" required min="0">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Dates et statut -->
+                    <div class="col-md-6">
+                        <h6 class="text-muted mb-3">Échéance et statut</h6>
+                        
+                        <div class="mb-3">
+                            <label for="due_date" class="form-label">Date d'échéance *</label>
+                            <input type="date" class="form-control" id="due_date" name="due_date" value="{{ 'now'|date('Y-m-d') }}" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="status" class="form-label">Statut *</label>
+                            <select class="form-select" id="status" name="status" required>
+                                <option value="pending">En attente</option>
+                                <option value="paid">Payé</option>
+                                <option value="overdue">En retard</option>
+                            </select>
+                        </div>
+
+                        <div id="payment-details" style="display: none;">
+                            <h6 class="text-muted mb-3">Détails du paiement</h6>
+                            
+                            <div class="mb-3">
+                                <label for="paid_date" class="form-label">Date de paiement</label>
+                                <input type="date" class="form-control" id="paid_date" name="paid_date" value="{{ 'now'|date('Y-m-d') }}">
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="payment_method" class="form-label">Mode de paiement</label>
+                                <select class="form-select" id="payment_method" name="payment_method">
+                                    <option value="">Choisir</option>
+                                    <option value="virement">Virement</option>
+                                    <option value="cheque">Chèque</option>
+                                    <option value="especes">Espèces</option>
+                                    <option value="prelevement">Prélèvement</option>
+                                    <option value="carte">Carte bancaire</option>
+                                </select>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="reference" class="form-label">Référence</label>
+                                <input type="text" class="form-control" id="reference" name="reference" placeholder="Numéro de chèque, référence virement...">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Notes -->
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <h6 class="text-muted mb-3">Notes</h6>
+                        
+                        <div class="mb-3">
+                            <label for="notes" class="form-label">Notes internes</label>
+                            <textarea class="form-control" id="notes" name="notes" rows="3" placeholder="Notes supplémentaires sur ce paiement..."></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <hr>
+
+                <div class="d-flex justify-content-end gap-2">
+                    <a href="{{ path('app_payment_index') }}" class="btn btn-secondary">Annuler</a>
+                    <button type="submit" class="btn btn-primary" {{ (contracts|length == 0 or tenants|length == 0) ? 'disabled' : '' }}>
+                        <i class="bi bi-check-circle me-1"></i>Enregistrer le paiement
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+// Auto-sélection du locataire basé sur le contrat
+document.getElementById('contract_id').addEventListener('change', function() {
+    const selectedOption = this.options[this.selectedIndex];
+    if (selectedOption.value) {
+        // Sélectionner automatiquement le locataire
+        const tenantId = selectedOption.dataset.tenant;
+        document.getElementById('tenant_id').value = tenantId || '';
+        
+        // Remplir le montant par défaut
+        const amount = selectedOption.dataset.amount;
+        document.getElementById('amount').value = amount || '';
+    } else {
+        document.getElementById('tenant_id').value = '';
+        document.getElementById('amount').value = '';
+    }
+});
+
+// Afficher/masquer les détails de paiement selon le statut
+document.getElementById('status').addEventListener('change', function() {
+    const paymentDetails = document.getElementById('payment-details');
+    if (this.value === 'paid') {
+        paymentDetails.style.display = 'block';
+        document.getElementById('paid_date').required = true;
+    } else {
+        paymentDetails.style.display = 'none';
+        document.getElementById('paid_date').required = false;
+    }
+});
+
+// Initialiser si contrat pré-sélectionné
+{% if preselectedContract %}
+document.getElementById('contract_id').dispatchEvent(new Event('change'));
+{% endif %}
+
+// Générer automatiquement la date d'échéance pour les loyers
+document.getElementById('type').addEventListener('change', function() {
+    if (this.value === 'rent') {
+        // Premier jour du mois pour les loyers
+        const today = new Date();
+        const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+        document.getElementById('due_date').value = firstDay.toISOString().split('T')[0];
+    }
+});
+</script>
+{% endblock %}

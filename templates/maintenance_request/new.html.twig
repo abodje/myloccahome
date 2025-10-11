@@ -1,0 +1,183 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Nouvelle Demande de Maintenance{% endblock %}
+
+{% block body %}
+<div class="p-4">
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pb-2 mb-3 border-bottom">
+        <h1 class="h2"><i class="bi bi-plus-circle me-2"></i>Nouvelle Demande de Maintenance</h1>
+        <div class="btn-toolbar mb-2 mb-md-0">
+            <a href="{{ path('app_maintenance_request_index') }}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left me-1"></i>Retour à la liste
+            </a>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0">Informations de la demande</h5>
+        </div>
+        <div class="card-body">
+            <form method="POST">
+                <div class="row">
+                    <!-- Informations générales -->
+                    <div class="col-md-6">
+                        <h6 class="text-muted mb-3">Informations générales</h6>
+                        
+                        <div class="mb-3">
+                            <label for="property_id" class="form-label">Propriété concernée *</label>
+                            <select class="form-select" id="property_id" name="property_id" required>
+                                <option value="">Choisir une propriété</option>
+                                {% for property in properties %}
+                                <option value="{{ property.id }}" {{ preselectedProperty == property.id ? 'selected' : '' }}>
+                                    {{ property.title }} - {{ property.city }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                            {% if properties|length == 0 %}
+                            <div class="form-text text-warning">
+                                <i class="bi bi-exclamation-triangle me-1"></i>
+                                Aucune propriété enregistrée. <a href="{{ path('app_property_new') }}">Créer une propriété</a>
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="title" class="form-label">Titre de la demande *</label>
+                            <input type="text" class="form-control" id="title" name="title" required placeholder="Ex: Fuite d'eau dans la salle de bain">
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="description" class="form-label">Description détaillée *</label>
+                            <textarea class="form-control" id="description" name="description" rows="4" required placeholder="Décrivez le problème en détail..."></textarea>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="category" class="form-label">Catégorie *</label>
+                                    <select class="form-select" id="category" name="category" required>
+                                        <option value="">Choisir une catégorie</option>
+                                        <option value="plumbing">Plomberie</option>
+                                        <option value="electrical">Électricité</option>
+                                        <option value="heating">Chauffage</option>
+                                        <option value="painting">Peinture</option>
+                                        <option value="flooring">Revêtement sol</option>
+                                        <option value="windows">Fenêtres/Volets</option>
+                                        <option value="doors">Portes/Serrures</option>
+                                        <option value="appliances">Électroménager</option>
+                                        <option value="garden">Jardin/Extérieur</option>
+                                        <option value="other">Autre</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="priority" class="form-label">Priorité *</label>
+                                    <select class="form-select" id="priority" name="priority" required>
+                                        <option value="low">Basse</option>
+                                        <option value="medium" selected>Moyenne</option>
+                                        <option value="high">Haute</option>
+                                        <option value="urgent">Urgente</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Planification et coûts -->
+                    <div class="col-md-6">
+                        <h6 class="text-muted mb-3">Planification et estimation</h6>
+                        
+                        <div class="mb-3">
+                            <label for="assigned_to" class="form-label">Assigné à</label>
+                            <input type="text" class="form-control" id="assigned_to" name="assigned_to" placeholder="Nom de l'intervenant, société...">
+                            <div class="form-text">Laisser vide si pas encore assigné</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="scheduled_date" class="form-label">Date prévue d'intervention</label>
+                            <input type="datetime-local" class="form-control" id="scheduled_date" name="scheduled_date">
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="estimated_cost" class="form-label">Coût estimé (€)</label>
+                            <input type="number" class="form-control" id="estimated_cost" name="estimated_cost" step="0.01" min="0" placeholder="0.00">
+                        </div>
+
+                        <h6 class="text-muted mb-3 mt-4">Notes</h6>
+
+                        <div class="mb-3">
+                            <label for="notes" class="form-label">Notes internes</label>
+                            <textarea class="form-control" id="notes" name="notes" rows="4" placeholder="Notes supplémentaires, informations importantes..."></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <hr>
+
+                <!-- Aide priorité -->
+                <div class="alert alert-info">
+                    <h6 class="alert-heading">Guide des priorités :</h6>
+                    <div class="row">
+                        <div class="col-md-3">
+                            <span class="badge bg-danger me-1">Urgente</span>
+                            <small>Sécurité, fuite majeure</small>
+                        </div>
+                        <div class="col-md-3">
+                            <span class="badge bg-warning me-1">Haute</span>
+                            <small>Impacte le confort</small>
+                        </div>
+                        <div class="col-md-3">
+                            <span class="badge bg-info me-1">Moyenne</span>
+                            <small>Problème notable</small>
+                        </div>
+                        <div class="col-md-3">
+                            <span class="badge bg-secondary me-1">Basse</span>
+                            <small>Amélioration, esthétique</small>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-end gap-2">
+                    <a href="{{ path('app_maintenance_request_index') }}" class="btn btn-secondary">Annuler</a>
+                    <button type="submit" class="btn btn-primary" {{ properties|length == 0 ? 'disabled' : '' }}>
+                        <i class="bi bi-check-circle me-1"></i>Créer la demande
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+// Changement automatique de priorité selon la catégorie
+document.getElementById('category').addEventListener('change', function() {
+    const prioritySelect = document.getElementById('priority');
+    
+    // Suggestions de priorité selon la catégorie
+    const prioritySuggestions = {
+        'plumbing': 'high',     // Plomberie souvent urgente
+        'electrical': 'high',   // Électricité peut être dangereuse
+        'heating': 'high',      // Chauffage important pour le confort
+        'painting': 'low',      // Peinture moins urgente
+        'garden': 'low'         // Jardin moins prioritaire
+    };
+    
+    if (prioritySuggestions[this.value]) {
+        prioritySelect.value = prioritySuggestions[this.value];
+    }
+});
+
+// Validation de la date programmée
+document.getElementById('scheduled_date').addEventListener('change', function() {
+    const selectedDate = new Date(this.value);
+    const now = new Date();
+    
+    if (selectedDate < now) {
+        alert('La date d\'intervention ne peut pas être dans le passé.');
+        this.value = '';
+    }
+});
+</script>
+{% endblock %}

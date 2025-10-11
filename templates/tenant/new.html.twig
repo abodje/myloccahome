@@ -1,0 +1,135 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Nouveau Locataire{% endblock %}
+
+{% block body %}
+<div class="p-4">
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pb-2 mb-3 border-bottom">
+        <h1 class="h2"><i class="bi bi-person-plus me-2"></i>Nouveau Locataire</h1>
+        <div class="btn-toolbar mb-2 mb-md-0">
+            <a href="{{ path('app_tenant_index') }}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left me-1"></i>Retour à la liste
+            </a>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0">Informations du locataire</h5>
+        </div>
+        <div class="card-body">
+            <form method="POST">
+                <div class="row">
+                    <!-- Informations personnelles -->
+                    <div class="col-md-6">
+                        <h6 class="text-muted mb-3">Informations personnelles</h6>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="first_name" class="form-label">Prénom *</label>
+                                    <input type="text" class="form-control" id="first_name" name="first_name" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="last_name" class="form-label">Nom *</label>
+                                    <input type="text" class="form-control" id="last_name" name="last_name" required>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Email *</label>
+                            <input type="email" class="form-control" id="email" name="email" required>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="phone" class="form-label">Téléphone</label>
+                                    <input type="tel" class="form-control" id="phone" name="phone">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="birth_date" class="form-label">Date de naissance</label>
+                                    <input type="date" class="form-control" id="birth_date" name="birth_date">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="address" class="form-label">Adresse</label>
+                            <input type="text" class="form-control" id="address" name="address">
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-8">
+                                <div class="mb-3">
+                                    <label for="city" class="form-label">Ville</label>
+                                    <input type="text" class="form-control" id="city" name="city">
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="postal_code" class="form-label">Code postal</label>
+                                    <input type="text" class="form-control" id="postal_code" name="postal_code">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="country" class="form-label">Pays</label>
+                            <input type="text" class="form-control" id="country" name="country" value="France">
+                        </div>
+                    </div>
+
+                    <!-- Informations professionnelles et contact d'urgence -->
+                    <div class="col-md-6">
+                        <h6 class="text-muted mb-3">Informations professionnelles</h6>
+                        
+                        <div class="mb-3">
+                            <label for="profession" class="form-label">Profession</label>
+                            <input type="text" class="form-control" id="profession" name="profession">
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="monthly_income" class="form-label">Revenus mensuels (€)</label>
+                            <input type="number" class="form-control" id="monthly_income" name="monthly_income" step="0.01" min="0">
+                        </div>
+
+                        <h6 class="text-muted mb-3 mt-4">Contact d'urgence</h6>
+
+                        <div class="mb-3">
+                            <label for="emergency_contact_name" class="form-label">Nom du contact d'urgence</label>
+                            <input type="text" class="form-control" id="emergency_contact_name" name="emergency_contact_name">
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="emergency_contact_phone" class="form-label">Téléphone du contact d'urgence</label>
+                            <input type="tel" class="form-control" id="emergency_contact_phone" name="emergency_contact_phone">
+                        </div>
+
+                        <h6 class="text-muted mb-3 mt-4">Notes</h6>
+
+                        <div class="mb-3">
+                            <label for="notes" class="form-label">Notes et commentaires</label>
+                            <textarea class="form-control" id="notes" name="notes" rows="4" placeholder="Notes supplémentaires sur le locataire..."></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <hr>
+
+                <div class="d-flex justify-content-end gap-2">
+                    <a href="{{ path('app_tenant_index') }}" class="btn btn-secondary">Annuler</a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check-circle me-1"></i>Créer le locataire
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

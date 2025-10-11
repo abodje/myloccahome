@@ -1,0 +1,240 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Gestion des Paiements{% endblock %}
+
+{% block body %}
+<div class="p-4">
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pb-2 mb-3 border-bottom">
+        <h1 class="h2"><i class="bi bi-credit-card me-2"></i>Paiements</h1>
+        <div class="btn-toolbar mb-2 mb-md-0">
+            <div class="btn-group me-2">
+                <a href="{{ path('app_payment_bulk_generate') }}" class="btn btn-outline-info">
+                    <i class="bi bi-calendar-plus me-1"></i>Générer paiements
+                </a>
+                <a href="{{ path('app_payment_new') }}" class="btn btn-primary">
+                    <i class="bi bi-plus-circle me-1"></i>Nouveau paiement
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtres -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-2">
+                    <a href="{{ path('app_payment_index') }}" 
+                       class="btn {{ filter is empty and tenant is empty and contract is empty ? 'btn-primary' : 'btn-outline-primary' }} w-100">
+                        Tous
+                    </a>
+                </div>
+                <div class="col-md-2">
+                    <a href="{{ path('app_payment_index', {filter: 'due_soon'}) }}" 
+                       class="btn {{ filter == 'due_soon' ? 'btn-info' : 'btn-outline-info' }} w-100">
+                        Échéance proche
+                    </a>
+                </div>
+                <div class="col-md-2">
+                    <a href="{{ path('app_payment_index', {filter: 'overdue'}) }}" 
+                       class="btn {{ filter == 'overdue' ? 'btn-danger' : 'btn-outline-danger' }} w-100">
+                        En retard
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Liste des paiements -->
+    {% if payments|length > 0 %}
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Locataire</th>
+                            <th>Propriété</th>
+                            <th>Montant</th>
+                            <th>Type</th>
+                            <th>Échéance</th>
+                            <th>Statut</th>
+                            <th>Paiement</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for payment in payments %}
+                        <tr class="{{ payment.isOverdue ? 'table-danger' : (payment.status == 'paid' ? 'table-success' : '') }}">
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center me-2" style="width: 30px; height: 30px; font-size: 0.8rem;">
+                                        {{ payment.tenant.firstName|first|upper }}{{ payment.tenant.lastName|first|upper }}
+                                    </div>
+                                    <div>
+                                        <a href="{{ path('app_tenant_show', {id: payment.tenant.id}) }}" class="text-decoration-none">
+                                            {{ payment.tenant.fullName }}
+                                        </a>
+                                        <br>
+                                        <small class="text-muted">{{ payment.tenant.email }}</small>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <a href="{{ path('app_property_show', {id: payment.rentalContract.property.id}) }}" class="text-decoration-none">
+                                    {{ payment.rentalContract.property.title }}
+                                </a>
+                                <br>
+                                <small class="text-muted">{{ payment.rentalContract.property.city }}</small>
+                            </td>
+                            <td>
+                                <span class="fw-bold">{{ payment.amount|number_format(2, ',', ' ') }}€</span>
+                            </td>
+                            <td>
+                                <span class="badge bg-light text-dark">{{ payment.type|title }}</span>
+                            </td>
+                            <td>
+                                <div>{{ payment.dueDate|date('d/m/Y') }}</div>
+                                {% if payment.isOverdue and payment.status != 'paid' %}
+                                    <small class="text-danger">
+                                        <i class="bi bi-exclamation-triangle me-1"></i>
+                                        {{ payment.daysOverdue }} jour(s) de retard
+                                    </small>
+                                {% elseif payment.status == 'pending' and payment.dueDate.diff(date()).days <= 7 and payment.dueDate >= date() %}
+                                    <small class="text-warning">
+                                        <i class="bi bi-clock me-1"></i>
+                                        Dans {{ payment.dueDate.diff(date()).days }} jour(s)
+                                    </small>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if payment.status == 'paid' %}
+                                    <span class="badge bg-success">Payé</span>
+                                {% elseif payment.isOverdue %}
+                                    <span class="badge bg-danger">En retard</span>
+                                {% else %}
+                                    <span class="badge bg-warning">En attente</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if payment.paidDate %}
+                                    <div>{{ payment.paidDate|date('d/m/Y') }}</div>
+                                    {% if payment.paymentMethod %}
+                                        <small class="text-muted">{{ payment.paymentMethod }}</small>
+                                    {% endif %}
+                                {% else %}
+                                    <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="btn-group" role="group">
+                                    <a href="{{ path('app_payment_show', {id: payment.id}) }}" class="btn btn-outline-primary btn-sm">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                    {% if payment.status != 'paid' %}
+                                    <button type="button" class="btn btn-outline-success btn-sm" data-bs-toggle="modal" data-bs-target="#markPaidModal{{ payment.id }}">
+                                        <i class="bi bi-check-circle"></i>
+                                    </button>
+                                    {% endif %}
+                                    <a href="{{ path('app_payment_edit', {id: payment.id}) }}" class="btn btn-outline-warning btn-sm">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    <button type="button" class="btn btn-outline-danger btn-sm" data-bs-toggle="modal" data-bs-target="#deleteModal{{ payment.id }}">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+
+                        <!-- Modal marquer comme payé -->
+                        {% if payment.status != 'paid' %}
+                        <div class="modal fade" id="markPaidModal{{ payment.id }}" tabindex="-1">
+                            <div class="modal-dialog">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title">Marquer comme payé</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                    </div>
+                                    <form method="POST" action="{{ path('app_payment_mark_paid', {id: payment.id}) }}">
+                                        <div class="modal-body">
+                                            <p>Marquer le paiement de <strong>{{ payment.amount|number_format(2, ',', ' ') }}€</strong> comme payé ?</p>
+                                            
+                                            <div class="row">
+                                                <div class="col-md-6">
+                                                    <div class="mb-3">
+                                                        <label for="paid_date{{ payment.id }}" class="form-label">Date de paiement</label>
+                                                        <input type="date" class="form-control" id="paid_date{{ payment.id }}" name="paid_date" value="{{ 'now'|date('Y-m-d') }}">
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="mb-3">
+                                                        <label for="payment_method{{ payment.id }}" class="form-label">Mode de paiement</label>
+                                                        <select class="form-select" id="payment_method{{ payment.id }}" name="payment_method">
+                                                            <option value="">Choisir</option>
+                                                            <option value="virement">Virement</option>
+                                                            <option value="cheque">Chèque</option>
+                                                            <option value="especes">Espèces</option>
+                                                            <option value="prelevement">Prélèvement</option>
+                                                            <option value="carte">Carte bancaire</option>
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            
+                                            <div class="mb-3">
+                                                <label for="reference{{ payment.id }}" class="form-label">Référence (optionnel)</label>
+                                                <input type="text" class="form-control" id="reference{{ payment.id }}" name="reference" placeholder="Numéro de chèque, référence virement...">
+                                            </div>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <input type="hidden" name="_token" value="{{ csrf_token('mark_paid' ~ payment.id) }}">
+                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                                            <button type="submit" class="btn btn-success">Marquer comme payé</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <!-- Modal de suppression -->
+                        <div class="modal fade" id="deleteModal{{ payment.id }}" tabindex="-1">
+                            <div class="modal-dialog">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title">Confirmer la suppression</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        Êtes-vous sûr de vouloir supprimer ce paiement de <strong>{{ payment.amount|number_format(2, ',', ' ') }}€</strong> ?
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                                        <form method="POST" action="{{ path('app_payment_delete', {id: payment.id}) }}" style="display: inline;">
+                                            <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ payment.id) }}">
+                                            <button type="submit" class="btn btn-danger">Supprimer</button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="alert alert-info text-center">
+        <i class="bi bi-info-circle me-2"></i>
+        {% if filter or tenant or contract %}
+            Aucun paiement ne correspond à vos critères.
+        {% else %}
+            Aucun paiement enregistré. 
+        {% endif %}
+        <a href="{{ path('app_payment_new') }}" class="alert-link">Enregistrez votre premier paiement !</a>
+        ou 
+        <a href="{{ path('app_payment_bulk_generate') }}" class="alert-link">générez automatiquement les paiements</a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,259 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ property.title }} - Propriété{% endblock %}
+
+{% block body %}
+<div class="p-4">
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pb-2 mb-3 border-bottom">
+        <h1 class="h2"><i class="bi bi-building me-2"></i>{{ property.title }}</h1>
+        <div class="btn-toolbar mb-2 mb-md-0">
+            <div class="btn-group me-2">
+                <a href="{{ path('app_property_edit', {id: property.id}) }}" class="btn btn-outline-warning">
+                    <i class="bi bi-pencil me-1"></i>Modifier
+                </a>
+                <a href="{{ path('app_property_index') }}" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left me-1"></i>Retour
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Informations principales -->
+        <div class="col-lg-8">
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between">
+                    <h5 class="mb-0">Informations de la propriété</h5>
+                    {% if property.available %}
+                        <span class="badge bg-success">Disponible</span>
+                    {% else %}
+                        <span class="badge bg-danger">Occupé</span>
+                    {% endif %}
+                </div>
+                <div class="card-body">
+                    {% if property.description %}
+                    <p class="card-text">{{ property.description }}</p>
+                    <hr>
+                    {% endif %}
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="text-muted">Adresse</h6>
+                            <p class="mb-3">
+                                <i class="bi bi-geo-alt me-2"></i>{{ property.fullAddress }}
+                            </p>
+
+                            <h6 class="text-muted">Caractéristiques</h6>
+                            <div class="row text-center">
+                                <div class="col-3">
+                                    <div class="border rounded p-2">
+                                        <i class="bi bi-rulers d-block mb-1 text-muted"></i>
+                                        <small class="text-muted">Surface</small>
+                                        <div class="fw-bold">{{ property.surface }}m²</div>
+                                    </div>
+                                </div>
+                                <div class="col-3">
+                                    <div class="border rounded p-2">
+                                        <i class="bi bi-door-open d-block mb-1 text-muted"></i>
+                                        <small class="text-muted">Pièces</small>
+                                        <div class="fw-bold">{{ property.rooms }}</div>
+                                    </div>
+                                </div>
+                                <div class="col-3">
+                                    <div class="border rounded p-2">
+                                        <i class="bi bi-bed d-block mb-1 text-muted"></i>
+                                        <small class="text-muted">Chambres</small>
+                                        <div class="fw-bold">{{ property.bedrooms }}</div>
+                                    </div>
+                                </div>
+                                <div class="col-3">
+                                    <div class="border rounded p-2">
+                                        <i class="bi bi-droplet d-block mb-1 text-muted"></i>
+                                        <small class="text-muted">Salles de bain</small>
+                                        <div class="fw-bold">{{ property.bathrooms }}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <h6 class="text-muted">Type et équipements</h6>
+                            <div class="mb-3">
+                                <span class="badge bg-info me-2">{{ property.type|title }}</span>
+                                {% if property.furnished %}
+                                    <span class="badge bg-secondary">Meublé</span>
+                                {% else %}
+                                    <span class="badge bg-outline-secondary">Non meublé</span>
+                                {% endif %}
+                            </div>
+
+                            <h6 class="text-muted">Tarification</h6>
+                            <div class="list-group list-group-flush">
+                                <div class="list-group-item d-flex justify-content-between px-0">
+                                    <span>Loyer mensuel</span>
+                                    <span class="fw-bold">{{ property.monthlyRent|number_format(2, ',', ' ') }}€</span>
+                                </div>
+                                <div class="list-group-item d-flex justify-content-between px-0">
+                                    <span>Charges</span>
+                                    <span class="fw-bold">{{ property.charges|number_format(2, ',', ' ') }}€</span>
+                                </div>
+                                <div class="list-group-item d-flex justify-content-between px-0 border-bottom">
+                                    <span><strong>Total mensuel</strong></span>
+                                    <span class="fw-bold text-success">{{ property.totalRent|number_format(2, ',', ' ') }}€</span>
+                                </div>
+                                <div class="list-group-item d-flex justify-content-between px-0">
+                                    <span>Dépôt de garantie</span>
+                                    <span class="fw-bold">{{ property.deposit|number_format(2, ',', ' ') }}€</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Contrats de location -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Historique des contrats</h5>
+                </div>
+                <div class="card-body">
+                    {% if property.rentalContracts|length > 0 %}
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Locataire</th>
+                                        <th>Période</th>
+                                        <th>Loyer</th>
+                                        <th>Statut</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for contract in property.rentalContracts %}
+                                    <tr>
+                                        <td>
+                                            <a href="{{ path('app_tenant_show', {id: contract.tenant.id}) }}">
+                                                {{ contract.tenant.fullName }}
+                                            </a>
+                                        </td>
+                                        <td>
+                                            {{ contract.startDate|date('d/m/Y') }}
+                                            {% if contract.endDate %}
+                                                - {{ contract.endDate|date('d/m/Y') }}
+                                            {% else %}
+                                                - En cours
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ contract.monthlyRent|number_format(2, ',', ' ') }}€</td>
+                                        <td>
+                                            {% if contract.status == 'active' %}
+                                                <span class="badge bg-success">Actif</span>
+                                            {% elseif contract.status == 'terminated' %}
+                                                <span class="badge bg-secondary">Terminé</span>
+                                            {% else %}
+                                                <span class="badge bg-warning">{{ contract.status|title }}</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center text-muted">
+                            <i class="bi bi-file-earmark-text mb-2" style="font-size: 2rem;"></i>
+                            <p>Aucun contrat de location pour cette propriété.</p>
+                            {% if property.available %}
+                                <a href="{{ path('app_rental_contract_new') }}?property={{ property.id }}" class="btn btn-outline-primary">
+                                    Créer un contrat
+                                </a>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Informations complémentaires -->
+        <div class="col-lg-4">
+            <!-- Actions rapides -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0">Actions rapides</h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        {% if property.available %}
+                            <a href="{{ path('app_rental_contract_new') }}?property={{ property.id }}" class="btn btn-outline-success">
+                                <i class="bi bi-file-plus me-1"></i>Nouveau contrat
+                            </a>
+                        {% endif %}
+                        <a href="{{ path('app_maintenance_request_new') }}?property={{ property.id }}" class="btn btn-outline-warning">
+                            <i class="bi bi-wrench me-1"></i>Demande maintenance
+                        </a>
+                        <a href="{{ path('app_property_edit', {id: property.id}) }}" class="btn btn-outline-primary">
+                            <i class="bi bi-pencil me-1"></i>Modifier propriété
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Demandes de maintenance -->
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">Maintenance récente</h6>
+                </div>
+                <div class="card-body">
+                    {% if property.maintenanceRequests|length > 0 %}
+                        {% for request in property.maintenanceRequests|slice(0, 5) %}
+                        <div class="d-flex justify-content-between align-items-center border-bottom py-2">
+                            <div>
+                                <div class="fw-bold">{{ request.title }}</div>
+                                <small class="text-muted">{{ request.createdAt|date('d/m/Y') }}</small>
+                            </div>
+                            <div>
+                                {% if request.status == 'completed' %}
+                                    <span class="badge bg-success">Terminé</span>
+                                {% elseif request.status == 'in_progress' %}
+                                    <span class="badge bg-warning">En cours</span>
+                                {% elseif request.priority == 'urgent' %}
+                                    <span class="badge bg-danger">Urgent</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">{{ request.status|title }}</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                        
+                        {% if property.maintenanceRequests|length > 5 %}
+                        <div class="text-center mt-2">
+                            <a href="{{ path('app_maintenance_request_index', {property: property.id}) }}" class="btn btn-sm btn-outline-primary">
+                                Voir toutes ({{ property.maintenanceRequests|length }})
+                            </a>
+                        </div>
+                        {% endif %}
+                    {% else %}
+                        <div class="text-center text-muted">
+                            <i class="bi bi-tools mb-2"></i>
+                            <p class="mb-0">Aucune demande de maintenance</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Informations système -->
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h6 class="mb-0">Informations</h6>
+                </div>
+                <div class="card-body">
+                    <small class="text-muted">
+                        <div class="mb-1">Créé le : {{ property.createdAt|date('d/m/Y à H:i') }}</div>
+                        <div>Modifié le : {{ property.updatedAt|date('d/m/Y à H:i') }}</div>
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

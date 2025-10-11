@@ -1,0 +1,182 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Modifier {{ property.title }}{% endblock %}
+
+{% block body %}
+<div class="p-4">
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pb-2 mb-3 border-bottom">
+        <h1 class="h2"><i class="bi bi-pencil me-2"></i>Modifier {{ property.title }}</h1>
+        <div class="btn-toolbar mb-2 mb-md-0">
+            <div class="btn-group me-2">
+                <a href="{{ path('app_property_show', {id: property.id}) }}" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left me-1"></i>Retour
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0">Informations de la propriété</h5>
+        </div>
+        <div class="card-body">
+            <form method="POST">
+                <div class="row">
+                    <!-- Informations générales -->
+                    <div class="col-md-6">
+                        <h6 class="text-muted mb-3">Informations générales</h6>
+                        
+                        <div class="mb-3">
+                            <label for="title" class="form-label">Titre *</label>
+                            <input type="text" class="form-control" id="title" name="title" value="{{ property.title }}" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="description" class="form-label">Description</label>
+                            <textarea class="form-control" id="description" name="description" rows="3">{{ property.description }}</textarea>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="type" class="form-label">Type *</label>
+                            <select class="form-select" id="type" name="type" required>
+                                <option value="">Choisir un type</option>
+                                <option value="appartement" {{ property.type == 'appartement' ? 'selected' : '' }}>Appartement</option>
+                                <option value="maison" {{ property.type == 'maison' ? 'selected' : '' }}>Maison</option>
+                                <option value="studio" {{ property.type == 'studio' ? 'selected' : '' }}>Studio</option>
+                                <option value="bureau" {{ property.type == 'bureau' ? 'selected' : '' }}>Bureau</option>
+                                <option value="commerce" {{ property.type == 'commerce' ? 'selected' : '' }}>Commerce</option>
+                            </select>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="surface" class="form-label">Surface (m²) *</label>
+                                    <input type="number" class="form-control" id="surface" name="surface" value="{{ property.surface }}" required min="1">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="rooms" class="form-label">Nombre de pièces *</label>
+                                    <input type="number" class="form-control" id="rooms" name="rooms" value="{{ property.rooms }}" required min="1">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="bedrooms" class="form-label">Chambres *</label>
+                                    <input type="number" class="form-control" id="bedrooms" name="bedrooms" value="{{ property.bedrooms }}" required min="0">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="bathrooms" class="form-label">Salles de bain *</label>
+                                    <input type="number" class="form-control" id="bathrooms" name="bathrooms" value="{{ property.bathrooms }}" required min="1">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="furnished" name="furnished" value="1" {{ property.furnished ? 'checked' : '' }}>
+                                <label class="form-check-label" for="furnished">
+                                    Meublé
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="available" name="available" value="1" {{ property.available ? 'checked' : '' }}>
+                                <label class="form-check-label" for="available">
+                                    Disponible à la location
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Adresse et tarification -->
+                    <div class="col-md-6">
+                        <h6 class="text-muted mb-3">Adresse</h6>
+                        
+                        <div class="mb-3">
+                            <label for="address" class="form-label">Adresse *</label>
+                            <input type="text" class="form-control" id="address" name="address" value="{{ property.address }}" required>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-8">
+                                <div class="mb-3">
+                                    <label for="city" class="form-label">Ville *</label>
+                                    <input type="text" class="form-control" id="city" name="city" value="{{ property.city }}" required>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="postal_code" class="form-label">Code postal *</label>
+                                    <input type="text" class="form-control" id="postal_code" name="postal_code" value="{{ property.postalCode }}" required>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="country" class="form-label">Pays *</label>
+                            <input type="text" class="form-control" id="country" name="country" value="{{ property.country }}" required>
+                        </div>
+
+                        <h6 class="text-muted mb-3 mt-4">Tarification</h6>
+
+                        <div class="mb-3">
+                            <label for="monthly_rent" class="form-label">Loyer mensuel (€) *</label>
+                            <input type="number" class="form-control" id="monthly_rent" name="monthly_rent" value="{{ property.monthlyRent }}" step="0.01" required min="0">
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="charges" class="form-label">Charges (€) *</label>
+                            <input type="number" class="form-control" id="charges" name="charges" value="{{ property.charges }}" step="0.01" required min="0">
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="deposit" class="form-label">Dépôt de garantie (€) *</label>
+                            <input type="number" class="form-control" id="deposit" name="deposit" value="{{ property.deposit }}" step="0.01" required min="0">
+                        </div>
+
+                        <!-- Résumé du loyer total -->
+                        <div class="alert alert-info">
+                            <strong>Loyer total mensuel :</strong>
+                            <span id="total-rent">{{ property.totalRent|number_format(2, ',', ' ') }}€</span>
+                        </div>
+                    </div>
+                </div>
+
+                <hr>
+
+                <div class="d-flex justify-content-end gap-2">
+                    <a href="{{ path('app_property_show', {id: property.id}) }}" class="btn btn-secondary">Annuler</a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check-circle me-1"></i>Enregistrer les modifications
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+// Calcul automatique du loyer total
+function updateTotalRent() {
+    const rent = parseFloat(document.getElementById('monthly_rent').value) || 0;
+    const charges = parseFloat(document.getElementById('charges').value) || 0;
+    const total = rent + charges;
+    document.getElementById('total-rent').textContent = total.toLocaleString('fr-FR', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    }) + '€';
+}
+
+document.getElementById('monthly_rent').addEventListener('input', updateTotalRent);
+document.getElementById('charges').addEventListener('input', updateTotalRent);
+</script>
+{% endblock %}

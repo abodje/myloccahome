@@ -1,0 +1,292 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Modifier Demande #{{ maintenanceRequest.id }}{% endblock %}
+
+{% block body %}
+<div class="p-4">
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pb-2 mb-3 border-bottom">
+        <h1 class="h2">
+            <i class="bi bi-pencil me-2"></i>
+            Modifier Demande #{{ maintenanceRequest.id }}
+        </h1>
+        <div class="btn-toolbar mb-2 mb-md-0">
+            <div class="btn-group me-2">
+                <a href="{{ path('app_maintenance_request_show', {id: maintenanceRequest.id}) }}" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left me-1"></i>Retour
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0">Modification de la demande</h5>
+        </div>
+        <div class="card-body">
+            <form method="POST">
+                <div class="row">
+                    <!-- Informations générales -->
+                    <div class="col-md-6">
+                        <h6 class="text-muted mb-3">Informations générales</h6>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Propriété concernée <small>(non modifiable)</small></label>
+                            <div class="form-control-plaintext bg-light p-2 rounded">
+                                <strong>{{ maintenanceRequest.property.title }}</strong>
+                                <br>
+                                <small class="text-muted">{{ maintenanceRequest.property.fullAddress }}</small>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="title" class="form-label">Titre de la demande *</label>
+                            <input type="text" class="form-control" id="title" name="title" value="{{ maintenanceRequest.title }}" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="description" class="form-label">Description détaillée *</label>
+                            <textarea class="form-control" id="description" name="description" rows="4" required>{{ maintenanceRequest.description }}</textarea>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="category" class="form-label">Catégorie *</label>
+                                    <select class="form-select" id="category" name="category" required>
+                                        <option value="">Choisir une catégorie</option>
+                                        <option value="plumbing" {{ maintenanceRequest.category == 'plumbing' ? 'selected' : '' }}>Plomberie</option>
+                                        <option value="electrical" {{ maintenanceRequest.category == 'electrical' ? 'selected' : '' }}>Électricité</option>
+                                        <option value="heating" {{ maintenanceRequest.category == 'heating' ? 'selected' : '' }}>Chauffage</option>
+                                        <option value="painting" {{ maintenanceRequest.category == 'painting' ? 'selected' : '' }}>Peinture</option>
+                                        <option value="flooring" {{ maintenanceRequest.category == 'flooring' ? 'selected' : '' }}>Revêtement sol</option>
+                                        <option value="windows" {{ maintenanceRequest.category == 'windows' ? 'selected' : '' }}>Fenêtres/Volets</option>
+                                        <option value="doors" {{ maintenanceRequest.category == 'doors' ? 'selected' : '' }}>Portes/Serrures</option>
+                                        <option value="appliances" {{ maintenanceRequest.category == 'appliances' ? 'selected' : '' }}>Électroménager</option>
+                                        <option value="garden" {{ maintenanceRequest.category == 'garden' ? 'selected' : '' }}>Jardin/Extérieur</option>
+                                        <option value="other" {{ maintenanceRequest.category == 'other' ? 'selected' : '' }}>Autre</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="priority" class="form-label">Priorité *</label>
+                                    <select class="form-select" id="priority" name="priority" required>
+                                        <option value="low" {{ maintenanceRequest.priority == 'low' ? 'selected' : '' }}>Basse</option>
+                                        <option value="medium" {{ maintenanceRequest.priority == 'medium' ? 'selected' : '' }}>Moyenne</option>
+                                        <option value="high" {{ maintenanceRequest.priority == 'high' ? 'selected' : '' }}>Haute</option>
+                                        <option value="urgent" {{ maintenanceRequest.priority == 'urgent' ? 'selected' : '' }}>Urgente</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="status" class="form-label">Statut *</label>
+                            <select class="form-select" id="status" name="status" required>
+                                <option value="pending" {{ maintenanceRequest.status == 'pending' ? 'selected' : '' }}>En attente</option>
+                                <option value="in_progress" {{ maintenanceRequest.status == 'in_progress' ? 'selected' : '' }}>En cours</option>
+                                <option value="completed" {{ maintenanceRequest.status == 'completed' ? 'selected' : '' }}>Terminé</option>
+                                <option value="cancelled" {{ maintenanceRequest.status == 'cancelled' ? 'selected' : '' }}>Annulé</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Planification et coûts -->
+                    <div class="col-md-6">
+                        <h6 class="text-muted mb-3">Planification et coûts</h6>
+                        
+                        <div class="mb-3">
+                            <label for="assigned_to" class="form-label">Assigné à</label>
+                            <input type="text" class="form-control" id="assigned_to" name="assigned_to" value="{{ maintenanceRequest.assignedTo }}" placeholder="Nom de l'intervenant, société...">
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="scheduled_date" class="form-label">Date prévue d'intervention</label>
+                            <input type="datetime-local" class="form-control" id="scheduled_date" name="scheduled_date" value="{{ maintenanceRequest.scheduledDate ? maintenanceRequest.scheduledDate|date('Y-m-d\\TH:i') : '' }}">
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="estimated_cost" class="form-label">Coût estimé (€)</label>
+                                    <input type="number" class="form-control" id="estimated_cost" name="estimated_cost" value="{{ maintenanceRequest.estimatedCost }}" step="0.01" min="0">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="actual_cost" class="form-label">Coût réel (€)</label>
+                                    <input type="number" class="form-control" id="actual_cost" name="actual_cost" value="{{ maintenanceRequest.actualCost }}" step="0.01" min="0">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="completion-details" style="{{ maintenanceRequest.status == 'completed' ? 'display: block;' : 'display: none;' }}">
+                            <h6 class="text-muted mb-3">Détails de résolution</h6>
+                            
+                            <div class="mb-3">
+                                <label for="completed_date" class="form-label">Date de fin d'intervention</label>
+                                <input type="datetime-local" class="form-control" id="completed_date" name="completed_date" value="{{ maintenanceRequest.completedDate ? maintenanceRequest.completedDate|date('Y-m-d\\TH:i') : '' }}">
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="resolution" class="form-label">Solution apportée</label>
+                                <textarea class="form-control" id="resolution" name="resolution" rows="3" placeholder="Décrivez la solution apportée...">{{ maintenanceRequest.resolution }}</textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Notes -->
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <h6 class="text-muted mb-3">Notes</h6>
+                        
+                        <div class="mb-3">
+                            <label for="notes" class="form-label">Notes internes</label>
+                            <textarea class="form-control" id="notes" name="notes" rows="3" placeholder="Notes supplémentaires, informations importantes...">{{ maintenanceRequest.notes }}</textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <hr>
+
+                <!-- Informations de modification -->
+                {% if maintenanceRequest.status == 'completed' and maintenanceRequest.completedDate %}
+                <div class="alert alert-success">
+                    <i class="bi bi-check-circle me-2"></i>
+                    Cette demande a été marquée comme terminée le {{ maintenanceRequest.completedDate|date('d/m/Y à H:i') }}.
+                </div>
+                {% elseif maintenanceRequest.priority == 'urgent' %}
+                <div class="alert alert-warning">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    Cette demande est marquée comme <strong>urgente</strong>. Veillez à la traiter rapidement.
+                </div>
+                {% endif %}
+
+                <div class="d-flex justify-content-end gap-2">
+                    <a href="{{ path('app_maintenance_request_show', {id: maintenanceRequest.id}) }}" class="btn btn-secondary">Annuler</a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check-circle me-1"></i>Enregistrer les modifications
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Informations supplémentaires -->
+    <div class="card mt-4">
+        <div class="card-header">
+            <h6 class="mb-0">Informations</h6>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <small class="text-muted">
+                        <strong>Demande créée :</strong> {{ maintenanceRequest.createdAt|date('d/m/Y à H:i') }}
+                    </small>
+                </div>
+                <div class="col-md-6">
+                    <small class="text-muted">
+                        <strong>Dernière modification :</strong> {{ maintenanceRequest.updatedAt|date('d/m/Y à H:i') }}
+                    </small>
+                </div>
+            </div>
+            
+            {% if maintenanceRequest.isCompleted %}
+            <hr>
+            <div class="row">
+                <div class="col-md-6">
+                    <small class="text-muted">
+                        <strong>Durée de résolution :</strong> {{ maintenanceRequest.daysOpen }} jour(s)
+                    </small>
+                </div>
+                {% if maintenanceRequest.estimatedCost and maintenanceRequest.actualCost %}
+                <div class="col-md-6">
+                    {% set difference = maintenanceRequest.actualCost - maintenanceRequest.estimatedCost %}
+                    <small class="{{ difference > 0 ? 'text-danger' : 'text-success' }}">
+                        <strong>Écart budgétaire :</strong> 
+                        {{ difference > 0 ? '+' : '' }}{{ difference|number_format(2, ',', ' ') }}€
+                    </small>
+                </div>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+// Afficher/masquer les détails de résolution selon le statut
+document.getElementById('status').addEventListener('change', function() {
+    const completionDetails = document.getElementById('completion-details');
+    const completedDateInput = document.getElementById('completed_date');
+    const resolutionInput = document.getElementById('resolution');
+    
+    if (this.value === 'completed') {
+        completionDetails.style.display = 'block';
+        // Auto-remplir la date de fin si vide
+        if (!completedDateInput.value) {
+            const now = new Date();
+            const formatted = now.getFullYear() + '-' + 
+                            String(now.getMonth() + 1).padStart(2, '0') + '-' + 
+                            String(now.getDate()).padStart(2, '0') + 'T' + 
+                            String(now.getHours()).padStart(2, '0') + ':' + 
+                            String(now.getMinutes()).padStart(2, '0');
+            completedDateInput.value = formatted;
+        }
+    } else {
+        completionDetails.style.display = 'none';
+        // Optionnel : vider les champs si on repasse en non-terminé
+        if (this.value !== 'completed') {
+            completedDateInput.value = '';
+            resolutionInput.value = '';
+        }
+    }
+});
+
+// Validation des dates
+document.getElementById('scheduled_date').addEventListener('change', function() {
+    const createdDate = new Date('{{ maintenanceRequest.createdAt|date('Y-m-d\\TH:i') }}');
+    const scheduledDate = new Date(this.value);
+    
+    if (this.value && scheduledDate < createdDate) {
+        alert('La date d\'intervention ne peut pas être antérieure à la date de création de la demande.');
+        this.value = '';
+    }
+});
+
+document.getElementById('completed_date').addEventListener('change', function() {
+    const createdDate = new Date('{{ maintenanceRequest.createdAt|date('Y-m-d\\TH:i') }}');
+    const completedDate = new Date(this.value);
+    
+    if (this.value && completedDate < createdDate) {
+        alert('La date de fin d\'intervention ne peut pas être antérieure à la date de création de la demande.');
+        this.value = '';
+    }
+});
+
+// Calcul automatique de l'écart budgétaire
+function updateBudgetDifference() {
+    const estimated = parseFloat(document.getElementById('estimated_cost').value) || 0;
+    const actual = parseFloat(document.getElementById('actual_cost').value) || 0;
+    
+    if (estimated > 0 && actual > 0) {
+        const difference = actual - estimated;
+        const percentDiff = ((difference / estimated) * 100).toFixed(1);
+        
+        // Vous pourriez afficher cette information quelque part
+        console.log(`Écart: ${difference}€ (${percentDiff}%)`);
+    }
+}
+
+document.getElementById('estimated_cost').addEventListener('input', updateBudgetDifference);
+document.getElementById('actual_cost').addEventListener('input', updateBudgetDifference);
+
+// Alerte pour priorité urgente
+document.getElementById('priority').addEventListener('change', function() {
+    if (this.value === 'urgent') {
+        alert('⚠️ Attention : Cette demande est maintenant marquée comme URGENTE. Assurez-vous qu\'elle sera traitée rapidement.');
+    }
+});
+</script>
+{% endblock %}
