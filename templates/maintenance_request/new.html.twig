@@ -1,0 +1,101 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Nouvelle demande - MYLOCCA{% endblock %}
+
+{% block page_title %}
+    <h5 class="mb-0">
+        <i class="bi bi-plus-circle me-2"></i>
+        Nouvelle demande de maintenance
+    </h5>
+{% endblock %}
+
+{% block page_actions %}
+    <a href="{{ path('app_maintenance_request_index') }}" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-arrow-left"></i> Retour
+    </a>
+{% endblock %}
+
+{% block body %}
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="bi bi-tools me-2"></i>
+                        Informations de la demande
+                    </h6>
+                </div>
+                <div class="card-body">
+                    {{ form_start(form) }}
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    {{ form_label(form.property) }}
+                                    {{ form_widget(form.property) }}
+                                    {{ form_errors(form.property) }}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    {{ form_label(form.tenant) }}
+                                    {{ form_widget(form.tenant) }}
+                                    {{ form_errors(form.tenant) }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            {{ form_label(form.title) }}
+                            {{ form_widget(form.title) }}
+                            {{ form_errors(form.title) }}
+                        </div>
+
+                        <div class="mb-3">
+                            {{ form_label(form.description) }}
+                            {{ form_widget(form.description) }}
+                            {{ form_errors(form.description) }}
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    {{ form_label(form.category) }}
+                                    {{ form_widget(form.category) }}
+                                    {{ form_errors(form.category) }}
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    {{ form_label(form.priority) }}
+                                    {{ form_widget(form.priority) }}
+                                    {{ form_errors(form.priority) }}
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    {{ form_label(form.requestedDate) }}
+                                    {{ form_widget(form.requestedDate) }}
+                                    {{ form_errors(form.requestedDate) }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            {{ form_label(form.notes) }}
+                            {{ form_widget(form.notes) }}
+                            {{ form_errors(form.notes) }}
+                        </div>
+
+                        <div class="d-flex justify-content-end gap-2">
+                            <a href="{{ path('app_maintenance_request_index') }}" class="btn btn-secondary">Annuler</a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-check-circle me-2"></i>
+                                Créer la demande
+                            </button>
+                        </div>
+                    {{ form_end(form) }}
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

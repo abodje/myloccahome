@@ -1,0 +1,250 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Gestion des contrats - MYLOCCA{% endblock %}
+
+{% block page_title %}
+    <h5 class="mb-0">
+        <i class="bi bi-file-text me-2"></i>
+        Gestion des contrats
+    </h5>
+{% endblock %}
+
+{% block page_actions %}
+    <div class="d-flex gap-2">
+        <a href="{{ path('app_lease_expiring') }}" class="btn btn-outline-warning btn-sm">
+            <i class="bi bi-clock"></i> Expirent bientôt
+        </a>
+        <a href="{{ path('app_lease_new') }}" class="btn btn-primary btn-sm">
+            <i class="bi bi-plus-circle me-2"></i>
+            Nouveau contrat
+        </a>
+    </div>
+{% endblock %}
+
+{% block body %}
+    <!-- Statistiques -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h4 class="text-primary">{{ stats.total }}</h4>
+                    <small class="text-muted">Total contrats</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h4 class="text-success">{{ stats.active }}</h4>
+                    <small class="text-muted">Actifs</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h4 class="text-secondary">{{ stats.terminated }}</h4>
+                    <small class="text-muted">Terminés</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h4 class="text-warning">{{ stats.expiring_soon }}</h4>
+                    <small class="text-muted">Expirent bientôt</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtres -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-body">
+                    <form method="GET" class="row g-3">
+                        <div class="col-md-3">
+                            <label class="form-label">Statut</label>
+                            <select name="status" class="form-select form-select-sm">
+                                <option value="">Tous</option>
+                                <option value="Actif" {{ current_status == 'Actif' ? 'selected' : '' }}>Actifs</option>
+                                <option value="Terminé" {{ current_status == 'Terminé' ? 'selected' : '' }}>Terminés</option>
+                                <option value="Résilié" {{ current_status == 'Résilié' ? 'selected' : '' }}>Résiliés</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Recherche</label>
+                            <input type="text" name="search" class="form-control form-control-sm"
+                                   placeholder="Locataire, propriété..." value="{{ search }}">
+                        </div>
+                        <div class="col-md-5 d-flex align-items-end">
+                            <button type="submit" class="btn btn-outline-primary btn-sm me-2">
+                                <i class="bi bi-funnel"></i> Filtrer
+                            </button>
+                            <a href="{{ path('app_lease_index') }}" class="btn btn-outline-secondary btn-sm">
+                                <i class="bi bi-x-circle"></i> Reset
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Liste des contrats -->
+    <div class="card">
+        <div class="card-header" style="background-color: var(--primary-color); color: white;">
+            <div class="row">
+                <div class="col-2"><strong>Contrat</strong></div>
+                <div class="col-3"><strong>Locataire</strong></div>
+                <div class="col-3"><strong>Propriété</strong></div>
+                <div class="col-2"><strong>Période</strong></div>
+                <div class="col-1"><strong>Statut</strong></div>
+                <div class="col-1"><strong>Actions</strong></div>
+            </div>
+        </div>
+        <div class="card-body p-0">
+            {% if leases|length > 0 %}
+                {% for lease in leases %}
+                    <div class="row align-items-center p-3 border-bottom lease-row" data-lease-id="{{ lease.id }}">
+                        <div class="col-2">
+                            <strong>#{{ ('0000' ~ lease.id)|slice(-4) }}</strong>
+                            <br><small class="text-muted">{{ lease.monthlyRent|currency }}/mois</small>
+                        </div>
+                        <div class="col-3">
+                            <div class="d-flex align-items-center">
+                                <div class="avatar-circle me-2">
+                                    <i class="bi bi-person"></i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-1">{{ lease.tenant.fullName }}</h6>
+                                    <small class="text-muted">{{ lease.tenant.email }}</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-3">
+                            <strong>{{ lease.property.address }}</strong>
+                            <br><small class="text-muted">{{ lease.property.city }} - {{ lease.property.propertyType }}</small>
+                        </div>
+                        <div class="col-2">
+                            <small>{{ lease.startDate|date('d/m/Y') }}</small>
+                            <br><small class="text-muted">
+                                {% if lease.endDate %}
+                                    au {{ lease.endDate|date('d/m/Y') }}
+                                {% else %}
+                                    Indéterminée
+                                {% endif %}
+                            </small>
+                        </div>
+                        <div class="col-1">
+                            <span class="badge bg-{{ lease.status == 'Actif' ? 'success' : (lease.status == 'Terminé' ? 'secondary' : 'warning') }}">
+                                {{ lease.status }}
+                            </span>
+                        </div>
+                        <div class="col-1">
+                            <div class="dropdown">
+                                <button class="btn btn-sm btn-outline-primary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                    <i class="bi bi-three-dots"></i>
+                                </button>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" href="{{ path('app_lease_show', {id: lease.id}) }}">
+                                        <i class="bi bi-eye me-2"></i>Voir
+                                    </a></li>
+                                    <li><a class="dropdown-item" href="{{ path('app_lease_edit', {id: lease.id}) }}">
+                                        <i class="bi bi-pencil me-2"></i>Modifier
+                                    </a></li>
+                                    {% if lease.status == 'Actif' %}
+                                        <li><a class="dropdown-item" href="{{ path('app_lease_renew', {id: lease.id}) }}">
+                                            <i class="bi bi-arrow-repeat me-2"></i>Renouveler
+                                        </a></li>
+                                        <li><hr class="dropdown-divider"></li>
+                                        <li><a class="dropdown-item text-warning" href="#" onclick="terminateLease({{ lease.id }})">
+                                            <i class="bi bi-x-circle me-2"></i>Résilier
+                                        </a></li>
+                                    {% endif %}
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="text-center p-5">
+                    <i class="bi bi-file-text display-1 text-muted"></i>
+                    <h5 class="mt-3 text-muted">Aucun contrat trouvé</h5>
+                    <p class="text-muted">Commencez par créer votre premier contrat de location.</p>
+                    <a href="{{ path('app_lease_new') }}" class="btn btn-primary">
+                        <i class="bi bi-plus-circle me-2"></i>
+                        Créer un contrat
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        .lease-row {
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+
+        .lease-row:hover {
+            background-color: #f8f9fa;
+        }
+
+        .avatar-circle {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background-color: var(--primary-color);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+        }
+    </style>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+
+    <script>
+        function terminateLease(leaseId) {
+            const endDate = prompt('Date de fin du contrat (YYYY-MM-DD):');
+            if (endDate) {
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = `/contrats/${leaseId}/resilier`;
+
+                const tokenInput = document.createElement('input');
+                tokenInput.type = 'hidden';
+                tokenInput.name = '_token';
+                tokenInput.value = 'csrf-token-here'; // À remplacer par le vrai token
+
+                const dateInput = document.createElement('input');
+                dateInput.type = 'hidden';
+                dateInput.name = 'end_date';
+                dateInput.value = endDate;
+
+                form.appendChild(tokenInput);
+                form.appendChild(dateInput);
+                document.body.appendChild(form);
+                form.submit();
+            }
+        }
+
+        // Clic sur une ligne pour voir les détails
+        document.querySelectorAll('.lease-row').forEach(row => {
+            row.addEventListener('click', function(e) {
+                if (!e.target.closest('.dropdown')) {
+                    const leaseId = this.dataset.leaseId;
+                    window.location.href = `/contrats/${leaseId}`;
+                }
+            });
+        });
+    </script>
+{% endblock %}

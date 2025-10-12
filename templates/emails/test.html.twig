@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test de configuration email</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background: linear-gradient(135deg, #0dcaf0, #0aa2c0);
+            color: white;
+            padding: 30px;
+            text-align: center;
+            border-radius: 8px 8px 0 0;
+        }
+        .content {
+            background: white;
+            padding: 30px;
+            border: 1px solid #ddd;
+            border-top: none;
+            border-radius: 0 0 8px 8px;
+        }
+        .success-badge {
+            background-color: #198754;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            display: inline-block;
+            margin: 20px 0;
+        }
+        .info-box {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-left: 4px solid #0dcaf0;
+            margin: 20px 0;
+        }
+        .footer {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #ddd;
+            font-size: 12px;
+            color: #666;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>✅ {{ company.app_name ?? 'MYLOCCA' }}</h1>
+        <p>Test de configuration email</p>
+    </div>
+
+    <div class="content">
+        <div class="success-badge">
+            ✓ Configuration réussie !
+        </div>
+
+        <h2>Félicitations !</h2>
+
+        <p>
+            Votre configuration email fonctionne correctement. Ce message de test confirme que
+            le système d'envoi d'emails de <strong>{{ company.app_name ?? 'MYLOCCA' }}</strong>
+            est opérationnel.
+        </p>
+
+        <div class="info-box">
+            <h4>Informations du test</h4>
+            <ul>
+                <li><strong>Date:</strong> {{ test_date|date('d/m/Y à H:i:s') }}</li>
+                <li><strong>Application:</strong> {{ company.app_name ?? 'MYLOCCA' }}</li>
+                <li><strong>Entreprise:</strong> {{ company.company_name ?? 'MYLOCCA Gestion' }}</li>
+            </ul>
+        </div>
+
+        <h3>Fonctionnalités d'emails disponibles :</h3>
+        <ul>
+            <li>📧 Quittances de loyer automatiques</li>
+            <li>⏰ Rappels de paiement</li>
+            <li>📅 Alertes d'expiration de contrats</li>
+            <li>🔔 Notifications diverses</li>
+        </ul>
+
+        <p>
+            Vous pouvez maintenant utiliser toutes les fonctionnalités d'envoi d'emails
+            de l'application en toute confiance.
+        </p>
+
+        <div class="footer">
+            <p>
+                Email de test envoyé automatiquement le {{ test_date|date('d/m/Y à H:i') }}<br>
+                {{ company.company_name ?? 'MYLOCCA Gestion' }}<br>
+                {{ company.company_address ?? '123 Avenue de la République, 69000 Lyon' }}
+            </p>
+        </div>
+    </div>
+</body>
+</html>

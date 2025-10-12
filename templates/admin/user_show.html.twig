@@ -1,0 +1,185 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ user.fullName }} - Utilisateurs{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>👤 {{ user.fullName }}</h2>
+                <div class="d-flex gap-2">
+                    <a href="{{ path('app_admin_user_edit', {id: user.id}) }}" class="btn btn-warning">
+                        <i class="bi bi-pencil"></i> Modifier
+                    </a>
+                    <a href="{{ path('app_admin_users') }}" class="btn btn-secondary">
+                        <i class="bi bi-arrow-left"></i> Retour
+                    </a>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-8">
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">Informations personnelles</h5>
+                        </div>
+                        <div class="card-body">
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td class="text-muted" width="200">Email :</td>
+                                    <td><strong>{{ user.email }}</strong></td>
+                                </tr>
+                                <tr>
+                                    <td class="text-muted">Nom complet :</td>
+                                    <td>{{ user.fullName }}</td>
+                                </tr>
+                                <tr>
+                                    <td class="text-muted">Téléphone :</td>
+                                    <td>{{ user.phone ?? '-' }}</td>
+                                </tr>
+                                {% if user.address %}
+                                <tr>
+                                    <td class="text-muted">Adresse :</td>
+                                    <td>{{ user.fullAddress }}</td>
+                                </tr>
+                                {% endif %}
+                                {% if user.birthDate %}
+                                <tr>
+                                    <td class="text-muted">Date de naissance :</td>
+                                    <td>{{ user.birthDate|date('d/m/Y') }}</td>
+                                </tr>
+                                {% endif %}
+                                <tr>
+                                    <td class="text-muted">Compte créé le :</td>
+                                    <td>{{ user.createdAt|date('d/m/Y H:i') }}</td>
+                                </tr>
+                                <tr>
+                                    <td class="text-muted">Dernière connexion :</td>
+                                    <td>
+                                        {% if user.lastLoginAt %}
+                                            {{ user.lastLoginAt|date('d/m/Y H:i') }}
+                                        {% else %}
+                                            <span class="text-muted">Jamais connecté</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Liens avec entités -->
+                    {% if user.tenant or user.owner %}
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">Entités liées</h5>
+                        </div>
+                        <div class="card-body">
+                            {% if user.tenant %}
+                            <div class="mb-3">
+                                <h6><i class="bi bi-person"></i> Locataire</h6>
+                                <p>
+                                    <a href="{{ path('app_tenant_show', {id: user.tenant.id}) }}">
+                                        {{ user.tenant.fullName }}
+                                    </a>
+                                </p>
+                            </div>
+                            {% endif %}
+
+                            {% if user.owner %}
+                            <div>
+                                <h6><i class="bi bi-building"></i> Propriétaire/Gestionnaire</h6>
+                                <p>
+                                    {{ user.owner.fullName }}
+                                    <br><small class="text-muted">
+                                        {{ user.owner.properties|length }} bien(s)
+                                    </small>
+                                </p>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <div class="col-md-4">
+                    <div class="card mb-3">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">Rôles et permissions</h5>
+                        </div>
+                        <div class="card-body">
+                            {% for role in user.roles %}
+                                {% if role == 'ROLE_ADMIN' %}
+                                    <div class="mb-2">
+                                        <span class="badge bg-danger w-100 p-2">
+                                            <i class="bi bi-shield-check"></i> Administrateur
+                                        </span>
+                                    </div>
+                                {% elseif role == 'ROLE_MANAGER' %}
+                                    <div class="mb-2">
+                                        <span class="badge bg-warning w-100 p-2">
+                                            <i class="bi bi-briefcase"></i> Gestionnaire
+                                        </span>
+                                    </div>
+                                {% elseif role == 'ROLE_TENANT' %}
+                                    <div class="mb-2">
+                                        <span class="badge bg-info w-100 p-2">
+                                            <i class="bi bi-house"></i> Locataire
+                                        </span>
+                                    </div>
+                                {% elseif role != 'ROLE_USER' %}
+                                    <div class="mb-2">
+                                        <span class="badge bg-secondary w-100 p-2">{{ role }}</span>
+                                    </div>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <div class="card mb-3">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">Statut</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="text-center">
+                                <span class="badge bg-{{ user.isActive ? 'success' : 'secondary' }} p-3 w-100">
+                                    <i class="bi bi-{{ user.isActive ? 'check' : 'x' }}-circle"></i>
+                                    {{ user.isActive ? 'Compte actif' : 'Compte inactif' }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">Actions</h5>
+                        </div>
+                        <div class="card-body">
+                            <a href="{{ path('app_admin_user_edit', {id: user.id}) }}"
+                               class="btn btn-warning w-100 mb-2">
+                                <i class="bi bi-pencil"></i> Modifier
+                            </a>
+
+                            <form method="POST" action="{{ path('app_admin_user_toggle', {id: user.id}) }}">
+                                <button type="submit" class="btn btn-{{ user.isActive ? 'secondary' : 'success' }} w-100 mb-2">
+                                    <i class="bi bi-{{ user.isActive ? 'pause' : 'play' }}-circle"></i>
+                                    {{ user.isActive ? 'Désactiver' : 'Activer' }}
+                                </button>
+                            </form>
+
+                            {% if user != app.user %}
+                            <form method="POST" action="{{ path('app_admin_user_delete', {id: user.id}) }}"
+                                  onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cet utilisateur ?')">
+                                <button type="submit" class="btn btn-danger w-100">
+                                    <i class="bi bi-trash"></i> Supprimer
+                                </button>
+                            </form>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

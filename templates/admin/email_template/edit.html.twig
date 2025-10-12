@@ -1,0 +1,202 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Modifier le template - {{ template.name }}{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>✏️ Modifier le template : {{ template.name }}</h2>
+                <a href="{{ path('app_admin_email_template_index') }}" class="btn btn-secondary">
+                    <i class="bi bi-arrow-left"></i> Retour
+                </a>
+            </div>
+
+            <div class="row">
+                <div class="col-md-8">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">Contenu du template</h5>
+                        </div>
+                        <div class="card-body">
+                            <form method="POST" id="templateForm">
+                                <div class="mb-3">
+                                    <label for="name" class="form-label">Nom du template</label>
+                                    <input type="text" name="name" id="name" class="form-control"
+                                           value="{{ template.name }}" required>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="subject" class="form-label">Sujet de l'email</label>
+                                    <input type="text" name="subject" id="subject" class="form-control"
+                                           value="{{ template.subject }}" required
+                                           placeholder="Ex: Quittance de loyer - {{month}}">
+                                    <div class="form-text">
+                                        Utilisez les variables disponibles (ex: {{tenant_first_name}})
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="html_content" class="form-label">Contenu HTML</label>
+                                    <textarea name="html_content" id="html_content" class="form-control font-monospace"
+                                              rows="20" required>{{ template.htmlContent }}</textarea>
+                                    <div class="form-text">
+                                        Utilisez HTML et les variables disponibles
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="text_content" class="form-label">Version texte (optionnel)</label>
+                                    <textarea name="text_content" id="text_content" class="form-control"
+                                              rows="8">{{ template.textContent }}</textarea>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="description" class="form-label">Description</label>
+                                    <textarea name="description" id="description" class="form-control"
+                                              rows="2">{{ template.description }}</textarea>
+                                </div>
+
+                                <div class="mb-3 form-check">
+                                    <input type="checkbox" name="is_active" id="is_active"
+                                           class="form-check-input" {{ template.isActive ? 'checked' : '' }}>
+                                    <label for="is_active" class="form-check-label">
+                                        Template actif
+                                    </label>
+                                </div>
+
+                                <div class="d-flex gap-2">
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="bi bi-check-circle"></i> Enregistrer
+                                    </button>
+                                    <button type="button" class="btn btn-info" id="previewBtn">
+                                        <i class="bi bi-eye"></i> Prévisualiser
+                                    </button>
+                                    <a href="{{ path('app_admin_email_template_index') }}" class="btn btn-secondary">
+                                        <i class="bi bi-x-circle"></i> Annuler
+                                    </a>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <!-- Variables disponibles -->
+                    <div class="card mb-3">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">💡 Variables disponibles</h5>
+                        </div>
+                        <div class="card-body">
+                            <p class="small text-muted">Cliquez sur une variable pour la copier</p>
+
+                            {% for category, vars in variables %}
+                            <h6 class="border-bottom pb-2 mt-3">{{ category }}</h6>
+                            <div class="list-group list-group-flush">
+                                {% for var, description in vars %}
+                                <a href="#" class="list-group-item list-group-item-action p-2 variable-item"
+                                   data-variable="{{ var }}" title="{{ description }}">
+                                    <code class="small">{{ var }}</code>
+                                    <br><small class="text-muted">{{ description }}</small>
+                                </a>
+                                {% endfor %}
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <!-- Exemples -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">📝 Exemples</h5>
+                        </div>
+                        <div class="card-body">
+                            <h6>Salutation personnalisée :</h6>
+                            <code class="small d-block mb-3">
+                                Bonjour {{tenant_first_name}},
+                            </code>
+
+                            <h6>Montant formaté :</h6>
+                            <code class="small d-block mb-3">
+                                Montant : {{payment_amount}}
+                            </code>
+
+                            <h6>Informations entreprise :</h6>
+                            <code class="small d-block">
+                                {{company_name}}<br>
+                                {{company_address}}<br>
+                                Tél: {{company_phone}}
+                            </code>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de prévisualisation -->
+<div class="modal fade" id="previewModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Prévisualisation du template</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <iframe id="previewFrame" style="width: 100%; height: 500px; border: 1px solid #ddd;"></iframe>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Copier les variables au clic
+    document.querySelectorAll('.variable-item').forEach(item => {
+        item.addEventListener('click', function(e) {
+            e.preventDefault();
+            const variable = this.dataset.variable;
+            const textarea = document.getElementById('html_content');
+
+            // Insérer la variable à la position du curseur
+            const start = textarea.selectionStart;
+            const end = textarea.selectionEnd;
+            const text = textarea.value;
+            textarea.value = text.substring(0, start) + variable + text.substring(end);
+            textarea.focus();
+            textarea.setSelectionRange(start + variable.length, start + variable.length);
+
+            // Feedback visuel
+            this.classList.add('active');
+            setTimeout(() => this.classList.remove('active'), 200);
+        });
+    });
+
+    // Prévisualisation
+    document.getElementById('previewBtn').addEventListener('click', function(e) {
+        e.preventDefault();
+        const htmlContent = document.getElementById('html_content').value;
+
+        // Envoyer le contenu pour prévisualisation
+        fetch('{{ path('app_admin_email_template_preview', {id: template.id}) }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: 'html_content=' + encodeURIComponent(htmlContent)
+        })
+        .then(response => response.text())
+        .then(html => {
+            const frame = document.getElementById('previewFrame');
+            frame.srcdoc = html;
+            new bootstrap.Modal(document.getElementById('previewModal')).show();
+        });
+    });
+});
+</script>
+{% endblock %}

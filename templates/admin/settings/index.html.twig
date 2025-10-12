@@ -1,0 +1,192 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Paramètres système - Administration - MYLOCCA{% endblock %}
+
+{% block page_title %}
+    <h5 class="mb-0">
+        <i class="bi bi-gear me-2"></i>
+        Paramètres système
+    </h5>
+{% endblock %}
+
+{% block page_actions %}
+    <div class="d-flex gap-2">
+        <a href="{{ path('app_admin_dashboard') }}" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-arrow-left"></i> Retour
+        </a>
+        <form method="POST" action="{{ path('app_admin_initialize_settings') }}" class="d-inline">
+            <button type="submit" class="btn btn-outline-warning btn-sm" 
+                    onclick="return confirm('Restaurer tous les paramètres par défaut ?')">
+                <i class="bi bi-arrow-clockwise"></i> Réinitialiser
+            </button>
+        </form>
+    </div>
+{% endblock %}
+
+{% block body %}
+    <!-- Navigation par catégories -->
+    <div class="row g-4">
+        <!-- Application -->
+        <div class="col-lg-6 col-xl-4">
+            <div class="card settings-category-card h-100">
+                <div class="card-body text-center p-4">
+                    <div class="settings-icon mb-3">
+                        <i class="bi bi-app display-3 text-primary"></i>
+                    </div>
+                    <h5 class="card-title">Application</h5>
+                    <p class="card-text text-muted">Nom, logo, description, mode maintenance</p>
+                    <a href="{{ path('app_admin_app_settings') }}" class="btn btn-outline-primary">
+                        Configurer
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Devises -->
+        <div class="col-lg-6 col-xl-4">
+            <div class="card settings-category-card h-100">
+                <div class="card-body text-center p-4">
+                    <div class="settings-icon mb-3">
+                        <i class="bi bi-currency-exchange display-3 text-success"></i>
+                    </div>
+                    <h5 class="card-title">Devises</h5>
+                    <p class="card-text text-muted">Gestion des devises et taux de change</p>
+                    <a href="{{ path('app_admin_currencies') }}" class="btn btn-outline-success">
+                        Gérer
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Localisation -->
+        <div class="col-lg-6 col-xl-4">
+            <div class="card settings-category-card h-100">
+                <div class="card-body text-center p-4">
+                    <div class="settings-icon mb-3">
+                        <i class="bi bi-globe display-3 text-info"></i>
+                    </div>
+                    <h5 class="card-title">Localisation</h5>
+                    <p class="card-text text-muted">Formats de date, heure, langue, fuseau horaire</p>
+                    <a href="{{ path('app_admin_localization') }}" class="btn btn-outline-info">
+                        Configurer
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Email -->
+        <div class="col-lg-6 col-xl-4">
+            <div class="card settings-category-card h-100">
+                <div class="card-body text-center p-4">
+                    <div class="settings-icon mb-3">
+                        <i class="bi bi-envelope display-3 text-warning"></i>
+                    </div>
+                    <h5 class="card-title">Configuration email</h5>
+                    <p class="card-text text-muted">SMTP, notifications, templates d'email</p>
+                    <a href="{{ path('app_admin_email_settings') }}" class="btn btn-outline-warning">
+                        Configurer
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Paiements -->
+        <div class="col-lg-6 col-xl-4">
+            <div class="card settings-category-card h-100">
+                <div class="card-body text-center p-4">
+                    <div class="settings-icon mb-3">
+                        <i class="bi bi-credit-card display-3 text-danger"></i>
+                    </div>
+                    <h5 class="card-title">Paiements</h5>
+                    <p class="card-text text-muted">Échéances, pénalités, génération automatique</p>
+                    <a href="{{ path('app_admin_payment_settings') }}" class="btn btn-outline-danger">
+                        Configurer
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Maintenance -->
+        <div class="col-lg-6 col-xl-4">
+            <div class="card settings-category-card h-100">
+                <div class="card-body text-center p-4">
+                    <div class="settings-icon mb-3">
+                        <i class="bi bi-tools display-3 text-secondary"></i>
+                    </div>
+                    <h5 class="card-title">Maintenance</h5>
+                    <p class="card-text text-muted">Attribution automatique, notifications urgentes</p>
+                    <a href="{{ path('app_admin_settings') }}" class="btn btn-outline-secondary">
+                        Configurer
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Informations système -->
+    <div class="card mt-5">
+        <div class="card-header">
+            <h6 class="mb-0">
+                <i class="bi bi-info-circle me-2"></i>
+                Informations système
+            </h6>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-3">
+                    <div class="text-center">
+                        <i class="bi bi-server fs-1 text-primary mb-2"></i>
+                        <h6>Serveur</h6>
+                        <p class="text-muted small">PHP {{ constant('PHP_VERSION') }}</p>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="text-center">
+                        <i class="bi bi-database fs-1 text-success mb-2"></i>
+                        <h6>Base de données</h6>
+                        <p class="text-muted small">MySQL 8.0</p>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="text-center">
+                        <i class="bi bi-shield-check fs-1 text-info mb-2"></i>
+                        <h6>Framework</h6>
+                        <p class="text-muted small">Symfony {{ constant('Symfony\\Component\\HttpKernel\\Kernel::VERSION') }}</p>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="text-center">
+                        <i class="bi bi-speedometer2 fs-1 text-warning mb-2"></i>
+                        <h6>Performance</h6>
+                        <p class="text-muted small">{{ app.environment|upper }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        .settings-category-card {
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+        
+        .settings-category-card:hover {
+            border-color: var(--bs-primary);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        
+        .settings-icon {
+            opacity: 0.8;
+        }
+        
+        .settings-category-card:hover .settings-icon {
+            opacity: 1;
+        }
+    </style>
+{% endblock %}

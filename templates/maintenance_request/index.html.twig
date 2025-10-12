@@ -1,0 +1,278 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Mes demandes - MYLOCCA{% endblock %}
+
+{% block page_title %}
+    <h5 class="mb-0">
+        <i class="bi bi-tools me-2"></i>
+        Mes demandes
+    </h5>
+{% endblock %}
+
+{% block page_actions %}
+    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#newRequestModal">
+        <i class="bi bi-plus-circle me-2"></i>
+        Faire une demande
+    </button>
+{% endblock %}
+
+{% block body %}
+    <!-- Filtres -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-body">
+                    <form method="GET" class="row g-3">
+                        <div class="col-md-3">
+                            <label class="form-label">Statut</label>
+                            <select name="status" class="form-select">
+                                <option value="">Tous</option>
+                                <option value="Nouvelle" {{ current_status == 'Nouvelle' ? 'selected' : '' }}>Nouvelles</option>
+                                <option value="En cours" {{ current_status == 'En cours' ? 'selected' : '' }}>En cours</option>
+                                <option value="Terminée" {{ current_status == 'Terminée' ? 'selected' : '' }}>Terminées</option>
+                                <option value="Annulée" {{ current_status == 'Annulée' ? 'selected' : '' }}>Annulées</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Priorité</label>
+                            <select name="priority" class="form-select">
+                                <option value="">Toutes</option>
+                                <option value="Urgente" {{ current_priority == 'Urgente' ? 'selected' : '' }}>Urgente</option>
+                                <option value="Haute" {{ current_priority == 'Haute' ? 'selected' : '' }}>Haute</option>
+                                <option value="Normale" {{ current_priority == 'Normale' ? 'selected' : '' }}>Normale</option>
+                                <option value="Basse" {{ current_priority == 'Basse' ? 'selected' : '' }}>Basse</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Catégorie</label>
+                            <select name="category" class="form-select">
+                                <option value="">Toutes</option>
+                                <option value="Plomberie" {{ current_category == 'Plomberie' ? 'selected' : '' }}>Plomberie</option>
+                                <option value="Électricité" {{ current_category == 'Électricité' ? 'selected' : '' }}>Électricité</option>
+                                <option value="Chauffage" {{ current_category == 'Chauffage' ? 'selected' : '' }}>Chauffage</option>
+                                <option value="Autre" {{ current_category == 'Autre' ? 'selected' : '' }}>Autre</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3 d-flex align-items-end">
+                            <button type="submit" class="btn btn-outline-primary me-2">
+                                <i class="bi bi-funnel"></i> Filtrer
+                            </button>
+                            <a href="{{ path('app_maintenance_request_index') }}" class="btn btn-outline-secondary">
+                                <i class="bi bi-x-circle"></i> Reset
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistiques -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h4 class="text-primary">{{ stats.nouvelles }}</h4>
+                    <small class="text-muted">Nouvelles</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h4 class="text-warning">{{ stats.en_cours }}</h4>
+                    <small class="text-muted">En cours</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h4 class="text-success">{{ stats.terminees }}</h4>
+                    <small class="text-muted">Terminées</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h4 class="text-danger">{{ stats.urgentes }}</h4>
+                    <small class="text-muted">Urgentes</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Liste des demandes -->
+    <div class="card">
+        <div class="card-header">
+            <div class="row">
+                <div class="col-2"><strong>Date</strong></div>
+                <div class="col-4"><strong>Objet</strong></div>
+                <div class="col-2"><strong>Référence</strong></div>
+                <div class="col-2"><strong>Statut</strong></div>
+                <div class="col-2"><strong>Actions</strong></div>
+            </div>
+        </div>
+        <div class="card-body p-0">
+            {% if maintenance_requests|length > 0 %}
+                {% for request in maintenance_requests %}
+                    <div class="row align-items-center p-3 border-bottom">
+                        <div class="col-2">
+                            <small class="text-muted">{{ request.createdAt|date('d/m/Y') }}</small>
+                        </div>
+                        <div class="col-4">
+                            <h6 class="mb-1">{{ request.title }}</h6>
+                            <small class="text-muted">{{ request.category }}</small>
+                            {% if request.property %}
+                                <br><small class="text-muted">{{ request.property.fullAddress }}</small>
+                            {% endif %}
+                        </div>
+                        <div class="col-2">
+                            <code>{{ ('00000000' ~ request.id)|slice(-8) }}</code>
+                        </div>
+                        <div class="col-2">
+                            <span class="badge bg-{{ request.statusColor }}">
+                                {{ request.status }}
+                            </span>
+                            {% if request.priority == 'Urgente' %}
+                                <br><span class="badge bg-danger mt-1">
+                                    <i class="bi bi-exclamation-triangle"></i> Urgent
+                                </span>
+                            {% endif %}
+                        </div>
+                        <div class="col-2">
+                            <a href="{{ path('app_maintenance_request_show', {id: request.id}) }}"
+                               class="btn btn-sm btn-outline-primary">
+                                <i class="bi bi-envelope"></i>
+                            </a>
+                        </div>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="text-center p-5">
+                    <i class="bi bi-inbox display-1 text-muted"></i>
+                    <h5 class="mt-3 text-muted">Aucune demande trouvée</h5>
+                    <p class="text-muted">Commencez par créer votre première demande de maintenance.</p>
+                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#newRequestModal">
+                        <i class="bi bi-plus-circle me-2"></i>
+                        Créer une demande
+                    </button>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+
+    <!-- Modal pour nouvelle demande -->
+    <div class="modal fade" id="newRequestModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Nouvelle demande</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- Types de demandes -->
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="card h-100 request-type-card" data-type="payment">
+                                <div class="card-body text-center">
+                                    <i class="bi bi-credit-card display-4 text-primary mb-3"></i>
+                                    <h6>Paiements, charges, dépôt de garantie</h6>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card h-100 request-type-card" data-type="maintenance">
+                                <div class="card-body text-center">
+                                    <i class="bi bi-tools display-4 text-warning mb-3"></i>
+                                    <h6>Dépannage, travaux, sinistres</h6>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card h-100 request-type-card" data-type="documents">
+                                <div class="card-body text-center">
+                                    <i class="bi bi-file-earmark-text display-4 text-info mb-3"></i>
+                                    <h6>Attestations, coordonnées, documents</h6>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card h-100 request-type-card" data-type="access">
+                                <div class="card-body text-center">
+                                    <i class="bi bi-key display-4 text-success mb-3"></i>
+                                    <h6>Accès et entretien de l'immeuble</h6>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Formulaire de demande -->
+                    <div id="requestForm" class="mt-4" style="display: none;">
+                        <form action="{{ path('app_maintenance_request_new') }}" method="POST">
+                            <div class="mb-3">
+                                <label class="form-label">Détail de la demande</label>
+                                <textarea name="description" class="form-control" rows="4" placeholder="Décrivez votre demande en détail..."></textarea>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Pièces jointes</label>
+                                <input type="file" class="form-control" multiple>
+                                <small class="text-muted">Ajoutez jusqu'à 5 pièces jointes</small>
+                            </div>
+
+                            <div class="d-flex justify-content-end">
+                                <button type="button" class="btn btn-secondary me-2" data-bs-dismiss="modal">Annuler</button>
+                                <button type="submit" class="btn btn-primary">Envoyer</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        .request-type-card {
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+
+        .request-type-card:hover {
+            border-color: var(--bs-primary);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        .request-type-card.selected {
+            border-color: var(--bs-primary);
+            background-color: rgba(13, 110, 253, 0.1);
+        }
+    </style>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const typeCards = document.querySelectorAll('.request-type-card');
+            const requestForm = document.getElementById('requestForm');
+
+            typeCards.forEach(card => {
+                card.addEventListener('click', function() {
+                    // Remove selected class from all cards
+                    typeCards.forEach(c => c.classList.remove('selected'));
+
+                    // Add selected class to clicked card
+                    this.classList.add('selected');
+
+                    // Show form
+                    requestForm.style.display = 'block';
+                });
+            });
+        });
+    </script>
+{% endblock %}

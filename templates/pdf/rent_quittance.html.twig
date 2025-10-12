@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Quittance de Loyer</title>
+    <style>
+        body {
+            font-family: DejaVu Sans, sans-serif;
+            font-size: 11pt;
+            line-height: 1.6;
+            color: #333;
+            margin: 40px;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 3px solid #6f42c1;
+            padding-bottom: 20px;
+        }
+        .header h1 {
+            color: #6f42c1;
+            font-size: 24pt;
+            margin: 0 0 10px 0;
+        }
+        .company-info {
+            text-align: right;
+            margin-bottom: 30px;
+            font-size: 10pt;
+        }
+        .quittance-info {
+            background-color: #f3e8ff;
+            padding: 15px;
+            margin: 20px 0;
+            border-left: 5px solid #6f42c1;
+        }
+        .info-row {
+            margin: 8px 0;
+        }
+        .label {
+            font-weight: bold;
+            display: inline-block;
+            width: 200px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        table th {
+            background-color: #6f42c1;
+            color: white;
+            padding: 12px;
+            text-align: left;
+        }
+        table td {
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+        }
+        .total-row {
+            background-color: #f3e8ff;
+            font-weight: bold;
+            font-size: 12pt;
+        }
+        .tenant-section {
+            background-color: #f8f9fa;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        .legal-notice {
+            margin: 30px 0;
+            padding: 15px;
+            background-color: #e7f3ff;
+            border-left: 4px solid #0066cc;
+            font-size: 9pt;
+        }
+        .footer {
+            margin-top: 50px;
+            padding-top: 20px;
+            border-top: 1px solid #ccc;
+            text-align: center;
+            font-size: 9pt;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <!-- Company Info -->
+    <div class="company-info">
+        <strong>{{ company.company_name ?? 'MYLOCCA Gestion' }}</strong><br>
+        {{ company.company_address ?? '' }}<br>
+        {% if company.company_phone %}Tél: {{ company.company_phone }}<br>{% endif %}
+        {% if company.company_email %}Email: {{ company.company_email }}{% endif %}
+    </div>
+
+    <!-- Header -->
+    <div class="header">
+        <h1>QUITTANCE DE LOYER</h1>
+        <p style="font-size: 16pt; margin: 10px 0;">{{ month|date('F Y')|upper }}</p>
+    </div>
+
+    <!-- Quittance Info -->
+    <div class="quittance-info">
+        <div class="info-row">
+            <span class="label">Date d'émission :</span>
+            {{ generated_at|date('d/m/Y') }}
+        </div>
+        <div class="info-row">
+            <span class="label">Période concernée :</span>
+            {{ month|date('F Y') }}
+        </div>
+        <div class="info-row">
+            <span class="label">Référence :</span>
+            QUIT-{{ month|date('Ym') }}-{{ lease.id }}
+        </div>
+    </div>
+
+    <!-- Tenant Info -->
+    <div class="tenant-section">
+        <h3 style="margin-top: 0; color: #6f42c1;">LOCATAIRE</h3>
+        <strong>{{ tenant.firstName }} {{ tenant.lastName }}</strong><br>
+        {% if tenant.address %}{{ tenant.address }}<br>{% endif %}
+        {% if tenant.postalCode %}{{ tenant.postalCode }} {{ tenant.city }}<br>{% endif %}
+        Email: {{ tenant.email }}
+    </div>
+
+    <!-- Property Info -->
+    <div class="tenant-section">
+        <h3 style="margin-top: 0; color: #6f42c1;">BIEN LOUÉ</h3>
+        <strong>{{ property.address }}</strong><br>
+        {{ property.postalCode }} {{ property.city }}<br>
+        {{ property.propertyType }} - {{ property.rooms }} pièces - {{ property.surface }} m²
+    </div>
+
+    <!-- Déclaration -->
+    <div style="margin: 30px 0; text-align: center; font-size: 12pt;">
+        <p>Je soussigné(e) <strong>{{ company.company_name ?? 'MYLOCCA Gestion' }}</strong>,</p>
+        <p>certifie avoir reçu de <strong>{{ tenant.firstName }} {{ tenant.lastName }}</strong></p>
+        <p>la somme détaillée ci-dessous pour le paiement du loyer et des charges</p>
+        <p>concernant le mois de <strong>{{ month|date('F Y') }}</strong></p>
+    </div>
+
+    <!-- Payment Details -->
+    <h3 style="color: #6f42c1; border-bottom: 2px solid #6f42c1; padding-bottom: 5px;">
+        DÉTAIL DES PAIEMENTS
+    </h3>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Date de paiement</th>
+                <th>Désignation</th>
+                <th>Mode de paiement</th>
+                <th style="text-align: right;">Montant</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for payment in payments %}
+            <tr>
+                <td>{{ payment.paidDate|date('d/m/Y') }}</td>
+                <td>{{ payment.type }}</td>
+                <td>{{ payment.paymentMethod ?? 'Virement' }}</td>
+                <td style="text-align: right;">{{ payment.amount|currency }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+        <tfoot>
+            <tr class="total-row">
+                <td colspan="3"><strong>TOTAL PAYÉ POUR {{ month|date('F Y')|upper }}</strong></td>
+                <td style="text-align: right;"><strong>{{ total_amount|currency }}</strong></td>
+            </tr>
+        </tfoot>
+    </table>
+
+    <!-- Détail loyer/charges -->
+    {% if lease.charges %}
+    <div style="margin: 20px 0;">
+        <h4 style="color: #6f42c1;">Répartition :</h4>
+        <table>
+            <tr>
+                <td style="border-bottom: none;">Loyer hors charges</td>
+                <td style="border-bottom: none; text-align: right;">{{ lease.monthlyRent|currency }}</td>
+            </tr>
+            <tr>
+                <td style="border-bottom: none;">Provisions sur charges</td>
+                <td style="border-bottom: none; text-align: right;">{{ lease.charges|currency }}</td>
+            </tr>
+        </table>
+    </div>
+    {% endif %}
+
+    <!-- Legal Notice -->
+    <div class="legal-notice">
+        <p style="margin-top: 0;"><strong>MENTIONS LÉGALES :</strong></p>
+        <p>Cette quittance annule tous les reçus qui auraient pu être donnés précédemment pour acomptes versés sur la présente location.</p>
+        <p>Article 21 de la loi n° 89-462 du 6 juillet 1989 : « Le bailleur est tenu de transmettre gratuitement une quittance au locataire qui en fait la demande. La quittance porte le détail des sommes versées par le locataire en distinguant le loyer et les charges. »</p>
+    </div>
+
+    <!-- Signature -->
+    <div style="margin-top: 60px; text-align: right;">
+        <p>Fait à ____________</p>
+        <p>Le {{ generated_at|date('d/m/Y') }}</p>
+        <div style="margin-top: 80px; border-top: 1px solid #333; padding-top: 10px; width: 250px; margin-left: auto;">
+            <p style="margin: 0;">Signature et cachet</p>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+        <p>
+            <strong>{{ company.company_name ?? 'MYLOCCA Gestion' }}</strong><br>
+            {{ company.company_address ?? '' }}
+        </p>
+        <p style="margin-top: 10px;">
+            Document généré automatiquement le {{ generated_at|date('d/m/Y à H:i') }}<br>
+            En cas de question, merci de nous contacter en citant la référence QUIT-{{ month|date('Ym') }}-{{ lease.id }}
+        </p>
+    </div>
+</body>
+</html>

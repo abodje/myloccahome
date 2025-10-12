@@ -1,0 +1,215 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Détails de la tâche - {{ task.name }}{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>📋 {{ task.name }}</h2>
+                <div class="d-flex gap-2">
+                    <form method="POST" action="{{ path('app_admin_task_execute', {id: task.id}) }}" class="d-inline">
+                        <button type="submit" class="btn btn-success">
+                            <i class="bi bi-play-circle"></i> Exécuter
+                        </button>
+                    </form>
+                    <form method="POST" action="{{ path('app_admin_task_toggle', {id: task.id}) }}" class="d-inline">
+                        <button type="submit" class="btn btn-{{ task.isActive ? 'warning' : 'info' }}">
+                            <i class="bi bi-{{ task.isActive ? 'pause' : 'play' }}-circle"></i>
+                            {{ task.isActive ? 'Désactiver' : 'Activer' }}
+                        </button>
+                    </form>
+                    <a href="{{ path('app_admin_task_index') }}" class="btn btn-secondary">
+                        <i class="bi bi-arrow-left"></i> Retour
+                    </a>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-8">
+                    <!-- Informations générales -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">Informations générales</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <table class="table table-borderless">
+                                        <tr>
+                                            <td class="text-muted">Type :</td>
+                                            <td><span class="badge bg-info">{{ task.type }}</span></td>
+                                        </tr>
+                                        <tr>
+                                            <td class="text-muted">Fréquence :</td>
+                                            <td><strong>{{ task.frequency }}</strong></td>
+                                        </tr>
+                                        <tr>
+                                            <td class="text-muted">Statut :</td>
+                                            <td>
+                                                <span class="badge bg-{{ task.status == 'ACTIVE' ? 'success' : (task.status == 'RUNNING' ? 'info' : 'secondary') }}">
+                                                    {{ task.status }}
+                                                </span>
+                                            </td>
+                                        </tr>
+                                        {% if task.cronExpression %}
+                                        <tr>
+                                            <td class="text-muted">Expression CRON :</td>
+                                            <td><code>{{ task.cronExpression }}</code></td>
+                                        </tr>
+                                        {% endif %}
+                                    </table>
+                                </div>
+                                <div class="col-md-6">
+                                    <table class="table table-borderless">
+                                        <tr>
+                                            <td class="text-muted">Créée le :</td>
+                                            <td>{{ task.createdAt|date('d/m/Y H:i') }}</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="text-muted">Dernière exécution :</td>
+                                            <td>
+                                                {% if task.lastRunAt %}
+                                                    {{ task.lastRunAt|date('d/m/Y H:i') }}
+                                                {% else %}
+                                                    <span class="text-muted">Jamais</span>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td class="text-muted">Prochaine exécution :</td>
+                                            <td>
+                                                {% if task.nextRunAt %}
+                                                    {{ task.nextRunAt|date('d/m/Y H:i') }}
+                                                    {% if task.isDue %}
+                                                        <span class="badge bg-warning">À exécuter</span>
+                                                    {% endif %}
+                                                {% else %}
+                                                    <span class="text-muted">Non planifiée</span>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </div>
+                            </div>
+
+                            {% if task.description %}
+                                <div class="mt-3">
+                                    <h6>Description :</h6>
+                                    <p class="text-muted">{{ task.description }}</p>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Statistiques d'exécution -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">Statistiques d'exécution</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row text-center">
+                                <div class="col-md-3">
+                                    <div class="p-3">
+                                        <h3 class="text-primary">{{ task.runCount }}</h3>
+                                        <small class="text-muted">Exécutions totales</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="p-3">
+                                        <h3 class="text-success">{{ task.successCount }}</h3>
+                                        <small class="text-muted">Succès</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="p-3">
+                                        <h3 class="text-danger">{{ task.failureCount }}</h3>
+                                        <small class="text-muted">Échecs</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="p-3">
+                                        <h3 class="text-info">{{ task.successRate|round(1) }}%</h3>
+                                        <small class="text-muted">Taux de réussite</small>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {% if task.runCount > 0 %}
+                                <div class="progress mt-3" style="height: 10px;">
+                                    <div class="progress-bar bg-success" style="width: {{ (task.successCount / task.runCount * 100)|round }}%"></div>
+                                    <div class="progress-bar bg-danger" style="width: {{ (task.failureCount / task.runCount * 100)|round }}%"></div>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Dernière erreur -->
+                    {% if task.lastError %}
+                        <div class="card mb-4">
+                            <div class="card-header bg-danger text-white">
+                                <h5 class="card-title mb-0">
+                                    <i class="bi bi-exclamation-triangle"></i> Dernière erreur
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <p class="mb-0 font-monospace">{{ task.lastError }}</p>
+                                {% if task.lastRunAt %}
+                                    <small class="text-muted">
+                                        Le {{ task.lastRunAt|date('d/m/Y à H:i') }}
+                                    </small>
+                                {% endif %}
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class="col-md-4">
+                    <!-- Paramètres -->
+                    {% if task.parameters %}
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <h5 class="card-title mb-0">⚙️ Paramètres</h5>
+                            </div>
+                            <div class="card-body">
+                                <dl class="row mb-0">
+                                    {% for key, value in task.parameters %}
+                                        <dt class="col-sm-6 small text-muted">{{ key|replace({'_': ' '})|title }} :</dt>
+                                        <dd class="col-sm-6 small">{{ value }}</dd>
+                                    {% endfor %}
+                                </dl>
+                            </div>
+                        </div>
+                    {% endif %}
+
+                    <!-- Actions -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">🔧 Actions</h5>
+                        </div>
+                        <div class="card-body">
+                            <form method="POST" action="{{ path('app_admin_task_execute', {id: task.id}) }}">
+                                <button type="submit" class="btn btn-success w-100 mb-2">
+                                    <i class="bi bi-play-circle"></i> Exécuter maintenant
+                                </button>
+                            </form>
+
+                            <form method="POST" action="{{ path('app_admin_task_toggle', {id: task.id}) }}">
+                                <button type="submit" class="btn btn-{{ task.isActive ? 'warning' : 'info' }} w-100 mb-2">
+                                    <i class="bi bi-{{ task.isActive ? 'pause' : 'play' }}-circle"></i>
+                                    {{ task.isActive ? 'Désactiver' : 'Activer' }}
+                                </button>
+                            </form>
+
+                            <a href="{{ path('app_admin_task_index') }}" class="btn btn-secondary w-100">
+                                <i class="bi bi-arrow-left"></i> Retour à la liste
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

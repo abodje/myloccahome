@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Reçu de Paiement</title>
+    <style>
+        body {
+            font-family: DejaVu Sans, sans-serif;
+            font-size: 11pt;
+            line-height: 1.5;
+            color: #333;
+            margin: 40px;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 3px solid #198754;
+            padding-bottom: 20px;
+        }
+        .header h1 {
+            color: #198754;
+            font-size: 22pt;
+            margin: 0 0 10px 0;
+        }
+        .company-info {
+            text-align: right;
+            margin-bottom: 30px;
+            font-size: 10pt;
+        }
+        .receipt-info {
+            background-color: #e7f4e7;
+            padding: 15px;
+            margin: 20px 0;
+            border-left: 5px solid #198754;
+        }
+        .info-row {
+            margin: 8px 0;
+        }
+        .label {
+            font-weight: bold;
+            display: inline-block;
+            width: 200px;
+        }
+        .amount-box {
+            background-color: #198754;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            margin: 30px 0;
+            font-size: 18pt;
+            font-weight: bold;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        table th {
+            background-color: #198754;
+            color: white;
+            padding: 12px;
+            text-align: left;
+        }
+        table td {
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+        }
+        .tenant-info {
+            background-color: #f8f9fa;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        .stamp-box {
+            margin-top: 50px;
+            padding: 20px;
+            border: 2px dashed #ccc;
+            text-align: center;
+            color: #666;
+        }
+        .footer {
+            margin-top: 50px;
+            padding-top: 20px;
+            border-top: 1px solid #ccc;
+            text-align: center;
+            font-size: 9pt;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <!-- Company Info -->
+    <div class="company-info">
+        <strong>{{ company.company_name ?? 'MYLOCCA Gestion' }}</strong><br>
+        {{ company.company_address ?? '' }}<br>
+        {% if company.company_phone %}Tél: {{ company.company_phone }}<br>{% endif %}
+        {% if company.company_email %}Email: {{ company.company_email }}{% endif %}
+    </div>
+
+    <!-- Header -->
+    <div class="header">
+        <h1>✓ REÇU DE PAIEMENT</h1>
+        <p>N° {{ ('000000' ~ payment.id)|slice(-6) }}</p>
+    </div>
+
+    <!-- Receipt Info -->
+    <div class="receipt-info">
+        <div class="info-row">
+            <span class="label">Date de paiement :</span>
+            {{ payment.paidDate|date('d/m/Y') }}
+        </div>
+        <div class="info-row">
+            <span class="label">Date d'échéance :</span>
+            {{ payment.dueDate|date('d/m/Y') }}
+        </div>
+        <div class="info-row">
+            <span class="label">Mode de paiement :</span>
+            {{ payment.paymentMethod ?? 'Virement bancaire' }}
+        </div>
+        {% if payment.reference %}
+        <div class="info-row">
+            <span class="label">Référence :</span>
+            {{ payment.reference }}
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Tenant Info -->
+    <div class="tenant-info">
+        <h3 style="margin-top: 0; color: #198754;">LOCATAIRE</h3>
+        <strong>{{ tenant.firstName }} {{ tenant.lastName }}</strong><br>
+        {{ tenant.address ?? '' }}<br>
+        {{ tenant.postalCode ?? '' }} {{ tenant.city ?? '' }}<br>
+        Email: {{ tenant.email }}
+    </div>
+
+    <!-- Property Info -->
+    <div class="tenant-info">
+        <h3 style="margin-top: 0; color: #198754;">BIEN LOUÉ</h3>
+        {{ property.address }}<br>
+        {{ property.postalCode }} {{ property.city }}<br>
+        {{ property.propertyType }} - {{ property.rooms }} pièces - {{ property.surface }} m²
+    </div>
+
+    <!-- Payment Details -->
+    <h3 style="color: #198754; border-bottom: 2px solid #198754; padding-bottom: 5px;">DÉTAIL DU PAIEMENT</h3>
+    <table>
+        <tr>
+            <th>Désignation</th>
+            <th>Période</th>
+            <th style="text-align: right;">Montant</th>
+        </tr>
+        <tr>
+            <td>{{ payment.type }}</td>
+            <td>{{ payment.dueDate|date('m/Y') }}</td>
+            <td style="text-align: right;"><strong>{{ payment.amount|currency }}</strong></td>
+        </tr>
+    </table>
+
+    <!-- Total Amount -->
+    <div class="amount-box">
+        MONTANT TOTAL PAYÉ : {{ payment.amount|currency }}
+    </div>
+
+    <!-- Notes -->
+    {% if payment.notes %}
+    <div style="margin: 20px 0; padding: 15px; background-color: #fff3cd; border-left: 4px solid #ffc107;">
+        <strong>Notes :</strong><br>
+        {{ payment.notes }}
+    </div>
+    {% endif %}
+
+    <!-- Legal Notice -->
+    <div style="margin: 30px 0; padding: 15px; background-color: #e7f4e7; font-size: 9pt; border-left: 3px solid #198754;">
+        <strong>IMPORTANT :</strong> Ce reçu atteste du paiement effectué pour la période mentionnée.
+        Il ne constitue pas une quittance de loyer mensuelle complète. Conservez ce document précieusement.
+    </div>
+
+    <!-- Stamp -->
+    <div class="stamp-box">
+        <p style="margin: 0; font-size: 9pt;">Cachet et signature</p>
+        <div style="height: 60px;"></div>
+        <p style="margin: 0; font-size: 8pt;">
+            Document généré électroniquement le {{ generated_at|date('d/m/Y à H:i') }}
+        </p>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+        <p>
+            <strong>{{ company.company_name ?? 'MYLOCCA Gestion' }}</strong><br>
+            {{ company.company_address ?? '' }}<br>
+            {% if company.company_phone %}Tél: {{ company.company_phone }} - {% endif %}
+            {% if company.company_email %}{{ company.company_email }}{% endif %}
+        </p>
+        <p style="margin-top: 10px; font-size: 8pt;">
+            Ce document est une preuve de paiement générée automatiquement.<br>
+            En cas de question, merci de nous contacter en mentionnant la référence {{ ('000000' ~ payment.id)|slice(-6) }}.
+        </p>
+    </div>
+</body>
+</html>

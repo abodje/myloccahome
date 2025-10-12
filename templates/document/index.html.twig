@@ -1,0 +1,319 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Mes documents - MYLOCCA{% endblock %}
+
+{% block page_title %}
+    <h5 class="mb-0">
+        <i class="bi bi-file-earmark-text me-2"></i>
+        Mes documents
+    </h5>
+{% endblock %}
+
+{% block page_actions %}
+    <div class="d-flex gap-2">
+        <a href="{{ path('app_document_search') }}" class="btn btn-outline-primary btn-sm">
+            <i class="bi bi-search"></i> Rechercher
+        </a>
+        <a href="{{ path('app_document_new') }}" class="btn btn-primary btn-sm">
+            <i class="bi bi-plus-circle me-2"></i>
+            Ajouter un document
+        </a>
+    </div>
+{% endblock %}
+
+{% block body %}
+    <!-- Statistiques rapides -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h4 class="text-primary">{{ stats.total }}</h4>
+                    <small class="text-muted">Total documents</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h4 class="text-warning">{{ stats.expiring_soon }}</h4>
+                    <small class="text-muted">Expirent bientôt</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h4 class="text-danger">{{ stats.expired }}</h4>
+                    <small class="text-muted">Expirés</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h4 class="text-secondary">{{ stats.archived }}</h4>
+                    <small class="text-muted">Archivés</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Types de documents -->
+    <div class="row g-4">
+        <!-- Assurance -->
+        <div class="col-lg-6 col-xl-4">
+            <div class="card document-type-card h-100" data-type="Assurance">
+                <div class="card-body text-center p-4">
+                    <div class="document-icon mb-3">
+                        <i class="bi bi-shield-check display-3 text-primary"></i>
+                    </div>
+                    <h5 class="card-title">Assurance</h5>
+                    <p class="card-text text-muted">Contrat d'assurance habitation</p>
+
+                    {% if documents_by_type['Assurance']|length > 0 %}
+                        <div class="document-count mb-3">
+                            <span class="badge bg-primary">{{ documents_by_type['Assurance']|length }} document(s)</span>
+                        </div>
+                        {% set latest = documents_by_type['Assurance']|first %}
+                        <p class="text-muted small mb-3">
+                            Actualisé le {{ latest.createdAt|date('d/m/Y') }}
+                        </p>
+                    {% else %}
+                        <p class="text-muted small mb-3">Aucun document</p>
+                    {% endif %}
+
+                    <a href="{{ path('app_document_by_type', {type: 'Assurance'}) }}"
+                       class="btn btn-outline-primary btn-sm">
+                        Voir les documents
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Avis d'échéance -->
+        <div class="col-lg-6 col-xl-4">
+            <div class="card document-type-card h-100" data-type="Avis d'échéance">
+                <div class="card-body text-center p-4">
+                    <div class="document-icon mb-3">
+                        <i class="bi bi-megaphone display-3 text-info"></i>
+                    </div>
+                    <h5 class="card-title">Avis d'échéance</h5>
+                    <p class="card-text text-muted">Quittance de loyer</p>
+                    <p class="card-text text-muted small">Derniers avis d'échéances (appels de loyer de charges locatives) et quittances de loyer</p>
+
+                    {% if documents_by_type['Avis d\'échéance']|length > 0 %}
+                        <div class="document-count mb-3">
+                            <span class="badge bg-info">{{ documents_by_type['Avis d\'échéance']|length }} document(s)</span>
+                        </div>
+                        {% set latest = documents_by_type['Avis d\'échéance']|first %}
+                        <p class="text-muted small mb-3">
+                            Actualisé le {{ latest.createdAt|date('d/m/Y') }}
+                        </p>
+                    {% else %}
+                        <p class="text-muted small mb-3">Aucun document</p>
+                    {% endif %}
+
+                    <a href="{{ path('app_document_by_type', {type: 'Avis d\'échéance'}) }}"
+                       class="btn btn-outline-info btn-sm">
+                        Voir les documents
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bail -->
+        <div class="col-lg-6 col-xl-4">
+            <div class="card document-type-card h-100" data-type="Bail">
+                <div class="card-body text-center p-4">
+                    <div class="document-icon mb-3">
+                        <i class="bi bi-people display-3 text-success"></i>
+                    </div>
+                    <h5 class="card-title">Bail</h5>
+                    <p class="card-text text-muted">Contrat de location</p>
+
+                    {% if documents_by_type['Bail']|length > 0 %}
+                        <div class="document-count mb-3">
+                            <span class="badge bg-success">{{ documents_by_type['Bail']|length }} document(s)</span>
+                        </div>
+                        {% set latest = documents_by_type['Bail']|first %}
+                        <p class="text-muted small mb-3">
+                            Actualisé le {{ latest.createdAt|date('d/m/Y') }}
+                        </p>
+                    {% else %}
+                        <p class="text-muted small mb-3">Aucun document</p>
+                    {% endif %}
+
+                    <a href="{{ path('app_document_by_type', {type: 'Contrat de location'}) }}"
+                       class="btn btn-outline-success btn-sm">
+                        Voir les documents
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Diagnostics -->
+        <div class="col-lg-6 col-xl-4">
+            <div class="card document-type-card h-100" data-type="Diagnostics">
+                <div class="card-body text-center p-4">
+                    <div class="document-icon mb-3">
+                        <i class="bi bi-clipboard-check display-3 text-warning"></i>
+                    </div>
+                    <h5 class="card-title">Diagnostics</h5>
+                    <p class="card-text text-muted">Ensemble des diagnostics immobiliers obligatoires réalisés sur mon bien</p>
+
+                    {% if documents_by_type['Diagnostics']|length > 0 %}
+                        <div class="document-count mb-3">
+                            <span class="badge bg-warning text-dark">{{ documents_by_type['Diagnostics']|length }} document(s)</span>
+                        </div>
+                        {% set latest = documents_by_type['Diagnostics']|first %}
+                        <p class="text-muted small mb-3">
+                            Actualisé le {{ latest.createdAt|date('d/m/Y') }}
+                        </p>
+                    {% else %}
+                        <p class="text-muted small mb-3">Aucun document</p>
+                    {% endif %}
+
+                    <a href="{{ path('app_document_by_type', {type: 'Diagnostics'}) }}"
+                       class="btn btn-outline-warning btn-sm">
+                        Voir les documents
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- OK Foncia -->
+        <div class="col-lg-6 col-xl-4">
+            <div class="card document-type-card h-100" data-type="OK Foncia">
+                <div class="card-body text-center p-4">
+                    <div class="document-icon mb-3">
+                        <i class="bi bi-lightbulb display-3 text-secondary"></i>
+                    </div>
+                    <h5 class="card-title">OK Foncia</h5>
+                    <p class="card-text text-muted">Retrouvez ici tous nos conseils pour vous accompagner dans votre vie immobilière</p>
+
+                    {% if documents_by_type['OK Foncia']|length > 0 %}
+                        <div class="document-count mb-3">
+                            <span class="badge bg-secondary">{{ documents_by_type['OK Foncia']|length }} document(s)</span>
+                        </div>
+                        {% set latest = documents_by_type['OK Foncia']|first %}
+                        <p class="text-muted small mb-3">
+                            Actualisé le {{ latest.createdAt|date('d/m/Y') }}
+                        </p>
+                    {% else %}
+                        <p class="text-muted small mb-3">Aucun document</p>
+                    {% endif %}
+
+                    <a href="{{ path('app_document_by_type', {type: 'Conseils'}) }}"
+                       class="btn btn-outline-secondary btn-sm">
+                        Voir les documents
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Autres documents -->
+        <div class="col-lg-6 col-xl-4">
+            <div class="card document-type-card h-100">
+                <div class="card-body text-center p-4">
+                    <div class="document-icon mb-3">
+                        <i class="bi bi-folder display-3 text-dark"></i>
+                    </div>
+                    <h5 class="card-title">Autres documents</h5>
+                    <p class="card-text text-muted">États des lieux, factures, attestations...</p>
+
+                    <div class="document-count mb-3">
+                        <span class="badge bg-dark">Voir tous</span>
+                    </div>
+
+                    <a href="{{ path('app_document_search') }}"
+                       class="btn btn-outline-dark btn-sm">
+                        Parcourir
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Documents récents -->
+    {% set recent_documents = [] %}
+    {% for type, docs in documents_by_type %}
+        {% set recent_documents = recent_documents|merge(docs|slice(0, 3)) %}
+    {% endfor %}
+
+    {% if recent_documents|length > 0 %}
+        <div class="card mt-5">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="bi bi-clock-history me-2"></i>
+                    Documents récents
+                </h6>
+            </div>
+            <div class="card-body p-0">
+                {% for document in recent_documents|slice(0, 5) %}
+                    <div class="d-flex justify-content-between align-items-center p-3 border-bottom">
+                        <div class="d-flex align-items-center">
+                            <div class="me-3">
+                                {% if document.isPdf %}
+                                    <i class="bi bi-file-earmark-pdf text-danger fs-4"></i>
+                                {% elseif document.isImage %}
+                                    <i class="bi bi-file-earmark-image text-primary fs-4"></i>
+                                {% else %}
+                                    <i class="bi bi-file-earmark text-secondary fs-4"></i>
+                                {% endif %}
+                            </div>
+                            <div>
+                                <h6 class="mb-1">{{ document.name }}</h6>
+                                <small class="text-muted">
+                                    {{ document.type }} -
+                                    {{ document.createdAt|date('d/m/Y H:i') }}
+                                    {% if document.fileSize %}
+                                        - {{ document.fileSizeFormatted }}
+                                    {% endif %}
+                                </small>
+                            </div>
+                        </div>
+                        <div class="d-flex gap-2">
+                            <a href="{{ path('app_document_download', {id: document.id}) }}"
+                               class="btn btn-sm btn-outline-primary" title="Télécharger">
+                                <i class="bi bi-download"></i>
+                            </a>
+                            <a href="{{ path('app_document_show', {id: document.id}) }}"
+                               class="btn btn-sm btn-outline-secondary" title="Voir">
+                                <i class="bi bi-eye"></i>
+                            </a>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    {% endif %}
+{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        .document-type-card {
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+
+        .document-type-card:hover {
+            border-color: var(--bs-primary);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        .document-icon {
+            opacity: 0.8;
+        }
+
+        .document-type-card:hover .document-icon {
+            opacity: 1;
+        }
+
+        .document-count {
+            margin-top: 1rem;
+        }
+    </style>
+{% endblock %}

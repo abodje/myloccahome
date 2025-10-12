@@ -1,0 +1,362 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Mon profil - MYLOCCA{% endblock %}
+
+{% block page_title %}
+    <h5 class="mb-0">
+        <i class="bi bi-person me-2"></i>
+        Mon profil
+    </h5>
+{% endblock %}
+
+{% block body %}
+    <!-- Onglets de navigation -->
+    <div class="card">
+        <div class="card-header">
+            <ul class="nav nav-tabs card-header-tabs" id="profileTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="credentials-tab" data-bs-toggle="tab"
+                            data-bs-target="#credentials" type="button" role="tab">
+                        Mes identifiants
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="information-tab" data-bs-toggle="tab"
+                            data-bs-target="#information" type="button" role="tab">
+                        Mes informations
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="payment-tab" data-bs-toggle="tab"
+                            data-bs-target="#payment" type="button" role="tab">
+                        Mon mode de paiement
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="privacy-tab" data-bs-toggle="tab"
+                            data-bs-target="#privacy" type="button" role="tab">
+                        Confidentialité
+                    </button>
+                </li>
+            </ul>
+        </div>
+
+        <div class="card-body">
+            <div class="tab-content" id="profileTabsContent">
+                <!-- Onglet Identifiants -->
+                <div class="tab-pane fade show active" id="credentials" role="tabpanel">
+                    <h6 class="mb-4">Identifiants de connexion</h6>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-4">
+                                <label class="form-label text-muted">Votre adresse e-mail de connexion :</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="bi bi-person"></i></span>
+                                    <input type="email" class="form-control" value="{{ user.email }}" readonly>
+                                </div>
+                                <button class="btn btn-outline-secondary btn-sm mt-2">Modifier</button>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-4">
+                                <label class="form-label text-muted">Votre mot de passe actuel :</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="bi bi-lock"></i></span>
+                                    <input type="password" class="form-control" value="••••••••••" readonly>
+                                </div>
+                                <a href="{{ path('app_profile_change_password') }}" class="btn btn-primary btn-sm mt-2">
+                                    Modifier mon mot de passe
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Onglet Informations -->
+                <div class="tab-pane fade" id="information" role="tabpanel">
+                    <h6 class="mb-4">Mes informations personnelles</h6>
+
+                    <form action="{{ path('app_profile_information') }}" method="POST">
+                        <div class="card bg-primary text-white mb-4">
+                            <div class="card-body">
+                                <h6 class="card-title">{{ user.fullName }}</h6>
+                                <p class="card-text mb-1">{{ user.address }}</p>
+                                <p class="card-text mb-1">{{ user.postalCode }} {{ user.city }}</p>
+                                <p class="card-text">{{ user.country }}</p>
+                                <button type="button" class="btn btn-light btn-sm" onclick="toggleEditMode()">
+                                    Modifier ces informations
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Téléphone mobile</label>
+                                    <div class="input-group">
+                                        <select class="form-select" style="max-width: 100px;">
+                                            <option>🇫🇷 FR</option>
+                                        </select>
+                                        <input type="tel" name="mobilePhone" class="form-control"
+                                               value="{{ user.mobilePhone }}" readonly id="mobilePhone">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Téléphone fixe</label>
+                                    <div class="input-group">
+                                        <select class="form-select" style="max-width: 100px;">
+                                            <option>🇫🇷 FR</option>
+                                        </select>
+                                        <input type="tel" name="landlinePhone" class="form-control"
+                                               value="{{ user.landlinePhone }}" readonly id="landlinePhone">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">E-mail de contact</label>
+                            <input type="email" name="email" class="form-control"
+                                   value="{{ user.email }}" readonly id="contactEmail">
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Situation familiale</label>
+                                    <select name="maritalStatus" class="form-select" disabled id="maritalStatus">
+                                        <option value="Célibataire" {{ user.maritalStatus == 'Célibataire' ? 'selected' : '' }}>Célibataire</option>
+                                        <option value="Marié(e)" {{ user.maritalStatus == 'Marié(e)' ? 'selected' : '' }}>Marié(e)</option>
+                                        <option value="Pacsé(e)" {{ user.maritalStatus == 'Pacsé(e)' ? 'selected' : '' }}>Pacsé(e)</option>
+                                        <option value="Divorcé(e)" {{ user.maritalStatus == 'Divorcé(e)' ? 'selected' : '' }}>Divorcé(e)</option>
+                                        <option value="Veuf(ve)" {{ user.maritalStatus == 'Veuf(ve)' ? 'selected' : '' }}>Veuf(ve)</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Date de naissance</label>
+                                    <input type="date" name="birthDate" class="form-control"
+                                           value="{{ user.birthDate ? user.birthDate|date('Y-m-d') : '' }}"
+                                           readonly id="birthDate">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-none" id="editActions">
+                            <div class="d-flex justify-content-end gap-2">
+                                <button type="button" class="btn btn-secondary" onclick="cancelEdit()">Annuler</button>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="bi bi-check-circle me-2"></i>
+                                    Envoyer
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Onglet Mode de paiement -->
+                <div class="tab-pane fade" id="payment" role="tabpanel">
+                    <h6 class="mb-4">Mon mode de paiement</h6>
+
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle me-2"></i>
+                        Votre mode de paiement actuel : <strong>{{ user.preferredPaymentMethod ?? 'Non défini' }}</strong>
+                    </div>
+
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <div class="card payment-option">
+                                <div class="card-body text-center">
+                                    <i class="bi bi-arrow-repeat display-4 text-primary mb-3"></i>
+                                    <h6>Prélèvement automatique</h6>
+                                    <p class="text-muted small">Paiement automatique chaque mois</p>
+                                    <button class="btn btn-outline-primary btn-sm">Configurer</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card payment-option">
+                                <div class="card-body text-center">
+                                    <i class="bi bi-phone display-4 text-info mb-3"></i>
+                                    <h6>E-paiement</h6>
+                                    <p class="text-muted small">Validation manuelle à chaque échéance</p>
+                                    <button class="btn btn-outline-info btn-sm">Configurer</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card payment-option">
+                                <div class="card-body text-center">
+                                    <i class="bi bi-bank display-4 text-success mb-3"></i>
+                                    <h6>Virement</h6>
+                                    <p class="text-muted small">Virement manuel via votre banque</p>
+                                    <button class="btn btn-outline-success btn-sm">Configurer</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Onglet Confidentialité -->
+                <div class="tab-pane fade" id="privacy" role="tabpanel">
+                    <h6 class="mb-4">Confidentialité des données</h6>
+
+                    <div class="card">
+                        <div class="card-header" style="background-color: var(--primary-color); color: white;">
+                            <h6 class="mb-0">
+                                <i class="bi bi-gear me-2"></i>
+                                Gestion de mes consentements
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <p class="text-muted mb-4">
+                                Pour vous faire profiter d'informations utiles, d'astuces pour optimiser vos charges et d'offres vous permettant de réaliser des économies, nous vous invitons à indiquer vos préférences ci-dessous. Quelques clics suffisent pour continuer à accéder à votre espace client... et ne rien manquer d'essentiel.
+                            </p>
+
+                            <form action="{{ path('app_profile_privacy') }}" method="POST">
+                                <div class="mb-4">
+                                    <h6>Pour Foncia uniquement</h6>
+
+                                    <div class="form-check mb-3">
+                                        <input class="form-check-input" type="checkbox" name="foncia_communications"
+                                               id="foncia_communications" {{ user.hasConsent('foncia_communications') ? 'checked' : '' }}>
+                                        <label class="form-check-label" for="foncia_communications">
+                                            <strong>Oui, j'accepte de recevoir</strong> les communications par email et/ou SMS
+                                            <strong>pour m'aider à optimiser mes charges et/ou développer mon patrimoine</strong>
+                                        </label>
+                                    </div>
+
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="foncia_no_communications"
+                                               id="foncia_no_communications" {{ not user.hasConsent('foncia_communications') ? 'checked' : '' }}>
+                                        <label class="form-check-label" for="foncia_no_communications">
+                                            <strong>Non, je ne souhaite pas recevoir</strong> ces communications et
+                                            <strong>renonce à ces conseils et offres</strong>
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <div class="mb-4">
+                                    <h6>Pour les filiales Emeria et ses partenaires de confiance</h6>
+
+                                    <div class="form-check mb-3">
+                                        <input class="form-check-input" type="checkbox" name="partner_communications"
+                                               id="partner_communications" {{ user.hasConsent('partner_communications') ? 'checked' : '' }}>
+                                        <label class="form-check-label" for="partner_communications">
+                                            <strong>Oui, j'accepte de recevoir</strong> ces communications par email et/ou SMS et
+                                            <strong>bénéficier de ces remises et avantages</strong>
+                                        </label>
+                                    </div>
+
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="partner_no_communications"
+                                               id="partner_no_communications" {{ not user.hasConsent('partner_communications') ? 'checked' : '' }}>
+                                        <label class="form-check-label" for="partner_no_communications">
+                                            <strong>Non, je ne souhaite pas recevoir</strong> ces communications et
+                                            <strong>renonce aux offres et remises proposées</strong>
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <div class="d-flex justify-content-end">
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="bi bi-check-circle me-2"></i>
+                                        Enregistrer mes préférences
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+
+    <script>
+        function toggleEditMode() {
+            const fields = ['mobilePhone', 'landlinePhone', 'contactEmail', 'maritalStatus', 'birthDate'];
+            const editActions = document.getElementById('editActions');
+
+            fields.forEach(fieldId => {
+                const field = document.getElementById(fieldId);
+                if (field) {
+                    field.readOnly = false;
+                    field.disabled = false;
+                    field.classList.add('border-primary');
+                }
+            });
+
+            editActions.classList.remove('d-none');
+        }
+
+        function cancelEdit() {
+            location.reload();
+        }
+
+        // Gestion des checkboxes mutuellement exclusives
+        document.addEventListener('DOMContentLoaded', function() {
+            const fonciaYes = document.getElementById('foncia_communications');
+            const fonciaNo = document.getElementById('foncia_no_communications');
+            const partnerYes = document.getElementById('partner_communications');
+            const partnerNo = document.getElementById('partner_no_communications');
+
+            if (fonciaYes && fonciaNo) {
+                fonciaYes.addEventListener('change', function() {
+                    if (this.checked) fonciaNo.checked = false;
+                });
+                fonciaNo.addEventListener('change', function() {
+                    if (this.checked) fonciaYes.checked = false;
+                });
+            }
+
+            if (partnerYes && partnerNo) {
+                partnerYes.addEventListener('change', function() {
+                    if (this.checked) partnerNo.checked = false;
+                });
+                partnerNo.addEventListener('change', function() {
+                    if (this.checked) partnerYes.checked = false;
+                });
+            }
+        });
+    </script>
+{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        .nav-tabs .nav-link {
+            color: var(--bs-secondary);
+            border: none;
+            border-bottom: 3px solid transparent;
+        }
+
+        .nav-tabs .nav-link.active {
+            color: var(--primary-color);
+            border-bottom-color: var(--primary-color);
+            background: none;
+        }
+
+        .payment-option {
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .payment-option:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        .form-check-input:checked {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+    </style>
+{% endblock %}

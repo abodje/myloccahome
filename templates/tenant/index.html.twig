@@ -1,0 +1,244 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Gestion des locataires - MYLOCCA{% endblock %}
+
+{% block page_title %}
+    <h5 class="mb-0">
+        <i class="bi bi-people me-2"></i>
+        Gestion des locataires
+    </h5>
+{% endblock %}
+
+{% block page_actions %}
+    <div class="d-flex gap-2">
+        <a href="{{ path('app_tenant_export') }}" class="btn btn-outline-success btn-sm">
+            <i class="bi bi-download"></i> Exporter CSV
+        </a>
+        <a href="{{ path('app_tenant_new') }}" class="btn btn-primary btn-sm">
+            <i class="bi bi-person-plus me-2"></i>
+            Nouveau locataire
+        </a>
+    </div>
+{% endblock %}
+
+{% block body %}
+    <!-- Statistiques -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h4 class="text-primary">{{ stats.total }}</h4>
+                    <small class="text-muted">Total locataires</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h4 class="text-success">{{ stats.with_active_lease }}</h4>
+                    <small class="text-muted">Avec contrat actif</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h4 class="text-warning">{{ stats.total - stats.with_active_lease }}</h4>
+                    <small class="text-muted">Sans contrat actif</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h4 class="text-info">{{ (stats.with_active_lease / stats.total * 100)|number_format(1) }}%</h4>
+                    <small class="text-muted">Taux d'occupation</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtres et recherche -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-body">
+                    <form method="GET" class="row g-3">
+                        <div class="col-md-4">
+                            <label class="form-label">Recherche</label>
+                            <input type="text" name="search" class="form-control form-control-sm"
+                                   placeholder="Nom, prénom, email..." value="{{ search }}">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Statut</label>
+                            <select name="status" class="form-select form-select-sm">
+                                <option value="">Tous</option>
+                                <option value="actif" {{ current_status == 'actif' ? 'selected' : '' }}>Avec contrat actif</option>
+                                <option value="inactif" {{ current_status == 'inactif' ? 'selected' : '' }}>Sans contrat actif</option>
+                            </select>
+                        </div>
+                        <div class="col-md-5 d-flex align-items-end">
+                            <button type="submit" class="btn btn-outline-primary btn-sm me-2">
+                                <i class="bi bi-search"></i> Rechercher
+                            </button>
+                            <a href="{{ path('app_tenant_index') }}" class="btn btn-outline-secondary btn-sm">
+                                <i class="bi bi-x-circle"></i> Reset
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Liste des locataires -->
+    <div class="card">
+        <div class="card-header" style="background-color: var(--primary-color); color: white;">
+            <div class="row">
+                <div class="col-3"><strong>Locataire</strong></div>
+                <div class="col-2"><strong>Contact</strong></div>
+                <div class="col-2"><strong>Profession</strong></div>
+                <div class="col-2"><strong>Revenus</strong></div>
+                <div class="col-2"><strong>Statut</strong></div>
+                <div class="col-1"><strong>Actions</strong></div>
+            </div>
+        </div>
+        <div class="card-body p-0">
+            {% if tenants|length > 0 %}
+                {% for tenant in tenants %}
+                    <div class="row align-items-center p-3 border-bottom tenant-row" data-tenant-id="{{ tenant.id }}">
+                        <div class="col-3">
+                            <div class="d-flex align-items-center">
+                                <div class="avatar-circle me-3">
+                                    <i class="bi bi-person fs-4"></i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-1">{{ tenant.fullName }}</h6>
+                                    <small class="text-muted">{{ tenant.email }}</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-2">
+                            {% if tenant.phone %}
+                                <small class="text-muted">
+                                    <i class="bi bi-phone me-1"></i>{{ tenant.phone }}
+                                </small>
+                            {% else %}
+                                <small class="text-muted">Non renseigné</small>
+                            {% endif %}
+                        </div>
+                        <div class="col-2">
+                            <small>{{ tenant.profession ?? 'Non renseignée' }}</small>
+                        </div>
+                        <div class="col-2">
+                            {% if tenant.monthlyIncome %}
+                                <strong class="text-success">{{ tenant.monthlyIncome|currency }}</strong>
+                            {% else %}
+                                <small class="text-muted">Non renseigné</small>
+                            {% endif %}
+                        </div>
+                        <div class="col-2">
+                            {% set currentLease = tenant.currentLease %}
+                            {% if currentLease %}
+                                <span class="badge bg-success">Actif</span>
+                                <br><small class="text-muted">{{ currentLease.property.city }}</small>
+                            {% else %}
+                                <span class="badge bg-secondary">Inactif</span>
+                            {% endif %}
+                        </div>
+                        <div class="col-1">
+                            <div class="dropdown">
+                                <button class="btn btn-sm btn-outline-primary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                    <i class="bi bi-three-dots"></i>
+                                </button>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" href="{{ path('app_tenant_show', {id: tenant.id}) }}">
+                                        <i class="bi bi-eye me-2"></i>Voir
+                                    </a></li>
+                                    <li><a class="dropdown-item" href="{{ path('app_tenant_edit', {id: tenant.id}) }}">
+                                        <i class="bi bi-pencil me-2"></i>Modifier
+                                    </a></li>
+                                    <li><a class="dropdown-item" href="{{ path('app_tenant_payments', {id: tenant.id}) }}">
+                                        <i class="bi bi-credit-card me-2"></i>Paiements
+                                    </a></li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><a class="dropdown-item text-danger" href="#" onclick="deleteTenant({{ tenant.id }})">
+                                        <i class="bi bi-trash me-2"></i>Supprimer
+                                    </a></li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="text-center p-5">
+                    <i class="bi bi-people display-1 text-muted"></i>
+                    <h5 class="mt-3 text-muted">Aucun locataire trouvé</h5>
+                    <p class="text-muted">Commencez par ajouter votre premier locataire.</p>
+                    <a href="{{ path('app_tenant_new') }}" class="btn btn-primary">
+                        <i class="bi bi-person-plus me-2"></i>
+                        Ajouter un locataire
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        .tenant-row {
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+
+        .tenant-row:hover {
+            background-color: #f8f9fa;
+        }
+
+        .avatar-circle {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: var(--primary-color);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+    </style>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+
+    <script>
+        function deleteTenant(tenantId) {
+            if (confirm('Êtes-vous sûr de vouloir supprimer ce locataire ?')) {
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = `/locataires/${tenantId}/supprimer`;
+
+                const tokenInput = document.createElement('input');
+                tokenInput.type = 'hidden';
+                tokenInput.name = '_token';
+                tokenInput.value = 'csrf-token-here'; // À remplacer par le vrai token CSRF
+
+                form.appendChild(tokenInput);
+                document.body.appendChild(form);
+                form.submit();
+            }
+        }
+
+        // Clic sur une ligne pour voir les détails
+        document.querySelectorAll('.tenant-row').forEach(row => {
+            row.addEventListener('click', function(e) {
+                if (!e.target.closest('.dropdown')) {
+                    const tenantId = this.dataset.tenantId;
+                    window.location.href = `/locataires/${tenantId}`;
+                }
+            });
+        });
+    </script>
+{% endblock %}

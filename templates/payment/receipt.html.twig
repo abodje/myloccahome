@@ -1,0 +1,172 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Quittance de loyer - {{ payment.lease.tenant.fullName }}{% endblock %}
+
+{% block page_title %}
+    <h5 class="mb-0">
+        <i class="bi bi-receipt me-2"></i>
+        Quittance de loyer
+    </h5>
+{% endblock %}
+
+{% block page_actions %}
+    <div class="d-flex gap-2">
+        <a href="{{ path('app_payment_show', {id: payment.id}) }}" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-arrow-left"></i> Retour
+        </a>
+        <button onclick="window.print()" class="btn btn-primary btn-sm">
+            <i class="bi bi-printer"></i> Imprimer
+        </button>
+    </div>
+{% endblock %}
+
+{% block body %}
+    <div class="receipt-container">
+        <div class="card">
+            <div class="card-body p-5">
+                <!-- En-tête -->
+                <div class="row mb-5">
+                    <div class="col-6">
+                        <h3 class="text-primary">MYLOCCA</h3>
+                        <p class="mb-0">Gestion Locative</p>
+                        <p class="mb-0">123 Avenue de la République</p>
+                        <p class="mb-0">69000 Lyon</p>
+                    </div>
+                    <div class="col-6 text-end">
+                        <h4 class="text-uppercase">Quittance de Loyer</h4>
+                        <p class="mb-0">N° {{ ('000000' ~ payment.id)|slice(-6) }}</p>
+                        <p class="mb-0">{{ payment.paidDate|date('d/m/Y') }}</p>
+                    </div>
+                </div>
+
+                <!-- Informations locataire et propriété -->
+                <div class="row mb-4">
+                    <div class="col-6">
+                        <h6 class="text-uppercase text-muted">Locataire</h6>
+                        <p class="mb-1"><strong>{{ payment.lease.tenant.fullName }}</strong></p>
+                        {% if payment.lease.tenant.address %}
+                            <p class="mb-0">{{ payment.lease.tenant.fullAddress }}</p>
+                        {% endif %}
+                    </div>
+                    <div class="col-6">
+                        <h6 class="text-uppercase text-muted">Propriété</h6>
+                        <p class="mb-1"><strong>{{ payment.lease.property.fullAddress }}</strong></p>
+                        <p class="mb-0">{{ payment.lease.property.propertyType }} - {{ payment.lease.property.rooms }} pièces</p>
+                    </div>
+                </div>
+
+                <!-- Période et montants -->
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <h6 class="text-uppercase text-muted">Détail du paiement</h6>
+                        <table class="table table-bordered">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Période</th>
+                                    <th>Désignation</th>
+                                    <th class="text-end">Montant</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>{{ payment.dueDate|date('m/Y') }}</td>
+                                    <td>{{ payment.type }}</td>
+                                    <td class="text-end">{{ payment.amount|currency }}</td>
+                                </tr>
+                                {% if payment.lease.charges and payment.lease.charges > 0 %}
+                                <tr>
+                                    <td>{{ payment.dueDate|date('m/Y') }}</td>
+                                    <td>Charges locatives</td>
+                                    <td class="text-end">{{ payment.lease.charges|currency }}</td>
+                                </tr>
+                                {% endif %}
+                            </tbody>
+                            <tfoot class="table-light">
+                                <tr>
+                                    <th colspan="2" class="text-end">Total payé :</th>
+                                    <th class="text-end">{{ payment.amount|currency }}</th>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Informations de paiement -->
+                <div class="row mb-4">
+                    <div class="col-6">
+                        <h6 class="text-uppercase text-muted">Mode de paiement</h6>
+                        <p class="mb-0">{{ payment.paymentMethod ?? 'Non spécifié' }}</p>
+                        {% if payment.reference %}
+                            <p class="mb-0">Référence : {{ payment.reference }}</p>
+                        {% endif %}
+                    </div>
+                    <div class="col-6">
+                        <h6 class="text-uppercase text-muted">Date de paiement</h6>
+                        <p class="mb-0">{{ payment.paidDate|date('d/m/Y') }}</p>
+                    </div>
+                </div>
+
+                <!-- Mentions légales -->
+                <div class="row mt-5">
+                    <div class="col-12">
+                        <hr>
+                        <p class="text-muted small text-center">
+                            Cette quittance annule tous les reçus qui auraient pu être donnés précédemment
+                            pour acomptes versés sur la présente location.
+                        </p>
+                        <p class="text-muted small text-center">
+                            Document généré automatiquement le {{ 'now'|date('d/m/Y à H:i') }}
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        @media print {
+            .sidebar,
+            .navbar,
+            .btn,
+            .card-header {
+                display: none !important;
+            }
+
+            .main-content {
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+
+            .receipt-container {
+                margin: 0;
+                padding: 0;
+            }
+
+            .card {
+                border: none !important;
+                box-shadow: none !important;
+            }
+
+            body {
+                background: white !important;
+            }
+        }
+
+        .receipt-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .table th,
+        .table td {
+            padding: 0.75rem;
+        }
+
+        .text-primary {
+            color: var(--primary-color) !important;
+        }
+    </style>
+{% endblock %}

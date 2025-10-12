@@ -1,0 +1,257 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Rapports - Administration - MYLOCCA{% endblock %}
+
+{% block page_title %}
+    <h5 class="mb-0">
+        <i class="bi bi-graph-up me-2"></i>
+        Rapports et statistiques
+    </h5>
+{% endblock %}
+
+{% block page_actions %}
+    <div class="d-flex gap-2">
+        <a href="{{ path('app_admin_dashboard') }}" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-arrow-left"></i> Retour
+        </a>
+        <button class="btn btn-outline-primary btn-sm" onclick="exportReport()">
+            <i class="bi bi-download"></i> Exporter PDF
+        </button>
+    </div>
+{% endblock %}
+
+{% block body %}
+    <!-- Indicateurs clés -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-success text-white text-center">
+                <div class="card-body">
+                    <i class="bi bi-cash-coin fs-1 mb-2"></i>
+                    <h4>{{ reports.monthly_revenue|currency }}</h4>
+                    <small>Revenus du mois</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white text-center">
+                <div class="card-body">
+                    <i class="bi bi-graph-up fs-1 mb-2"></i>
+                    <h4>{{ reports.yearly_revenue|currency }}</h4>
+                    <small>Revenus annuels</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-white text-center">
+                <div class="card-body">
+                    <i class="bi bi-tools fs-1 mb-2"></i>
+                    <h4>{{ reports.maintenance_costs|currency }}</h4>
+                    <small>Coûts maintenance</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-primary text-white text-center">
+                <div class="card-body">
+                    <i class="bi bi-percent fs-1 mb-2"></i>
+                    <h4>{{ reports.occupancy_rate|number_format(1) }}%</h4>
+                    <small>Taux d'occupation</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Comparaison mensuelle -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="bi bi-bar-chart me-2"></i>
+                        Comparaison mensuelle
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <span>Revenus ce mois</span>
+                        <strong class="text-success">{{ reports.monthly_revenue|currency }}</strong>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <span>Revenus mois dernier</span>
+                        <strong class="text-info">{{ reports.last_month_revenue|currency }}</strong>
+                    </div>
+                    <hr>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span>Évolution</span>
+                        {% set evolution = reports.monthly_revenue - reports.last_month_revenue %}
+                        <strong class="{{ evolution >= 0 ? 'text-success' : 'text-danger' }}">
+                            {{ evolution >= 0 ? '+' : '' }}{{ evolution|currency }}
+                            ({{ evolution != 0 ? ((evolution / reports.last_month_revenue) * 100)|number_format(1) : '0' }}%)
+                        </strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="bi bi-pie-chart me-2"></i>
+                        Répartition des coûts
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span>Maintenance</span>
+                        <span class="badge bg-warning">{{ reports.maintenance_costs|currency }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span>Frais de gestion</span>
+                        <span class="badge bg-info">{{ (reports.monthly_revenue * 0.08)|currency }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span>Assurances</span>
+                        <span class="badge bg-secondary">{{ (reports.monthly_revenue * 0.02)|currency }}</span>
+                    </div>
+                    <hr>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <strong>Bénéfice net</strong>
+                        {% set net_profit = reports.monthly_revenue - reports.maintenance_costs - (reports.monthly_revenue * 0.1) %}
+                        <strong class="text-success">{{ net_profit|currency }}</strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Graphiques détaillés -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="bi bi-graph-up me-2"></i>
+                        Évolution des revenus (12 derniers mois)
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <canvas id="revenueChart" height="100"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tableaux détaillés -->
+    <div class="row mt-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="bi bi-list-ul me-2"></i>
+                        Top 5 des propriétés les plus rentables
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="list-group list-group-flush">
+                        <div class="list-group-item d-flex justify-content-between">
+                            <span>1-9 Avenue de Limburg</span>
+                            <strong class="text-success">{{ 654.69|currency }}</strong>
+                        </div>
+                        <div class="list-group-item d-flex justify-content-between">
+                            <span>12 Boulevard des Belges</span>
+                            <strong class="text-success">{{ 1200|currency }}</strong>
+                        </div>
+                        <div class="list-group-item d-flex justify-content-between">
+                            <span>8 Place Bellecour</span>
+                            <strong class="text-success">{{ 2500|currency }}</strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        Alertes et notifications
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-warning d-flex align-items-center">
+                        <i class="bi bi-clock me-2"></i>
+                        <div>
+                            <strong>3 contrats</strong> expirent dans les 60 prochains jours
+                        </div>
+                    </div>
+                    <div class="alert alert-danger d-flex align-items-center">
+                        <i class="bi bi-exclamation-circle me-2"></i>
+                        <div>
+                            <strong>2 paiements</strong> sont en retard
+                        </div>
+                    </div>
+                    <div class="alert alert-info d-flex align-items-center">
+                        <i class="bi bi-tools me-2"></i>
+                        <div>
+                            <strong>1 demande urgente</strong> de maintenance
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Graphique des revenus (données simulées)
+            const ctx = document.getElementById('revenueChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Jun', 'Jul', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc'],
+                    datasets: [{
+                        label: 'Revenus mensuels',
+                        data: [2800, 3200, 3100, 3400, 3300, 3500, 3600, 3400, 3700, 3800, 3900, 4000],
+                        borderColor: '#198754',
+                        backgroundColor: 'rgba(25, 135, 84, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Évolution des revenus locatifs'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return value.toLocaleString('fr-FR') + ' {{ ''|currency_symbol }}';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        });
+
+        function exportReport() {
+            // Ici vous pourriez implémenter l'export PDF
+            alert('Export PDF en cours de développement...');
+        }
+    </script>
+{% endblock %}

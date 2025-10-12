@@ -1,0 +1,186 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Nouvel utilisateur - Administration{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>➕ Créer un nouvel utilisateur</h2>
+                <a href="{{ path('app_admin_users') }}" class="btn btn-secondary">
+                    <i class="bi bi-arrow-left"></i> Retour
+                </a>
+            </div>
+
+            <div class="row">
+                <div class="col-md-8">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">Informations de l'utilisateur</h5>
+                        </div>
+                        <div class="card-body">
+                            <form method="POST">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="firstName" class="form-label">Prénom <span class="text-danger">*</span></label>
+                                            <input type="text" name="firstName" id="firstName" class="form-control" required>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="lastName" class="form-label">Nom <span class="text-danger">*</span></label>
+                                            <input type="text" name="lastName" id="lastName" class="form-control" required>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="email" class="form-label">Email <span class="text-danger">*</span></label>
+                                            <input type="email" name="email" id="email" class="form-control" required>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="phone" class="form-label">Téléphone</label>
+                                            <input type="tel" name="phone" id="phone" class="form-control">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="password" class="form-label">Mot de passe <span class="text-danger">*</span></label>
+                                    <input type="password" name="password" id="password" class="form-control"
+                                           required minlength="8">
+                                    <div class="form-text">Minimum 8 caractères</div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="address" class="form-label">Adresse</label>
+                                    <input type="text" name="address" id="address" class="form-control">
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-8">
+                                        <div class="mb-3">
+                                            <label for="city" class="form-label">Ville</label>
+                                            <input type="text" name="city" id="city" class="form-control">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="mb-3">
+                                            <label for="postalCode" class="form-label">Code postal</label>
+                                            <input type="text" name="postalCode" id="postalCode" class="form-control">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label">Rôles <span class="text-danger">*</span></label>
+                                    <div>
+                                        <div class="form-check">
+                                            <input type="checkbox" name="roles[]" value="ROLE_ADMIN"
+                                                   id="role_admin" class="form-check-input">
+                                            <label for="role_admin" class="form-check-label">
+                                                <span class="badge bg-danger">Administrateur</span>
+                                                - Accès complet à tout
+                                            </label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input type="checkbox" name="roles[]" value="ROLE_MANAGER"
+                                                   id="role_manager" class="form-check-input">
+                                            <label for="role_manager" class="form-check-label">
+                                                <span class="badge bg-warning">Gestionnaire</span>
+                                                - Gestion de ses biens uniquement
+                                            </label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input type="checkbox" name="roles[]" value="ROLE_TENANT"
+                                                   id="role_tenant" class="form-check-input" checked>
+                                            <label for="role_tenant" class="form-check-label">
+                                                <span class="badge bg-info">Locataire</span>
+                                                - Accès à ses informations uniquement
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="mb-3 form-check">
+                                    <input type="checkbox" name="isActive" id="isActive"
+                                           class="form-check-input" checked>
+                                    <label for="isActive" class="form-check-label">
+                                        Compte actif
+                                    </label>
+                                </div>
+
+                                <div class="d-flex gap-2">
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="bi bi-check-circle"></i> Créer l'utilisateur
+                                    </button>
+                                    <a href="{{ path('app_admin_users') }}" class="btn btn-secondary">
+                                        <i class="bi bi-x-circle"></i> Annuler
+                                    </a>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">💡 Rôles et permissions</h5>
+                        </div>
+                        <div class="card-body">
+                            <h6 class="text-danger">👑 ADMINISTRATEUR</h6>
+                            <ul class="small">
+                                <li>Accès complet à tout</li>
+                                <li>Gestion des paramètres</li>
+                                <li>Gestion des utilisateurs</li>
+                                <li>Tous les biens et locataires</li>
+                            </ul>
+
+                            <hr>
+
+                            <h6 class="text-warning">🏢 GESTIONNAIRE</h6>
+                            <ul class="small">
+                                <li>Gestion de ses biens uniquement</li>
+                                <li>Gestion de ses locataires</li>
+                                <li>Création de contrats</li>
+                                <li>Suivi des paiements</li>
+                            </ul>
+
+                            <hr>
+
+                            <h6 class="text-info">🏠 LOCATAIRE</h6>
+                            <ul class="small">
+                                <li>Consultation de son bail</li>
+                                <li>Historique de ses paiements</li>
+                                <li>Création de demandes</li>
+                                <li>Ses documents uniquement</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="card mt-3">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">📝 Conseils</h5>
+                        </div>
+                        <div class="card-body small">
+                            <ul>
+                                <li>Un utilisateur peut avoir plusieurs rôles</li>
+                                <li>Utilisez un email unique par utilisateur</li>
+                                <li>Le mot de passe doit faire au moins 8 caractères</li>
+                                <li>Liez les utilisateurs aux entités Tenant/Owner après création</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,260 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Paramètres de paiement - Administration{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>💳 Paramètres de paiement</h2>
+                <a href="{{ path('app_admin_settings_index') }}" class="btn btn-secondary">
+                    <i class="bi bi-arrow-left"></i> Retour
+                </a>
+            </div>
+
+            <div class="row">
+                <div class="col-md-8">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">Configuration des paiements</h5>
+                        </div>
+                        <div class="card-body">
+                            <form method="POST" action="{{ path('app_admin_payment_settings') }}">
+                                <div class="mb-4">
+                                    <h6 class="border-bottom pb-2">Échéances de loyer</h6>
+
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label for="default_rent_due_day" class="form-label">
+                                                    Jour d'échéance par défaut
+                                                </label>
+                                                <select name="default_rent_due_day" id="default_rent_due_day" class="form-select">
+                                                    {% for day in 1..28 %}
+                                                        <option value="{{ day }}" {{ settings.default_rent_due_day == day ? 'selected' : '' }}>
+                                                            {{ day }} du mois
+                                                        </option>
+                                                    {% endfor %}
+                                                </select>
+                                                <div class="form-text">
+                                                    Jour du mois où le loyer est dû par défaut
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label for="payment_reminder_days" class="form-label">
+                                                    Rappel de paiement après (jours)
+                                                </label>
+                                                <input type="number" name="payment_reminder_days"
+                                                       id="payment_reminder_days" class="form-control"
+                                                       value="{{ settings.payment_reminder_days }}"
+                                                       min="1" max="30">
+                                                <div class="form-text">
+                                                    Nombre de jours après l'échéance pour envoyer un rappel
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <div class="form-check form-switch">
+                                            <input type="checkbox" name="auto_generate_rent"
+                                                   id="auto_generate_rent" class="form-check-input"
+                                                   {{ settings.auto_generate_rent ? 'checked' : '' }}>
+                                            <label for="auto_generate_rent" class="form-check-label">
+                                                Générer automatiquement les loyers mensuels
+                                            </label>
+                                        </div>
+                                        <div class="form-text">
+                                            Les échéances de loyer seront créées automatiquement chaque mois
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="mb-4">
+                                    <h6 class="border-bottom pb-2">Pénalités et frais</h6>
+
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label for="late_fee_rate" class="form-label">
+                                                    Taux de pénalité de retard (%)
+                                                </label>
+                                                <div class="input-group">
+                                                    <input type="number" name="late_fee_rate"
+                                                           id="late_fee_rate" class="form-control"
+                                                           value="{{ settings.late_fee_rate }}"
+                                                           min="0" max="100" step="0.01">
+                                                    <span class="input-group-text">%</span>
+                                                </div>
+                                                <div class="form-text">
+                                                    Pourcentage appliqué en cas de retard de paiement
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label for="minimum_payment_amount" class="form-label">
+                                                    Montant minimum de paiement
+                                                </label>
+                                                <div class="input-group">
+                                                    <input type="number" name="minimum_payment_amount"
+                                                           id="minimum_payment_amount" class="form-control"
+                                                           value="{{ settings.minimum_payment_amount }}"
+                                                           min="0" step="0.01">
+                                                    <span class="input-group-text">{{ ''|currency_symbol }}</span>
+                                                </div>
+                                                <div class="form-text">
+                                                    Montant minimum pour un paiement partiel
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="mb-4">
+                                    <h6 class="border-bottom pb-2">Options de paiement</h6>
+
+                                    <div class="mb-3">
+                                        <div class="form-check form-switch">
+                                            <input type="checkbox" name="allow_partial_payments"
+                                                   id="allow_partial_payments" class="form-check-input"
+                                                   {{ settings.allow_partial_payments ? 'checked' : '' }}>
+                                            <label for="allow_partial_payments" class="form-check-label">
+                                                Autoriser les paiements partiels
+                                            </label>
+                                        </div>
+                                        <div class="form-text">
+                                            Permet aux locataires de payer leur loyer en plusieurs fois
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="mb-4">
+                                    <h6 class="border-bottom pb-2">Méthodes de paiement acceptées</h6>
+
+                                    <div class="row">
+                                        <div class="col-md-4">
+                                            <div class="form-check">
+                                                <input type="checkbox" name="payment_method_bank_transfer"
+                                                       id="payment_method_bank_transfer" class="form-check-input"
+                                                       checked disabled>
+                                                <label for="payment_method_bank_transfer" class="form-check-label">
+                                                    Virement bancaire
+                                                </label>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="form-check">
+                                                <input type="checkbox" name="payment_method_direct_debit"
+                                                       id="payment_method_direct_debit" class="form-check-input"
+                                                       checked>
+                                                <label for="payment_method_direct_debit" class="form-check-label">
+                                                    Prélèvement automatique
+                                                </label>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="form-check">
+                                                <input type="checkbox" name="payment_method_check"
+                                                       id="payment_method_check" class="form-check-input"
+                                                       checked>
+                                                <label for="payment_method_check" class="form-check-label">
+                                                    Chèque
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="d-flex gap-2">
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="bi bi-check-circle"></i> Enregistrer les modifications
+                                    </button>
+                                    <a href="{{ path('app_admin_settings_index') }}" class="btn btn-secondary">
+                                        <i class="bi bi-x-circle"></i> Annuler
+                                    </a>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">💡 Informations</h5>
+                        </div>
+                        <div class="card-body">
+                            <h6>Paramètres actuels</h6>
+                            <ul class="list-unstyled">
+                                <li class="mb-2">
+                                    <i class="bi bi-calendar-check text-primary"></i>
+                                    <strong>Échéance:</strong> Le {{ settings.default_rent_due_day }} du mois
+                                </li>
+                                <li class="mb-2">
+                                    <i class="bi bi-bell text-warning"></i>
+                                    <strong>Rappel:</strong> Après {{ settings.payment_reminder_days }} jours
+                                </li>
+                                <li class="mb-2">
+                                    <i class="bi bi-percent text-danger"></i>
+                                    <strong>Pénalité:</strong> {{ settings.late_fee_rate }}%
+                                </li>
+                                <li class="mb-2">
+                                    <i class="bi bi-cash text-success"></i>
+                                    <strong>Minimum:</strong> {{ settings.minimum_payment_amount|currency }}
+                                </li>
+                            </ul>
+
+                            <hr>
+
+                            <h6>Conseils</h6>
+                            <ul class="small">
+                                <li>Définissez une échéance cohérente (généralement le 1er ou 5 du mois)</li>
+                                <li>Les rappels automatiques réduisent les retards</li>
+                                <li>Les pénalités doivent être conformes à la législation locale</li>
+                                <li>Les paiements partiels peuvent faciliter la gestion pour les locataires</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="card mt-3">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">📊 Statistiques</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Taux de paiement à temps:</span>
+                                <strong class="text-success">85%</strong>
+                            </div>
+                            <div class="progress mb-3" style="height: 5px;">
+                                <div class="progress-bar bg-success" style="width: 85%"></div>
+                            </div>
+
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Paiements en retard:</span>
+                                <strong class="text-warning">12%</strong>
+                            </div>
+                            <div class="progress mb-3" style="height: 5px;">
+                                <div class="progress-bar bg-warning" style="width: 12%"></div>
+                            </div>
+
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Impayés:</span>
+                                <strong class="text-danger">3%</strong>
+                            </div>
+                            <div class="progress" style="height: 5px;">
+                                <div class="progress-bar bg-danger" style="width: 3%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
