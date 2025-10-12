@@ -18,13 +18,48 @@ class AccountingController extends AbstractController
     #[Route('/', name: 'app_accounting_index', methods: ['GET'])]
     public function index(AccountingEntryRepository $accountingRepository, Request $request): Response
     {
+        /** @var \App\Entity\User|null $user */
+        $user = $this->getUser();
         $type = $request->query->get('type');
         $category = $request->query->get('category');
         $year = $request->query->get('year', date('Y'));
         $month = $request->query->get('month');
 
-        $entries = $accountingRepository->findWithFilters($type, $category, $year, $month);
-        $stats = $accountingRepository->getAccountingStatistics();
+        // Filtrer les écritures selon le rôle de l'utilisateur
+        if ($user && in_array('ROLE_TENANT', $user->getRoles())) {
+            // Si l'utilisateur est un locataire, ne montrer que ses écritures
+            $tenant = $user->getTenant();
+            if ($tenant) {
+                $entries = $accountingRepository->findByTenantWithFilters($tenant->getId(), $type, $category, $year, $month);
+                $stats = $accountingRepository->getTenantStatistics($tenant->getId());
+            } else {
+                $entries = [];
+                $stats = [
+                    'total_credits' => 0,
+                    'total_debits' => 0,
+                    'balance' => 0,
+                    'current_month_credits' => 0,
+                    'current_month_debits' => 0,
+                ];
+            }
+        } elseif ($user && in_array('ROLE_MANAGER', $user->getRoles())) {
+            // Si l'utilisateur est un gestionnaire, montrer les écritures de ses propriétés
+            $owner = $user->getOwner();
+            if ($owner) {
+                $entries = $accountingRepository->findByManagerWithFilters($owner->getId(), $type, $category, $year, $month);
+                $stats = $accountingRepository->getManagerStatistics($owner->getId());
+            } else {
+                $entries = $accountingRepository->findWithFilters($type, $category, $year, $month);
+                $stats = $accountingRepository->getAccountingStatistics();
+            }
+        } else {
+            // Pour les admins, montrer toutes les écritures
+            $entries = $accountingRepository->findWithFilters($type, $category, $year, $month);
+            $stats = $accountingRepository->getAccountingStatistics();
+        }
+
+        // Passer une variable pour indiquer si c'est la vue locataire
+        $isTenantView = $user && in_array('ROLE_TENANT', $user->getRoles());
 
         return $this->render('accounting/index.html.twig', [
             'entries' => $entries,
@@ -33,6 +68,7 @@ class AccountingController extends AbstractController
             'current_category' => $category,
             'current_year' => $year,
             'current_month' => $month,
+            'is_tenant_view' => $isTenantView,
         ]);
     }
 

@@ -14,10 +14,12 @@
         <a href="{{ path('app_accounting_export', {format: 'csv'}) }}" class="btn btn-outline-primary btn-sm">
             <i class="bi bi-download"></i> Exporter
         </a>
+        {% if not is_tenant_view %}
         <a href="{{ path('app_accounting_new') }}" class="btn btn-primary btn-sm">
             <i class="bi bi-plus-circle me-2"></i>
             Nouvelle écriture
         </a>
+        {% endif %}
     </div>
 {% endblock %}
 
@@ -28,8 +30,8 @@
             <div class="card bg-light">
                 <div class="card-body text-center">
                     <h6 class="text-muted mb-2">Solde actuel :</h6>
-                    <h2 class="mb-0 {{ stats.current_balance >= 0 ? 'text-success' : 'text-danger' }}">
-                        {{ stats.current_balance|currency }}
+                    <h2 class="mb-0 {{ (stats.balance ?? stats.current_balance ?? 0) >= 0 ? 'text-success' : 'text-danger' }}">
+                        {{ (stats.balance ?? stats.current_balance ?? 0)|currency }}
                     </h2>
                 </div>
             </div>
@@ -155,7 +157,7 @@
                 <div class="card text-center">
                     <div class="card-body">
                         <h6 class="text-muted">Crédits du mois</h6>
-                        <h4 class="text-success">+{{ stats.monthly_credits|currency }}</h4>
+                        <h4 class="text-success">+{{ (stats.current_month_credits ?? stats.monthly_credits ?? 0)|currency }}</h4>
                     </div>
                 </div>
             </div>
@@ -163,7 +165,7 @@
                 <div class="card text-center">
                     <div class="card-body">
                         <h6 class="text-muted">Débits du mois</h6>
-                        <h4 class="text-danger">-{{ stats.monthly_debits|currency }}</h4>
+                        <h4 class="text-danger">-{{ (stats.current_month_debits ?? stats.monthly_debits ?? 0)|currency }}</h4>
                     </div>
                 </div>
             </div>
@@ -171,8 +173,11 @@
                 <div class="card text-center">
                     <div class="card-body">
                         <h6 class="text-muted">Résultat du mois</h6>
-                        <h4 class="{{ stats.monthly_net >= 0 ? 'text-success' : 'text-danger' }}">
-                            {{ stats.monthly_net >= 0 ? '+' : '' }}{{ stats.monthly_net|currency }}
+                        {% set monthlyCredits = stats.current_month_credits ?? stats.monthly_credits ?? 0 %}
+                        {% set monthlyDebits = stats.current_month_debits ?? stats.monthly_debits ?? 0 %}
+                        {% set monthlyNet = monthlyCredits - monthlyDebits %}
+                        <h4 class="{{ monthlyNet >= 0 ? 'text-success' : 'text-danger' }}">
+                            {{ monthlyNet >= 0 ? '+' : '' }}{{ monthlyNet|currency }}
                         </h4>
                     </div>
                 </div>

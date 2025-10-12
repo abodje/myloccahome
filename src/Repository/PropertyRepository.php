@@ -178,4 +178,65 @@ class PropertyRepository extends ServiceEntityRepository
             'occupancy_rate' => $total > 0 ? round(($occupied / $total) * 100, 2) : 0
         ];
     }
+
+    /**
+     * Trouve les propriétés louées par un locataire avec filtres
+     */
+    public function findByTenantWithFilters(int $tenantId, ?string $search = null, ?string $status = null, ?string $type = null): array
+    {
+        $qb = $this->createQueryBuilder('p')
+            ->join('p.leases', 'l')
+            ->where('l.tenant = :tenantId')
+            ->andWhere('l.status = :leaseStatus')
+            ->setParameter('tenantId', $tenantId)
+            ->setParameter('leaseStatus', 'active');
+
+        if ($search) {
+            $qb->andWhere('p.address LIKE :search OR p.city LIKE :search')
+               ->setParameter('search', '%' . $search . '%');
+        }
+
+        if ($status) {
+            $qb->andWhere('p.status = :status')
+               ->setParameter('status', $status);
+        }
+
+        if ($type) {
+            $qb->andWhere('p.propertyType = :type')
+               ->setParameter('type', $type);
+        }
+
+        return $qb->orderBy('p.createdAt', 'DESC')
+                  ->getQuery()
+                  ->getResult();
+    }
+
+    /**
+     * Trouve les propriétés d'un propriétaire avec filtres
+     */
+    public function findByOwnerWithFilters(int $ownerId, ?string $search = null, ?string $status = null, ?string $type = null): array
+    {
+        $qb = $this->createQueryBuilder('p')
+            ->where('p.owner = :ownerId')
+            ->setParameter('ownerId', $ownerId);
+
+        if ($search) {
+            $qb->andWhere('p.address LIKE :search OR p.city LIKE :search')
+               ->setParameter('search', '%' . $search . '%');
+        }
+
+        if ($status) {
+            $qb->andWhere('p.status = :status')
+               ->setParameter('status', $status);
+        }
+
+        if ($type) {
+            $qb->andWhere('p.propertyType = :type')
+               ->setParameter('type', $type);
+        }
+
+        return $qb->orderBy('p.createdAt', 'DESC')
+                  ->getQuery()
+                  ->getResult();
+    }
 }

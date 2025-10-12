@@ -8,6 +8,7 @@ use App\Form\TenantType;
 use App\Repository\TenantRepository;
 use App\Repository\LeaseRepository;
 use App\Repository\PaymentRepository;
+use App\Repository\DocumentRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -194,13 +195,6 @@ class TenantController extends AbstractController
         ]);
     }
 
-    #[Route('/{id}/documents', name: 'app_tenant_documents', methods: ['GET'])]
-    public function documents(Tenant $tenant): Response
-    {
-        return $this->render('tenant/documents.html.twig', [
-            'tenant' => $tenant,
-        ]);
-    }
 
     #[Route('/recherche', name: 'app_tenant_search', methods: ['GET'])]
     public function search(Request $request, TenantRepository $tenantRepository): Response
@@ -311,5 +305,70 @@ class TenantController extends AbstractController
         $this->addFlash('info', "N'oubliez pas de communiquer ces identifiants au locataire de manière sécurisée.");
 
         return $this->redirectToRoute('app_tenant_show', ['id' => $tenant->getId()]);
+    }
+
+    #[Route('/{id}/documents', name: 'app_tenant_documents', methods: ['GET'])]
+    public function documents(Tenant $tenant, DocumentRepository $documentRepository): Response
+    {
+        // Récupérer les documents du locataire
+        $tenantDocuments = $documentRepository->findByTenant($tenant->getId());
+
+        // Organiser par type
+        $documentsByType = [
+            'Assurance' => [],
+            'Avis d\'échéance' => [],
+            'Bail' => [],
+            'Diagnostics' => [],
+            'OK' => [],
+        ];
+
+        foreach ($tenantDocuments as $document) {
+            $type = $document->getType();
+
+            // Grouper "Bail" et "Contrat de location" ensemble
+            if ($type === 'Bail' || $type === 'Contrat de location') {
+                $type = 'Bail';
+            }
+            // Grouper "Conseils" sous "OK"
+            elseif ($type === 'Conseils') {
+                $type = 'OK';
+            }
+
+            if (isset($documentsByType[$type])) {
+                $documentsByType[$type][] = $document;
+            }
+        }
+
+        // Calculer les statistiques
+        $stats = [
+            'total' => count($tenantDocuments),
+            'archived' => 0,
+            'expiring_soon' => 0,
+            'expired' => 0
+        ];
+
+        foreach ($tenantDocuments as $document) {
+            if ($document->isArchived()) {
+                $stats['archived']++;
+            }
+
+            $expirationDate = $document->getExpirationDate();
+            if ($expirationDate) {
+                $now = new \DateTime();
+                $in30Days = new \DateTime('+30 days');
+
+                if ($expirationDate <= $in30Days && $expirationDate > $now) {
+                    $stats['expiring_soon']++;
+                } elseif ($expirationDate <= $now) {
+                    $stats['expired']++;
+                }
+            }
+        }
+
+        return $this->render('tenant/documents.html.twig', [
+            'tenant' => $tenant,
+            'documents_by_type' => $documentsByType,
+            'stats' => $stats,
+        ]);
     }
 }

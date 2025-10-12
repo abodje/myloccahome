@@ -19,31 +19,98 @@ class DocumentController extends AbstractController
     #[Route('/', name: 'app_document_index', methods: ['GET'])]
     public function index(DocumentRepository $documentRepository): Response
     {
-        // Organiser les documents par type
+        $user = $this->getUser();
+        $documentsByType = [];
+
+        // Initialiser toutes les catégories
         $documentsByType = [
-            'Assurance' => $documentRepository->findByType('Assurance'),
-            'Avis d\'échéance' => $documentRepository->findByType('Avis d\'échéance'),
-            'Bail' => array_merge(
-                $documentRepository->findByType('Bail'),
-                $documentRepository->findByType('Contrat de location')
-            ),
-            'Diagnostics' => $documentRepository->findByType('Diagnostics'),
-            'OK' => $documentRepository->findByType('Conseils'),
+            'Assurance' => [],
+            'Avis d\'échéance' => [],
+            'Bail' => [],
+            'Diagnostics' => [],
+            'OK' => [],
         ];
 
-        // Calculer les statistiques
-        $stats = $documentRepository->getStatistics();
+        // Filtrer les documents selon le rôle de l'utilisateur
+        if ($user && in_array('ROLE_TENANT', $user->getRoles())) {
+            // Si l'utilisateur est un locataire, ne montrer que ses documents
+            $tenant = $user->getTenant();
+            if ($tenant) {
+                $tenantDocuments = $documentRepository->findByTenant($tenant->getId());
+
+                // Organiser par type
+                foreach ($tenantDocuments as $document) {
+                    $type = $document->getType();
+
+                    // Grouper "Bail" et "Contrat de location" ensemble
+                    if ($type === 'Bail' || $type === 'Contrat de location') {
+                        $type = 'Bail';
+                    }
+                    // Grouper "Conseils" sous "OK"
+                    elseif ($type === 'Conseils') {
+                        $type = 'OK';
+                    }
+
+                    if (isset($documentsByType[$type])) {
+                        $documentsByType[$type][] = $document;
+                    }
+                }
+            }
+        } else {
+            // Pour les admins/managers, remplir avec tous les documents
+            $documentsByType['Assurance'] = $documentRepository->findByType('Assurance');
+            $documentsByType['Avis d\'échéance'] = $documentRepository->findByType('Avis d\'échéance');
+            $documentsByType['Bail'] = array_merge(
+                $documentRepository->findByType('Bail'),
+                $documentRepository->findByType('Contrat de location')
+            );
+            $documentsByType['Diagnostics'] = $documentRepository->findByType('Diagnostics');
+            $documentsByType['OK'] = $documentRepository->findByType('Conseils');
+        }
+
+        // Calculer les statistiques (filtrées selon le rôle)
+        $stats = $this->calculateFilteredStats($documentRepository, $user);
 
         return $this->render('document/index.html.twig', [
             'documents_by_type' => $documentsByType,
             'stats' => $stats,
+            'is_tenant_view' => $user && in_array('ROLE_TENANT', $user->getRoles()),
         ]);
     }
 
     #[Route('/type/{type}', name: 'app_document_by_type', methods: ['GET'])]
     public function byType(string $type, DocumentRepository $documentRepository): Response
     {
-        $documents = $documentRepository->findByType($type);
+        $user = $this->getUser();
+        $documents = [];
+
+        // Filtrer selon le rôle
+        if ($user && in_array('ROLE_TENANT', $user->getRoles())) {
+            // Pour les locataires, filtrer par type ET par tenant
+            $tenant = $user->getTenant();
+            if ($tenant) {
+                $allDocuments = $documentRepository->findByTenant($tenant->getId());
+                foreach ($allDocuments as $document) {
+                    $documentType = $document->getType();
+                    // Grouper "Bail" et "Contrat de location"
+                    if (($documentType === 'Bail' || $documentType === 'Contrat de location') && $type === 'Bail') {
+                        $documents[] = $document;
+                    } elseif ($documentType === $type) {
+                        $documents[] = $document;
+                    }
+                }
+            }
+        } else {
+            // Pour les admins/managers, montrer tous les documents du type
+            if ($type === 'Bail') {
+                $documents = array_merge(
+                    $documentRepository->findByType('Bail'),
+                    $documentRepository->findByType('Contrat de location')
+                );
+            } else {
+                $documents = $documentRepository->findByType($type);
+            }
+        }
 
         return $this->render('document/by_type.html.twig', [
             'documents' => $documents,
@@ -161,9 +228,26 @@ class DocumentController extends AbstractController
     {
         $query = $request->query->get('q', '');
         $documents = [];
+        $user = $this->getUser();
 
         if ($query) {
-            $documents = $documentRepository->search($query);
+            if ($user && in_array('ROLE_TENANT', $user->getRoles())) {
+                // Pour les locataires, filtrer par tenant ET par recherche
+                $tenant = $user->getTenant();
+                if ($tenant) {
+                    $allDocuments = $documentRepository->findByTenant($tenant->getId());
+                    foreach ($allDocuments as $document) {
+                        if (stripos($document->getName(), $query) !== false ||
+                            stripos($document->getOriginalFileName(), $query) !== false ||
+                            stripos($document->getDescription(), $query) !== false) {
+                            $documents[] = $document;
+                        }
+                    }
+                }
+            } else {
+                // Pour les admins/managers, recherche globale
+                $documents = $documentRepository->search($query);
+            }
         }
 
         return $this->render('document/search.html.twig', [
@@ -175,12 +259,82 @@ class DocumentController extends AbstractController
     #[Route('/expires', name: 'app_document_expiring', methods: ['GET'])]
     public function expiring(DocumentRepository $documentRepository): Response
     {
-        $expiringSoon = $documentRepository->findExpiringSoon();
-        $expired = $documentRepository->findExpired();
+        $user = $this->getUser();
+        $expiringSoon = [];
+        $expired = [];
+
+        if ($user && in_array('ROLE_TENANT', $user->getRoles())) {
+            // Pour les locataires, filtrer par tenant
+            $tenant = $user->getTenant();
+            if ($tenant) {
+                $allDocuments = $documentRepository->findByTenant($tenant->getId());
+                $now = new \DateTime();
+                $in30Days = new \DateTime('+30 days');
+
+                foreach ($allDocuments as $document) {
+                    $expirationDate = $document->getExpirationDate();
+                    if ($expirationDate) {
+                        if ($expirationDate <= $in30Days && $expirationDate > $now) {
+                            $expiringSoon[] = $document;
+                        } elseif ($expirationDate <= $now) {
+                            $expired[] = $document;
+                        }
+                    }
+                }
+            }
+        } else {
+            // Pour les admins/managers, montrer tous les documents
+            $expiringSoon = $documentRepository->findExpiringSoon();
+            $expired = $documentRepository->findExpired();
+        }
 
         return $this->render('document/expiring.html.twig', [
             'expiring_soon' => $expiringSoon,
             'expired' => $expired,
         ]);
+    }
+
+    /**
+     * Calcule les statistiques filtrées selon le rôle de l'utilisateur
+     */
+    private function calculateFilteredStats(DocumentRepository $documentRepository, $user): array
+    {
+        if ($user && in_array('ROLE_TENANT', $user->getRoles())) {
+            // Pour les locataires, calculer les stats sur leurs documents seulement
+            $tenant = $user->getTenant();
+            if ($tenant) {
+                $tenantDocuments = $documentRepository->findByTenant($tenant->getId());
+
+                $stats = [
+                    'total' => count($tenantDocuments),
+                    'archived' => 0,
+                    'expiring_soon' => 0,
+                    'expired' => 0
+                ];
+
+                foreach ($tenantDocuments as $document) {
+                    if ($document->isArchived()) {
+                        $stats['archived']++;
+                    }
+
+                    $expirationDate = $document->getExpirationDate();
+                    if ($expirationDate) {
+                        $now = new \DateTime();
+                        $in30Days = new \DateTime('+30 days');
+
+                        if ($expirationDate <= $in30Days && $expirationDate > $now) {
+                            $stats['expiring_soon']++;
+                        } elseif ($expirationDate <= $now) {
+                            $stats['expired']++;
+                        }
+                    }
+                }
+
+                return $stats;
+            }
+        }
+
+        // Pour les admins/managers, retourner les stats globales
+        return $documentRepository->getStatistics();
     }
 }

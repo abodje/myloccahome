@@ -21,22 +21,32 @@ class MaintenanceRequestType extends AbstractType
 {
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
+        $isTenantView = $options['is_tenant_view'] ?? false;
+        $tenantProperties = $options['tenant_properties'] ?? [];
+
         $builder
             ->add('property', EntityType::class, [
                 'class' => Property::class,
                 'choice_label' => 'fullAddress',
                 'label' => 'Propriété',
                 'placeholder' => 'Sélectionner une propriété',
+                'choices' => $isTenantView ? $tenantProperties : null,
                 'attr' => ['class' => 'form-select']
-            ])
-            ->add('tenant', EntityType::class, [
+            ]);
+
+        // Le champ tenant n'est affiché que pour les gestionnaires/admins
+        if (!$isTenantView) {
+            $builder->add('tenant', EntityType::class, [
                 'class' => Tenant::class,
                 'choice_label' => 'fullName',
                 'label' => 'Locataire',
                 'placeholder' => 'Sélectionner un locataire',
                 'required' => false,
                 'attr' => ['class' => 'form-select']
-            ])
+            ]);
+        }
+
+        $builder
             ->add('title', TextType::class, [
                 'label' => 'Titre de la demande',
                 'attr' => ['class' => 'form-control']
@@ -136,6 +146,8 @@ class MaintenanceRequestType extends AbstractType
     {
         $resolver->setDefaults([
             'data_class' => MaintenanceRequest::class,
+            'is_tenant_view' => false,
+            'tenant_properties' => [],
         ]);
     }
 }

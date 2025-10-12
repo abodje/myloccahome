@@ -34,7 +34,9 @@ class PdfService
         $dompdf->render();
 
         if ($download) {
-            $dompdf->stream($filename, ['Attachment' => true]);
+            // Ne pas utiliser stream() car cela envoie directement les headers
+            // Retourner le contenu et laisser le contrôleur gérer la réponse
+            return $dompdf->output();
         }
 
         return $dompdf->output();
@@ -47,7 +49,7 @@ class PdfService
     {
         // Récupérer la configuration du contrat
         $contractConfig = $this->contractConfigService->getContractConfig();
-        
+
         $html = $this->twig->render('pdf/lease_contract.html.twig', array_merge([
             'lease' => $lease,
             'property' => $lease->getProperty(),

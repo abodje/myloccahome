@@ -204,6 +204,8 @@ class SettingsController extends AbstractController
                 'payment_reminder_days' => $request->request->get('payment_reminder_days'),
                 'allow_partial_payments' => $request->request->has('allow_partial_payments'),
                 'minimum_payment_amount' => $request->request->get('minimum_payment_amount'),
+                'allow_advance_payments' => $request->request->has('allow_advance_payments'),
+                'minimum_advance_amount' => $request->request->get('minimum_advance_amount'),
             ];
 
             foreach ($newSettings as $key => $value) {
@@ -219,8 +221,88 @@ class SettingsController extends AbstractController
                 'payment_reminder_days' => $settingsService->get('payment_reminder_days', 7),
                 'allow_partial_payments' => $settingsService->get('allow_partial_payments', false),
                 'minimum_payment_amount' => $settingsService->get('minimum_payment_amount', 10),
+                'allow_advance_payments' => $settingsService->get('allow_advance_payments', true),
+                'minimum_advance_amount' => $settingsService->get('minimum_advance_amount', 50),
             ]),
         ]);
+    }
+
+    #[Route('/cinetpay', name: 'app_admin_cinetpay_settings', methods: ['GET', 'POST'])]
+    public function cinetpaySettings(Request $request, SettingsService $settingsService): Response
+    {
+        if ($request->isMethod('POST')) {
+            $newSettings = [
+                'cinetpay_apikey' => $request->request->get('cinetpay_apikey'),
+                'cinetpay_site_id' => $request->request->get('cinetpay_site_id'),
+                'cinetpay_secret_key' => $request->request->get('cinetpay_secret_key'),
+                'cinetpay_environment' => $request->request->get('cinetpay_environment'),
+                'cinetpay_currency' => $request->request->get('cinetpay_currency'),
+                'cinetpay_return_url' => $request->request->get('cinetpay_return_url'),
+                'cinetpay_enabled' => $request->request->has('cinetpay_enabled'),
+                'cinetpay_channels' => $request->request->get('cinetpay_channels'),
+            ];
+
+            foreach ($newSettings as $key => $value) {
+                if ($value !== null && $value !== '') {
+                    $settingsService->set($key, $value);
+                }
+            }
+
+            $this->addFlash('success', 'La configuration CinetPay a été mise à jour avec succès.');
+            return $this->redirectToRoute('app_admin_cinetpay_settings');
+        }
+
+        // Charger les paramètres
+        $settings = [
+            'cinetpay_apikey' => $settingsService->get('cinetpay_apikey', ''),
+            'cinetpay_site_id' => $settingsService->get('cinetpay_site_id', ''),
+            'cinetpay_secret_key' => $settingsService->get('cinetpay_secret_key', ''),
+            'cinetpay_environment' => $settingsService->get('cinetpay_environment', 'test'),
+            'cinetpay_currency' => $settingsService->get('cinetpay_currency', 'XOF'),
+            'cinetpay_return_url' => $settingsService->get('cinetpay_return_url', ''),
+            'cinetpay_enabled' => $settingsService->get('cinetpay_enabled', true),
+            'cinetpay_channels' => $settingsService->get('cinetpay_channels', 'ALL'),
+            'is_configured' => !empty($settingsService->get('cinetpay_apikey')) && !empty($settingsService->get('cinetpay_site_id')),
+        ];
+
+        return $this->render('admin/settings/cinetpay.html.twig', [
+            'settings' => $settings,
+        ]);
+    }
+
+    #[Route('/cinetpay/tester', name: 'app_admin_cinetpay_test', methods: ['POST'])]
+    public function testCinetpay(SettingsService $settingsService): Response
+    {
+        try {
+            $apikey = $settingsService->get('cinetpay_apikey');
+            $siteId = $settingsService->get('cinetpay_site_id');
+
+            if (empty($apikey) || empty($siteId)) {
+                return $this->json([
+                    'success' => false,
+                    'message' => 'API Key ou Site ID manquant. Veuillez configurer vos identifiants.'
+                ]);
+            }
+
+            // Test de connexion basique (vérifier que les credentials existent)
+            // En production, vous pourriez faire un vrai appel API CinetPay
+
+            return $this->json([
+                'success' => true,
+                'message' => 'Configuration valide. Les identifiants sont présents.',
+                'config' => [
+                    'apikey_length' => strlen($apikey),
+                    'site_id' => $siteId,
+                    'environment' => $settingsService->get('cinetpay_environment', 'test'),
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            return $this->json([
+                'success' => false,
+                'message' => 'Erreur : ' . $e->getMessage()
+            ]);
+        }
     }
 
     #[Route('/initialiser', name: 'app_admin_initialize_settings', methods: ['POST'])]

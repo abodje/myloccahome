@@ -132,6 +132,40 @@
                                             Permet aux locataires de payer leur loyer en plusieurs fois
                                         </div>
                                     </div>
+
+                                    <div class="mb-3">
+                                        <div class="form-check form-switch">
+                                            <input type="checkbox" name="allow_advance_payments"
+                                                   id="allow_advance_payments" class="form-check-input"
+                                                   {{ settings.allow_advance_payments ?? true ? 'checked' : '' }}>
+                                            <label for="allow_advance_payments" class="form-check-label">
+                                                💰 Autoriser les paiements anticipés (acomptes)
+                                            </label>
+                                        </div>
+                                        <div class="form-text">
+                                            Permet aux locataires de constituer un solde qui sera utilisé automatiquement pour payer les loyers futurs
+                                        </div>
+                                    </div>
+
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label for="minimum_advance_amount" class="form-label">
+                                                    Montant minimum pour un acompte
+                                                </label>
+                                                <div class="input-group">
+                                                    <input type="number" name="minimum_advance_amount"
+                                                           id="minimum_advance_amount" class="form-control"
+                                                           value="{{ settings.minimum_advance_amount ?? 50 }}"
+                                                           min="0" step="0.01">
+                                                    <span class="input-group-text">{{ ''|currency_symbol }}</span>
+                                                </div>
+                                                <div class="form-text">
+                                                    Montant minimum qu'un locataire peut verser en acompte
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
 
                                 <div class="mb-4">

@@ -5,6 +5,7 @@ namespace App\Controller;
 use App\Entity\Property;
 use App\Form\PropertyType;
 use App\Repository\PropertyRepository;
+use App\Repository\InventoryRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -17,23 +18,57 @@ class PropertyController extends AbstractController
     #[Route('/', name: 'app_property_index', methods: ['GET'])]
     public function index(PropertyRepository $propertyRepository, Request $request): Response
     {
+        /** @var \App\Entity\User|null $user */
+        $user = $this->getUser();
         $search = $request->query->get('search');
         $status = $request->query->get('status');
         $type = $request->query->get('type');
 
-        $properties = $propertyRepository->findWithFilters($search, $status, $type);
+        // Filtrer les propriétés selon le rôle de l'utilisateur
+        if ($user && in_array('ROLE_TENANT', $user->getRoles())) {
+            // Si l'utilisateur est un locataire, ne montrer que les propriétés qu'il loue
+            $tenant = $user->getTenant();
+            if ($tenant) {
+                $properties = $propertyRepository->findByTenantWithFilters($tenant->getId(), $search, $status, $type);
+            } else {
+                $properties = [];
+            }
+        } elseif ($user && in_array('ROLE_MANAGER', $user->getRoles())) {
+            // Si l'utilisateur est un gestionnaire, montrer ses propriétés
+            $owner = $user->getOwner();
+            if ($owner) {
+                $properties = $propertyRepository->findByOwnerWithFilters($owner->getId(), $search, $status, $type);
+            } else {
+                $properties = $propertyRepository->findWithFilters($search, $status, $type);
+            }
+        } else {
+            // Pour les admins, montrer toutes les propriétés
+            $properties = $propertyRepository->findWithFilters($search, $status, $type);
+        }
+
+        // Passer une variable pour indiquer si c'est la vue locataire
+        $isTenantView = $user && in_array('ROLE_TENANT', $user->getRoles());
 
         return $this->render('property/index.html.twig', [
             'properties' => $properties,
             'search' => $search,
             'current_status' => $status,
             'current_type' => $type,
+            'is_tenant_view' => $isTenantView,
         ]);
     }
 
     #[Route('/nouveau', name: 'app_property_new', methods: ['GET', 'POST'])]
     public function new(Request $request, EntityManagerInterface $entityManager): Response
     {
+        /** @var \App\Entity\User|null $user */
+        $user = $this->getUser();
+
+        // Vérifier que l'utilisateur n'est pas un locataire
+        if ($user && in_array('ROLE_TENANT', $user->getRoles())) {
+            throw $this->createAccessDeniedException('Les locataires ne peuvent pas ajouter de biens.');
+        }
+
         $property = new Property();
         $form = $this->createForm(PropertyType::class, $property);
         $form->handleRequest($request);
@@ -69,6 +104,14 @@ class PropertyController extends AbstractController
     #[Route('/{id}/modifier', name: 'app_property_edit', methods: ['GET', 'POST'])]
     public function edit(Request $request, Property $property, EntityManagerInterface $entityManager): Response
     {
+        /** @var \App\Entity\User|null $user */
+        $user = $this->getUser();
+
+        // Vérifier que l'utilisateur n'est pas un locataire
+        if ($user && in_array('ROLE_TENANT', $user->getRoles())) {
+            throw $this->createAccessDeniedException('Les locataires ne peuvent pas modifier de biens.');
+        }
+
         $form = $this->createForm(PropertyType::class, $property);
         $form->handleRequest($request);
 
@@ -123,10 +166,13 @@ class PropertyController extends AbstractController
     }
 
     #[Route('/{id}/inventaires', name: 'app_property_inventories', methods: ['GET'])]
-    public function inventories(Property $property): Response
+    public function inventories(Property $property, InventoryRepository $inventoryRepository): Response
     {
+        $inventories = $inventoryRepository->findBy(['property' => $property], ['inventoryDate' => 'DESC']);
+
         return $this->render('property/inventories.html.twig', [
             'property' => $property,
+            'inventories' => $inventories,
         ]);
     }
 

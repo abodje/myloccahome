@@ -18,21 +18,38 @@ class MaintenanceRequestController extends AbstractController
     #[Route('/', name: 'app_maintenance_request_index', methods: ['GET'])]
     public function index(MaintenanceRequestRepository $maintenanceRequestRepository, Request $request): Response
     {
+        /** @var \App\Entity\User|null $user */
+        $user = $this->getUser();
         $status = $request->query->get('status');
         $priority = $request->query->get('priority');
         $category = $request->query->get('category');
 
-        if ($status) {
-            $requests = $maintenanceRequestRepository->findByStatus($status);
-        } elseif ($priority) {
-            $requests = $maintenanceRequestRepository->findByPriority($priority);
-        } elseif ($category) {
-            $requests = $maintenanceRequestRepository->findByCategory($category);
+        // Filtrer les demandes selon le rôle de l'utilisateur
+        if ($user && in_array('ROLE_TENANT', $user->getRoles())) {
+            // Si l'utilisateur est un locataire, ne montrer que ses demandes
+            $tenant = $user->getTenant();
+            if ($tenant) {
+                $requests = $maintenanceRequestRepository->findByTenantWithFilters($tenant->getId(), $status, $priority, $category);
+            } else {
+                $requests = [];
+            }
+        } elseif ($user && in_array('ROLE_MANAGER', $user->getRoles())) {
+            // Si l'utilisateur est un gestionnaire, montrer les demandes de ses propriétés
+            $owner = $user->getOwner();
+            if ($owner) {
+                $requests = $maintenanceRequestRepository->findByManagerWithFilters($owner->getId(), $status, $priority, $category);
+            } else {
+                $requests = $maintenanceRequestRepository->findWithFilters($status, $priority, $category);
+            }
         } else {
-            $requests = $maintenanceRequestRepository->findBy([], ['createdAt' => 'DESC']);
+            // Pour les admins, montrer toutes les demandes
+            $requests = $maintenanceRequestRepository->findWithFilters($status, $priority, $category);
         }
 
-        $stats = $maintenanceRequestRepository->getStatistics();
+        $stats = $this->calculateFilteredStats($maintenanceRequestRepository, $user);
+
+        // Passer une variable pour indiquer si c'est la vue locataire
+        $isTenantView = $user && in_array('ROLE_TENANT', $user->getRoles());
 
         return $this->render('maintenance_request/index.html.twig', [
             'maintenance_requests' => $requests,
@@ -40,17 +57,64 @@ class MaintenanceRequestController extends AbstractController
             'current_status' => $status,
             'current_priority' => $priority,
             'current_category' => $category,
+            'is_tenant_view' => $isTenantView,
         ]);
     }
 
     #[Route('/nouvelle', name: 'app_maintenance_request_new', methods: ['GET', 'POST'])]
-    public function new(Request $request, EntityManagerInterface $entityManager): Response
+    public function new(Request $request, EntityManagerInterface $entityManager, PropertyRepository $propertyRepository): Response
     {
+        /** @var \App\Entity\User|null $user */
+        $user = $this->getUser();
+
         $maintenanceRequest = new MaintenanceRequest();
-        $form = $this->createForm(MaintenanceRequestType::class, $maintenanceRequest);
+        
+        // Préparer les options du formulaire selon le rôle
+        $formOptions = [];
+        $isTenantView = $user && in_array('ROLE_TENANT', $user->getRoles());
+        
+        if ($isTenantView) {
+            $tenant = $user->getTenant();
+            if ($tenant) {
+                // Pour les locataires, limiter aux propriétés qu'ils louent
+                $tenantProperties = $propertyRepository->findByTenantWithFilters($tenant->getId());
+                $formOptions['is_tenant_view'] = true;
+                $formOptions['tenant_properties'] = $tenantProperties;
+                
+                // Pré-remplir avec la première propriété si disponible
+                if (!empty($tenantProperties)) {
+                    $maintenanceRequest->setProperty($tenantProperties[0]);
+                }
+            }
+        }
+        
+        $form = $this->createForm(MaintenanceRequestType::class, $maintenanceRequest, $formOptions);
+
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
+            // Définir automatiquement les données selon le rôle
+            if ($user && in_array('ROLE_TENANT', $user->getRoles())) {
+                $tenant = $user->getTenant();
+                if ($tenant) {
+                    // Pour les locataires, s'assurer que la propriété appartient bien à un de leurs baux
+                    $property = $maintenanceRequest->getProperty();
+                    $tenantProperties = $propertyRepository->findByTenantWithFilters($tenant->getId());
+                    
+                    if (!in_array($property, $tenantProperties)) {
+                        $this->addFlash('error', 'Vous ne pouvez créer une demande que pour vos propriétés louées.');
+                        return $this->redirectToRoute('app_maintenance_request_new');
+                    }
+                    
+                    // Définir automatiquement le locataire
+                    $maintenanceRequest->setTenant($tenant);
+                }
+            }
+            
+            $maintenanceRequest->setCreatedAt(new \DateTime());
+            $maintenanceRequest->setStatus('En attente');
+            $maintenanceRequest->setPriority('Normale');
+
             $entityManager->persist($maintenanceRequest);
             $entityManager->flush();
 
@@ -62,6 +126,7 @@ class MaintenanceRequestController extends AbstractController
         return $this->render('maintenance_request/new.html.twig', [
             'maintenance_request' => $maintenanceRequest,
             'form' => $form,
+            'is_tenant_view' => $user && in_array('ROLE_TENANT', $user->getRoles()),
         ]);
     }
 
@@ -157,5 +222,78 @@ class MaintenanceRequestController extends AbstractController
             'requests' => $requests,
             'category' => $category,
         ]);
+    }
+
+    /**
+     * Calcule les statistiques filtrées selon le rôle de l'utilisateur
+     */
+    private function calculateFilteredStats(MaintenanceRequestRepository $maintenanceRequestRepository, $user): array
+    {
+        if ($user && in_array('ROLE_TENANT', $user->getRoles())) {
+            // Pour les locataires, calculer les stats sur leurs demandes seulement
+            $tenant = $user->getTenant();
+            if ($tenant) {
+                $tenantRequests = $maintenanceRequestRepository->findByTenantWithFilters($tenant->getId());
+
+                $stats = [
+                    'total' => count($tenantRequests),
+                    'pending' => 0,
+                    'urgent' => 0,
+                    'overdue' => 0,
+                    'completed' => 0
+                ];
+
+                foreach ($tenantRequests as $request) {
+                    if ($request->getStatus() === 'En attente') {
+                        $stats['pending']++;
+                    } elseif ($request->getStatus() === 'En cours') {
+                        $stats['urgent']++;
+                    } elseif ($request->getStatus() === 'Terminée') {
+                        $stats['completed']++;
+                    }
+
+                    // Vérifier si la demande est en retard
+                    if ($request->getStatus() === 'En attente' && $request->getCreatedAt() < new \DateTime('-7 days')) {
+                        $stats['overdue']++;
+                    }
+                }
+
+                return $stats;
+            }
+        } elseif ($user && in_array('ROLE_MANAGER', $user->getRoles())) {
+            // Pour les gestionnaires, calculer les stats sur les demandes de leurs propriétés
+            $owner = $user->getOwner();
+            if ($owner) {
+                $managerRequests = $maintenanceRequestRepository->findByManagerWithFilters($owner->getId());
+
+                $stats = [
+                    'total' => count($managerRequests),
+                    'pending' => 0,
+                    'urgent' => 0,
+                    'overdue' => 0,
+                    'completed' => 0
+                ];
+
+                foreach ($managerRequests as $request) {
+                    if ($request->getStatus() === 'En attente') {
+                        $stats['pending']++;
+                    } elseif ($request->getStatus() === 'En cours') {
+                        $stats['urgent']++;
+                    } elseif ($request->getStatus() === 'Terminée') {
+                        $stats['completed']++;
+                    }
+
+                    // Vérifier si la demande est en retard
+                    if ($request->getStatus() === 'En attente' && $request->getCreatedAt() < new \DateTime('-7 days')) {
+                        $stats['overdue']++;
+                    }
+                }
+
+                return $stats;
+            }
+        }
+
+        // Pour les admins, retourner les stats globales
+        return $maintenanceRequestRepository->getStatistics();
     }
 }

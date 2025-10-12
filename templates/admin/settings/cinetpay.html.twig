@@ -1,0 +1,441 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Configuration CinetPay - Administration{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>💳 Configuration CinetPay</h2>
+                <a href="{{ path('app_admin_settings_index') }}" class="btn btn-secondary">
+                    <i class="bi bi-arrow-left"></i> Retour
+                </a>
+            </div>
+
+            <div class="row">
+                <div class="col-md-8">
+                    <div class="card">
+                        <div class="card-header bg-primary text-white">
+                            <h5 class="card-title mb-0">
+                                <i class="bi bi-credit-card me-2"></i>
+                                Paramètres de connexion CinetPay
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <form method="POST" action="{{ path('app_admin_cinetpay_settings') }}">
+
+                                <!-- Statut de configuration -->
+                                <div class="alert {{ settings.is_configured ? 'alert-success' : 'alert-warning' }} mb-4">
+                                    <div class="d-flex align-items-center">
+                                        <i class="bi {{ settings.is_configured ? 'bi-check-circle' : 'bi-exclamation-triangle' }} fs-4 me-3"></i>
+                                        <div>
+                                            <strong>
+                                                {{ settings.is_configured ? 'CinetPay configuré' : 'Configuration incomplète' }}
+                                            </strong>
+                                            <p class="mb-0 small">
+                                                {{ settings.is_configured
+                                                    ? 'Vos identifiants CinetPay sont correctement configurés'
+                                                    : 'Veuillez renseigner vos identifiants CinetPay pour activer les paiements en ligne' }}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Identifiants CinetPay -->
+                                <div class="mb-4">
+                                    <h6 class="border-bottom pb-2">🔑 Identifiants API</h6>
+
+                                    <div class="mb-3">
+                                        <label for="cinetpay_apikey" class="form-label">
+                                            API Key <span class="text-danger">*</span>
+                                        </label>
+                                        <input type="text"
+                                               name="cinetpay_apikey"
+                                               id="cinetpay_apikey"
+                                               class="form-control font-monospace"
+                                               value="{{ settings.cinetpay_apikey }}"
+                                               placeholder="Ex: 383009496685bd7d235ad53.69596427"
+                                               required>
+                                        <div class="form-text">
+                                            <i class="bi bi-info-circle"></i>
+                                            Clé API fournie par CinetPay lors de la création de votre compte
+                                        </div>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label for="cinetpay_site_id" class="form-label">
+                                            Site ID <span class="text-danger">*</span>
+                                        </label>
+                                        <input type="text"
+                                               name="cinetpay_site_id"
+                                               id="cinetpay_site_id"
+                                               class="form-control font-monospace"
+                                               value="{{ settings.cinetpay_site_id }}"
+                                               placeholder="Ex: 105899583"
+                                               required>
+                                        <div class="form-text">
+                                            <i class="bi bi-info-circle"></i>
+                                            Identifiant de votre site sur CinetPay
+                                        </div>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label for="cinetpay_secret_key" class="form-label">
+                                            Secret Key (pour HMAC) <span class="text-danger">*</span>
+                                        </label>
+                                        <input type="password"
+                                               name="cinetpay_secret_key"
+                                               id="cinetpay_secret_key"
+                                               class="form-control font-monospace"
+                                               value="{{ settings.cinetpay_secret_key }}"
+                                               placeholder="Ex: 202783455685bd868b44665.45198979"
+                                               required>
+                                        <div class="form-text">
+                                            <i class="bi bi-shield-lock"></i>
+                                            Clé secrète pour la vérification HMAC des notifications (sécurité)
+                                        </div>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary mt-2"
+                                                onclick="togglePasswordVisibility()">
+                                            <i class="bi bi-eye" id="toggleIcon"></i>
+                                            <span id="toggleText">Afficher</span>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- Environnement -->
+                                <div class="mb-4">
+                                    <h6 class="border-bottom pb-2">🌍 Environnement</h6>
+
+                                    <div class="mb-3">
+                                        <label for="cinetpay_environment" class="form-label">
+                                            Mode de fonctionnement
+                                        </label>
+                                        <select name="cinetpay_environment" id="cinetpay_environment" class="form-select">
+                                            <option value="test" {{ settings.cinetpay_environment == 'test' ? 'selected' : '' }}>
+                                                🧪 Test / Sandbox
+                                            </option>
+                                            <option value="production" {{ settings.cinetpay_environment == 'production' ? 'selected' : '' }}>
+                                                🚀 Production
+                                            </option>
+                                        </select>
+                                        <div class="form-text">
+                                            En mode Test, les paiements ne sont pas réels. Utilisez Production pour les vrais paiements.
+                                        </div>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label for="cinetpay_currency" class="form-label">
+                                            Devise par défaut
+                                        </label>
+                                        <select name="cinetpay_currency" id="cinetpay_currency" class="form-select">
+                                            <option value="XOF" {{ settings.cinetpay_currency == 'XOF' ? 'selected' : '' }}>
+                                                XOF (Franc CFA)
+                                            </option>
+                                            <option value="USD" {{ settings.cinetpay_currency == 'USD' ? 'selected' : '' }}>
+                                                USD (Dollar)
+                                            </option>
+                                            <option value="EUR" {{ settings.cinetpay_currency == 'EUR' ? 'selected' : '' }}>
+                                                EUR (Euro)
+                                            </option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <!-- URLs de callback -->
+                                <div class="mb-4">
+                                    <h6 class="border-bottom pb-2">🔗 URLs de Callback</h6>
+
+                                    <div class="alert alert-info">
+                                        <i class="bi bi-info-circle me-2"></i>
+                                        <strong>Important :</strong> Ces URLs doivent être configurées dans votre compte CinetPay et être publiquement accessibles.
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label class="form-label">URL de notification (Webhook)</label>
+                                        <div class="input-group">
+                                            <input type="text"
+                                                   class="form-control font-monospace"
+                                                   value="{{ app.request.schemeAndHttpHost ~ path('app_online_payment_notify') }}"
+                                                   readonly>
+                                            <button class="btn btn-outline-secondary" type="button"
+                                                    onclick="copyToClipboard('{{ app.request.schemeAndHttpHost ~ path('app_online_payment_notify') }}')">
+                                                <i class="bi bi-clipboard"></i> Copier
+                                            </button>
+                                        </div>
+                                        <div class="form-text">
+                                            CinetPay enverra les notifications de paiement à cette URL
+                                        </div>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label for="cinetpay_return_url" class="form-label">
+                                            URL de retour personnalisée (optionnel)
+                                        </label>
+                                        <input type="url"
+                                               name="cinetpay_return_url"
+                                               id="cinetpay_return_url"
+                                               class="form-control"
+                                               value="{{ settings.cinetpay_return_url }}"
+                                               placeholder="https://votre-domaine.com/confirmation">
+                                        <div class="form-text">
+                                            Par défaut: {{ app.request.schemeAndHttpHost }}/paiement-en-ligne/retour/
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Options avancées -->
+                                <div class="mb-4">
+                                    <h6 class="border-bottom pb-2">⚙️ Options avancées</h6>
+
+                                    <div class="mb-3">
+                                        <div class="form-check form-switch">
+                                            <input type="checkbox"
+                                                   name="cinetpay_enabled"
+                                                   id="cinetpay_enabled"
+                                                   class="form-check-input"
+                                                   {{ settings.cinetpay_enabled ?? true ? 'checked' : '' }}>
+                                            <label for="cinetpay_enabled" class="form-check-label">
+                                                Activer les paiements en ligne CinetPay
+                                            </label>
+                                        </div>
+                                        <div class="form-text">
+                                            Désactiver temporairement les paiements en ligne si nécessaire
+                                        </div>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label for="cinetpay_channels" class="form-label">
+                                            Canaux de paiement autorisés
+                                        </label>
+                                        <select name="cinetpay_channels" id="cinetpay_channels" class="form-select">
+                                            <option value="ALL" {{ settings.cinetpay_channels == 'ALL' ? 'selected' : '' }}>
+                                                Tous les canaux (Mobile Money + Carte)
+                                            </option>
+                                            <option value="MOBILE_MONEY" {{ settings.cinetpay_channels == 'MOBILE_MONEY' ? 'selected' : '' }}>
+                                                Mobile Money uniquement
+                                            </option>
+                                            <option value="CARD" {{ settings.cinetpay_channels == 'CARD' ? 'selected' : '' }}>
+                                                Carte bancaire uniquement
+                                            </option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <!-- Boutons d'action -->
+                                <div class="d-flex gap-2">
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="bi bi-check-circle"></i> Enregistrer la configuration
+                                    </button>
+                                    <a href="{{ path('app_admin_settings_index') }}" class="btn btn-secondary">
+                                        <i class="bi bi-x-circle"></i> Annuler
+                                    </a>
+                                    <button type="button" class="btn btn-outline-info ms-auto" onclick="testConnection()">
+                                        <i class="bi bi-arrow-repeat"></i> Tester la connexion
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sidebar d'information -->
+                <div class="col-md-4">
+                    <!-- Informations actuelles -->
+                    <div class="card mb-3">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">
+                                <i class="bi bi-info-circle"></i> Configuration actuelle
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <ul class="list-unstyled mb-0">
+                                <li class="mb-2">
+                                    <strong>Statut :</strong>
+                                    {% if settings.is_configured %}
+                                        <span class="badge bg-success">✅ Configuré</span>
+                                    {% else %}
+                                        <span class="badge bg-warning">⚠️ Non configuré</span>
+                                    {% endif %}
+                                </li>
+                                <li class="mb-2">
+                                    <strong>Environnement :</strong>
+                                    {% if settings.cinetpay_environment == 'production' %}
+                                        <span class="badge bg-success">🚀 Production</span>
+                                    {% else %}
+                                        <span class="badge bg-info">🧪 Test</span>
+                                    {% endif %}
+                                </li>
+                                <li class="mb-2">
+                                    <strong>Paiements actifs :</strong>
+                                    {% if settings.cinetpay_enabled ?? true %}
+                                        <span class="badge bg-success">✅ Activé</span>
+                                    {% else %}
+                                        <span class="badge bg-danger">❌ Désactivé</span>
+                                    {% endif %}
+                                </li>
+                                <li class="mb-2">
+                                    <strong>Devise :</strong>
+                                    <span class="badge bg-secondary">{{ settings.cinetpay_currency ?? 'XOF' }}</span>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Modes de paiement -->
+                    <div class="card mb-3">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">
+                                <i class="bi bi-phone"></i> Modes de paiement
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <h6 class="mb-3">Supportés par CinetPay :</h6>
+                            <ul class="list-unstyled">
+                                <li class="mb-2">🍊 <strong>Orange Money</strong></li>
+                                <li class="mb-2">💛 <strong>MTN Money</strong></li>
+                                <li class="mb-2">💙 <strong>Moov Money</strong></li>
+                                <li class="mb-2">💚 <strong>Wave</strong></li>
+                                <li class="mb-2">💳 <strong>Visa/Mastercard</strong></li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Guide de configuration -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">
+                                <i class="bi bi-book"></i> Guide de configuration
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <h6>Comment obtenir vos identifiants ?</h6>
+                            <ol class="small">
+                                <li>Créez un compte sur <a href="https://cinetpay.com" target="_blank">cinetpay.com</a></li>
+                                <li>Accédez à votre tableau de bord</li>
+                                <li>Allez dans <strong>Paramètres → API</strong></li>
+                                <li>Copiez :
+                                    <ul>
+                                        <li>API Key</li>
+                                        <li>Site ID</li>
+                                        <li>Secret Key</li>
+                                    </ul>
+                                </li>
+                                <li>Configurez l'URL de notification dans CinetPay</li>
+                            </ol>
+
+                            <hr>
+
+                            <h6>⚠️ Important</h6>
+                            <ul class="small mb-0">
+                                <li>Ne partagez jamais vos clés API</li>
+                                <li>En production, utilisez HTTPS</li>
+                                <li>Testez en mode Sandbox d'abord</li>
+                                <li>L'URL de notification doit être publique</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section de test -->
+            <div class="row mt-4">
+                <div class="col-md-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">
+                                <i class="bi bi-tools"></i> Test de configuration
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div id="testResult"></div>
+                            <p class="text-muted mb-3">
+                                Utilisez ce bouton pour vérifier que vos identifiants sont valides et que la connexion à CinetPay fonctionne correctement.
+                            </p>
+                            <button type="button" class="btn btn-outline-primary" onclick="testConnection()">
+                                <i class="bi bi-arrow-repeat"></i> Tester la connexion CinetPay
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function togglePasswordVisibility() {
+        const input = document.getElementById('cinetpay_secret_key');
+        const icon = document.getElementById('toggleIcon');
+        const text = document.getElementById('toggleText');
+
+        if (input.type === 'password') {
+            input.type = 'text';
+            icon.classList.remove('bi-eye');
+            icon.classList.add('bi-eye-slash');
+            text.textContent = 'Masquer';
+        } else {
+            input.type = 'password';
+            icon.classList.remove('bi-eye-slash');
+            icon.classList.add('bi-eye');
+            text.textContent = 'Afficher';
+        }
+    }
+
+    function copyToClipboard(text) {
+        navigator.clipboard.writeText(text).then(() => {
+            alert('✅ URL copiée dans le presse-papiers !');
+        }).catch(err => {
+            console.error('Erreur de copie:', err);
+        });
+    }
+
+    function testConnection() {
+        const resultDiv = document.getElementById('testResult');
+        resultDiv.innerHTML = `
+            <div class="alert alert-info">
+                <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+                Test de connexion en cours...
+            </div>
+        `;
+
+        // Simuler un test (à implémenter avec une vraie route)
+        fetch('{{ path('app_admin_cinetpay_test') }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                resultDiv.innerHTML = `
+                    <div class="alert alert-success alert-dismissible fade show">
+                        <i class="bi bi-check-circle me-2"></i>
+                        <strong>Succès !</strong> La connexion à CinetPay fonctionne correctement.
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                `;
+            } else {
+                resultDiv.innerHTML = `
+                    <div class="alert alert-danger alert-dismissible fade show">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        <strong>Erreur :</strong> ${data.message || 'Impossible de se connecter à CinetPay'}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                `;
+            }
+        })
+        .catch(error => {
+            resultDiv.innerHTML = `
+                <div class="alert alert-danger alert-dismissible fade show">
+                    <i class="bi bi-x-circle me-2"></i>
+                    <strong>Erreur :</strong> ${error.message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            `;
+        });
+    }
+</script>
+{% endblock %}
+

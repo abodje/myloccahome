@@ -19,7 +19,8 @@ class NotificationService
         private Environment $twig,
         private SettingsService $settingsService,
         private EntityManagerInterface $entityManager,
-        private ?EmailCustomizationService $emailCustomizationService = null
+        private ?EmailCustomizationService $emailCustomizationService = null,
+        private ?PaymentSettingsService $paymentSettingsService = null
     ) {
     }
 
@@ -140,13 +141,20 @@ class NotificationService
 
     /**
      * Envoie des rappels de paiement pour les loyers en retard
+     * Respecte le délai configuré dans payment_reminder_days
      */
     public function sendPaymentReminders(): array
     {
         $paymentRepository = $this->entityManager->getRepository(Payment::class);
-        $overduePayments = $paymentRepository->findOverdue();
 
-        $results = ['sent' => 0, 'failed' => 0, 'errors' => []];
+        // Utiliser le délai configuré (par défaut 7 jours)
+        $reminderDays = $this->paymentSettingsService
+            ? $this->paymentSettingsService->getPaymentReminderDays()
+            : 7;
+
+        $overduePayments = $paymentRepository->findOverdueByDays($reminderDays);
+
+        $results = ['sent' => 0, 'failed' => 0, 'errors' => [], 'reminder_days' => $reminderDays];
 
         foreach ($overduePayments as $payment) {
             try {

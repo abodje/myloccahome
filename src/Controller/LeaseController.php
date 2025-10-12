@@ -8,6 +8,7 @@ use App\Repository\LeaseRepository;
 use App\Repository\PaymentRepository;
 use App\Service\PdfService;
 use App\Service\ContractGenerationService;
+use App\Service\PaymentSettingsService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -40,9 +41,15 @@ class LeaseController extends AbstractController
     }
 
     #[Route('/nouveau', name: 'app_lease_new', methods: ['GET', 'POST'])]
-    public function new(Request $request, EntityManagerInterface $entityManager): Response
-    {
+    public function new(
+        Request $request,
+        EntityManagerInterface $entityManager,
+        PaymentSettingsService $paymentSettings
+    ): Response {
         $lease = new Lease();
+
+        // Appliquer le jour d'échéance par défaut configuré
+        $lease->setRentDueDay($paymentSettings->getDefaultRentDueDay());
 
         // Pré-remplir avec les paramètres de l'URL si disponibles
         $propertyId = $request->query->get('property');
@@ -263,8 +270,42 @@ class LeaseController extends AbstractController
     #[Route('/{id}/contrat-pdf', name: 'app_lease_contract_pdf', methods: ['GET'])]
     public function downloadContract(Lease $lease, PdfService $pdfService): Response
     {
-        $pdfService->generateLeaseContract($lease, true);
-        return new Response(); // Le PDF est déjà envoyé par generateLeaseContract
+        try {
+            // Générer le PDF
+            $pdfContent = $pdfService->generateLeaseContract($lease, false);
+
+            // Créer la réponse avec les headers appropriés
+            $response = new Response($pdfContent);
+            $response->headers->set('Content-Type', 'application/pdf');
+            $response->headers->set('Content-Disposition', sprintf(
+                'attachment; filename="Contrat_Bail_%s_%s.pdf"',
+                $lease->getId(),
+                $lease->getStartDate()->format('Y-m-d')
+            ));
+            $response->headers->set('Cache-Control', 'no-cache, must-revalidate');
+            $response->headers->set('Pragma', 'no-cache');
+
+            return $response;
+        } catch (\Exception $e) {
+            // En cas d'erreur, rediriger vers la page du bail avec un message d'erreur
+            $this->addFlash('error', 'Erreur lors de la génération du contrat : ' . $e->getMessage());
+            return $this->redirectToRoute('app_lease_show', ['id' => $lease->getId()]);
+        }
+    }
+
+    #[Route('/{id}/test-pdf', name: 'app_lease_test_pdf', methods: ['GET'])]
+    public function testPdf(Lease $lease, PdfService $pdfService): Response
+    {
+        try {
+            $pdfContent = $pdfService->generateLeaseContract($lease, false);
+
+            return new Response($pdfContent, 200, [
+                'Content-Type' => 'application/pdf',
+                'Content-Disposition' => 'inline; filename="test_contract.pdf"'
+            ]);
+        } catch (\Exception $e) {
+            return new Response('Erreur: ' . $e->getMessage(), 500);
+        }
     }
 
     #[Route('/{id}/echeancier-pdf', name: 'app_lease_schedule_pdf', methods: ['GET'])]

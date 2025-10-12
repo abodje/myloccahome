@@ -77,6 +77,23 @@ class SettingsService
     }
 
     /**
+     * Récupère les paramètres CinetPay
+     */
+    public function getCinetPaySettings(): array
+    {
+        return [
+            'cinetpay_apikey' => $this->get('cinetpay_apikey', '383009496685bd7d235ad53.69596427'),
+            'cinetpay_site_id' => $this->get('cinetpay_site_id', '105899583'),
+            'cinetpay_secret_key' => $this->get('cinetpay_secret_key', '202783455685bd868b44665.45198979'),
+            'cinetpay_environment' => $this->get('cinetpay_environment', 'test'),
+            'cinetpay_currency' => $this->get('cinetpay_currency', 'XOF'),
+            'cinetpay_return_url' => $this->get('cinetpay_return_url', ''),
+            'cinetpay_enabled' => $this->get('cinetpay_enabled', true),
+            'cinetpay_channels' => $this->get('cinetpay_channels', 'ALL'),
+        ];
+    }
+
+    /**
      * Vérifie si une fonctionnalité est activée
      */
     public function isFeatureEnabled(string $feature): bool
@@ -149,6 +166,18 @@ class SettingsService
             'payment_reminder_days' => 7,
             'allow_partial_payments' => false,
             'minimum_payment_amount' => 10,
+            'allow_advance_payments' => true,
+            'minimum_advance_amount' => 50,
+
+            // CinetPay
+            'cinetpay_apikey' => '383009496685bd7d235ad53.69596427',
+            'cinetpay_site_id' => '105899583',
+            'cinetpay_secret_key' => '202783455685bd868b44665.45198979',
+            'cinetpay_environment' => 'test',
+            'cinetpay_currency' => 'XOF',
+            'cinetpay_return_url' => '',
+            'cinetpay_enabled' => true,
+            'cinetpay_channels' => 'ALL',
 
             // Email
             'smtp_host' => 'localhost',

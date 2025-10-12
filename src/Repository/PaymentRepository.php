@@ -71,6 +71,28 @@ class PaymentRepository extends ServiceEntityRepository
     }
 
     /**
+     * Trouve les paiements en retard depuis au moins X jours
+     * Utile pour envoyer des rappels après un délai configuré
+     *
+     * @param int $days Nombre de jours de retard minimum
+     * @return array Liste des paiements en retard
+     */
+    public function findOverdueByDays(int $days = 7): array
+    {
+        $reminderDate = new \DateTime();
+        $reminderDate->modify("-{$days} days");
+
+        return $this->createQueryBuilder('p')
+            ->where('p.status = :status')
+            ->andWhere('p.dueDate <= :reminderDate')
+            ->setParameter('status', 'En attente')
+            ->setParameter('reminderDate', $reminderDate)
+            ->orderBy('p.dueDate', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
      * Trouve les paiements payés par période
      */
     public function findPaidByPeriod(\DateTime $startDate, \DateTime $endDate): array
@@ -159,5 +181,90 @@ class PaymentRepository extends ServiceEntityRepository
                 ->getSingleScalarResult(),
             'overdue' => count($this->findOverdue()),
         ];
+    }
+
+    /**
+     * Trouve les paiements d'un locataire avec filtres
+     */
+    public function findByTenantWithFilters(int $tenantId, ?string $status = null, ?string $type = null, ?int $year = null, ?int $month = null): array
+    {
+        $qb = $this->createQueryBuilder('p')
+            ->join('p.lease', 'l')
+            ->join('l.tenant', 't')
+            ->where('t.id = :tenantId')
+            ->setParameter('tenantId', $tenantId);
+
+        if ($status) {
+            $qb->andWhere('p.status = :status')
+               ->setParameter('status', $status);
+        }
+
+        if ($type) {
+            $qb->andWhere('p.type = :type')
+               ->setParameter('type', $type);
+        }
+
+        if ($year) {
+            $startDate = new \DateTime("$year-01-01");
+            $endDate = new \DateTime("$year-12-31 23:59:59");
+            $qb->andWhere('p.dueDate BETWEEN :startDate AND :endDate')
+               ->setParameter('startDate', $startDate)
+               ->setParameter('endDate', $endDate);
+        }
+
+        if ($month) {
+            $startDate = new \DateTime("$year-$month-01");
+            $endDate = new \DateTime("$year-$month-31 23:59:59");
+            $qb->andWhere('p.dueDate BETWEEN :startDate AND :endDate')
+               ->setParameter('startDate', $startDate)
+               ->setParameter('endDate', $endDate);
+        }
+
+        return $qb->orderBy('p.dueDate', 'DESC')
+                  ->getQuery()
+                  ->getResult();
+    }
+
+    /**
+     * Trouve les paiements gérés par un gestionnaire avec filtres
+     */
+    public function findByManagerWithFilters(int $ownerId, ?string $status = null, ?string $type = null, ?int $year = null, ?int $month = null): array
+    {
+        $qb = $this->createQueryBuilder('p')
+            ->join('p.lease', 'l')
+            ->join('l.property', 'prop')
+            ->join('prop.owner', 'o')
+            ->where('o.id = :ownerId')
+            ->setParameter('ownerId', $ownerId);
+
+        if ($status) {
+            $qb->andWhere('p.status = :status')
+               ->setParameter('status', $status);
+        }
+
+        if ($type) {
+            $qb->andWhere('p.type = :type')
+               ->setParameter('type', $type);
+        }
+
+        if ($year) {
+            $startDate = new \DateTime("$year-01-01");
+            $endDate = new \DateTime("$year-12-31 23:59:59");
+            $qb->andWhere('p.dueDate BETWEEN :startDate AND :endDate')
+               ->setParameter('startDate', $startDate)
+               ->setParameter('endDate', $endDate);
+        }
+
+        if ($month) {
+            $startDate = new \DateTime("$year-$month-01");
+            $endDate = new \DateTime("$year-$month-31 23:59:59");
+            $qb->andWhere('p.dueDate BETWEEN :startDate AND :endDate')
+               ->setParameter('startDate', $startDate)
+               ->setParameter('endDate', $endDate);
+        }
+
+        return $qb->orderBy('p.dueDate', 'DESC')
+                  ->getQuery()
+                  ->getResult();
     }
 }

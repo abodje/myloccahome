@@ -14,10 +14,12 @@
         <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#newRequestModal">
             Faire une demande
         </button>
+        {% if not is_tenant_view %}
         <a href="{{ path('app_property_new') }}" class="btn btn-outline-primary">
             <i class="bi bi-plus-circle me-2"></i>
             Ajouter un bien
         </a>
+        {% endif %}
     </div>
 {% endblock %}
 
@@ -227,10 +229,22 @@
 
         .expand-btn {
             transition: transform 0.3s ease;
+            border: none;
+            background: none;
+        }
+
+        .expand-btn:hover {
+            background-color: rgba(0, 123, 255, 0.1);
+            border-radius: 50%;
         }
 
         .expand-btn.expanded {
             transform: rotate(90deg);
+        }
+
+        .property-details {
+            transition: all 0.3s ease;
+            overflow: hidden;
         }
 
         .request-type-card {
@@ -248,28 +262,57 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Gestion de l'expansion des détails
+            console.log('Page chargée, recherche des boutons d\'expansion...'); // Debug
+
+            const expandButtons = document.querySelectorAll('.expand-btn');
+            console.log('Boutons d\'expansion trouvés:', expandButtons.length); // Debug
+
+            // Gestion de l'expansion des détails - clic direct sur le bouton
+            expandButtons.forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+
+                    console.log('Bouton d\'expansion cliqué'); // Debug
+
+                    const propertyId = this.closest('.property-row').dataset.propertyId;
+                    const details = document.getElementById('details-' + propertyId);
+                    const icon = this.querySelector('i');
+
+                    console.log('Property ID:', propertyId); // Debug
+                    console.log('Details element:', details); // Debug
+
+                    if (!details) {
+                        console.error('Élément details non trouvé pour property ID:', propertyId);
+                        return;
+                    }
+
+                    const isHidden = details.style.display === 'none' || details.style.display === '';
+
+                    if (isHidden) {
+                        details.style.display = 'block';
+                        icon.classList.remove('bi-chevron-right');
+                        icon.classList.add('bi-chevron-down');
+                        console.log('Détails affichés'); // Debug
+                    } else {
+                        details.style.display = 'none';
+                        icon.classList.remove('bi-chevron-down');
+                        icon.classList.add('bi-chevron-right');
+                        console.log('Détails masqués'); // Debug
+                    }
+                });
+            });
+
+            // Gestion du clic sur la ligne (pour ouvrir la modal)
             document.querySelectorAll('.property-row').forEach(row => {
                 row.addEventListener('click', function(e) {
+                    // Ne pas ouvrir la modal si on clique sur le bouton d'expansion
                     if (e.target.closest('.expand-btn')) {
-                        e.preventDefault();
-                        const propertyId = this.dataset.propertyId;
-                        const details = document.getElementById('details-' + propertyId);
-                        const btn = this.querySelector('.expand-btn i');
-
-                        if (details.style.display === 'none') {
-                            details.style.display = 'block';
-                            btn.classList.remove('bi-chevron-right');
-                            btn.classList.add('bi-chevron-down');
-                        } else {
-                            details.style.display = 'none';
-                            btn.classList.remove('bi-chevron-down');
-                            btn.classList.add('bi-chevron-right');
-                        }
-                    } else {
-                        // Ouvrir la modal avec les détails
-                        openPropertyModal(this.dataset.propertyId);
+                        return;
                     }
+
+                    // Ouvrir la modal avec les détails
+                    openPropertyModal(this.dataset.propertyId);
                 });
             });
 

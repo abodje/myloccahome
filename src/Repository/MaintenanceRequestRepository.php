@@ -192,4 +192,94 @@ class MaintenanceRequestRepository extends ServiceEntityRepository
 
         return (float)($result ?? 0);
     }
+
+    /**
+     * Trouve les demandes avec filtres (méthode générique)
+     */
+    public function findWithFilters(?string $status = null, ?string $priority = null, ?string $category = null): array
+    {
+        $qb = $this->createQueryBuilder('mr');
+
+        if ($status) {
+            $qb->andWhere('mr.status = :status')
+               ->setParameter('status', $status);
+        }
+
+        if ($priority) {
+            $qb->andWhere('mr.priority = :priority')
+               ->setParameter('priority', $priority);
+        }
+
+        if ($category) {
+            $qb->andWhere('mr.category = :category')
+               ->setParameter('category', $category);
+        }
+
+        return $qb->orderBy('mr.createdAt', 'DESC')
+                  ->getQuery()
+                  ->getResult();
+    }
+
+    /**
+     * Trouve les demandes d'un locataire avec filtres
+     */
+    public function findByTenantWithFilters(int $tenantId, ?string $status = null, ?string $priority = null, ?string $category = null): array
+    {
+        $qb = $this->createQueryBuilder('mr')
+            ->join('mr.property', 'p')
+            ->join('p.leases', 'l')
+            ->where('l.tenant = :tenantId')
+            ->andWhere('l.status = :leaseStatus')
+            ->setParameter('tenantId', $tenantId)
+            ->setParameter('leaseStatus', 'active');
+
+        if ($status) {
+            $qb->andWhere('mr.status = :status')
+               ->setParameter('status', $status);
+        }
+
+        if ($priority) {
+            $qb->andWhere('mr.priority = :priority')
+               ->setParameter('priority', $priority);
+        }
+
+        if ($category) {
+            $qb->andWhere('mr.category = :category')
+               ->setParameter('category', $category);
+        }
+
+        return $qb->orderBy('mr.createdAt', 'DESC')
+                  ->getQuery()
+                  ->getResult();
+    }
+
+    /**
+     * Trouve les demandes des propriétés d'un gestionnaire avec filtres
+     */
+    public function findByManagerWithFilters(int $ownerId, ?string $status = null, ?string $priority = null, ?string $category = null): array
+    {
+        $qb = $this->createQueryBuilder('mr')
+            ->join('mr.property', 'p')
+            ->where('p.owner = :ownerId')
+            ->setParameter('ownerId', $ownerId);
+
+        if ($status) {
+            $qb->andWhere('mr.status = :status')
+               ->setParameter('status', $status);
+        }
+
+        if ($priority) {
+            $qb->andWhere('mr.priority = :priority')
+               ->setParameter('priority', $priority);
+        }
+
+        if ($category) {
+            $qb->andWhere('mr.category = :category')
+               ->setParameter('category', $category);
+        }
+
+        return $qb->orderBy('mr.createdAt', 'DESC')
+                  ->getQuery()
+                  ->getResult();
+    }
 }

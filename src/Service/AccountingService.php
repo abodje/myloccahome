@@ -5,6 +5,7 @@ namespace App\Service;
 use App\Entity\AccountingEntry;
 use App\Entity\Payment;
 use App\Entity\Expense;
+use App\Entity\AdvancePayment;
 use App\Repository\AccountingEntryRepository;
 use Doctrine\ORM\EntityManagerInterface;
 
@@ -243,5 +244,77 @@ class AccountingService
             'entries' => $entries,
             'entry_count' => count($entries)
         ];
+    }
+
+    /**
+     * Enregistre un paiement anticipé (acompte) en comptabilité
+     */
+    public function recordAdvancePayment(AdvancePayment $advance): AccountingEntry
+    {
+        $entry = new AccountingEntry();
+        $entry->setType('Crédit');
+        $entry->setCategory('Acomptes reçus');
+        $entry->setAmount((float) $advance->getAmount());
+        $entry->setDescription(sprintf(
+            'Acompte reçu - %s - Bail #%d',
+            $advance->getTenant()?->getFullName() ?? 'N/A',
+            $advance->getLease()?->getId() ?? 0
+        ));
+        $entry->setEntryDate($advance->getPaidDate());
+        $entry->setReference('ACOMPTE-' . $advance->getId());
+
+        $this->entityManager->persist($entry);
+        $this->entityManager->flush();
+
+        return $entry;
+    }
+
+    /**
+     * Enregistre l'utilisation d'un acompte en comptabilité
+     */
+    public function recordAdvanceUsage(AdvancePayment $advance, float $amountUsed, Payment $payment): AccountingEntry
+    {
+        $entry = new AccountingEntry();
+        $entry->setType('Débit');
+        $entry->setCategory('Utilisation acomptes');
+        $entry->setAmount($amountUsed);
+        $entry->setDescription(sprintf(
+            'Utilisation acompte #%d pour paiement #%d - %s',
+            $advance->getId(),
+            $payment->getId(),
+            $payment->getLease()?->getTenant()?->getFullName() ?? 'N/A'
+        ));
+        $entry->setEntryDate(new \DateTime());
+        $entry->setReference('USE-ACOMPTE-' . $advance->getId() . '-' . $payment->getId());
+        $entry->setPayment($payment);
+
+        $this->entityManager->persist($entry);
+        $this->entityManager->flush();
+
+        return $entry;
+    }
+
+    /**
+     * Enregistre le remboursement d'un acompte en comptabilité
+     */
+    public function recordAdvanceRefund(AdvancePayment $advance, float $amount, ?string $reason = null): AccountingEntry
+    {
+        $entry = new AccountingEntry();
+        $entry->setType('Débit');
+        $entry->setCategory('Remboursement acomptes');
+        $entry->setAmount($amount);
+        $entry->setDescription(sprintf(
+            'Remboursement acompte #%d - %s%s',
+            $advance->getId(),
+            $advance->getTenant()?->getFullName() ?? 'N/A',
+            $reason ? " - Raison: $reason" : ''
+        ));
+        $entry->setEntryDate(new \DateTime());
+        $entry->setReference('REFUND-ACOMPTE-' . $advance->getId());
+
+        $this->entityManager->persist($entry);
+        $this->entityManager->flush();
+
+        return $entry;
     }
 }

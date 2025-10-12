@@ -40,7 +40,7 @@ class MenuService
                 'label' => 'Mes biens',
                 'icon' => 'bi-building',
                 'route' => 'app_property_index',
-                'roles' => ['ROLE_MANAGER', 'ROLE_ADMIN'],
+                'roles' => ['ROLE_USER', 'ROLE_TENANT', 'ROLE_MANAGER', 'ROLE_ADMIN'],
                 'order' => 3,
             ],
             'tenants' => [
@@ -68,7 +68,7 @@ class MenuService
                 'label' => 'Ma comptabilité',
                 'icon' => 'bi-calculator',
                 'route' => 'app_accounting_index',
-                'roles' => ['ROLE_MANAGER', 'ROLE_ADMIN'],
+                'roles' => ['ROLE_USER', 'ROLE_TENANT', 'ROLE_MANAGER', 'ROLE_ADMIN'],
                 'order' => 7,
             ],
             'documents' => [
@@ -77,6 +77,15 @@ class MenuService
                 'route' => 'app_document_index',
                 'roles' => ['ROLE_USER', 'ROLE_TENANT', 'ROLE_MANAGER', 'ROLE_ADMIN'],
                 'order' => 8,
+            ],
+            'messages' => [
+                'label' => 'Messagerie',
+                'icon' => 'bi-chat-dots',
+                'route' => 'app_message_index',
+                'roles' => ['ROLE_USER', 'ROLE_TENANT', 'ROLE_MANAGER', 'ROLE_ADMIN'],
+                'order' => 9,
+                'badge_type' => 'danger',
+                'badge_value' => 'unread_count',
             ],
             'divider_admin' => [
                 'type' => 'divider',
@@ -151,6 +160,11 @@ class MenuService
                     'settings_payment' => [
                         'label' => 'Paiements',
                         'route' => 'app_admin_payment_settings',
+                        'roles' => ['ROLE_ADMIN'],
+                    ],
+                    'settings_cinetpay' => [
+                        'label' => '💳 Paiement en ligne',
+                        'route' => 'app_admin_cinetpay_settings',
                         'roles' => ['ROLE_ADMIN'],
                     ],
                     'settings_maintenance_system' => [

@@ -1,0 +1,228 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Documents - {{ tenant.fullName }}{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h1 class="h3 mb-0">
+                        <i class="bi bi-folder2-open text-primary me-2"></i>
+                        Documents - {{ tenant.fullName }}
+                    </h1>
+                    <p class="text-muted mb-0">Gestion des documents du locataire</p>
+                </div>
+                <div>
+                    <a href="{{ path('app_tenant_show', {'id': tenant.id}) }}" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left me-1"></i>
+                        Retour au profil
+                    </a>
+                    <a href="{{ path('app_document_new') }}" class="btn btn-primary">
+                        <i class="bi bi-plus-circle me-1"></i>
+                        Nouveau document
+                    </a>
+                </div>
+            </div>
+
+            <!-- Informations du locataire -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="text-muted mb-1">Locataire</h6>
+                            <p class="mb-2">{{ tenant.fullName }}</p>
+                            
+                            <h6 class="text-muted mb-1">Email</h6>
+                            <p class="mb-2">{{ tenant.email }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-muted mb-1">Téléphone</h6>
+                            <p class="mb-2">{{ tenant.phone ?: 'Non renseigné' }}</p>
+                            
+                            <h6 class="text-muted mb-1">Adresse</h6>
+                            <p class="mb-2">{{ tenant.address ?: 'Non renseignée' }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Statistiques -->
+            {% if stats %}
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="card bg-primary text-white">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-folder2 fs-1 me-3"></i>
+                                <div>
+                                    <h3 class="mb-0">{{ stats.total }}</h3>
+                                    <p class="mb-0">Documents total</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-success text-white">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-check-circle fs-1 me-3"></i>
+                                <div>
+                                    <h3 class="mb-0">{{ stats.total - stats.archived }}</h3>
+                                    <p class="mb-0">Actifs</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-warning text-white">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-clock fs-1 me-3"></i>
+                                <div>
+                                    <h3 class="mb-0">{{ stats.expiring_soon }}</h3>
+                                    <p class="mb-0">Expirent bientôt</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-danger text-white">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-exclamation-triangle fs-1 me-3"></i>
+                                <div>
+                                    <h3 class="mb-0">{{ stats.expired }}</h3>
+                                    <p class="mb-0">Expirés</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Documents par type -->
+            {% if documents_by_type %}
+            <div class="row">
+                {% for type, documents in documents_by_type %}
+                <div class="col-lg-6 mb-4">
+                    <div class="card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">
+                                {% if type == 'Assurance' %}
+                                    <i class="bi bi-shield-check text-success me-2"></i>
+                                {% elseif type == 'Bail' %}
+                                    <i class="bi bi-file-earmark-text text-primary me-2"></i>
+                                {% elseif type == 'Avis d\'échéance' %}
+                                    <i class="bi bi-calendar-event text-warning me-2"></i>
+                                {% elseif type == 'Diagnostics' %}
+                                    <i class="bi bi-clipboard-check text-info me-2"></i>
+                                {% else %}
+                                    <i class="bi bi-file-earmark text-secondary me-2"></i>
+                                {% endif %}
+                                {{ type }}
+                            </h5>
+                            <span class="badge bg-secondary">{{ documents|length }}</span>
+                        </div>
+                        <div class="card-body">
+                            {% if documents is empty %}
+                                <div class="text-center text-muted py-3">
+                                    <i class="bi bi-folder-x fs-1 mb-2 d-block"></i>
+                                    <p class="mb-0">Aucun document de ce type</p>
+                                </div>
+                            {% else %}
+                                <div class="list-group list-group-flush">
+                                    {% for document in documents %}
+                                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                                        <div class="flex-grow-1">
+                                            <h6 class="mb-1">{{ document.name ?: document.originalFileName }}</h6>
+                                            <p class="text-muted mb-1 small">
+                                                <i class="bi bi-calendar3 me-1"></i>
+                                                Ajouté le {{ document.createdAt|date('d/m/Y à H:i') }}
+                                            </p>
+                                            {% if document.description %}
+                                                <p class="text-muted mb-1 small">{{ document.description }}</p>
+                                            {% endif %}
+                                            {% if document.expirationDate %}
+                                                <span class="badge 
+                                                    {% if document.expirationDate < date() %}
+                                                        bg-danger
+                                                    {% elseif document.expirationDate < date('+30 days') %}
+                                                        bg-warning
+                                                    {% else %}
+                                                        bg-success
+                                                    {% endif %}">
+                                                    Expire le {{ document.expirationDate|date('d/m/Y') }}
+                                                </span>
+                                            {% endif %}
+                                        </div>
+                                        <div class="btn-group" role="group">
+                                            <a href="{{ path('app_document_show', {'id': document.id}) }}" 
+                                               class="btn btn-outline-primary btn-sm" title="Voir">
+                                                <i class="bi bi-eye"></i>
+                                            </a>
+                                            <a href="{{ path('app_document_download', {'id': document.id}) }}" 
+                                               class="btn btn-outline-success btn-sm" title="Télécharger">
+                                                <i class="bi bi-download"></i>
+                                            </a>
+                                            {% if is_granted('ROLE_ADMIN') or is_granted('ROLE_MANAGER') %}
+                                                <a href="{{ path('app_document_edit', {'id': document.id}) }}" 
+                                                   class="btn btn-outline-warning btn-sm" title="Modifier">
+                                                    <i class="bi bi-pencil"></i>
+                                                </a>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <!-- Aucun document -->
+            <div class="text-center py-5">
+                <i class="bi bi-folder-x text-muted" style="font-size: 4rem;"></i>
+                <h4 class="text-muted mt-3">Aucun document trouvé</h4>
+                <p class="text-muted">Ce locataire n'a pas encore de documents associés.</p>
+                <a href="{{ path('app_document_new') }}" class="btn btn-primary">
+                    <i class="bi bi-plus-circle me-1"></i>
+                    Ajouter le premier document
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+.card {
+    transition: transform 0.2s ease-in-out;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+.list-group-item {
+    border: none;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.list-group-item:last-child {
+    border-bottom: none;
+}
+
+.badge {
+    font-size: 0.75rem;
+}
+</style>
+{% endblock %}

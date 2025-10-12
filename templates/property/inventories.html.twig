@@ -53,19 +53,18 @@
                                     </td>
                                     <td>{{ inventory.inventoryDate|date('d/m/Y') }}</td>
                                     <td>
-                                        {% if inventory.tenant %}
-                                            {{ inventory.tenant.fullName }}
+                                        {% if inventory.lease and inventory.lease.tenant %}
+                                            {{ inventory.lease.tenant.fullName }}
                                         {% else %}
                                             <span class="text-muted">-</span>
                                         {% endif %}
                                     </td>
                                     <td>
-                                        {% if inventory.status == 'Complété' %}
-                                            <span class="badge bg-success">{{ inventory.status }}</span>
-                                        {% elseif inventory.status == 'En cours' %}
-                                            <span class="badge bg-warning">{{ inventory.status }}</span>
+                                        {% set status = inventory.items|length > 0 ? 'En cours' : 'En attente' %}
+                                        {% if status == 'En cours' %}
+                                            <span class="badge bg-warning">{{ status }}</span>
                                         {% else %}
-                                            <span class="badge bg-secondary">{{ inventory.status }}</span>
+                                            <span class="badge bg-secondary">{{ status }}</span>
                                         {% endif %}
                                     </td>
                                     <td>

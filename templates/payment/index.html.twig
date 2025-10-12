@@ -17,6 +17,35 @@
 {% endblock %}
 
 {% block body %}
+    <!-- Paiements en attente -->
+    {% set pendingPayments = payments|filter(p => p.status == 'En attente') %}
+    {% if pendingPayments|length > 0 %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="alert alert-warning">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="alert-heading mb-1">
+                            <i class="bi bi-exclamation-triangle me-2"></i>
+                            {{ pendingPayments|length }} paiement(s) en attente
+                        </h6>
+                        <p class="mb-0">Vous avez des échéances à régler. Cliquez sur les boutons verts pour payer en ligne.</p>
+                    </div>
+                    <div class="text-end">
+                        <strong>Total à payer :
+                            {% set total = 0 %}
+                            {% for payment in pendingPayments %}
+                                {% set total = total + payment.amount %}
+                            {% endfor %}
+                            {{ total|currency }}
+                        </strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
     <!-- Solde actuel -->
     <div class="row mb-4">
         <div class="col-12">
@@ -127,10 +156,18 @@
                             {% endif %}
                         </div>
                         <div class="col-1">
-                            <a href="{{ path('app_payment_show', {id: payment.id}) }}"
-                               class="btn btn-sm btn-outline-primary">
-                                <i class="bi bi-eye"></i>
-                            </a>
+                            <div class="btn-group btn-group-sm">
+                                <a href="{{ path('app_payment_show', {id: payment.id}) }}"
+                                   class="btn btn-outline-primary" title="Voir les détails">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                {% if payment.status == 'En attente' %}
+                                    <a href="{{ path('app_online_payment_tenant_page', {id: payment.id}) }}"
+                                       class="btn btn-success" title="Payer en ligne">
+                                        <i class="bi bi-credit-card"></i>
+                                    </a>
+                                {% endif %}
+                            </div>
                         </div>
                     </div>
                 {% endfor %}
@@ -172,59 +209,11 @@
     <!-- Section moyens de paiement -->
     <div class="card">
         <div class="card-header">
-            <h6 class="mb-0">
-                <i class="bi bi-credit-card me-2"></i>
-                Choisissez votre moyen de paiement
-            </h6>
+
         </div>
         <div class="card-body">
             <div class="row g-4">
-                <!-- Prélèvement automatique -->
-                <div class="col-md-4">
-                    <div class="card h-100 payment-method-card">
-                        <div class="card-body text-center">
-                            <i class="bi bi-arrow-repeat display-4 text-primary mb-3"></i>
-                            <h6 class="card-title">Prélèvement automatique</h6>
-                            <div class="mt-3">
-                                <p class="text-muted small mb-2">NOM</p>
-                                <p class="fw-bold mb-2">M ABODJE Kouame Paul Arnaud</p>
-                                <p class="text-muted small mb-2">IBAN</p>
-                                <p class="font-monospace small">FR** **** **** **** **** 053</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
 
-                <!-- E-paiement à la demande -->
-                <div class="col-md-4">
-                    <div class="card h-100 payment-method-card">
-                        <div class="card-body text-center">
-                            <i class="bi bi-phone display-4 text-info mb-3"></i>
-                            <h6 class="card-title">E-paiement à la demande</h6>
-                            <p class="text-muted small mt-3">
-                                Vous avez souscrit au E-paiement à la demande : à chaque nouvelle échéance,
-                                vous validez le montant de votre règlement.
-                            </p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Virement -->
-                <div class="col-md-4">
-                    <div class="card h-100 payment-method-card position-relative">
-                        <div class="card-body text-center">
-                            <span class="badge bg-primary position-absolute top-0 start-50 translate-middle">
-                                Nouveau
-                            </span>
-                            <i class="bi bi-bank display-4 text-success mb-3"></i>
-                            <h6 class="card-title">Virement</h6>
-                            <p class="text-muted small mt-3">
-                                Découvrez une solution simple de paiement par virement que vous
-                                initiez via votre application bancaire.
-                            </p>
-                        </div>
-                    </div>
-                </div>
             </div>
         </div>
     </div>
