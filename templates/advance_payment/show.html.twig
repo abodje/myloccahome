@@ -1,0 +1,268 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Détails de l'acompte #{{ advance.id }} - MYLOCCA{% endblock %}
+
+{% block page_title %}
+    <h5 class="mb-0">
+        <i class="bi bi-piggy-bank me-2"></i>
+        Détails de l'acompte #{{ advance.id }}
+    </h5>
+{% endblock %}
+
+{% block page_actions %}
+    <a href="{{ path('app_advance_payment_index') }}" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-arrow-left me-2"></i>
+        Retour à la liste
+    </a>
+{% endblock %}
+
+{% block body %}
+    <div class="container-fluid">
+        <!-- Statut de l'acompte -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="alert alert-{{ advance.status == 'Disponible' ? 'success' : (advance.status == 'Utilisé partiellement' ? 'warning' : 'info') }}">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <h5 class="alert-heading mb-2">
+                                {% if advance.status == 'Disponible' %}
+                                    <i class="bi bi-check-circle me-2"></i>Acompte disponible
+                                {% elseif advance.status == 'Utilisé partiellement' %}
+                                    <i class="bi bi-hourglass-split me-2"></i>Acompte partiellement utilisé
+                                {% elseif advance.status == 'Utilisé' %}
+                                    <i class="bi bi-check-all me-2"></i>Acompte entièrement utilisé
+                                {% elseif advance.status == 'Remboursé' %}
+                                    <i class="bi bi-arrow-return-left me-2"></i>Acompte remboursé
+                                {% endif %}
+                            </h5>
+                            <p class="mb-0">
+                                {% if advance.status == 'Disponible' %}
+                                    Cet acompte sera automatiquement appliqué à vos prochaines échéances de loyer.
+                                {% elseif advance.status == 'Utilisé partiellement' %}
+                                    Cet acompte est en cours d'utilisation pour vos loyers.
+                                {% elseif advance.status == 'Utilisé' %}
+                                    Cet acompte a été entièrement utilisé pour vos paiements de loyer.
+                                {% elseif advance.status == 'Remboursé' %}
+                                    Cet acompte a été remboursé.
+                                {% endif %}
+                            </p>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <div class="h3 mb-0">
+                                Solde restant : <strong>{{ advance.remainingBalance|currency }}</strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Informations principales -->
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <div class="card shadow">
+                    <div class="card-header bg-primary text-white">
+                        <h6 class="mb-0">
+                            <i class="bi bi-info-circle me-2"></i>
+                            Informations générales
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-3">
+                            <div class="col-5 fw-bold">Numéro :</div>
+                            <div class="col-7">#{{ advance.id }}</div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-5 fw-bold">Date de paiement :</div>
+                            <div class="col-7">
+                                <span class="badge bg-light text-dark">
+                                    {{ advance.paidDate|date('d/m/Y à H:i') }}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-5 fw-bold">Montant initial :</div>
+                            <div class="col-7">
+                                <span class="badge bg-primary">
+                                    {{ advance.amount|currency }}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-5 fw-bold">Montant utilisé :</div>
+                            <div class="col-7">
+                                <span class="badge bg-info">
+                                    {{ (advance.amount - advance.remainingBalance)|currency }}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-5 fw-bold">Solde restant :</div>
+                            <div class="col-7">
+                                <span class="badge bg-{{ advance.remainingBalance > 0 ? 'success' : 'secondary' }}">
+                                    {{ advance.remainingBalance|currency }}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-5 fw-bold">Statut :</div>
+                            <div class="col-7">
+                                {% if advance.status == 'Disponible' %}
+                                    <span class="badge bg-success">
+                                        <i class="bi bi-check-circle me-1"></i>{{ advance.status }}
+                                    </span>
+                                {% elseif advance.status == 'Utilisé partiellement' %}
+                                    <span class="badge bg-warning">
+                                        <i class="bi bi-hourglass-split me-1"></i>{{ advance.status }}
+                                    </span>
+                                {% elseif advance.status == 'Utilisé' %}
+                                    <span class="badge bg-info">
+                                        <i class="bi bi-check-all me-1"></i>{{ advance.status }}
+                                    </span>
+                                {% else %}
+                                    <span class="badge bg-secondary">{{ advance.status }}</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="card shadow">
+                    <div class="card-header bg-success text-white">
+                        <h6 class="mb-0">
+                            <i class="bi bi-file-text me-2"></i>
+                            Informations du bail
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-3">
+                            <div class="col-5 fw-bold">Bail :</div>
+                            <div class="col-7">
+                                <a href="{{ path('app_lease_show', {'id': advance.lease.id}) }}" class="btn btn-sm btn-outline-primary">
+                                    Bail #{{ advance.lease.id }}
+                                </a>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-5 fw-bold">Propriété :</div>
+                            <div class="col-7">
+                                <strong>{{ advance.lease.property.address }}</strong>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-5 fw-bold">Locataire :</div>
+                            <div class="col-7">
+                                {{ advance.lease.tenant.firstName }} {{ advance.lease.tenant.lastName }}
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-5 fw-bold">Loyer mensuel :</div>
+                            <div class="col-7">
+                                <span class="badge bg-info">
+                                    {{ advance.lease.monthlyRent|currency }}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-5 fw-bold">Équivalent :</div>
+                            <div class="col-7">
+                                <span class="badge bg-warning">
+                                    {{ (advance.amount / advance.lease.monthlyRent)|number_format(2) }} mois de loyer
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Historique d'utilisation -->
+        {% if advance.usageHistory|length > 0 %}
+        <div class="row">
+            <div class="col-12">
+                <div class="card shadow">
+                    <div class="card-header bg-info text-white">
+                        <h6 class="mb-0">
+                            <i class="bi bi-clock-history me-2"></i>
+                            Historique d'utilisation
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Description</th>
+                                        <th>Paiement</th>
+                                        <th>Montant utilisé</th>
+                                        <th>Solde après</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for usage in advance.usageHistory %}
+                                    <tr>
+                                        <td>{{ usage.usedDate|date('d/m/Y H:i') }}</td>
+                                        <td>{{ usage.description }}</td>
+                                        <td>
+                                            {% if usage.payment %}
+                                            <a href="{{ path('app_payment_show', {'id': usage.payment.id}) }}" class="btn btn-sm btn-outline-primary">
+                                                Paiement #{{ usage.payment.id }}
+                                            </a>
+                                            {% else %}
+                                            -
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-danger">
+                                                -{{ usage.amountUsed|currency }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-secondary">
+                                                {{ usage.balanceAfter|currency }}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Actions -->
+        {% if is_granted('ROLE_ADMIN') %}
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="card shadow">
+                    <div class="card-header bg-warning">
+                        <h6 class="mb-0">
+                            <i class="bi bi-gear me-2"></i>
+                            Actions administrateur
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="btn-group" role="group">
+                            {% if advance.remainingBalance > 0 %}
+                            <form method="POST" action="{{ path('app_advance_payment_refund', {'id': advance.id}) }}" class="d-inline" onsubmit="return confirm('Êtes-vous sûr de vouloir rembourser cet acompte ?')">
+                                <button type="submit" class="btn btn-danger">
+                                    <i class="bi bi-arrow-return-left me-2"></i>
+                                    Rembourser l'acompte
+                                </button>
+                            </form>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+{% endblock %}
+

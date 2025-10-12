@@ -180,8 +180,10 @@ class OnlinePaymentController extends AbstractController
                 $onlinePayment = new OnlinePayment();
                 $onlinePayment->setTransactionId($transactionId);
                 $onlinePayment->setPaymentType('advance');
+                $onlinePayment->setPaymentMethod('cinetpay');
                 $onlinePayment->setLease($lease);
                 $onlinePayment->setAmount((string) $amount);
+                $onlinePayment->setStatus('pending');
                 $onlinePayment->setCustomerName($tenant->getFullName());
                 $onlinePayment->setCustomerPhone($tenant->getPhone());
                 $onlinePayment->setCustomerEmail($tenant->getEmail());
@@ -219,18 +221,32 @@ class OnlinePaymentController extends AbstractController
                 $em->persist($onlinePayment);
                 $em->flush();
 
-                // Rediriger vers CinetPay
-                return $this->render('online_payment/pay_rent.html.twig', [
-                    'payment' => $payment,
-                    'payment_url' => $paymentUrl,
-                ]);
+                // Redirection directe vers CinetPay
+                if (!empty($paymentUrl)) {
+                    return $this->redirect($paymentUrl);
+                } else {
+                    $this->addFlash('error', 'Erreur : URL de paiement non disponible.');
+                    return $this->redirectToRoute('app_online_payment_pay_advance');
+                }
 
             } catch (\Exception $e) {
                 $this->addFlash('error', 'Erreur lors de l\'initialisation du paiement : ' . $e->getMessage());
+                return $this->redirectToRoute('app_online_payment_pay_advance');
             }
         }
 
-        $activeLeases = $leaseRepository->findBy(['status' => 'Actif']);
+        // Récupérer uniquement les baux actifs du locataire connecté
+        /** @var \App\Entity\User|null $user */
+        $user = $this->getUser();
+        $activeLeases = [];
+
+        if ($user && $user->getTenant()) {
+            $tenant = $user->getTenant();
+            $activeLeases = $leaseRepository->findBy([
+                'tenant' => $tenant,
+                'status' => 'Actif'
+            ]);
+        }
 
         return $this->render('online_payment/pay_advance.html.twig', [
             'leases' => $activeLeases,

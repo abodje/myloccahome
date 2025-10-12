@@ -55,18 +55,18 @@ class PropertyType extends AbstractType
             ])
             ->add('monthlyRent', MoneyType::class, [
                 'label' => 'Loyer mensuel',
-                'currency' => 'EUR',
+                'currency' => 'XOF',
                 'attr' => ['class' => 'form-control']
             ])
             ->add('charges', MoneyType::class, [
                 'label' => 'Charges',
-                'currency' => 'EUR',
+                'currency' => 'XOF',
                 'required' => false,
                 'attr' => ['class' => 'form-control']
             ])
             ->add('deposit', MoneyType::class, [
                 'label' => 'Dépôt de garantie',
-                'currency' => 'EUR',
+                'currency' => 'XOF',
                 'required' => false,
                 'attr' => ['class' => 'form-control']
             ])

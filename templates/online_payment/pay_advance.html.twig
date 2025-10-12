@@ -1,0 +1,322 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Payer un acompte - MYLOCCA{% endblock %}
+
+{% block page_title %}
+    <h5 class="mb-0">
+        <i class="bi bi-piggy-bank me-2"></i>
+        Payer un acompte
+    </h5>
+{% endblock %}
+
+{% block body %}
+    <div class="container-fluid">
+        <!-- Message d'information -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="alert alert-info">
+                    <h5 class="alert-heading">
+                        <i class="bi bi-info-circle me-2"></i>
+                        Qu'est-ce qu'un acompte ?
+                    </h5>
+                    <p class="mb-2">
+                        Un <strong>acompte</strong> est un paiement en avance qui sera automatiquement appliqué à vos prochaines échéances de loyer.
+                    </p>
+                    <hr>
+                    <p class="mb-0">
+                        <strong>Avantages :</strong>
+                    </p>
+                    <ul class="mb-0">
+                        <li>💰 <strong>Flexibilité</strong> : Payez le montant de votre choix, quand vous le souhaitez</li>
+                        <li>🔄 <strong>Application automatique</strong> : Votre acompte sera déduit de vos prochains loyers</li>
+                        <li>📊 <strong>Suivi transparent</strong> : Consultez l'utilisation de vos acomptes à tout moment</li>
+                        <li>✅ <strong>Simplicité</strong> : Plus besoin de vous soucier des prochaines échéances</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Formulaire de paiement -->
+        <div class="row">
+            <div class="col-md-8 offset-md-2">
+                <div class="card shadow">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="mb-0">
+                            <i class="bi bi-credit-card me-2"></i>
+                            Effectuer un paiement en avance
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <form method="POST" action="{{ path('app_online_payment_pay_advance') }}" id="advancePaymentForm" data-turbo="false">
+                            <!-- Sélection du bail -->
+                            <div class="mb-4">
+                                <label for="lease_id" class="form-label">
+                                    <i class="bi bi-file-text me-1"></i>
+                                    Sélectionner le bail <span class="text-danger">*</span>
+                                </label>
+                                {% if leases|length > 0 %}
+                                <select name="lease_id" id="lease_id" class="form-select" required>
+                                    <option value="">-- Choisir un bail --</option>
+                                    {% for lease in leases %}
+                                        <option value="{{ lease.id }}"
+                                                data-rent="{{ lease.monthlyRent }}"
+                                                data-property="{{ lease.property.address }}">
+                                            {{ lease.property.address }} - {{ lease.monthlyRent|currency }}/mois
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                                <small class="form-text text-muted">
+                                    Choisissez le bail pour lequel vous souhaitez effectuer un acompte
+                                </small>
+                                {% else %}
+                                <div class="alert alert-warning">
+                                    <i class="bi bi-exclamation-triangle me-2"></i>
+                                    <strong>Aucun bail actif trouvé.</strong><br>
+                                    Vous devez avoir un bail actif pour pouvoir effectuer un paiement en avance.
+                                    Contactez votre gestionnaire si vous pensez qu'il s'agit d'une erreur.
+                                </div>
+                                {% endif %}
+                            </div>
+
+                            <!-- Montant -->
+                            <div class="mb-4">
+                                <label for="amount" class="form-label">
+                                    <i class="bi bi-cash me-1"></i>
+                                    Montant de l'acompte <span class="text-danger">*</span>
+                                </label>
+                                {% set minAmount = app_setting('minimum_advance_amount', 1000) %}
+                                <div class="input-group">
+                                    <input type="number"
+                                           name="amount"
+                                           id="amount"
+                                           class="form-control"
+                                           step="0.01"
+                                           min="{{ minAmount }}"
+                                           placeholder="Ex: 50000"
+                                           required>
+                                    <span class="input-group-text">{{ app_setting('default_currency', 'FCFA') }}</span>
+                                </div>
+                                <small class="form-text text-muted">
+                                    Montant minimum : {{ minAmount|number_format(0, ',', ' ') }} {{ app_setting('default_currency', 'FCFA') }}
+                                </small>
+                            </div>
+
+                            <!-- Montants suggérés -->
+                            <div class="mb-4">
+                                <label class="form-label">
+                                    <i class="bi bi-lightning me-1"></i>
+                                    Montants suggérés
+                                </label>
+                                <div class="btn-group d-flex" role="group" id="suggestedAmounts">
+                                    <button type="button" class="btn btn-outline-success" data-amount="25000">
+                                        25,000 {{ app_setting('default_currency', 'FCFA') }}
+                                    </button>
+                                    <button type="button" class="btn btn-outline-success" data-amount="50000">
+                                        50,000 {{ app_setting('default_currency', 'FCFA') }}
+                                    </button>
+                                    <button type="button" class="btn btn-outline-success" data-amount="100000">
+                                        100,000 {{ app_setting('default_currency', 'FCFA') }}
+                                    </button>
+                                    <button type="button" class="btn btn-outline-success" id="oneMonthRent">
+                                        1 mois de loyer
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Récapitulatif -->
+                            <div class="mb-4 d-none" id="summary">
+                                <div class="alert alert-light border">
+                                    <h6 class="mb-3">
+                                        <i class="bi bi-clipboard-check me-2"></i>
+                                        Récapitulatif
+                                    </h6>
+                                    <div class="row">
+                                        <div class="col-6">
+                                            <strong>Bail :</strong>
+                                        </div>
+                                        <div class="col-6" id="summaryProperty">
+                                            -
+                                        </div>
+                                    </div>
+                                    <div class="row mt-2">
+                                        <div class="col-6">
+                                            <strong>Loyer mensuel :</strong>
+                                        </div>
+                                        <div class="col-6" id="summaryRent">
+                                            -
+                                        </div>
+                                    </div>
+                                    <div class="row mt-2">
+                                        <div class="col-6">
+                                            <strong>Montant de l'acompte :</strong>
+                                        </div>
+                                        <div class="col-6 text-success fw-bold" id="summaryAmount">
+                                            -
+                                        </div>
+                                    </div>
+                                    <hr>
+                                    <div class="row">
+                                        <div class="col-6">
+                                            <strong>Équivalent en loyers :</strong>
+                                        </div>
+                                        <div class="col-6 text-info fw-bold" id="summaryEquivalent">
+                                            -
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Boutons -->
+                            <div class="d-grid gap-2">
+                                {% if leases|length > 0 %}
+                                <button type="submit" class="btn btn-success btn-lg">
+                                    <i class="bi bi-credit-card me-2"></i>
+                                    Procéder au paiement en ligne
+                                </button>
+                                {% else %}
+                                <button type="button" class="btn btn-secondary btn-lg" disabled>
+                                    <i class="bi bi-x-circle me-2"></i>
+                                    Aucun bail disponible
+                                </button>
+                                {% endif %}
+                                <a href="{{ path('app_payment_index') }}" class="btn btn-outline-secondary">
+                                    <i class="bi bi-arrow-left me-2"></i>
+                                    Retour aux paiements
+                                </a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Informations complémentaires -->
+        <div class="row mt-4">
+            <div class="col-md-8 offset-md-2">
+                <div class="card">
+                    <div class="card-header">
+                        <h6 class="mb-0">
+                            <i class="bi bi-question-circle me-2"></i>
+                            Questions fréquentes
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="accordion" id="faqAccordion">
+                            <!-- FAQ 1 -->
+                            <div class="accordion-item">
+                                <h2 class="accordion-header">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq1">
+                                        Comment fonctionne l'acompte ?
+                                    </button>
+                                </h2>
+                                <div id="faq1" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                    <div class="accordion-body">
+                                        Lorsque vous payez un acompte, le montant est crédité à votre compte. Ensuite, à chaque échéance de loyer, le système déduit automatiquement le montant dû de votre acompte jusqu'à épuisement.
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- FAQ 2 -->
+                            <div class="accordion-item">
+                                <h2 class="accordion-header">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq2">
+                                        Puis-je payer plusieurs acomptes ?
+                                    </button>
+                                </h2>
+                                <div id="faq2" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                    <div class="accordion-body">
+                                        Oui, vous pouvez effectuer autant d'acomptes que vous le souhaitez. Les montants seront cumulés et appliqués automatiquement à vos prochaines échéances.
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- FAQ 3 -->
+                            <div class="accordion-item">
+                                <h2 class="accordion-header">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq3">
+                                        Que se passe-t-il si mon acompte dépasse mes loyers restants ?
+                                    </button>
+                                </h2>
+                                <div id="faq3" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                    <div class="accordion-body">
+                                        Si votre acompte dépasse le montant de vos loyers à venir, le solde restant reste disponible sur votre compte. Vous pouvez demander un remboursement ou l'utiliser pour de futurs paiements.
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- FAQ 4 -->
+                            <div class="accordion-item">
+                                <h2 class="accordion-header">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq4">
+                                        Comment suivre l'utilisation de mes acomptes ?
+                                    </button>
+                                </h2>
+                                <div id="faq4" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                    <div class="accordion-body">
+                                        Vous pouvez consulter l'historique et le solde de vos acomptes dans la section "Acomptes" du menu latéral, ainsi que sur la page "Mes paiements".
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const leaseSelect = document.getElementById('lease_id');
+            const amountInput = document.getElementById('amount');
+            const summary = document.getElementById('summary');
+            const oneMonthRentBtn = document.getElementById('oneMonthRent');
+            const suggestedAmounts = document.querySelectorAll('#suggestedAmounts button[data-amount]');
+
+            // Montants suggérés
+            suggestedAmounts.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    amountInput.value = this.dataset.amount;
+                    updateSummary();
+                });
+            });
+
+            // 1 mois de loyer
+            oneMonthRentBtn.addEventListener('click', function() {
+                const selectedOption = leaseSelect.options[leaseSelect.selectedIndex];
+                if (selectedOption.value) {
+                    const rent = parseFloat(selectedOption.dataset.rent);
+                    amountInput.value = rent;
+                    updateSummary();
+                } else {
+                    alert('Veuillez d\'abord sélectionner un bail');
+                }
+            });
+
+            // Mise à jour du récapitulatif
+            function updateSummary() {
+                const selectedOption = leaseSelect.options[leaseSelect.selectedIndex];
+                const amount = parseFloat(amountInput.value);
+
+                if (selectedOption.value && amount > 0) {
+                    const rent = parseFloat(selectedOption.dataset.rent);
+                    const property = selectedOption.dataset.property;
+                    const equivalent = (amount / rent).toFixed(2);
+
+                    document.getElementById('summaryProperty').textContent = property;
+                    document.getElementById('summaryRent').textContent = rent.toLocaleString() + ' {{ app_setting('default_currency', 'FCFA') }}';
+                    document.getElementById('summaryAmount').textContent = amount.toLocaleString() + ' {{ app_setting('default_currency', 'FCFA') }}';
+                    document.getElementById('summaryEquivalent').textContent = equivalent + ' mois';
+
+                    summary.classList.remove('d-none');
+                } else {
+                    summary.classList.add('d-none');
+                }
+            }
+
+            leaseSelect.addEventListener('change', updateSummary);
+            amountInput.addEventListener('input', updateSummary);
+        });
+    </script>
+{% endblock %}
+

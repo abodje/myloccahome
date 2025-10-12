@@ -10,10 +10,19 @@
 {% endblock %}
 
 {% block page_actions %}
-    <a href="{{ path('app_payment_new') }}" class="btn btn-primary btn-sm">
-        <i class="bi bi-plus-circle me-2"></i>
-        Nouveau paiement
-    </a>
+    {% if is_granted('ROLE_TENANT') and app_setting('allow_advance_payments', true) %}
+        <a href="{{ path('app_online_payment_pay_advance') }}" class="btn btn-success btn-sm me-2">
+            <i class="bi bi-piggy-bank me-2"></i>
+            Payer un acompte
+        </a>
+    {% endif %}
+
+    {% if not is_granted('ROLE_TENANT') %}
+        <a href="{{ path('app_payment_new') }}" class="btn btn-primary btn-sm">
+            <i class="bi bi-plus-circle me-2"></i>
+            Nouveau paiement
+        </a>
+    {% endif %}
 {% endblock %}
 
 {% block body %}
@@ -52,11 +61,72 @@
             <div class="card bg-light">
                 <div class="card-body text-center">
                     <h6 class="text-muted mb-2">Solde actuel :</h6>
-                    <h2 class="mb-0 text-success">{{ 0|currency }}</h2>
+                    <h2 class="mb-0 {{ current_balance >= 0 ? 'text-success' : 'text-danger' }}">
+                        {{ current_balance|currency }}
+                    </h2>
+                    {% if current_balance < 0 %}
+                    <small class="text-danger">
+                        <i class="bi bi-exclamation-circle"></i>
+                        Vous avez un solde débiteur
+                    </small>
+                    {% elseif current_balance > 0 %}
+                    <small class="text-success">
+                        <i class="bi bi-check-circle"></i>
+                        Vous avez un crédit disponible
+                    </small>
+                    {% else %}
+                    <small class="text-muted">
+                        <i class="bi bi-dash-circle"></i>
+                        Votre compte est à jour
+                    </small>
+                    {% endif %}
                 </div>
             </div>
         </div>
     </div>
+
+    <!-- Carte d'information pour les acomptes (Locataires uniquement) -->
+    {% if is_granted('ROLE_TENANT') and app_setting('allow_advance_payments', true) %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-success">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-1 text-center">
+                            <i class="bi bi-piggy-bank text-success" style="font-size: 3rem;"></i>
+                        </div>
+                        <div class="col-md-8">
+                            <h5 class="card-title text-success mb-2">
+                                <i class="bi bi-info-circle me-2"></i>Paiements en avance disponibles
+                            </h5>
+                            <p class="card-text mb-0">
+                                Vous pouvez effectuer des <strong>paiements en avance (acomptes)</strong> pour faciliter la gestion de votre budget.
+                                Ces acomptes seront automatiquement appliqués à vos prochaines échéances de loyer.
+                            </p>
+                            <small class="text-muted">
+                                💡 <strong>Avantage :</strong> Payez quand vous le pouvez, nous déduisons automatiquement de vos futurs loyers !
+                            </small>
+                        </div>
+                        <div class="col-md-3 text-end">
+                            <a href="{{ path('app_online_payment_pay_advance') }}" class="btn btn-success">
+                                <i class="bi bi-piggy-bank me-2"></i>
+                                Payer un acompte
+                            </a>
+                            {% if advance_stats.available_balance > 0 %}
+                            <div class="mt-2">
+                                <small class="text-success">
+                                    <i class="bi bi-check-circle"></i>
+                                    Solde acompte disponible : <strong>{{ advance_stats.available_balance|currency }}</strong>
+                                </small>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
 
     <!-- Filtres -->
     <div class="row mb-4">

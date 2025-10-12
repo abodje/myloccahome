@@ -11,7 +11,8 @@ use Symfony\Bundle\SecurityBundle\Security;
 class MenuService
 {
     public function __construct(
-        private Security $security
+        private Security $security,
+        private SettingsService $settingsService
     ) {
     }
 
@@ -63,6 +64,14 @@ class MenuService
                 'route' => 'app_payment_index',
                 'roles' => ['ROLE_USER', 'ROLE_TENANT', 'ROLE_MANAGER', 'ROLE_ADMIN'],
                 'order' => 6,
+            ],
+            'advance_payments' => [
+                'label' => 'Acomptes',
+                'icon' => 'bi-piggy-bank',
+                'route' => 'app_advance_payment_index',
+                'roles' => ['ROLE_TENANT'],
+                'order' => 6.5,
+                'visible_condition' => 'allow_advance_payments',
             ],
             'accounting' => [
                 'label' => 'Ma comptabilité',
@@ -237,7 +246,20 @@ class MenuService
             return false;
         }
 
-        return $this->hasAnyRole($menuItem['roles']);
+        // Vérifier les rôles
+        if (!$this->hasAnyRole($menuItem['roles'])) {
+            return false;
+        }
+
+        // Vérifier la condition de visibilité (paramètre système)
+        if (isset($menuItem['visible_condition'])) {
+            $settingValue = $this->settingsService->get($menuItem['visible_condition'], false);
+            if (!$settingValue) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /**

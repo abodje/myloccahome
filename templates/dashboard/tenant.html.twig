@@ -1,0 +1,352 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Tableau de bord - Locataire{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3 mb-0 text-gray-800">
+                    <i class="fas fa-home me-2"></i>Mon Tableau de Bord
+                </h1>
+                <div class="text-muted">
+                    <i class="fas fa-user me-1"></i>
+                    Connecté en tant que Locataire
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistiques principales -->
+    <div class="row mb-4">
+        <!-- Mes Propriétés -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                Mes Propriétés
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ stats.properties.total }}</div>
+                            <small class="text-muted">Propriétés louées</small>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-home fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mes Baux -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                Mes Baux Actifs
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ stats.leases.active }}</div>
+                            <small class="text-muted">{{ stats.leases.expiring_soon }} expirant bientôt</small>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-file-contract fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mes Paiements -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                Paiements en Attente
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ stats.payments.pending }}</div>
+                            <small class="text-muted">{{ stats.payments.overdue }} en retard</small>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-credit-card fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Messages -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-info shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                Messages Non Lus
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ stats.messages.unread }}</div>
+                            <small class="text-muted">{{ stats.messages.total }} conversations</small>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-envelope fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistiques financières -->
+    <div class="row mb-4">
+        <!-- Solde Comptable -->
+        <div class="col-xl-4 col-md-6 mb-4">
+            <div class="card border-left-{{ stats.accounting.balance >= 0 ? 'success' : 'danger' }} shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-{{ stats.accounting.balance >= 0 ? 'success' : 'danger' }} text-uppercase mb-1">
+                                Solde Comptable
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                {{ stats.accounting.balance|currency }}
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-{{ stats.accounting.balance >= 0 ? 'arrow-up' : 'arrow-down' }} fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Crédits du mois -->
+        <div class="col-xl-4 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                Crédits du Mois
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                {{ stats.accounting.monthly_credits|currency }}
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-plus-circle fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Débits du mois -->
+        <div class="col-xl-4 col-md-6 mb-4">
+            <div class="card border-left-danger shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">
+                                Débits du Mois
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                {{ stats.accounting.monthly_debits|currency }}
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-minus-circle fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Demandes de maintenance -->
+    {% if stats.maintenance.pending > 0 or stats.maintenance.urgent > 0 %}
+    <div class="row mb-4">
+        <div class="col-xl-4 col-md-6 mb-4">
+            <div class="card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                Mes Demandes
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ stats.maintenance.pending }}</div>
+                            <small class="text-muted">{{ stats.maintenance.urgent }} urgentes</small>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-tools fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Alertes importantes -->
+    {% if overdue_payments|length > 0 %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-danger">
+                        <i class="fas fa-exclamation-triangle me-2"></i>Paiements en Retard
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        {% for payment in overdue_payments %}
+                        <div class="col-md-6 mb-3">
+                            <div class="alert alert-danger">
+                                <strong>{{ payment.amount|currency }}</strong><br>
+                                Propriété: {{ payment.lease.property.address }}
+                                <br><small class="text-muted">Échéance: {{ payment.dueDate|date('d/m/Y') }}</small>
+                                <div class="mt-2">
+                                    <a href="{{ path('app_payment_show', {'id': payment.id}) }}" class="btn btn-sm btn-danger">
+                                        Voir détails
+                                    </a>
+                                    <a href="{{ path('app_online_payment_pay_rent', {'id': payment.id}) }}" class="btn btn-sm btn-success">
+                                        Payer maintenant
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Activités récentes -->
+    <div class="row">
+        <!-- Mes Paiements récents -->
+        <div class="col-lg-6 mb-4">
+            <div class="card shadow">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-primary">Mes Paiements Récents</h6>
+                    <a href="{{ path('app_payment_index') }}" class="btn btn-sm btn-primary">Voir tout</a>
+                </div>
+                <div class="card-body">
+                    {% if recent_payments|length > 0 %}
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Propriété</th>
+                                    <th>Montant</th>
+                                    <th>Date</th>
+                                    <th>Statut</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for payment in recent_payments %}
+                                <tr>
+                                    <td>{{ payment.lease.property.address }}</td>
+                                    <td>{{ payment.amount|currency }}</td>
+                                    <td>{{ payment.createdAt|date('d/m/Y') }}</td>
+                                    <td>
+                                        <span class="badge badge-{{ payment.status == 'Payé' ? 'success' : 'warning' }}">
+                                            {{ payment.status }}
+                                        </span>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p class="text-muted text-center">Aucun paiement récent</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Mes Demandes de maintenance récentes -->
+        <div class="col-lg-6 mb-4">
+            <div class="card shadow">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-primary">Mes Demandes de Maintenance</h6>
+                    <a href="{{ path('app_maintenance_request_index') }}" class="btn btn-sm btn-primary">Voir tout</a>
+                </div>
+                <div class="card-body">
+                    {% if recent_maintenance|length > 0 %}
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Propriété</th>
+                                    <th>Description</th>
+                                    <th>Date</th>
+                                    <th>Statut</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for maintenance in recent_maintenance %}
+                                <tr>
+                                    <td>{{ maintenance.property.address }}</td>
+                                    <td>{{ maintenance.description|slice(0, 30) }}...</td>
+                                    <td>{{ maintenance.createdAt|date('d/m/Y') }}</td>
+                                    <td>
+                                        <span class="badge badge-{{ maintenance.status == 'Terminée' ? 'success' : (maintenance.status == 'En cours' ? 'warning' : 'secondary') }}">
+                                            {{ maintenance.status }}
+                                        </span>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p class="text-muted text-center">Aucune demande récente</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Actions rapides -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Actions Rapides</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3 mb-3">
+                            <a href="{{ path('app_property_index') }}" class="btn btn-primary btn-block">
+                                <i class="fas fa-home me-2"></i>Mes Propriétés
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <a href="{{ path('app_payment_index') }}" class="btn btn-success btn-block">
+                                <i class="fas fa-credit-card me-2"></i>Mes Paiements
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <a href="{{ path('app_maintenance_request_new') }}" class="btn btn-warning btn-block">
+                                <i class="fas fa-tools me-2"></i>Nouvelle Demande
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <a href="{{ path('app_message_new') }}" class="btn btn-info btn-block">
+                                <i class="fas fa-envelope me-2"></i>Contacter
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

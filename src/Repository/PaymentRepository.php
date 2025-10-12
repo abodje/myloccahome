@@ -267,4 +267,71 @@ class PaymentRepository extends ServiceEntityRepository
                   ->getQuery()
                   ->getResult();
     }
+
+    /**
+     * Trouve les paiements en retard pour un gestionnaire
+     */
+    public function findOverdueByManager(int $ownerId): array
+    {
+        $qb = $this->createQueryBuilder('p')
+            ->join('p.lease', 'l')
+            ->join('l.property', 'prop')
+            ->join('prop.owner', 'o')
+            ->where('o.id = :ownerId')
+            ->andWhere('p.status != :status')
+            ->andWhere('p.dueDate < :now')
+            ->setParameter('ownerId', $ownerId)
+            ->setParameter('status', 'Payé')
+            ->setParameter('now', new \DateTime());
+
+        return $qb->orderBy('p.dueDate', 'ASC')
+                  ->getQuery()
+                  ->getResult();
+    }
+
+    /**
+     * Trouve les paiements en retard pour un locataire
+     */
+    public function findOverdueByTenant(int $tenantId): array
+    {
+        $qb = $this->createQueryBuilder('p')
+            ->join('p.lease', 'l')
+            ->join('l.tenant', 't')
+            ->where('t.id = :tenantId')
+            ->andWhere('p.status != :status')
+            ->andWhere('p.dueDate < :now')
+            ->setParameter('tenantId', $tenantId)
+            ->setParameter('status', 'Payé')
+            ->setParameter('now', new \DateTime());
+
+        return $qb->orderBy('p.dueDate', 'ASC')
+                  ->getQuery()
+                  ->getResult();
+    }
+
+    /**
+     * Calcule le revenu mensuel pour un gestionnaire
+     */
+    public function getMonthlyIncomeByManager(int $ownerId): float
+    {
+        $currentMonth = new \DateTime('first day of this month');
+        $nextMonth = new \DateTime('first day of next month');
+
+        $qb = $this->createQueryBuilder('p')
+            ->select('SUM(p.amount)')
+            ->join('p.lease', 'l')
+            ->join('l.property', 'prop')
+            ->join('prop.owner', 'o')
+            ->where('o.id = :ownerId')
+            ->andWhere('p.status = :status')
+            ->andWhere('p.createdAt >= :startDate')
+            ->andWhere('p.createdAt < :endDate')
+            ->setParameter('ownerId', $ownerId)
+            ->setParameter('status', 'Payé')
+            ->setParameter('startDate', $currentMonth)
+            ->setParameter('endDate', $nextMonth);
+
+        $result = $qb->getQuery()->getSingleScalarResult();
+        return $result ? (float) $result : 0.0;
+    }
 }

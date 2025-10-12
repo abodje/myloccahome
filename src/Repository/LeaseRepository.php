@@ -98,4 +98,45 @@ class LeaseRepository extends ServiceEntityRepository
             'expiring_soon' => count($this->findExpiringSoon()),
         ];
     }
+
+    /**
+     * Trouve les baux expirant bientôt pour un gestionnaire
+     */
+    public function findExpiringSoonByManager(int $ownerId): array
+    {
+        $qb = $this->createQueryBuilder('l')
+            ->join('l.property', 'p')
+            ->join('p.owner', 'o')
+            ->where('o.id = :ownerId')
+            ->andWhere('l.status = :status')
+            ->andWhere('l.endDate BETWEEN :now AND :soon')
+            ->setParameter('ownerId', $ownerId)
+            ->setParameter('status', 'Actif')
+            ->setParameter('now', new \DateTime())
+            ->setParameter('soon', new \DateTime('+3 months'));
+
+        return $qb->orderBy('l.endDate', 'ASC')
+                  ->getQuery()
+                  ->getResult();
+    }
+
+    /**
+     * Trouve les baux expirant bientôt pour un locataire
+     */
+    public function findExpiringSoonByTenant(int $tenantId): array
+    {
+        $qb = $this->createQueryBuilder('l')
+            ->join('l.tenant', 't')
+            ->where('t.id = :tenantId')
+            ->andWhere('l.status = :status')
+            ->andWhere('l.endDate BETWEEN :now AND :soon')
+            ->setParameter('tenantId', $tenantId)
+            ->setParameter('status', 'Actif')
+            ->setParameter('now', new \DateTime())
+            ->setParameter('soon', new \DateTime('+3 months'));
+
+        return $qb->orderBy('l.endDate', 'ASC')
+                  ->getQuery()
+                  ->getResult();
+    }
 }

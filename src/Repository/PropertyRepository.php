@@ -189,7 +189,7 @@ class PropertyRepository extends ServiceEntityRepository
             ->where('l.tenant = :tenantId')
             ->andWhere('l.status = :leaseStatus')
             ->setParameter('tenantId', $tenantId)
-            ->setParameter('leaseStatus', 'active');
+            ->setParameter('leaseStatus', 'Actif');
 
         if ($search) {
             $qb->andWhere('p.address LIKE :search OR p.city LIKE :search')

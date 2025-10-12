@@ -7,6 +7,7 @@ use App\Form\PaymentType;
 use App\Repository\PaymentRepository;
 use App\Repository\LeaseRepository;
 use App\Repository\AdvancePaymentRepository;
+use App\Repository\AccountingEntryRepository;
 use App\Service\PdfService;
 use App\Service\ContractGenerationService;
 use App\Service\PaymentSettingsService;
@@ -24,7 +25,8 @@ class PaymentController extends AbstractController
     public function index(
         PaymentRepository $paymentRepository,
         Request $request,
-        AdvancePaymentRepository $advancePaymentRepository
+        AdvancePaymentRepository $advancePaymentRepository,
+        AccountingEntryRepository $accountingRepository
     ): Response {
         /** @var \App\Entity\User|null $user */
         $user = $this->getUser();
@@ -61,10 +63,14 @@ class PaymentController extends AbstractController
         // Statistiques des acomptes filtrées
         $advanceStats = $this->calculateFilteredAdvanceStats($advancePaymentRepository, $user);
 
+        // Calculer le solde actuel selon le rôle
+        $currentBalance = $this->calculateCurrentBalance($accountingRepository, $user);
+
         return $this->render('payment/index.html.twig', [
             'payments' => $payments,
             'stats' => $stats,
             'advance_stats' => $advanceStats,
+            'current_balance' => $currentBalance,
             'current_status' => $status,
             'current_type' => $type,
             'current_year' => $year,
@@ -650,5 +656,67 @@ class PaymentController extends AbstractController
 
         // Pour les admins, retourner les stats globales
         return $advancePaymentRepository->getStatistics();
+    }
+
+    /**
+     * Calcule le solde actuel selon le rôle de l'utilisateur
+     */
+    private function calculateCurrentBalance(AccountingEntryRepository $accountingRepository, $user): float
+    {
+        if ($user && in_array('ROLE_TENANT', $user->getRoles())) {
+            // Pour les locataires, calculer leur solde personnel
+            $tenant = $user->getTenant();
+            if ($tenant) {
+                $tenantStats = $accountingRepository->getTenantStatistics($tenant->getId());
+                return $tenantStats['balance'] ?? 0.0;
+            }
+        } elseif ($user && in_array('ROLE_MANAGER', $user->getRoles())) {
+            // Pour les gestionnaires, calculer le solde de tous leurs locataires
+            $owner = $user->getOwner();
+            if ($owner) {
+                // Récupérer tous les locataires du gestionnaire
+                $managerTenants = $accountingRepository->createQueryBuilder('ae')
+                    ->select('ae.tenant')
+                    ->join('ae.lease', 'l')
+                    ->join('l.property', 'p')
+                    ->join('p.owner', 'o')
+                    ->where('o.id = :ownerId')
+                    ->andWhere('ae.tenant IS NOT NULL')
+                    ->setParameter('ownerId', $owner->getId())
+                    ->groupBy('ae.tenant')
+                    ->getQuery()
+                    ->getResult();
+
+                $totalBalance = 0;
+                foreach ($managerTenants as $tenantArray) {
+                    $tenant = $tenantArray['tenant'];
+                    if ($tenant) {
+                        $tenantStats = $accountingRepository->getTenantStatistics($tenant->getId());
+                        $totalBalance += $tenantStats['balance'] ?? 0.0;
+                    }
+                }
+
+                return $totalBalance;
+            }
+        }
+
+        // Pour les admins, calculer le solde global de tous les locataires
+        $allTenants = $accountingRepository->createQueryBuilder('ae')
+            ->select('ae.tenant')
+            ->where('ae.tenant IS NOT NULL')
+            ->groupBy('ae.tenant')
+            ->getQuery()
+            ->getResult();
+
+        $totalBalance = 0;
+        foreach ($allTenants as $tenantArray) {
+            $tenant = $tenantArray['tenant'];
+            if ($tenant) {
+                $tenantStats = $accountingRepository->getTenantStatistics($tenant->getId());
+                $totalBalance += $tenantStats['balance'] ?? 0.0;
+            }
+        }
+
+        return $totalBalance;
     }
 }

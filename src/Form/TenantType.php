@@ -64,7 +64,7 @@ class TenantType extends AbstractType
             ])
             ->add('monthlyIncome', MoneyType::class, [
                 'label' => 'Revenus mensuels',
-                'currency' => 'EUR',
+                'currency' => 'XOF',
                 'required' => false,
                 'attr' => ['class' => 'form-control']
             ])

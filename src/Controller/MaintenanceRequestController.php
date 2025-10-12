@@ -68,11 +68,11 @@ class MaintenanceRequestController extends AbstractController
         $user = $this->getUser();
 
         $maintenanceRequest = new MaintenanceRequest();
-        
+
         // Préparer les options du formulaire selon le rôle
         $formOptions = [];
         $isTenantView = $user && in_array('ROLE_TENANT', $user->getRoles());
-        
+
         if ($isTenantView) {
             $tenant = $user->getTenant();
             if ($tenant) {
@@ -80,14 +80,14 @@ class MaintenanceRequestController extends AbstractController
                 $tenantProperties = $propertyRepository->findByTenantWithFilters($tenant->getId());
                 $formOptions['is_tenant_view'] = true;
                 $formOptions['tenant_properties'] = $tenantProperties;
-                
+
                 // Pré-remplir avec la première propriété si disponible
                 if (!empty($tenantProperties)) {
                     $maintenanceRequest->setProperty($tenantProperties[0]);
                 }
             }
         }
-        
+
         $form = $this->createForm(MaintenanceRequestType::class, $maintenanceRequest, $formOptions);
 
         $form->handleRequest($request);
@@ -100,17 +100,17 @@ class MaintenanceRequestController extends AbstractController
                     // Pour les locataires, s'assurer que la propriété appartient bien à un de leurs baux
                     $property = $maintenanceRequest->getProperty();
                     $tenantProperties = $propertyRepository->findByTenantWithFilters($tenant->getId());
-                    
+
                     if (!in_array($property, $tenantProperties)) {
                         $this->addFlash('error', 'Vous ne pouvez créer une demande que pour vos propriétés louées.');
                         return $this->redirectToRoute('app_maintenance_request_new');
                     }
-                    
+
                     // Définir automatiquement le locataire
                     $maintenanceRequest->setTenant($tenant);
                 }
             }
-            
+
             $maintenanceRequest->setCreatedAt(new \DateTime());
             $maintenanceRequest->setStatus('En attente');
             $maintenanceRequest->setPriority('Normale');
@@ -240,7 +240,7 @@ class MaintenanceRequestController extends AbstractController
                     'pending' => 0,
                     'urgent' => 0,
                     'overdue' => 0,
-                    'completed' => 0
+                    'terminees' => 0
                 ];
 
                 foreach ($tenantRequests as $request) {
@@ -249,7 +249,7 @@ class MaintenanceRequestController extends AbstractController
                     } elseif ($request->getStatus() === 'En cours') {
                         $stats['urgent']++;
                     } elseif ($request->getStatus() === 'Terminée') {
-                        $stats['completed']++;
+                        $stats['terminees']++;
                     }
 
                     // Vérifier si la demande est en retard
@@ -271,7 +271,7 @@ class MaintenanceRequestController extends AbstractController
                     'pending' => 0,
                     'urgent' => 0,
                     'overdue' => 0,
-                    'completed' => 0
+                    'terminees' => 0
                 ];
 
                 foreach ($managerRequests as $request) {
@@ -280,7 +280,7 @@ class MaintenanceRequestController extends AbstractController
                     } elseif ($request->getStatus() === 'En cours') {
                         $stats['urgent']++;
                     } elseif ($request->getStatus() === 'Terminée') {
-                        $stats['completed']++;
+                        $stats['terminees']++;
                     }
 
                     // Vérifier si la demande est en retard

@@ -226,12 +226,9 @@ class MaintenanceRequestRepository extends ServiceEntityRepository
     public function findByTenantWithFilters(int $tenantId, ?string $status = null, ?string $priority = null, ?string $category = null): array
     {
         $qb = $this->createQueryBuilder('mr')
-            ->join('mr.property', 'p')
-            ->join('p.leases', 'l')
-            ->where('l.tenant = :tenantId')
-            ->andWhere('l.status = :leaseStatus')
-            ->setParameter('tenantId', $tenantId)
-            ->setParameter('leaseStatus', 'active');
+            ->join('mr.tenant', 't')
+            ->where('t.id = :tenantId')
+            ->setParameter('tenantId', $tenantId);
 
         if ($status) {
             $qb->andWhere('mr.status = :status')
@@ -279,6 +276,84 @@ class MaintenanceRequestRepository extends ServiceEntityRepository
         }
 
         return $qb->orderBy('mr.createdAt', 'DESC')
+                  ->getQuery()
+                  ->getResult();
+    }
+
+    /**
+     * Trouve les demandes urgentes en attente pour un gestionnaire
+     */
+    public function findUrgentPendingByManager(int $ownerId): array
+    {
+        $qb = $this->createQueryBuilder('mr')
+            ->join('mr.property', 'p')
+            ->join('p.owner', 'o')
+            ->where('o.id = :ownerId')
+            ->andWhere('mr.priority = :priority')
+            ->andWhere('mr.status IN (:statuses)')
+            ->setParameter('ownerId', $ownerId)
+            ->setParameter('priority', 'Urgente')
+            ->setParameter('statuses', ['Nouvelle', 'En cours']);
+
+        return $qb->orderBy('mr.createdAt', 'DESC')
+                  ->getQuery()
+                  ->getResult();
+    }
+
+    /**
+     * Trouve les demandes en retard pour un gestionnaire
+     */
+    public function findOverdueByManager(int $ownerId): array
+    {
+        $qb = $this->createQueryBuilder('mr')
+            ->join('mr.property', 'p')
+            ->join('p.owner', 'o')
+            ->where('o.id = :ownerId')
+            ->andWhere('mr.status IN (:statuses)')
+            ->andWhere('mr.createdAt < :overdueDate')
+            ->setParameter('ownerId', $ownerId)
+            ->setParameter('statuses', ['Nouvelle', 'En cours'])
+            ->setParameter('overdueDate', new \DateTime('-7 days'));
+
+        return $qb->orderBy('mr.createdAt', 'ASC')
+                  ->getQuery()
+                  ->getResult();
+    }
+
+    /**
+     * Trouve les demandes urgentes en attente pour un locataire
+     */
+    public function findUrgentPendingByTenant(int $tenantId): array
+    {
+        $qb = $this->createQueryBuilder('mr')
+            ->join('mr.tenant', 't')
+            ->where('t.id = :tenantId')
+            ->andWhere('mr.priority = :priority')
+            ->andWhere('mr.status IN (:statuses)')
+            ->setParameter('tenantId', $tenantId)
+            ->setParameter('priority', 'Urgente')
+            ->setParameter('statuses', ['Nouvelle', 'En cours']);
+
+        return $qb->orderBy('mr.createdAt', 'DESC')
+                  ->getQuery()
+                  ->getResult();
+    }
+
+    /**
+     * Trouve les demandes en retard pour un locataire
+     */
+    public function findOverdueByTenant(int $tenantId): array
+    {
+        $qb = $this->createQueryBuilder('mr')
+            ->join('mr.tenant', 't')
+            ->where('t.id = :tenantId')
+            ->andWhere('mr.status IN (:statuses)')
+            ->andWhere('mr.createdAt < :overdueDate')
+            ->setParameter('tenantId', $tenantId)
+            ->setParameter('statuses', ['Nouvelle', 'En cours'])
+            ->setParameter('overdueDate', new \DateTime('-7 days'));
+
+        return $qb->orderBy('mr.createdAt', 'ASC')
                   ->getQuery()
                   ->getResult();
     }
