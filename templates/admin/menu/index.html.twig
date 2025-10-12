@@ -1,0 +1,193 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Gestion des menus - MYLOCCA{% endblock %}
+
+{% block page_title %}
+    <h5 class="mb-0">
+        <i class="bi bi-menu-button-wide me-2"></i>
+        Gestion des menus & ACL
+    </h5>
+{% endblock %}
+
+{% block page_actions %}
+    <div class="btn-group">
+        <form method="POST" action="{{ path('app_admin_menu_sync') }}" class="d-inline">
+            <button type="submit" class="btn btn-warning btn-sm" onclick="return confirm('Synchroniser les menus depuis le code ?')">
+                <i class="bi bi-arrow-repeat"></i> Synchroniser
+            </button>
+        </form>
+        <a href="{{ path('app_admin_menu_new') }}" class="btn btn-primary btn-sm">
+            <i class="bi bi-plus-circle"></i> Nouveau menu
+        </a>
+    </div>
+{% endblock %}
+
+{% block body %}
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">Liste des menus</h6>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle me-2"></i>
+                        <strong>Gestion ACL :</strong> Modifiez les menus, leurs rôles et leur ordre d'affichage. Les changements sont appliqués immédiatement.
+                    </div>
+
+                    {% if menus is empty %}
+                        <div class="text-center py-5">
+                            <i class="bi bi-menu-button display-1 text-muted"></i>
+                            <p class="text-muted mt-3">Aucun menu configuré</p>
+                            <form method="POST" action="{{ path('app_admin_menu_sync') }}" class="d-inline">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="bi bi-arrow-repeat"></i> Synchroniser depuis le code
+                                </button>
+                            </form>
+                        </div>
+                    {% else %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 50px;">Ordre</th>
+                                        <th>Clé</th>
+                                        <th>Label</th>
+                                        <th>Icône</th>
+                                        <th>Route</th>
+                                        <th>Rôles</th>
+                                        <th>Type</th>
+                                        <th>Statut</th>
+                                        <th style="width: 200px;">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for menu in menus %}
+                                        <tr>
+                                            <td>{{ menu.displayOrder }}</td>
+                                            <td><code class="small">{{ menu.menuKey }}</code></td>
+                                            <td>
+                                                <strong>{{ menu.label }}</strong>
+                                                {% if menu.subMenuItems|length > 0 %}
+                                                    <span class="badge bg-secondary">{{ menu.subMenuItems|length }} sous-menu(s)</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if menu.icon %}
+                                                    <i class="{{ menu.icon }}"></i>
+                                                {% endif %}
+                                            </td>
+                                            <td><small class="text-muted">{{ menu.route }}</small></td>
+                                            <td>
+                                                {% for role in menu.roles %}
+                                                    <span class="badge bg-primary">{{ role }}</span>
+                                                {% endfor %}
+                                            </td>
+                                            <td>
+                                                <span class="badge {% if menu.type == 'divider' %}bg-secondary{% else %}bg-info{% endif %}">
+                                                    {{ menu.type }}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <form method="POST" action="{{ path('app_admin_menu_toggle', {id: menu.id}) }}" class="d-inline">
+                                                    <button type="submit" class="btn btn-sm btn-link p-0">
+                                                        {% if menu.isActive %}
+                                                            <span class="badge bg-success">Actif</span>
+                                                        {% else %}
+                                                            <span class="badge bg-secondary">Inactif</span>
+                                                        {% endif %}
+                                                    </button>
+                                                </form>
+                                            </td>
+                                            <td>
+                                                <div class="btn-group btn-group-sm">
+                                                    <a href="{{ path('app_admin_menu_edit', {id: menu.id}) }}"
+                                                       class="btn btn-outline-primary" title="Modifier">
+                                                        <i class="bi bi-pencil"></i>
+                                                    </a>
+                                                    <form method="POST" action="{{ path('app_admin_menu_delete', {id: menu.id}) }}"
+                                                          class="d-inline"
+                                                          onsubmit="return confirm('Supprimer ce menu ?')">
+                                                        <button type="submit" class="btn btn-outline-danger" title="Supprimer">
+                                                            <i class="bi bi-trash"></i>
+                                                        </button>
+                                                    </form>
+                                                </div>
+                                            </td>
+                                        </tr>
+
+                                        {# Sous-menus #}
+                                        {% if menu.subMenuItems|length > 0 %}
+                                            {% for submenu in menu.subMenuItems %}
+                                                <tr class="table-secondary">
+                                                    <td class="ps-5">└─ {{ submenu.displayOrder }}</td>
+                                                    <td><code class="small">{{ submenu.menuKey }}</code></td>
+                                                    <td>{{ submenu.label }}</td>
+                                                    <td></td>
+                                                    <td><small class="text-muted">{{ submenu.route }}</small></td>
+                                                    <td>
+                                                        {% for role in submenu.roles %}
+                                                            <span class="badge bg-primary">{{ role }}</span>
+                                                        {% endfor %}
+                                                    </td>
+                                                    <td><span class="badge bg-light text-dark">submenu</span></td>
+                                                    <td>
+                                                        {% if submenu.isActive %}
+                                                            <span class="badge bg-success">Actif</span>
+                                                        {% else %}
+                                                            <span class="badge bg-secondary">Inactif</span>
+                                                        {% endif %}
+                                                    </td>
+                                                    <td>
+                                                        <div class="btn-group btn-group-sm">
+                                                            <a href="{{ path('app_admin_menu_edit', {id: submenu.id}) }}"
+                                                               class="btn btn-outline-primary">
+                                                                <i class="bi bi-pencil"></i>
+                                                            </a>
+                                                            <form method="POST" action="{{ path('app_admin_menu_delete', {id: submenu.id}) }}"
+                                                                  class="d-inline"
+                                                                  onsubmit="return confirm('Supprimer ce sous-menu ?')">
+                                                                <button type="submit" class="btn btn-outline-danger">
+                                                                    <i class="bi bi-trash"></i>
+                                                                </button>
+                                                            </form>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            {% endfor %}
+                                        {% endif %}
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h6 class="mb-0">📝 À propos</h6>
+                </div>
+                <div class="card-body">
+                    <h6>Fonctionnalités</h6>
+                    <ul>
+                        <li><strong>Synchroniser :</strong> Importe les menus depuis le code PHP (MenuService.php)</li>
+                        <li><strong>Nouveau menu :</strong> Créer un menu personnalisé via l'interface</li>
+                        <li><strong>Modifier :</strong> Changer le label, les rôles, l'icône, etc.</li>
+                        <li><strong>Toggle :</strong> Activer/désactiver un menu sans le supprimer</li>
+                        <li><strong>Supprimer :</strong> Retirer définitivement un menu</li>
+                    </ul>
+
+                    <h6 class="mt-3">Rôles disponibles</h6>
+                    <div class="d-flex gap-2 flex-wrap">
+                        <span class="badge bg-primary">ROLE_USER</span>
+                        <span class="badge bg-primary">ROLE_TENANT</span>
+                        <span class="badge bg-success">ROLE_MANAGER</span>
+                        <span class="badge bg-danger">ROLE_ADMIN</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+

@@ -23,9 +23,12 @@ class DocumentController extends AbstractController
         $documentsByType = [
             'Assurance' => $documentRepository->findByType('Assurance'),
             'Avis d\'échéance' => $documentRepository->findByType('Avis d\'échéance'),
-            'Bail' => $documentRepository->findByType('Contrat de location'),
+            'Bail' => array_merge(
+                $documentRepository->findByType('Bail'),
+                $documentRepository->findByType('Contrat de location')
+            ),
             'Diagnostics' => $documentRepository->findByType('Diagnostics'),
-            'OK Foncia' => $documentRepository->findByType('Conseils'),
+            'OK' => $documentRepository->findByType('Conseils'),
         ];
 
         // Calculer les statistiques

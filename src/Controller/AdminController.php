@@ -83,33 +83,7 @@ class AdminController extends AbstractController
         ]);
     }
 
-    #[Route('/utilisateurs', name: 'app_admin_users', methods: ['GET'])]
-    public function users(): Response
-    {
-        // Pour la démo, on simule des utilisateurs
-        $users = [
-            [
-                'id' => 1,
-                'name' => 'Administrateur',
-                'email' => 'admin@mylocca.com',
-                'role' => 'ROLE_ADMIN',
-                'last_login' => new \DateTime('-2 hours'),
-                'status' => 'Actif'
-            ],
-            [
-                'id' => 2,
-                'name' => 'Kouame ABODJE',
-                'email' => 'abodjekouamepaularnaud@gmail.com',
-                'role' => 'ROLE_USER',
-                'last_login' => new \DateTime('-1 day'),
-                'status' => 'Actif'
-            ]
-        ];
-
-        return $this->render('admin/users.html.twig', [
-            'users' => $users,
-        ]);
-    }
+    // Route supprimée - remplacée par Admin/UserController
 
     #[Route('/rapports', name: 'app_admin_reports', methods: ['GET'])]
     public function reports(

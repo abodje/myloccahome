@@ -181,21 +181,21 @@
             </div>
         </div>
 
-        <!-- OK Foncia -->
+        <!-- Conseils -->
         <div class="col-lg-6 col-xl-4">
-            <div class="card document-type-card h-100" data-type="OK Foncia">
+            <div class="card document-type-card h-100" data-type="OK">
                 <div class="card-body text-center p-4">
                     <div class="document-icon mb-3">
                         <i class="bi bi-lightbulb display-3 text-secondary"></i>
                     </div>
-                    <h5 class="card-title">OK Foncia</h5>
+                    <h5 class="card-title">Conseils</h5>
                     <p class="card-text text-muted">Retrouvez ici tous nos conseils pour vous accompagner dans votre vie immobilière</p>
 
-                    {% if documents_by_type['OK Foncia']|length > 0 %}
+                    {% if documents_by_type['OK']|length > 0 %}
                         <div class="document-count mb-3">
-                            <span class="badge bg-secondary">{{ documents_by_type['OK Foncia']|length }} document(s)</span>
+                            <span class="badge bg-secondary">{{ documents_by_type['OK']|length }} document(s)</span>
                         </div>
-                        {% set latest = documents_by_type['OK Foncia']|first %}
+                        {% set latest = documents_by_type['OK']|first %}
                         <p class="text-muted small mb-3">
                             Actualisé le {{ latest.createdAt|date('d/m/Y') }}
                         </p>

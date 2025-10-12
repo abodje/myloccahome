@@ -31,9 +31,9 @@
                                     <label for="subject" class="form-label">Sujet de l'email</label>
                                     <input type="text" name="subject" id="subject" class="form-control"
                                            value="{{ template.subject }}" required
-                                           placeholder="Ex: Quittance de loyer - {{month}}">
+                                           placeholder="Ex: Quittance de loyer - {month}">
                                     <div class="form-text">
-                                        Utilisez les variables disponibles (ex: {{tenant_first_name}})
+                                        Utilisez les variables disponibles (ex: {tenant_first_name})
                                     </div>
                                 </div>
 
@@ -114,19 +114,19 @@
                         <div class="card-body">
                             <h6>Salutation personnalisée :</h6>
                             <code class="small d-block mb-3">
-                                Bonjour {{tenant_first_name}},
+                                Bonjour {{ '{{tenant_first_name}}' }},
                             </code>
 
                             <h6>Montant formaté :</h6>
                             <code class="small d-block mb-3">
-                                Montant : {{payment_amount}}
+                                Montant : {{ '{{payment_amount}}' }}
                             </code>
 
                             <h6>Informations entreprise :</h6>
                             <code class="small d-block">
-                                {{company_name}}<br>
-                                {{company_address}}<br>
-                                Tél: {{company_phone}}
+                                {{ '{{company_name}}' }}<br>
+                                {{ '{{company_address}}' }}<br>
+                                Tél: {{ '{{company_phone}}' }}
                             </code>
                         </div>
                     </div>

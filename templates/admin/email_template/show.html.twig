@@ -90,7 +90,7 @@
                             <h5 class="card-title mb-0">Prévisualisation</h5>
                         </div>
                         <div class="card-body">
-                            <iframe srcdoc="{{ preview|e('html_attr') }}" 
+                            <iframe srcdoc="{{ preview|e('html_attr') }}"
                                     style="width: 100%; height: 600px; border: 1px solid #ddd;"></iframe>
                         </div>
                     </div>
@@ -103,11 +103,11 @@
                             <h5 class="card-title mb-0">Actions</h5>
                         </div>
                         <div class="card-body">
-                            <a href="{{ path('app_admin_email_template_edit', {id: template.id}) }}" 
+                            <a href="{{ path('app_admin_email_template_edit', {id: template.id}) }}"
                                class="btn btn-warning w-100 mb-2">
                                 <i class="bi bi-pencil"></i> Modifier
                             </a>
-                            
+
                             <form method="POST" action="{{ path('app_admin_email_template_toggle', {id: template.id}) }}">
                                 <button type="submit" class="btn btn-{{ template.isActive ? 'secondary' : 'success' }} w-100 mb-2">
                                     <i class="bi bi-{{ template.isActive ? 'pause' : 'play' }}-circle"></i>
@@ -140,7 +140,7 @@
                         </div>
                         <div class="card-body">
                             {% for var in template.availableVariables %}
-                            <span class="badge bg-secondary mb-1">{{{{var}}}}</span>
+                            <span class="badge bg-secondary mb-1">{{ '{{' ~ var ~ '}}' }}</span>
                             {% endfor %}
                         </div>
                     </div>

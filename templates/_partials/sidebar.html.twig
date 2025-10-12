@@ -1,0 +1,150 @@
+{# Sidebar avec ACL - Menu dynamique selon les rôles #}
+<div class="col-md-3 col-lg-2 sidebar p-0">
+    <div class="p-3">
+        <h4 class="navbar-brand mb-4">
+            <i class="bi bi-building"></i> {{ app_setting('app_name', 'MYLOCCA') }}
+        </h4>
+
+        <nav class="nav flex-column">
+            {% set menu_items = get_menu() %}
+            {% set current_route = app.request.get('_route') %}
+
+            {% for key, item in menu_items %}
+                {# Divider / Separator #}
+                {% if item.type|default('') == 'divider' %}
+                    <div class="nav-divider mt-3 mb-2">
+                        <small class="text-muted fw-bold">{{ item.label }}</small>
+                    </div>
+
+                {# Menu item with submenu #}
+                {% elseif item.submenu is defined %}
+                    <div class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle {{ current_route starts with item.route|default('') ? 'active' : '' }}"
+                           href="#"
+                           data-bs-toggle="collapse"
+                           data-bs-target="#submenu-{{ key }}"
+                           aria-expanded="false">
+                            <i class="{{ item.icon }} me-2"></i>
+                            {{ item.label }}
+                        </a>
+                        <div class="collapse" id="submenu-{{ key }}">
+                            <nav class="nav flex-column ms-3">
+                                {% for sub_key, sub_item in item.submenu %}
+                                    <a class="nav-link small {{ current_route == sub_item.route ? 'active' : '' }}"
+                                       href="{{ path(sub_item.route) }}">
+                                        {{ sub_item.label }}
+                                    </a>
+                                {% endfor %}
+                            </nav>
+                        </div>
+                    </div>
+
+                {# Regular menu item #}
+                {% else %}
+                    <a class="nav-link {{ current_route starts with item.route|default('') ? 'active' : '' }}"
+                       href="{{ path(item.route) }}">
+                        <i class="{{ item.icon }} me-2"></i>
+                        {{ item.label }}
+
+                        {# Badge pour notifications #}
+                        {% if item.badge|default('') == 'pending_requests' %}
+                            {% set pending_count = 0 %} {# TODO: Implémenter le comptage #}
+                            {% if pending_count > 0 %}
+                                <span class="badge bg-danger ms-auto">{{ pending_count }}</span>
+                            {% endif %}
+                        {% endif %}
+                    </a>
+                {% endif %}
+            {% endfor %}
+        </nav>
+    </div>
+</div>
+
+<style>
+    .nav-divider {
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        padding-bottom: 0.5rem;
+    }
+
+    .nav-divider small {
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+        font-size: 0.75rem;
+    }
+
+    .nav-link.dropdown-toggle::after {
+        margin-left: auto;
+    }
+
+    .collapse .nav-link {
+        padding-left: 2.5rem;
+        font-size: 0.9rem;
+    }
+
+    .sidebar {
+        position: fixed;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        z-index: 100;
+        padding: 0;
+        width: 16.66667%;
+        min-width: 250px;
+        box-shadow: inset -1px 0 0 rgba(0, 0, 0, .1);
+        background: linear-gradient(180deg, #2c3e50 0%, #34495e 100%);
+        color: white;
+        overflow-y: auto;
+    }
+
+    .main-content {
+        margin-left: 16.66667%;
+        min-height: 100vh;
+    }
+
+    @media (max-width: 768px) {
+        .sidebar {
+            width: 100%;
+            transform: translateX(-100%);
+            transition: transform 0.3s ease;
+        }
+
+        .sidebar.show {
+            transform: translateX(0);
+        }
+
+        .main-content {
+            margin-left: 0;
+        }
+    }
+
+    .sidebar .nav-link {
+        font-weight: 500;
+        color: rgba(255, 255, 255, 0.8);
+        padding: 0.75rem 1rem;
+        margin-bottom: 0.25rem;
+        border-radius: 0.375rem;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+    }
+
+    .sidebar .nav-link:hover {
+        color: white;
+        background-color: rgba(255, 255, 255, 0.1);
+    }
+
+    .sidebar .nav-link.active {
+        color: white;
+        background-color: var(--primary-color, #5a8fb3);
+    }
+
+    .sidebar .nav-link i {
+        font-size: 1.1rem;
+    }
+
+    .badge {
+        font-size: 0.7rem;
+        padding: 0.25rem 0.5rem;
+    }
+</style>
+

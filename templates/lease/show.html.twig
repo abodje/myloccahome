@@ -255,6 +255,22 @@
                 </div>
                 <div class="card-body">
                     <div class="d-grid gap-2">
+                        <!-- Génération de contrat -->
+                        <div class="btn-group" role="group">
+                            <form method="POST" action="{{ path('app_lease_generate_contract_document', {id: lease.id}) }}" class="d-inline">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="bi bi-file-earmark-text me-2"></i>
+                                    Générer contrat PDF
+                                </button>
+                            </form>
+                            <a href="{{ path('app_lease_contract_pdf', {id: lease.id}) }}" class="btn btn-outline-primary" target="_blank">
+                                <i class="bi bi-download me-2"></i>
+                                Télécharger
+                            </a>
+                        </div>
+
+                        <hr>
+
                         <a href="{{ path('app_payment_new') }}?lease={{ lease.id }}" class="btn btn-success">
                             <i class="bi bi-credit-card-2-front me-2"></i>
                             Nouveau paiement

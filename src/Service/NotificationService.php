@@ -311,4 +311,78 @@ class NotificationService
             return false;
         }
     }
+
+    /**
+     * Notifie un intervenant de l'attribution d'une demande de maintenance
+     */
+    public function notifyMaintenanceAssignment($maintenanceRequest, $user): void
+    {
+        try {
+            $email = (new Email())
+                ->from($this->settingsService->get('email_from', 'noreply@mylocca.com'))
+                ->to($user->getEmail())
+                ->subject('Nouvelle demande de maintenance assignée')
+                ->html($this->twig->render('emails/maintenance_assignment.html.twig', [
+                    'request' => $maintenanceRequest,
+                    'user' => $user,
+                    'company' => $this->settingsService->getAppSettings(),
+                ]));
+
+            $this->mailer->send($email);
+        } catch (\Exception $e) {
+            // Log l'erreur silencieusement
+        }
+    }
+
+    /**
+     * Envoie une alerte pour une demande de maintenance urgente
+     */
+    public function sendUrgentMaintenanceAlert($maintenanceRequest): void
+    {
+        try {
+            // Envoyer à tous les admins
+            $admins = $this->entityManager->getRepository('App\Entity\User')->findByRole('ROLE_ADMIN');
+
+            foreach ($admins as $admin) {
+                $email = (new Email())
+                    ->from($this->settingsService->get('email_from', 'noreply@mylocca.com'))
+                    ->to($admin->getEmail())
+                    ->subject('⚠️ Demande de maintenance URGENTE')
+                    ->html($this->twig->render('emails/urgent_maintenance.html.twig', [
+                        'request' => $maintenanceRequest,
+                        'company' => $this->settingsService->getAppSettings(),
+                    ]));
+
+                $this->mailer->send($email);
+            }
+        } catch (\Exception $e) {
+            // Log l'erreur silencieusement
+        }
+    }
+
+    /**
+     * Envoie une alerte pour une demande de maintenance en retard
+     */
+    public function sendOverdueMaintenanceAlert($maintenanceRequest): void
+    {
+        try {
+            // Envoyer à tous les admins
+            $admins = $this->entityManager->getRepository('App\Entity\User')->findByRole('ROLE_ADMIN');
+
+            foreach ($admins as $admin) {
+                $email = (new Email())
+                    ->from($this->settingsService->get('email_from', 'noreply@mylocca.com'))
+                    ->to($admin->getEmail())
+                    ->subject('🔴 Demande de maintenance EN RETARD')
+                    ->html($this->twig->render('emails/overdue_maintenance.html.twig', [
+                        'request' => $maintenanceRequest,
+                        'company' => $this->settingsService->getAppSettings(),
+                    ]));
+
+                $this->mailer->send($email);
+            }
+        } catch (\Exception $e) {
+            // Log l'erreur silencieusement
+        }
+    }
 }

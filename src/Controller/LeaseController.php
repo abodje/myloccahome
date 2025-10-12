@@ -7,6 +7,7 @@ use App\Form\LeaseType;
 use App\Repository\LeaseRepository;
 use App\Repository\PaymentRepository;
 use App\Service\PdfService;
+use App\Service\ContractGenerationService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -272,5 +273,18 @@ class LeaseController extends AbstractController
         $months = $request->query->getInt('months', 12);
         $pdfService->generatePaymentSchedule($lease, $months, true);
         return new Response(); // Le PDF est déjà envoyé par generatePaymentSchedule
+    }
+
+    #[Route('/{id}/generer-contrat-document', name: 'app_lease_generate_contract_document', methods: ['POST'])]
+    public function generateContractDocument(Lease $lease, ContractGenerationService $contractService): Response
+    {
+        try {
+            $document = $contractService->generateContractManually($lease);
+            $this->addFlash('success', '📄 Le contrat de bail a été généré et enregistré dans les documents !');
+        } catch (\Exception $e) {
+            $this->addFlash('error', 'Erreur lors de la génération : ' . $e->getMessage());
+        }
+
+        return $this->redirectToRoute('app_lease_show', ['id' => $lease->getId()]);
     }
 }

@@ -1,0 +1,124 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Ajouter un document - MYLOCCA{% endblock %}
+
+{% block page_title %}
+    <h5 class="mb-0">
+        <i class="bi bi-file-earmark-plus me-2"></i>
+        Ajouter un document
+    </h5>
+{% endblock %}
+
+{% block page_actions %}
+    <a href="{{ path('app_document_index') }}" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-arrow-left"></i> Retour
+    </a>
+{% endblock %}
+
+{% block body %}
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">Informations du document</h6>
+                </div>
+                <div class="card-body">
+                    {{ form_start(form) }}
+
+                    <div class="mb-3">
+                        {{ form_label(form.name, 'Nom du document') }}
+                        {{ form_widget(form.name, {'attr': {'class': 'form-control'}}) }}
+                        {{ form_errors(form.name) }}
+                    </div>
+
+                    <div class="mb-3">
+                        {{ form_label(form.type, 'Type') }}
+                        {{ form_widget(form.type, {'attr': {'class': 'form-select'}}) }}
+                        {{ form_errors(form.type) }}
+                    </div>
+
+                    <div class="mb-3">
+                        {{ form_label(form.file, 'Fichier') }}
+                        {{ form_widget(form.file, {'attr': {'class': 'form-control'}}) }}
+                        {{ form_errors(form.file) }}
+                        <div class="form-text">
+                            Formats acceptés : PDF, DOC, DOCX, JPG, PNG (Max 10MB)
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        {{ form_label(form.description, 'Description') }}
+                        {{ form_widget(form.description, {'attr': {'class': 'form-control', 'rows': 3}}) }}
+                        {{ form_errors(form.description) }}
+                    </div>
+
+                    {% if form.lease is defined %}
+                    <div class="mb-3">
+                        {{ form_label(form.lease, 'Bail associé (optionnel)') }}
+                        {{ form_widget(form.lease, {'attr': {'class': 'form-select'}}) }}
+                        {{ form_errors(form.lease) }}
+                    </div>
+                    {% endif %}
+
+                    {% if form.tenant is defined %}
+                    <div class="mb-3">
+                        {{ form_label(form.tenant, 'Locataire associé (optionnel)') }}
+                        {{ form_widget(form.tenant, {'attr': {'class': 'form-select'}}) }}
+                        {{ form_errors(form.tenant) }}
+                    </div>
+                    {% endif %}
+
+                    {% if form.property is defined %}
+                    <div class="mb-3">
+                        {{ form_label(form.property, 'Propriété associée (optionnel)') }}
+                        {{ form_widget(form.property, {'attr': {'class': 'form-select'}}) }}
+                        {{ form_errors(form.property) }}
+                    </div>
+                    {% endif %}
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-circle"></i> Enregistrer
+                        </button>
+                        <a href="{{ path('app_document_index') }}" class="btn btn-secondary">
+                            <i class="bi bi-x-circle"></i> Annuler
+                        </a>
+                    </div>
+
+                    {{ form_end(form) }}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">💡 Types de documents</h6>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled small">
+                        <li class="mb-2"><i class="bi bi-shield-check text-primary"></i> <strong>Assurance</strong> : Contrats d'assurance</li>
+                        <li class="mb-2"><i class="bi bi-calendar-event text-warning"></i> <strong>Avis d'échéance</strong> : Échéances et rappels</li>
+                        <li class="mb-2"><i class="bi bi-file-text text-success"></i> <strong>Bail</strong> : Contrats de location</li>
+                        <li class="mb-2"><i class="bi bi-clipboard-check text-info"></i> <strong>Diagnostics</strong> : DPE, Amiante, etc.</li>
+                        <li class="mb-2"><i class="bi bi-lightbulb text-secondary"></i> <strong>Conseils</strong> : Guides et infos</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h6 class="mb-0">📝 Conseils</h6>
+                </div>
+                <div class="card-body small">
+                    <ul>
+                        <li>Utilisez des noms de fichiers explicites</li>
+                        <li>Associez les documents aux entités concernées</li>
+                        <li>Les documents liés à un bail sont visibles par le locataire</li>
+                        <li>Taille maximale : 10 MB par fichier</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

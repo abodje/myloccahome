@@ -68,21 +68,25 @@ class EmailTemplateRepository extends ServiceEntityRepository
      */
     public function getStatistics(): array
     {
-        $qb = $this->createQueryBuilder('e');
-
         return [
-            'total' => $qb->select('COUNT(e.id)')->getQuery()->getSingleScalarResult(),
-            'active' => $qb->select('COUNT(e.id)')
+            'total' => $this->createQueryBuilder('e')
+                ->select('COUNT(e.id)')
+                ->getQuery()
+                ->getSingleScalarResult(),
+            'active' => $this->createQueryBuilder('e')
+                ->select('COUNT(e.id)')
                 ->where('e.isActive = :active')
                 ->setParameter('active', true)
                 ->getQuery()
                 ->getSingleScalarResult(),
-            'system' => $qb->select('COUNT(e.id)')
+            'system' => $this->createQueryBuilder('e')
+                ->select('COUNT(e.id)')
                 ->where('e.isSystem = :system')
                 ->setParameter('system', true)
                 ->getQuery()
                 ->getSingleScalarResult(),
-            'custom' => $qb->select('COUNT(e.id)')
+            'custom' => $this->createQueryBuilder('e')
+                ->select('COUNT(e.id)')
                 ->where('e.isSystem = :system')
                 ->setParameter('system', false)
                 ->getQuery()

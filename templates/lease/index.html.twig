@@ -11,6 +11,25 @@
 
 {% block page_actions %}
     <div class="d-flex gap-2">
+        <div class="dropdown">
+            <button class="btn btn-outline-info btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                <i class="bi bi-file-earmark-text me-2"></i>Actions PDF
+            </button>
+            <ul class="dropdown-menu">
+                <li><h6 class="dropdown-header">Génération de contrats</h6></li>
+                <li><a class="dropdown-item" href="#" onclick="generateAllContracts()">
+                    <i class="bi bi-file-earmark-text me-2"></i>Générer tous les contrats
+                </a></li>
+                <li><a class="dropdown-item" href="#" onclick="generateActiveContracts()">
+                    <i class="bi bi-file-earmark-check me-2"></i>Générer contrats actifs
+                </a></li>
+                <li><hr class="dropdown-divider"></li>
+                <li><h6 class="dropdown-header">Échéanciers</h6></li>
+                <li><a class="dropdown-item" href="#" onclick="generateAllSchedules()">
+                    <i class="bi bi-calendar-week me-2"></i>Générer tous les échéanciers
+                </a></li>
+            </ul>
+        </div>
         <a href="{{ path('app_lease_expiring') }}" class="btn btn-outline-warning btn-sm">
             <i class="bi bi-clock"></i> Expirent bientôt
         </a>
@@ -154,11 +173,24 @@
                                     <li><a class="dropdown-item" href="{{ path('app_lease_edit', {id: lease.id}) }}">
                                         <i class="bi bi-pencil me-2"></i>Modifier
                                     </a></li>
+
+                                    <li><hr class="dropdown-divider"></li>
+
+                                    <!-- Génération de contrat -->
+                                    <li><form method="POST" action="{{ path('app_lease_generate_contract_document', {id: lease.id}) }}" class="d-inline">
+                                        <button type="submit" class="dropdown-item">
+                                            <i class="bi bi-file-earmark-text me-2"></i>Générer contrat PDF
+                                        </button>
+                                    </form></li>
+                                    <li><a class="dropdown-item" href="{{ path('app_lease_contract_pdf', {id: lease.id}) }}" target="_blank">
+                                        <i class="bi bi-download me-2"></i>Télécharger contrat
+                                    </a></li>
+
                                     {% if lease.status == 'Actif' %}
+                                        <li><hr class="dropdown-divider"></li>
                                         <li><a class="dropdown-item" href="{{ path('app_lease_renew', {id: lease.id}) }}">
                                             <i class="bi bi-arrow-repeat me-2"></i>Renouveler
                                         </a></li>
-                                        <li><hr class="dropdown-divider"></li>
                                         <li><a class="dropdown-item text-warning" href="#" onclick="terminateLease({{ lease.id }})">
                                             <i class="bi bi-x-circle me-2"></i>Résilier
                                         </a></li>
@@ -246,5 +278,77 @@
                 }
             });
         });
+
+        // Actions PDF en masse
+        function generateAllContracts() {
+            if (confirm('Générer les contrats PDF pour tous les baux ?')) {
+                const activeLeases = document.querySelectorAll('.lease-row');
+                let count = 0;
+
+                activeLeases.forEach(row => {
+                    const leaseId = row.dataset.leaseId;
+                    const form = document.createElement('form');
+                    form.method = 'POST';
+                    form.action = `/contrats/${leaseId}/generer-contrat-document`;
+                    form.style.display = 'none';
+                    document.body.appendChild(form);
+                    form.submit();
+                    count++;
+                });
+
+                if (count > 0) {
+                    alert(`${count} contrats en cours de génération...`);
+                }
+            }
+        }
+
+        function generateActiveContracts() {
+            if (confirm('Générer les contrats PDF pour les baux actifs uniquement ?')) {
+                const activeLeases = document.querySelectorAll('.lease-row');
+                let count = 0;
+
+                activeLeases.forEach(row => {
+                    const statusBadge = row.querySelector('.badge');
+                    if (statusBadge && statusBadge.textContent.trim() === 'Actif') {
+                        const leaseId = row.dataset.leaseId;
+                        const form = document.createElement('form');
+                        form.method = 'POST';
+                        form.action = `/contrats/${leaseId}/generer-contrat-document`;
+                        form.style.display = 'none';
+                        document.body.appendChild(form);
+                        form.submit();
+                        count++;
+                    }
+                });
+
+                if (count > 0) {
+                    alert(`${count} contrats actifs en cours de génération...`);
+                } else {
+                    alert('Aucun bail actif trouvé.');
+                }
+            }
+        }
+
+        function generateAllSchedules() {
+            if (confirm('Générer les échéanciers PDF pour tous les baux actifs ?')) {
+                const activeLeases = document.querySelectorAll('.lease-row');
+                let count = 0;
+
+                activeLeases.forEach(row => {
+                    const statusBadge = row.querySelector('.badge');
+                    if (statusBadge && statusBadge.textContent.trim() === 'Actif') {
+                        const leaseId = row.dataset.leaseId;
+                        window.open(`/contrats/${leaseId}/echeancier-pdf`, '_blank');
+                        count++;
+                    }
+                });
+
+                if (count > 0) {
+                    alert(`${count} échéanciers ouverts dans de nouveaux onglets.`);
+                } else {
+                    alert('Aucun bail actif trouvé.');
+                }
+            }
+        }
     </script>
 {% endblock %}

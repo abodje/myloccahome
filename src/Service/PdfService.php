@@ -13,7 +13,8 @@ class PdfService
     public function __construct(
         private Environment $twig,
         private SettingsService $settingsService,
-        private CurrencyService $currencyService
+        private CurrencyService $currencyService,
+        private ContractConfigService $contractConfigService
     ) {
     }
 
@@ -44,7 +45,10 @@ class PdfService
      */
     public function generateLeaseContract(Lease $lease, bool $download = true): string
     {
-        $html = $this->twig->render('pdf/lease_contract.html.twig', [
+        // Récupérer la configuration du contrat
+        $contractConfig = $this->contractConfigService->getContractConfig();
+        
+        $html = $this->twig->render('pdf/lease_contract.html.twig', array_merge([
             'lease' => $lease,
             'property' => $lease->getProperty(),
             'tenant' => $lease->getTenant(),
@@ -52,7 +56,7 @@ class PdfService
             'company' => $this->settingsService->getAppSettings(),
             'currency' => $this->currencyService->getActiveCurrency(),
             'generated_at' => new \DateTime(),
-        ]);
+        ], $contractConfig));
 
         $filename = sprintf(
             'Contrat_Bail_%s_%s.pdf',

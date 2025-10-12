@@ -7,6 +7,7 @@ use App\Form\PaymentType;
 use App\Repository\PaymentRepository;
 use App\Repository\LeaseRepository;
 use App\Service\PdfService;
+use App\Service\ContractGenerationService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -96,22 +97,38 @@ class PaymentController extends AbstractController
     }
 
     #[Route('/{id}/marquer-paye', name: 'app_payment_mark_paid', methods: ['POST'])]
-    public function markPaid(Request $request, Payment $payment, EntityManagerInterface $entityManager): Response
-    {
-        if ($this->isCsrfTokenValid('mark_paid'.$payment->getId(), $request->getPayload()->getString('_token'))) {
-            $paidDate = $request->getPayload()->getString('paid_date');
-            $paymentMethod = $request->getPayload()->getString('payment_method');
-            $reference = $request->getPayload()->getString('reference');
+    public function markPaid(
+        Request $request,
+        Payment $payment,
+        EntityManagerInterface $entityManager,
+        ContractGenerationService $contractService
+    ): Response {
+        $paidDate = $request->request->get('paid_date') ?? $request->getPayload()->getString('paid_date');
+        $paymentMethod = $request->request->get('payment_method') ?? $request->getPayload()->getString('payment_method');
+        $reference = $request->request->get('reference') ?? $request->getPayload()->getString('reference');
 
-            $payment->markAsPaid(
-                $paidDate ? new \DateTime($paidDate) : new \DateTime(),
-                $paymentMethod,
-                $reference
-            );
+        $payment->markAsPaid(
+            $paidDate ? new \DateTime($paidDate) : new \DateTime(),
+            $paymentMethod,
+            $reference
+        );
 
-            $entityManager->flush();
+        $entityManager->flush();
 
-            $this->addFlash('success', 'Le paiement a été marqué comme payé.');
+        $this->addFlash('success', 'Le paiement a été marqué comme payé.');
+
+        // 🎯 Générer automatiquement le contrat de bail si c'est la caution
+        if ($payment->getType() === 'Dépôt de garantie' || $payment->getType() === 'Caution') {
+            try {
+                $contract = $contractService->generateContractAfterDeposit($payment);
+                if ($contract) {
+                    $this->addFlash('success', '📄 Le contrat de bail a été généré automatiquement et est disponible dans les documents !');
+                } else {
+                    $this->addFlash('info', 'Le contrat existe déjà ou la caution n\'est pas encore payée.');
+                }
+            } catch (\Exception $e) {
+                $this->addFlash('error', 'Erreur lors de la génération du contrat : ' . $e->getMessage());
+            }
         }
 
         return $this->redirectToRoute('app_payment_show', ['id' => $payment->getId()]);
