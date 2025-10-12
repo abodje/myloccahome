@@ -12,7 +12,8 @@ class TaskManagerService
     public function __construct(
         private EntityManagerInterface $entityManager,
         private NotificationService $notificationService,
-        private LoggerInterface $logger
+        private LoggerInterface $logger,
+        private RentReceiptService $rentReceiptService
     ) {
     }
 
@@ -79,6 +80,10 @@ class TaskManagerService
 
                 case 'GENERATE_RENTS':
                     $this->executeGenerateRentsTask($task);
+                    break;
+
+                case 'GENERATE_RENT_DOCUMENTS':
+                    $this->executeGenerateRentDocumentsTask($task);
                     break;
 
                 default:
@@ -186,6 +191,16 @@ class TaskManagerService
                 'parameters' => [
                     'day_of_month' => 25 // 25ème jour du mois
                 ]
+            ],
+            [
+                'name' => 'Génération des quittances et avis d\'échéances',
+                'type' => 'GENERATE_RENT_DOCUMENTS',
+                'description' => 'Génère automatiquement les quittances de loyer et les avis d\'échéances du mois',
+                'frequency' => 'MONTHLY',
+                'parameters' => [
+                    'day_of_month' => 7, // 1er jour du mois
+                    'month' => 'current' // Mois en cours
+                ]
             ]
         ];
 
@@ -246,5 +261,48 @@ class TaskManagerService
     public function forceExecuteTask(Task $task): void
     {
         $this->executeTask($task);
+    }
+
+    /**
+     * Exécute la tâche de génération des quittances et avis d'échéances
+     */
+    private function executeGenerateRentDocumentsTask(Task $task): void
+    {
+        $parameters = $task->getParameters() ?? [];
+        $month = $parameters['month'] ?? 'current';
+
+        // Gérer les valeurs spéciales
+        if ($month === 'current' || $month === 'now') {
+            $monthDate = new \DateTime('first day of this month');
+        } elseif ($month === 'last') {
+            $monthDate = new \DateTime('first day of last month');
+        } elseif ($month === 'next') {
+            $monthDate = new \DateTime('first day of next month');
+        } else {
+            // Format YYYY-MM attendu
+            try {
+                $monthDate = new \DateTime($month . '-01');
+            } catch (\Exception $e) {
+                throw new \Exception('Format de mois invalide dans les paramètres de la tâche. Utilisez "current", "last", "next" ou le format YYYY-MM');
+            }
+        }
+
+        // Générer les quittances du mois
+        $receipts = $this->rentReceiptService->generateMonthlyReceipts($monthDate);
+
+        // Générer les avis d'échéance pour le mois prochain
+        $nextMonth = (clone $monthDate)->modify('+1 month');
+        $notices = $this->rentReceiptService->generateUpcomingNotices($nextMonth);
+
+        $total = count($receipts) + count($notices);
+
+        // Logger le résultat
+        $this->logger->info(sprintf(
+            'Documents générés pour %s : %d quittances, %d avis d\'échéance (Total: %d)',
+            $monthDate->format('F Y'),
+            count($receipts),
+            count($notices),
+            $total
+        ));
     }
 }

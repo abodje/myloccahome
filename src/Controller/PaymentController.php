@@ -8,6 +8,7 @@ use App\Repository\PaymentRepository;
 use App\Repository\LeaseRepository;
 use App\Repository\AdvancePaymentRepository;
 use App\Repository\AccountingEntryRepository;
+use App\Repository\TenantRepository;
 use App\Service\PdfService;
 use App\Service\ContractGenerationService;
 use App\Service\PaymentSettingsService;
@@ -26,7 +27,8 @@ class PaymentController extends AbstractController
         PaymentRepository $paymentRepository,
         Request $request,
         AdvancePaymentRepository $advancePaymentRepository,
-        AccountingEntryRepository $accountingRepository
+        AccountingEntryRepository $accountingRepository,
+        TenantRepository $tenantRepository
     ): Response {
         /** @var \App\Entity\User|null $user */
         $user = $this->getUser();
@@ -64,7 +66,7 @@ class PaymentController extends AbstractController
         $advanceStats = $this->calculateFilteredAdvanceStats($advancePaymentRepository, $user);
 
         // Calculer le solde actuel selon le rôle
-        $currentBalance = $this->calculateCurrentBalance($accountingRepository, $user);
+        $currentBalance = $this->calculateCurrentBalance($accountingRepository, $tenantRepository, $user);
 
         return $this->render('payment/index.html.twig', [
             'payments' => $payments,
@@ -661,7 +663,7 @@ class PaymentController extends AbstractController
     /**
      * Calcule le solde actuel selon le rôle de l'utilisateur
      */
-    private function calculateCurrentBalance(AccountingEntryRepository $accountingRepository, $user): float
+    private function calculateCurrentBalance(AccountingEntryRepository $accountingRepository, TenantRepository $tenantRepository, $user): float
     {
         if ($user && in_array('ROLE_TENANT', $user->getRoles())) {
             // Pour les locataires, calculer leur solde personnel
@@ -674,26 +676,22 @@ class PaymentController extends AbstractController
             // Pour les gestionnaires, calculer le solde de tous leurs locataires
             $owner = $user->getOwner();
             if ($owner) {
-                // Récupérer tous les locataires du gestionnaire
-                $managerTenants = $accountingRepository->createQueryBuilder('ae')
-                    ->select('ae.tenant')
-                    ->join('ae.lease', 'l')
+                // Utiliser TenantRepository pour récupérer les locataires du gestionnaire
+                $managerTenants = $tenantRepository->createQueryBuilder('t')
+                    ->join('t.leases', 'l')
                     ->join('l.property', 'p')
-                    ->join('p.owner', 'o')
-                    ->where('o.id = :ownerId')
-                    ->andWhere('ae.tenant IS NOT NULL')
+                    ->where('p.owner = :ownerId')
+                    ->andWhere('l.status = :status')
                     ->setParameter('ownerId', $owner->getId())
-                    ->groupBy('ae.tenant')
+                    ->setParameter('status', 'Actif')
+                    ->groupBy('t.id')
                     ->getQuery()
                     ->getResult();
 
                 $totalBalance = 0;
-                foreach ($managerTenants as $tenantArray) {
-                    $tenant = $tenantArray['tenant'];
-                    if ($tenant) {
-                        $tenantStats = $accountingRepository->getTenantStatistics($tenant->getId());
-                        $totalBalance += $tenantStats['balance'] ?? 0.0;
-                    }
+                foreach ($managerTenants as $tenant) {
+                    $tenantStats = $accountingRepository->getTenantStatistics($tenant->getId());
+                    $totalBalance += $tenantStats['balance'] ?? 0.0;
                 }
 
                 return $totalBalance;
@@ -701,20 +699,12 @@ class PaymentController extends AbstractController
         }
 
         // Pour les admins, calculer le solde global de tous les locataires
-        $allTenants = $accountingRepository->createQueryBuilder('ae')
-            ->select('ae.tenant')
-            ->where('ae.tenant IS NOT NULL')
-            ->groupBy('ae.tenant')
-            ->getQuery()
-            ->getResult();
+        $allTenants = $tenantRepository->findAll();
 
         $totalBalance = 0;
-        foreach ($allTenants as $tenantArray) {
-            $tenant = $tenantArray['tenant'];
-            if ($tenant) {
-                $tenantStats = $accountingRepository->getTenantStatistics($tenant->getId());
-                $totalBalance += $tenantStats['balance'] ?? 0.0;
-            }
+        foreach ($allTenants as $tenant) {
+            $tenantStats = $accountingRepository->getTenantStatistics($tenant->getId());
+            $totalBalance += $tenantStats['balance'] ?? 0.0;
         }
 
         return $totalBalance;

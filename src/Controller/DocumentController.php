@@ -5,6 +5,8 @@ namespace App\Controller;
 use App\Entity\Document;
 use App\Form\DocumentType;
 use App\Repository\DocumentRepository;
+use App\Repository\PaymentRepository;
+use App\Service\RentReceiptService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -336,5 +338,104 @@ class DocumentController extends AbstractController
 
         // Pour les admins/managers, retourner les stats globales
         return $documentRepository->getStatistics();
+    }
+
+    /**
+     * Génère une quittance de loyer pour un paiement
+     */
+    #[Route('/generer-quittance/{paymentId}', name: 'app_document_generate_receipt', methods: ['POST'])]
+    public function generateReceipt(
+        int $paymentId,
+        PaymentRepository $paymentRepository,
+        RentReceiptService $receiptService
+    ): Response {
+        $payment = $paymentRepository->find($paymentId);
+
+        if (!$payment) {
+            $this->addFlash('error', 'Paiement introuvable.');
+            return $this->redirectToRoute('app_document_index');
+        }
+
+        // Vérifier que le paiement est payé
+        if ($payment->getStatus() !== 'Payé') {
+            $this->addFlash('error', 'La quittance ne peut être générée que pour un paiement déjà effectué.');
+            return $this->redirectToRoute('app_payment_index');
+        }
+
+        try {
+            $receipt = $receiptService->generateRentReceipt($payment);
+            $this->addFlash('success', 'La quittance de loyer a été générée avec succès.');
+            return $this->redirectToRoute('app_document_show', ['id' => $receipt->getId()]);
+        } catch (\Exception $e) {
+            $this->addFlash('error', 'Erreur lors de la génération de la quittance : ' . $e->getMessage());
+            return $this->redirectToRoute('app_payment_index');
+        }
+    }
+
+    /**
+     * Génère un avis d'échéance pour un paiement à venir
+     */
+    #[Route('/generer-avis-echeance/{paymentId}', name: 'app_document_generate_notice', methods: ['POST'])]
+    public function generateNotice(
+        int $paymentId,
+        PaymentRepository $paymentRepository,
+        RentReceiptService $receiptService
+    ): Response {
+        $payment = $paymentRepository->find($paymentId);
+
+        if (!$payment) {
+            $this->addFlash('error', 'Paiement introuvable.');
+            return $this->redirectToRoute('app_document_index');
+        }
+
+        // Vérifier que le paiement est en attente
+        if ($payment->getStatus() === 'Payé') {
+            $this->addFlash('error', 'Un avis d\'échéance ne peut être généré que pour un paiement en attente.');
+            return $this->redirectToRoute('app_payment_index');
+        }
+
+        try {
+            $notice = $receiptService->generatePaymentNotice($payment);
+            $this->addFlash('success', 'L\'avis d\'échéance a été généré avec succès.');
+            return $this->redirectToRoute('app_document_show', ['id' => $notice->getId()]);
+        } catch (\Exception $e) {
+            $this->addFlash('error', 'Erreur lors de la génération de l\'avis : ' . $e->getMessage());
+            return $this->redirectToRoute('app_payment_index');
+        }
+    }
+
+    /**
+     * Génère tous les documents du mois en cours
+     */
+    #[Route('/generer-documents-mois', name: 'app_document_generate_monthly', methods: ['POST'])]
+    public function generateMonthlyDocuments(
+        Request $request,
+        RentReceiptService $receiptService
+    ): Response {
+        $monthStr = $request->request->get('month', date('Y-m'));
+
+        try {
+            $month = new \DateTime($monthStr . '-01');
+
+            // Générer les quittances du mois
+            $receipts = $receiptService->generateMonthlyReceipts($month);
+
+            // Générer les avis d'échéance pour le mois prochain
+            $nextMonth = (clone $month)->modify('+1 month');
+            $notices = $receiptService->generateUpcomingNotices($nextMonth);
+
+            $total = count($receipts) + count($notices);
+
+            $this->addFlash('success', sprintf(
+                '✅ %d document(s) généré(s) : %d quittance(s) et %d avis d\'échéance',
+                $total,
+                count($receipts),
+                count($notices)
+            ));
+        } catch (\Exception $e) {
+            $this->addFlash('error', 'Erreur lors de la génération des documents : ' . $e->getMessage());
+        }
+
+        return $this->redirectToRoute('app_document_index');
     }
 }

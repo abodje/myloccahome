@@ -11,13 +11,24 @@
 
 {% block page_actions %}
     <div class="d-flex gap-2">
+        {% if not is_tenant_view %}
+            <form method="POST" action="{{ path('app_document_generate_monthly') }}" class="d-inline">
+                <input type="hidden" name="month" value="{{ "now"|date('Y-m') }}">
+                <button type="submit" class="btn btn-success btn-sm" title="Générer les documents du mois en cours">
+                    <i class="bi bi-file-earmark-pdf me-2"></i>
+                    Générer Documents du Mois
+                </button>
+            </form>
+        {% endif %}
         <a href="{{ path('app_document_search') }}" class="btn btn-outline-primary btn-sm">
             <i class="bi bi-search"></i> Rechercher
         </a>
-        <a href="{{ path('app_document_new') }}" class="btn btn-primary btn-sm">
-            <i class="bi bi-plus-circle me-2"></i>
-            Ajouter un document
-        </a>
+        {% if not is_tenant_view %}
+            <a href="{{ path('app_document_new') }}" class="btn btn-primary btn-sm">
+                <i class="bi bi-plus-circle me-2"></i>
+                Ajouter un document
+            </a>
+        {% endif %}
     </div>
 {% endblock %}
 

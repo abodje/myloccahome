@@ -231,6 +231,21 @@
                                    class="btn btn-outline-primary" title="Voir les détails">
                                     <i class="bi bi-eye"></i>
                                 </a>
+
+                                {% if payment.status == 'Payé' %}
+                                    <form method="POST" action="{{ path('app_document_generate_receipt', {'paymentId': payment.id}) }}" class="d-inline">
+                                        <button type="submit" class="btn btn-outline-success" title="Générer une quittance">
+                                            <i class="bi bi-file-earmark-pdf"></i>
+                                        </button>
+                                    </form>
+                                {% elseif payment.status == 'En attente' %}
+                                    <form method="POST" action="{{ path('app_document_generate_notice', {'paymentId': payment.id}) }}" class="d-inline">
+                                        <button type="submit" class="btn btn-outline-warning" title="Générer un avis d'échéance">
+                                            <i class="bi bi-file-earmark-text"></i>
+                                        </button>
+                                    </form>
+                                {% endif %}
+
                                 {% if payment.status == 'En attente' %}
                                     <a href="{{ path('app_online_payment_tenant_page', {id: payment.id}) }}"
                                        class="btn btn-success" title="Payer en ligne">
