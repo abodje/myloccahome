@@ -141,12 +141,15 @@
         <div class="subtitle">Document officiel de paiement de loyer</div>
     </div>
 
-    <!-- Informations de l'entreprise -->
+    <!-- Informations de la société émettrice -->
     <div class="company-info">
         <strong>{{ settings.company_name }}</strong><br>
+        {% if settings.company_siret %}SIRET : {{ settings.company_siret }}<br>{% endif %}
         {% if settings.company_address %}{{ settings.company_address }}<br>{% endif %}
-        {% if settings.company_phone %}Tél : {{ settings.company_phone }}<br>{% endif %}
+        {% if settings.company_city %}{{ settings.company_city }}<br>{% endif %}
+        {% if settings.company_phone %}Tél : {{ settings.company_phone }} | {% endif %}
         {% if settings.company_email %}Email : {{ settings.company_email }}{% endif %}
+        {% if settings.company_website %}<br>Web : {{ settings.company_website }}{% endif %}
     </div>
 
     <!-- Date d'émission -->
@@ -242,20 +245,20 @@
         <strong>Informations de paiement :</strong><br>
         <strong>Méthode :</strong> {{ payment.paymentMethod|default('Non spécifié') }}<br>
         <strong>Date de paiement :</strong> {{ payment.paidDate|date('d/m/Y') }}<br>
-        {% if payment.transactionReference %}
-        <strong>Référence :</strong> {{ payment.transactionReference }}<br>
+        {% if payment.reference %}
+        <strong>Référence :</strong> {{ payment.reference }}<br>
         {% endif %}
     </div>
 
     <!-- Mentions légales -->
     <div style="margin-top: 30px; font-size: 10pt; color: #7f8c8d;">
         <p>
-            <strong>Note :</strong> Cette quittance atteste du paiement intégral du loyer et des charges 
-            pour la période mentionnée ci-dessus. Elle est remise au locataire en application de 
+            <strong>Note :</strong> Cette quittance atteste du paiement intégral du loyer et des charges
+            pour la période mentionnée ci-dessus. Elle est remise au locataire en application de
             l'article 21 de la loi n° 89-462 du 6 juillet 1989.
         </p>
         <p>
-            Le propriétaire ou son mandataire est tenu de transmettre gratuitement une quittance au 
+            Le propriétaire ou son mandataire est tenu de transmettre gratuitement une quittance au
             locataire qui en fait la demande.
         </p>
     </div>
@@ -278,8 +281,12 @@
 
     <!-- Pied de page -->
     <div class="footer">
-        Document généré automatiquement par {{ settings.company_name }} le {{ "now"|date('d/m/Y à H:i') }}<br>
-        Quittance de loyer #{{ payment.id }} - Bail #{{ lease.id }}
+        <strong>{{ settings.company_name }}</strong>
+        {% if settings.company_siret %} - SIRET : {{ settings.company_siret }}{% endif %}<br>
+        {{ settings.company_address }}{% if settings.company_city %}, {{ settings.company_city }}{% endif %}<br>
+        {% if settings.company_phone %}Tél : {{ settings.company_phone }} | {% endif %}
+        {% if settings.company_email %}Email : {{ settings.company_email }}{% endif %}<br>
+        <small>Document généré automatiquement le {{ "now"|date('d/m/Y à H:i') }} - Quittance #{{ payment.id }} - Bail #{{ lease.id }}</small>
     </div>
 
     <div class="stamp">

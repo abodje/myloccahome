@@ -160,12 +160,15 @@
         <div class="subtitle">Appel de loyer et charges locatives</div>
     </div>
 
-    <!-- Informations de l'entreprise -->
+    <!-- Informations de la société émettrice -->
     <div class="company-info">
         <strong>{{ settings.company_name }}</strong><br>
+        {% if settings.company_siret %}SIRET : {{ settings.company_siret }}<br>{% endif %}
         {% if settings.company_address %}{{ settings.company_address }}<br>{% endif %}
-        {% if settings.company_phone %}Tél : {{ settings.company_phone }}<br>{% endif %}
+        {% if settings.company_city %}{{ settings.company_city }}<br>{% endif %}
+        {% if settings.company_phone %}Tél : {{ settings.company_phone }} | {% endif %}
         {% if settings.company_email %}Email : {{ settings.company_email }}{% endif %}
+        {% if settings.company_website %}<br>Web : {{ settings.company_website }}{% endif %}
     </div>
 
     <!-- Date d'émission -->
@@ -298,9 +301,13 @@
 
     <!-- Pied de page -->
     <div class="footer">
-        Document généré automatiquement par {{ settings.company_name }} le {{ "now"|date('d/m/Y à H:i') }}<br>
-        Avis d'échéance #{{ payment.id }} - Bail #{{ lease.id }}<br>
-        <strong>Ce document n'est pas une quittance de loyer</strong>
+        <strong>{{ settings.company_name }}</strong>
+        {% if settings.company_siret %} - SIRET : {{ settings.company_siret }}{% endif %}<br>
+        {{ settings.company_address }}{% if settings.company_city %}, {{ settings.company_city }}{% endif %}<br>
+        {% if settings.company_phone %}Tél : {{ settings.company_phone }} | {% endif %}
+        {% if settings.company_email %}Email : {{ settings.company_email }}{% endif %}<br>
+        <small>Document généré le {{ "now"|date('d/m/Y à H:i') }} - Avis #{{ payment.id }} - Bail #{{ lease.id }}</small><br>
+        <strong style="color: #e74c3c;">Ce document n'est pas une quittance de loyer</strong>
     </div>
 
     <div style="margin-top: 20px; text-align: center; font-style: italic; color: #7f8c8d; font-size: 9pt;">

@@ -56,6 +56,14 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
     private ?\DateTimeInterface $lastLoginAt = null;
 
+    // Relation avec Organization (Multi-tenant SaaS)
+    #[ORM\ManyToOne(targetEntity: Organization::class, inversedBy: 'users')]
+    private ?Organization $organization = null;
+
+    #[ORM\ManyToOne(targetEntity: Company::class, inversedBy: 'managers')]
+    #[ORM\JoinColumn(nullable: true)]
+    private ?Company $company = null;
+
     // Relation avec Tenant (un User peut être un Tenant)
     #[ORM\OneToOne(targetEntity: Tenant::class, mappedBy: 'user', cascade: ['persist'])]
     private ?Tenant $tenant = null;
@@ -316,5 +324,27 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function __toString(): string
     {
         return $this->getFullName();
+    }
+
+    public function getOrganization(): ?Organization
+    {
+        return $this->organization;
+    }
+
+    public function setOrganization(?Organization $organization): static
+    {
+        $this->organization = $organization;
+        return $this;
+    }
+
+    public function getCompany(): ?Company
+    {
+        return $this->company;
+    }
+
+    public function setCompany(?Company $company): static
+    {
+        $this->company = $company;
+        return $this;
     }
 }

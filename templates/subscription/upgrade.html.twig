@@ -1,0 +1,134 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Améliorer mon Plan - MYLOCCA{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="h3 mb-3">
+                <i class="bi bi-arrow-up-circle"></i>
+                Améliorer mon Plan
+            </h1>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ path('app_subscription_dashboard') }}">Mon Abonnement</a></li>
+                    <li class="breadcrumb-item active">Améliorer</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    {% if currentPlan %}
+    <div class="alert alert-info mb-4">
+        <i class="bi bi-info-circle"></i>
+        Vous êtes actuellement sur le plan <strong>{{ currentPlan.name }}</strong>.
+        Choisissez un plan supérieur pour débloquer plus de fonctionnalités.
+    </div>
+    {% endif %}
+
+    <div class="row g-4">
+        {% for plan in plans %}
+        <div class="col-md-6 col-lg-3">
+            <div class="card h-100 {{ plan.isPopular ? 'border-warning border-3' : '' }} {{ currentPlan and plan.id == currentPlan.id ? 'border-primary border-3' : '' }}">
+                {% if plan.isPopular %}
+                <div class="card-header bg-warning text-white text-center">
+                    <strong>⭐ PLUS POPULAIRE</strong>
+                </div>
+                {% endif %}
+
+                {% if currentPlan and plan.id == currentPlan.id %}
+                <div class="card-header bg-primary text-white text-center">
+                    <strong>✓ PLAN ACTUEL</strong>
+                </div>
+                {% endif %}
+
+                <div class="card-body text-center">
+                    <h3 class="card-title">{{ plan.name }}</h3>
+                    <p class="text-muted">{{ plan.description }}</p>
+
+                    <!-- Prix -->
+                    <div class="my-4">
+                        {% if plan.slug == 'freemium' %}
+                            <div class="display-4 text-success">GRATUIT</div>
+                            <small class="text-muted">Pour toujours</small>
+                        {% else %}
+                            <div class="display-4">{{ (plan.monthlyPrice / 1000)|number_format(0) }}K</div>
+                            <small class="text-muted">FCFA / mois</small>
+                        {% endif %}
+                    </div>
+
+                    <!-- Limites -->
+                    <ul class="list-unstyled text-start mb-4">
+                        <li class="mb-2">
+                            <i class="bi bi-building text-primary"></i>
+                            <strong>{{ plan.maxProperties ?? '∞' }}</strong> propriétés
+                        </li>
+                        <li class="mb-2">
+                            <i class="bi bi-people text-primary"></i>
+                            <strong>{{ plan.maxTenants ?? '∞' }}</strong> locataires
+                        </li>
+                        <li class="mb-2">
+                            <i class="bi bi-person-badge text-primary"></i>
+                            <strong>{{ plan.maxUsers ?? '∞' }}</strong> utilisateurs
+                        </li>
+                    </ul>
+
+                    <!-- Fonctionnalités principales (top 5) -->
+                    <div class="text-start mb-4">
+                        <h6 class="fw-bold">Fonctionnalités clés :</h6>
+                        <ul class="list-unstyled">
+                            {% for feature in plan.features|slice(0, 5) %}
+                            <li class="mb-1">
+                                <i class="bi {{ feature_icon(feature) }} text-success"></i>
+                                <small>{{ feature_label(feature) }}</small>
+                            </li>
+                            {% endfor %}
+                            {% if plan.features|length > 5 %}
+                            <li class="text-muted">
+                                <small>+ {{ plan.features|length - 5 }} autres...</small>
+                            </li>
+                            {% endif %}
+                        </ul>
+                    </div>
+
+                    <!-- Bouton -->
+                    {% if currentPlan and plan.id == currentPlan.id %}
+                        <button class="btn btn-secondary w-100" disabled>
+                            Plan Actuel
+                        </button>
+                    {% elseif currentPlan and plan.monthlyPrice < currentPlan.monthlyPrice %}
+                        <a href="#" class="btn btn-outline-secondary w-100" onclick="alert('Contactez le support pour un downgrade'); return false;">
+                            Rétrograder
+                        </a>
+                    {% else %}
+                        <a href="{{ path('app_registration_register', {'planSlug': plan.slug}) }}" class="btn btn-primary w-100">
+                            <i class="bi bi-arrow-up-circle"></i>
+                            Passer à {{ plan.name }}
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <div class="row mt-5">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <h5>
+                        <i class="bi bi-question-circle"></i>
+                        Besoin d'aide pour choisir ?
+                    </h5>
+                    <p class="mb-0">
+                        Contactez notre équipe commerciale pour discuter de vos besoins spécifiques.
+                        <a href="mailto:support@mylocca.com">support@mylocca.com</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

@@ -31,6 +31,8 @@ class GenerateRentsCommand extends Command
         $this
             ->addOption('month', 'm', InputOption::VALUE_REQUIRED, 'Mois à générer (YYYY-MM)', null)
             ->addOption('months-ahead', null, InputOption::VALUE_REQUIRED, 'Nombre de mois à générer à l\'avance', 1)
+            ->addOption('company', 'c', InputOption::VALUE_REQUIRED, 'ID de la société (génère uniquement pour cette société)', null)
+            ->addOption('organization', 'o', InputOption::VALUE_REQUIRED, 'ID de l\'organization (génère pour toutes ses sociétés)', null)
             ->addOption('dry-run', null, InputOption::VALUE_NONE, 'Simulation sans création réelle')
             ->setHelp(
                 'Cette commande génère automatiquement les échéances de loyer pour tous les contrats actifs.' . PHP_EOL .
@@ -39,6 +41,8 @@ class GenerateRentsCommand extends Command
                 '  php bin/console app:generate-rents' . PHP_EOL .
                 '  php bin/console app:generate-rents --months-ahead=3' . PHP_EOL .
                 '  php bin/console app:generate-rents --month=2026-01' . PHP_EOL .
+                '  php bin/console app:generate-rents --company=5' . PHP_EOL .
+                '  php bin/console app:generate-rents --organization=2' . PHP_EOL .
                 '  php bin/console app:generate-rents --dry-run'
             );
     }
@@ -49,6 +53,8 @@ class GenerateRentsCommand extends Command
 
         $monthOption = $input->getOption('month');
         $monthsAhead = (int) $input->getOption('months-ahead');
+        $companyId = $input->getOption('company');
+        $organizationId = $input->getOption('organization');
         $dryRun = $input->getOption('dry-run');
 
         $io->title('🏠 Génération automatique des loyers - MYLOCCA');
@@ -69,8 +75,27 @@ class GenerateRentsCommand extends Command
             $startMonth = new \DateTime('first day of next month');
         }
 
-        // Récupérer tous les contrats actifs
-        $activeLeases = $this->leaseRepository->findByStatus('Actif');
+        // Filtrer les contrats par company/organization si spécifié
+        if ($companyId) {
+            $company = $this->entityManager->getRepository(\App\Entity\Company::class)->find($companyId);
+            if (!$company) {
+                $io->error("Société #{$companyId} introuvable");
+                return Command::FAILURE;
+            }
+            $io->info("🏢 Filtrage par société : {$company->getName()}");
+            $activeLeases = $this->leaseRepository->findBy(['company' => $company, 'status' => 'Actif']);
+        } elseif ($organizationId) {
+            $organization = $this->entityManager->getRepository(\App\Entity\Organization::class)->find($organizationId);
+            if (!$organization) {
+                $io->error("Organisation #{$organizationId} introuvable");
+                return Command::FAILURE;
+            }
+            $io->info("🏢 Filtrage par organization : {$organization->getName()}");
+            $activeLeases = $this->leaseRepository->findBy(['organization' => $organization, 'status' => 'Actif']);
+        } else {
+            // Récupérer tous les contrats actifs
+            $activeLeases = $this->leaseRepository->findByStatus('Actif');
+        }
 
         if (empty($activeLeases)) {
             $io->warning('Aucun contrat actif trouvé.');
@@ -128,7 +153,9 @@ class GenerateRentsCommand extends Command
                                ->setDueDate($dueDate)
                                ->setAmount($lease->getMonthlyRent())
                                ->setType('Loyer')
-                               ->setStatus('En attente');
+                               ->setStatus('En attente')
+                               ->setOrganization($lease->getOrganization()) // ✅ Auto-assign organization
+                               ->setCompany($lease->getCompany()); // ✅ Auto-assign company
 
                         $this->entityManager->persist($payment);
                     }

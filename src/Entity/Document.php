@@ -14,6 +14,14 @@ class Document
     #[ORM\Column]
     private ?int $id = null;
 
+    #[ORM\ManyToOne(targetEntity: Organization::class)]
+    #[ORM\JoinColumn(nullable: true)]
+    private ?Organization $organization = null;
+
+    #[ORM\ManyToOne(targetEntity: Company::class)]
+    #[ORM\JoinColumn(nullable: true)]
+    private ?Company $company = null;
+
     #[ORM\Column(length: 255)]
     private ?string $name = null;
 
@@ -335,6 +343,28 @@ class Document
     {
         $imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'];
         return in_array($this->getFileExtension(), $imageExtensions);
+    }
+
+    public function getOrganization(): ?Organization
+    {
+        return $this->organization;
+    }
+
+    public function setOrganization(?Organization $organization): static
+    {
+        $this->organization = $organization;
+        return $this;
+    }
+
+    public function getCompany(): ?Company
+    {
+        return $this->company;
+    }
+
+    public function setCompany(?Company $company): static
+    {
+        $this->company = $company;
+        return $this;
     }
 
     public function __toString(): string

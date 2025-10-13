@@ -31,15 +31,25 @@ class RentReceiptService
      */
     public function generateRentReceipt(Payment $payment): Document
     {
-        // Vérifier si une quittance existe déjà pour ce paiement
+        // Vérifier si une quittance existe déjà pour ce paiement (via le nom du fichier unique)
+        $fileName = sprintf(
+            'quittance_%s_%s.pdf',
+            $payment->getLease()->getTenant()->getLastName(),
+            $payment->getDueDate()->format('Y_m')
+        );
+
         $existingReceipt = $this->documentRepository->findOneBy([
-            'payment' => $payment,
-            'category' => 'Quittance de loyer'
+            'fileName' => $fileName,
+            'type' => 'Quittance de loyer'
         ]);
 
         if ($existingReceipt) {
             return $existingReceipt;
         }
+
+        // Récupérer la société émettrice
+        $company = $payment->getCompany() ?: $payment->getLease()->getCompany() ?: $payment->getLease()->getProperty()->getCompany();
+        $organization = $payment->getOrganization() ?: $payment->getLease()->getOrganization();
 
         // Générer le HTML de la quittance
         $html = $this->twig->render('pdf/rent_receipt.html.twig', [
@@ -47,11 +57,16 @@ class RentReceiptService
             'lease' => $payment->getLease(),
             'tenant' => $payment->getLease()->getTenant(),
             'property' => $payment->getLease()->getProperty(),
+            'company' => $company, // ✅ Informations de la société
+            'organization' => $organization,
             'settings' => [
-                'company_name' => $this->settingsService->get('company_name', 'MYLOCCA'),
-                'company_address' => $this->settingsService->get('company_address', ''),
-                'company_phone' => $this->settingsService->get('company_phone', ''),
-                'company_email' => $this->settingsService->get('company_email', ''),
+                'company_name' => $company ? $company->getLegalName() ?: $company->getName() : $this->settingsService->get('company_name', 'MYLOCCA'),
+                'company_address' => $company ? $company->getAddress() : $this->settingsService->get('company_address', ''),
+                'company_city' => $company ? ($company->getPostalCode() . ' ' . $company->getCity()) : '',
+                'company_phone' => $company ? $company->getPhone() : $this->settingsService->get('company_phone', ''),
+                'company_email' => $company ? $company->getEmail() : $this->settingsService->get('company_email', ''),
+                'company_siret' => $company ? $company->getRegistrationNumber() : '',
+                'company_website' => $company ? $company->getWebsite() : '',
             ]
         ]);
 
@@ -68,11 +83,6 @@ class RentReceiptService
 
         // Sauvegarder le PDF
         $pdfContent = $dompdf->output();
-        $fileName = sprintf(
-            'quittance_%s_%s.pdf',
-            $payment->getLease()->getTenant()->getLastName(),
-            $payment->getDueDate()->format('Y_m')
-        );
         $filePath = 'uploads/documents/' . $fileName;
 
         // Créer le dossier si nécessaire
@@ -85,14 +95,18 @@ class RentReceiptService
 
         // Créer l'entité Document
         $document = new Document();
-        $document->setTitle('Quittance de loyer - ' . $payment->getDueDate()->format('F Y'));
-        $document->setCategory('Quittance de loyer');
-        $document->setFilePath($filePath);
-        $document->setUploadDate(new \DateTime());
+        $document->setName('Quittance de loyer - ' . $payment->getDueDate()->format('F Y'));
+        $document->setType('Quittance de loyer');
+        $document->setFileName($fileName);
+        $document->setOriginalFileName($fileName);
+        $document->setMimeType('application/pdf');
+        $document->setDescription('Quittance de loyer pour le paiement #' . $payment->getId());
         $document->setTenant($payment->getLease()->getTenant());
         $document->setProperty($payment->getLease()->getProperty());
         $document->setLease($payment->getLease());
-        $document->setPayment($payment);
+        $document->setDocumentDate($payment->getPaidDate());
+        $document->setOrganization($organization); // ✅ Assigner organization
+        $document->setCompany($company); // ✅ Assigner company
 
         $this->entityManager->persist($document);
         $this->entityManager->flush();
@@ -105,15 +119,25 @@ class RentReceiptService
      */
     public function generatePaymentNotice(Payment $payment): Document
     {
-        // Vérifier si un avis existe déjà pour ce paiement
+        // Vérifier si un avis existe déjà pour ce paiement (via le nom du fichier unique)
+        $fileName = sprintf(
+            'avis_echeance_%s_%s.pdf',
+            $payment->getLease()->getTenant()->getLastName(),
+            $payment->getDueDate()->format('Y_m')
+        );
+
         $existingNotice = $this->documentRepository->findOneBy([
-            'payment' => $payment,
-            'category' => 'Avis d\'échéance'
+            'fileName' => $fileName,
+            'type' => 'Avis d\'échéance'
         ]);
 
         if ($existingNotice) {
             return $existingNotice;
         }
+
+        // Récupérer la société émettrice
+        $company = $payment->getCompany() ?: $payment->getLease()->getCompany() ?: $payment->getLease()->getProperty()->getCompany();
+        $organization = $payment->getOrganization() ?: $payment->getLease()->getOrganization();
 
         // Générer le HTML de l'avis d'échéance
         $html = $this->twig->render('pdf/payment_notice.html.twig', [
@@ -121,11 +145,16 @@ class RentReceiptService
             'lease' => $payment->getLease(),
             'tenant' => $payment->getLease()->getTenant(),
             'property' => $payment->getLease()->getProperty(),
+            'company' => $company, // ✅ Informations de la société
+            'organization' => $organization,
             'settings' => [
-                'company_name' => $this->settingsService->get('company_name', 'MYLOCCA'),
-                'company_address' => $this->settingsService->get('company_address', ''),
-                'company_phone' => $this->settingsService->get('company_phone', ''),
-                'company_email' => $this->settingsService->get('company_email', ''),
+                'company_name' => $company ? $company->getLegalName() ?: $company->getName() : $this->settingsService->get('company_name', 'MYLOCCA'),
+                'company_address' => $company ? $company->getAddress() : $this->settingsService->get('company_address', ''),
+                'company_city' => $company ? ($company->getPostalCode() . ' ' . $company->getCity()) : '',
+                'company_phone' => $company ? $company->getPhone() : $this->settingsService->get('company_phone', ''),
+                'company_email' => $company ? $company->getEmail() : $this->settingsService->get('company_email', ''),
+                'company_siret' => $company ? $company->getRegistrationNumber() : '',
+                'company_website' => $company ? $company->getWebsite() : '',
             ]
         ]);
 
@@ -142,25 +171,24 @@ class RentReceiptService
 
         // Sauvegarder le PDF
         $pdfContent = $dompdf->output();
-        $fileName = sprintf(
-            'avis_echeance_%s_%s.pdf',
-            $payment->getLease()->getTenant()->getLastName(),
-            $payment->getDueDate()->format('Y_m')
-        );
         $filePath = 'uploads/documents/' . $fileName;
 
         file_put_contents($this->getProjectDir() . '/public/' . $filePath, $pdfContent);
 
         // Créer l'entité Document
         $document = new Document();
-        $document->setTitle('Avis d\'échéance - ' . $payment->getDueDate()->format('F Y'));
-        $document->setCategory('Avis d\'échéance');
-        $document->setFilePath($filePath);
-        $document->setUploadDate(new \DateTime());
+        $document->setName('Avis d\'échéance - ' . $payment->getDueDate()->format('F Y'));
+        $document->setType('Avis d\'échéance');
+        $document->setFileName($fileName);
+        $document->setOriginalFileName($fileName);
+        $document->setMimeType('application/pdf');
+        $document->setDescription('Avis d\'échéance pour le paiement #' . $payment->getId());
         $document->setTenant($payment->getLease()->getTenant());
         $document->setProperty($payment->getLease()->getProperty());
         $document->setLease($payment->getLease());
-        $document->setPayment($payment);
+        $document->setDocumentDate($payment->getDueDate());
+        $document->setOrganization($organization); // ✅ Assigner organization
+        $document->setCompany($company); // ✅ Assigner company
 
         $this->entityManager->persist($document);
         $this->entityManager->flush();

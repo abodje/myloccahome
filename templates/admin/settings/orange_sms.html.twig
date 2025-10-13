@@ -1,0 +1,251 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Configuration Orange SMS - MYLOCCA{% endblock %}
+
+{% block page_title %}
+    <h5 class="mb-0">
+        <i class="bi bi-chat-dots me-2"></i>
+        Configuration Orange SMS
+    </h5>
+{% endblock %}
+
+{% block page_actions %}
+    <a href="{{ path('app_admin_settings_index') }}" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-arrow-left me-2"></i>
+        Retour aux paramètres
+    </a>
+{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <!-- Statut de la configuration -->
+    <div class="row mb-4">
+        <div class="col-12">
+            {% if settings.is_configured %}
+            <div class="alert alert-success">
+                <i class="bi bi-check-circle me-2"></i>
+                <strong>Orange SMS est configuré !</strong> Vous pouvez envoyer des SMS depuis l'application.
+            </div>
+            {% else %}
+            <div class="alert alert-warning">
+                <i class="bi bi-exclamation-triangle me-2"></i>
+                <strong>Orange SMS n'est pas encore configuré.</strong> Veuillez renseigner vos identifiants Orange API ci-dessous.
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Informations -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    <h6 class="mb-0">
+                        <i class="bi bi-info-circle me-2"></i>
+                        Comment obtenir vos identifiants Orange SMS ?
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <ol>
+                        <li>Rendez-vous sur <a href="https://developer.orange.com" target="_blank">Orange Developer Portal</a></li>
+                        <li>Créez un compte ou connectez-vous</li>
+                        <li>Créez une nouvelle application</li>
+                        <li>Activez l'API "SMS"</li>
+                        <li>Récupérez votre <strong>Client ID</strong> et <strong>Client Secret</strong></li>
+                        <li>Collez-les dans le formulaire ci-dessous</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Formulaire de configuration -->
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h6 class="mb-0">
+                        <i class="bi bi-gear me-2"></i>
+                        Paramètres Orange SMS
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        <!-- Activation -->
+                        <div class="mb-4">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" name="orange_sms_enabled" id="orange_sms_enabled" {{ settings.orange_sms_enabled ? 'checked' : '' }}>
+                                <label class="form-check-label" for="orange_sms_enabled">
+                                    <strong>Activer l'envoi de SMS via Orange</strong>
+                                </label>
+                            </div>
+                            <small class="text-muted">
+                                Activez cette option pour permettre l'envoi de SMS (notifications, rappels, etc.)
+                            </small>
+                        </div>
+
+                        <hr>
+
+                        <!-- Client ID -->
+                        <div class="mb-3">
+                            <label for="orange_sms_client_id" class="form-label">
+                                <i class="bi bi-key me-1"></i>
+                                Client ID <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" 
+                                   class="form-control" 
+                                   id="orange_sms_client_id" 
+                                   name="orange_sms_client_id" 
+                                   value="{{ settings.orange_sms_client_id }}"
+                                   placeholder="Votre Client ID Orange"
+                                   required>
+                            <small class="form-text text-muted">
+                                Identifiant unique de votre application Orange Developer
+                            </small>
+                        </div>
+
+                        <!-- Client Secret -->
+                        <div class="mb-3">
+                            <label for="orange_sms_client_secret" class="form-label">
+                                <i class="bi bi-shield-lock me-1"></i>
+                                Client Secret <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" 
+                                   class="form-control" 
+                                   id="orange_sms_client_secret" 
+                                   name="orange_sms_client_secret" 
+                                   value="{{ settings.orange_sms_client_secret }}"
+                                   placeholder="Votre Client Secret Orange"
+                                   required>
+                            <small class="form-text text-muted">
+                                Clé secrète pour signer vos requêtes API
+                            </small>
+                        </div>
+
+                        <!-- Sender Name -->
+                        <div class="mb-4">
+                            <label for="orange_sms_sender_name" class="form-label">
+                                <i class="bi bi-person-badge me-1"></i>
+                                Nom de l'expéditeur
+                            </label>
+                            <input type="text" 
+                                   class="form-control" 
+                                   id="orange_sms_sender_name" 
+                                   name="orange_sms_sender_name" 
+                                   value="{{ settings.orange_sms_sender_name }}"
+                                   placeholder="MYLOCCA"
+                                   maxlength="11">
+                            <small class="form-text text-muted">
+                                Nom qui apparaîtra comme expéditeur (max 11 caractères alphanum)
+                            </small>
+                        </div>
+
+                        <!-- Boutons -->
+                        <div class="d-flex justify-content-between">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-save me-2"></i>
+                                Enregistrer la configuration
+                            </button>
+                            <button type="button" class="btn btn-success" id="btnTestSms">
+                                <i class="bi bi-envelope-check me-2"></i>
+                                Tester la configuration
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Test de la configuration -->
+    <div class="row mt-4">
+        <div class="col-md-8 offset-md-2">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h6 class="mb-0">
+                        <i class="bi bi-telephone me-2"></i>
+                        Tester l'envoi de SMS
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label for="test_phone" class="form-label">Numéro de téléphone test</label>
+                        <div class="input-group">
+                            <span class="input-group-text">+225</span>
+                            <input type="text" 
+                                   class="form-control" 
+                                   id="test_phone" 
+                                   placeholder="0700000000"
+                                   pattern="[0-9]{10}">
+                        </div>
+                        <small class="text-muted">
+                            Entrez un numéro de téléphone pour tester l'envoi de SMS (format: 0700000000)
+                        </small>
+                    </div>
+                    <button type="button" class="btn btn-success" onclick="testSmsConfig()">
+                        <i class="bi bi-send me-2"></i>
+                        Tester maintenant
+                    </button>
+                    <div id="testResult" class="mt-3"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function testSmsConfig() {
+    const testPhone = document.getElementById('test_phone').value;
+    const resultDiv = document.getElementById('testResult');
+    
+    if (!testPhone) {
+        resultDiv.innerHTML = '<div class="alert alert-warning">Veuillez entrer un numéro de téléphone</div>';
+        return;
+    }
+
+    resultDiv.innerHTML = '<div class="alert alert-info"><i class="bi bi-hourglass-split me-2"></i>Test en cours...</div>';
+
+    fetch('{{ path('app_admin_orange_sms_test') }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: 'test_phone=' + encodeURIComponent(testPhone)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            resultDiv.innerHTML = `
+                <div class="alert alert-success">
+                    <i class="bi bi-check-circle me-2"></i>
+                    <strong>Succès !</strong> ${data.message}
+                    <div class="mt-2">
+                        <small>
+                            <strong>Client ID:</strong> ${data.config.client_id_length} caractères<br>
+                            <strong>Client Secret:</strong> ${data.config.client_secret_length} caractères<br>
+                            <strong>Nom expéditeur:</strong> ${data.config.sender_name}
+                        </small>
+                    </div>
+                </div>
+            `;
+        } else {
+            resultDiv.innerHTML = `
+                <div class="alert alert-danger">
+                    <i class="bi bi-x-circle me-2"></i>
+                    <strong>Erreur !</strong> ${data.message}
+                </div>
+            `;
+        }
+    })
+    .catch(error => {
+        resultDiv.innerHTML = `
+            <div class="alert alert-danger">
+                <i class="bi bi-x-circle me-2"></i>
+                <strong>Erreur !</strong> ${error.message}
+            </div>
+        `;
+    });
+}
+</script>
+{% endblock %}
+

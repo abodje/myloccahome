@@ -8,8 +8,10 @@ use App\Form\CurrencyType;
 use App\Repository\CurrencyRepository;
 use App\Repository\SettingsRepository;
 use App\Service\CurrencyService;
+use App\Service\OrangeSmsService;
 use App\Service\SettingsService;
 use Doctrine\ORM\EntityManagerInterface;
+use Psr\Log\LoggerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -318,5 +320,118 @@ class SettingsController extends AbstractController
 
         $this->addFlash('success', 'Les paramètres ont été initialisés avec les valeurs par défaut.');
         return $this->redirectToRoute('app_admin_settings');
+    }
+
+    /**
+     * Configuration Orange SMS
+     */
+    #[Route('/orange-sms', name: 'app_admin_orange_sms_settings', methods: ['GET', 'POST'])]
+    public function orangeSmsSettings(Request $request, SettingsService $settingsService): Response
+    {
+        if ($request->isMethod('POST')) {
+            $newSettings = [
+                'orange_sms_client_id' => $request->request->get('orange_sms_client_id'),
+                'orange_sms_client_secret' => $request->request->get('orange_sms_client_secret'),
+                'orange_sms_sender_name' => $request->request->get('orange_sms_sender_name'),
+                'orange_sms_enabled' => $request->request->has('orange_sms_enabled'),
+            ];
+
+            foreach ($newSettings as $key => $value) {
+                if ($value !== null && $value !== '') {
+                    $settingsService->set($key, $value);
+                }
+            }
+
+            $this->addFlash('success', 'La configuration Orange SMS a été mise à jour avec succès.');
+            return $this->redirectToRoute('app_admin_orange_sms_settings');
+        }
+
+        // Charger les paramètres
+        $settings = [
+            'orange_sms_client_id' => $settingsService->get('orange_sms_client_id', ''),
+            'orange_sms_client_secret' => $settingsService->get('orange_sms_client_secret', ''),
+            'orange_sms_sender_name' => $settingsService->get('orange_sms_sender_name', 'MYLOCCA'),
+            'orange_sms_enabled' => $settingsService->get('orange_sms_enabled', false),
+            'is_configured' => !empty($settingsService->get('orange_sms_client_id')) && !empty($settingsService->get('orange_sms_client_secret')),
+        ];
+
+        return $this->render('admin/settings/orange_sms.html.twig', [
+            'settings' => $settings,
+        ]);
+    }
+
+    /**
+     * Tester la configuration Orange SMS
+     */
+    #[Route('/orange-sms/tester', name: 'app_admin_orange_sms_test', methods: ['POST'])]
+    public function testOrangeSms(Request $request, SettingsService $settingsService,LoggerInterface $logger): Response
+    {
+        try {
+            $clientId = $settingsService->get('orange_sms_client_id');
+            $clientSecret = $settingsService->get('orange_sms_client_secret');
+            $testPhone = $request->request->get('test_phone', '');
+
+            if (empty($clientId) || empty($clientSecret)) {
+                return $this->json([
+                    'success' => false,
+                    'message' => 'Client ID ou Client Secret manquant. Veuillez configurer vos identifiants.'
+                ]);
+            }
+
+             $logger->info("Test client secret {$clientSecret}");
+            $logger->info("Test test phone $clientId {$clientId}");
+            if (empty($testPhone)) {
+                return $this->json([
+                    'success' => false,
+                    'message' => 'Veuillez fournir un numéro de téléphone pour le test.'
+                ]);
+            }
+
+            // Test d'envoi de SMS réel
+
+            try {
+                $osms = new OrangeSmsService($settingsService);
+                $osms->setVerifyPeerSSL(false);
+
+
+                $response = $osms->getTokenFromConsumerKey();
+
+                if (empty($response['access_token'])) {
+                    throw new \Exception("Impossible d'obtenir le token d'accès Orange SMS");
+                }
+
+
+                $result = $osms->envoyerSms($testPhone, 'Test SMS depuis MYLOCCA - Configuration reussie !','EAS CI');
+
+                if (isset($result['error'])) {
+                    return $this->json([
+                        'success' => false,
+                        'message' => 'Erreur lors de l\'envoi du SMS de test : ' . $result['error']
+                    ]);
+                }
+
+                // SMS envoyé avec succès
+                return $this->json([
+                    'success' => true,
+                    'message' => 'SMS de test envoyé avec succès ! Vérifiez le numéro ' . $testPhone,
+                    'config' => [
+                        'client_id_length' => strlen($clientId),
+                        'client_secret_length' => strlen($clientSecret),
+                        'sender_name' => $settingsService->get('orange_sms_sender_name', 'MYLOCCA'),
+                    ]
+                ]);
+            } catch (\Exception $smsException) {
+                return $this->json([
+                    'success' => false,
+                    'message' => 'Exception lors de l\'envoi : ' . $smsException->getMessage()
+                ]);
+            }
+
+        } catch (\Exception $e) {
+            return $this->json([
+                'success' => false,
+                'message' => 'Erreur : ' . $e->getMessage()
+            ]);
+        }
     }
 }

@@ -59,15 +59,41 @@ class DocumentController extends AbstractController
                 }
             }
         } else {
-            // Pour les admins/managers, remplir avec tous les documents
-            $documentsByType['Assurance'] = $documentRepository->findByType('Assurance');
-            $documentsByType['Avis d\'échéance'] = $documentRepository->findByType('Avis d\'échéance');
-            $documentsByType['Bail'] = array_merge(
-                $documentRepository->findByType('Bail'),
-                $documentRepository->findByType('Contrat de location')
-            );
-            $documentsByType['Diagnostics'] = $documentRepository->findByType('Diagnostics');
-            $documentsByType['OK'] = $documentRepository->findByType('Conseils');
+            // Pour les admins/managers, filtrer par organization/company
+            $qb = $documentRepository->createQueryBuilder('d');
+
+            if ($user && method_exists($user, 'getOrganization') && $user->getOrganization()) {
+                // MANAGER: voir documents de SA company
+                if (method_exists($user, 'getCompany') && $user->getCompany() && in_array('ROLE_MANAGER', $user->getRoles())) {
+                    $qb->where('d.company = :company')
+                       ->setParameter('company', $user->getCompany());
+                }
+                // ADMIN: voir documents de SON organization
+                else {
+                    $qb->where('d.organization = :organization')
+                       ->setParameter('organization', $user->getOrganization());
+                }
+            }
+
+            $allDocuments = $qb->orderBy('d.createdAt', 'DESC')->getQuery()->getResult();
+
+            // Organiser par type
+            foreach ($allDocuments as $document) {
+                $type = $document->getType();
+
+                // Grouper "Bail" et "Contrat de location" ensemble
+                if ($type === 'Bail' || $type === 'Contrat de location') {
+                    $type = 'Bail';
+                }
+                // Grouper "Conseils" sous "OK"
+                elseif ($type === 'Conseils') {
+                    $type = 'OK';
+                }
+
+                if (isset($documentsByType[$type])) {
+                    $documentsByType[$type][] = $document;
+                }
+            }
         }
 
         // Calculer les statistiques (filtrées selon le rôle)
@@ -103,15 +129,34 @@ class DocumentController extends AbstractController
                 }
             }
         } else {
-            // Pour les admins/managers, montrer tous les documents du type
+            // Pour les admins/managers, filtrer par organization/company
+            /** @var \App\Entity\User $user */
+            $qb = $documentRepository->createQueryBuilder('d');
+
+            // Filtrer par type
             if ($type === 'Bail') {
-                $documents = array_merge(
-                    $documentRepository->findByType('Bail'),
-                    $documentRepository->findByType('Contrat de location')
-                );
+                $qb->where('d.type IN (:types)')
+                   ->setParameter('types', ['Bail', 'Contrat de location']);
             } else {
-                $documents = $documentRepository->findByType($type);
+                $qb->where('d.type = :type')
+                   ->setParameter('type', $type);
             }
+
+            // Filtrage multi-tenant
+            if ($user && method_exists($user, 'getOrganization') && $user->getOrganization()) {
+                // MANAGER: voir documents de SA company
+                if (method_exists($user, 'getCompany') && $user->getCompany() && in_array('ROLE_MANAGER', $user->getRoles())) {
+                    $qb->andWhere('d.company = :company')
+                       ->setParameter('company', $user->getCompany());
+                }
+                // ADMIN: voir documents de SON organization
+                else {
+                    $qb->andWhere('d.organization = :organization')
+                       ->setParameter('organization', $user->getOrganization());
+                }
+            }
+
+            $documents = $qb->orderBy('d.createdAt', 'DESC')->getQuery()->getResult();
         }
 
         return $this->render('document/by_type.html.twig', [

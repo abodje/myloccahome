@@ -6,13 +6,14 @@ use Symfony\Bundle\SecurityBundle\Security;
 
 /**
  * Service de gestion des menus avec ACL (Access Control List)
- * Gère l'affichage des menus selon les rôles des utilisateurs
+ * Gère l'affichage des menus selon les rôles des utilisateurs ET les fonctionnalités du plan
  */
 class MenuService
 {
     public function __construct(
         private Security $security,
-        private SettingsService $settingsService
+        private SettingsService $settingsService,
+        private FeatureAccessService $featureAccessService
     ) {
     }
 
@@ -36,6 +37,7 @@ class MenuService
                 'roles' => ['ROLE_USER', 'ROLE_TENANT', 'ROLE_MANAGER', 'ROLE_ADMIN'],
                 'order' => 2,
                 'badge' => 'pending_requests', // Compteur dynamique
+                'required_feature' => 'maintenance_requests', // ✅ Nécessite plan Professional+
             ],
             'properties' => [
                 'label' => 'Mes biens',
@@ -79,6 +81,7 @@ class MenuService
                 'route' => 'app_accounting_index',
                 'roles' => ['ROLE_USER', 'ROLE_TENANT', 'ROLE_MANAGER', 'ROLE_ADMIN'],
                 'order' => 7,
+                'required_feature' => 'accounting', // ✅ Nécessite plan Professional+
             ],
             'documents' => [
                 'label' => 'Mes documents',
@@ -95,6 +98,13 @@ class MenuService
                 'order' => 9,
                 'badge_type' => 'danger',
                 'badge_value' => 'unread_count',
+            ],
+            'subscription' => [
+                'label' => 'Mon Abonnement',
+                'icon' => 'bi-credit-card-2-back',
+                'route' => 'app_subscription_dashboard',
+                'roles' => ['ROLE_ADMIN'],
+                'order' => 9.5,
             ],
             'divider_admin' => [
                 'type' => 'divider',
@@ -174,6 +184,11 @@ class MenuService
                     'settings_cinetpay' => [
                         'label' => '💳 Paiement en ligne',
                         'route' => 'app_admin_cinetpay_settings',
+                        'roles' => ['ROLE_ADMIN'],
+                    ],
+                    'settings_orange_sms' => [
+                        'label' => '📱 Orange SMS',
+                        'route' => 'app_admin_orange_sms_settings',
                         'roles' => ['ROLE_ADMIN'],
                     ],
                     'settings_maintenance_system' => [
@@ -256,6 +271,20 @@ class MenuService
             $settingValue = $this->settingsService->get($menuItem['visible_condition'], false);
             if (!$settingValue) {
                 return false;
+            }
+        }
+
+        // ✅ NOUVEAU : Vérifier la fonctionnalité requise selon le plan d'abonnement
+        if (isset($menuItem['required_feature'])) {
+            /** @var \App\Entity\User|null $user */
+            $user = $this->security->getUser();
+
+            if (!$user || !method_exists($user, 'getOrganization') || !$user->getOrganization()) {
+                return false; // Pas d'organization = pas d'accès
+            }
+
+            if (!$this->featureAccessService->hasAccess($user->getOrganization(), $menuItem['required_feature'])) {
+                return false; // Fonctionnalité non disponible dans le plan
             }
         }
 

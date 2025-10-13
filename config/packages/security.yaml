@@ -46,12 +46,20 @@ security:
             # https://symfony.com/doc/current/security/impersonating_user.html
             switch_user: true
 
+    # Hiérarchie des rôles
+    role_hierarchy:
+        ROLE_TENANT: ROLE_USER
+        ROLE_MANAGER: [ROLE_USER, ROLE_TENANT]
+        ROLE_ADMIN: [ROLE_MANAGER, ROLE_USER]
+        ROLE_SUPER_ADMIN: [ROLE_ADMIN, ROLE_MANAGER, ROLE_USER]
+
     # Easy way to control access for large sections of your site
     # Note: Only the *first* access control that matches will be used
     access_control:
         # Routes publiques
         - { path: ^/login, roles: PUBLIC_ACCESS }
         - { path: ^/register, roles: PUBLIC_ACCESS }
+        - { path: ^/inscription, roles: PUBLIC_ACCESS }
 
         # Routes d'administration - uniquement pour les admins
         - { path: ^/admin, roles: ROLE_ADMIN }
@@ -70,12 +78,6 @@ security:
 
         # Dashboard - tous les utilisateurs connectés
         - { path: ^/, roles: ROLE_USER }
-
-    # Hiérarchie des rôles
-    role_hierarchy:
-        ROLE_TENANT: ROLE_USER
-        ROLE_MANAGER: [ROLE_USER, ROLE_TENANT]
-        ROLE_ADMIN: [ROLE_MANAGER, ROLE_USER]
 
 when@test:
     security:

@@ -15,7 +15,9 @@ class MaintenanceAssignmentService
     public function __construct(
         private EntityManagerInterface $entityManager,
         private UserRepository $userRepository,
-        private NotificationService $notificationService
+        private NotificationService $notificationService,
+        private OrangeSmsService $orangeSmsService,
+        private SettingsService $settingsService
     ) {
     }
 
@@ -139,7 +141,7 @@ class MaintenanceAssignmentService
             ->from(MaintenanceRequest::class, 'm')
             ->where('m.priority = :priority')
             ->andWhere('m.status != :completed')
-            ->setParameter('priority', 'Urgent')
+            ->setParameter('priority', 'Urgente')
             ->setParameter('completed', 'Terminée')
             ->getQuery()
             ->getResult();
@@ -147,10 +149,56 @@ class MaintenanceAssignmentService
         $notifiedCount = 0;
         foreach ($urgentRequests as $request) {
             $this->notificationService->sendUrgentMaintenanceAlert($request);
+            
+            // Envoyer SMS si activé
+            if ($this->settingsService->get('orange_sms_enabled', false)) {
+                $this->sendUrgentMaintenanceSms($request);
+            }
+            
             $notifiedCount++;
         }
 
         return $notifiedCount;
+    }
+
+    /**
+     * Envoie un SMS pour une demande de maintenance urgente
+     */
+    private function sendUrgentMaintenanceSms(MaintenanceRequest $request): void
+    {
+        try {
+            // Notifier le propriétaire/gestionnaire
+            $owner = $request->getProperty()->getOwner();
+            
+            if ($owner && $owner->getPhone()) {
+                $message = sprintf(
+                    "URGENT MYLOCCA: Demande maintenance a %s. Priorite: %s. Voir details sur mylocca.com",
+                    substr($request->getProperty()->getAddress(), 0, 30),
+                    $request->getPriority()
+                );
+
+                // Limiter à 160 caractères
+                if (strlen($message) > 160) {
+                    $message = substr($message, 0, 157) . '...';
+                }
+
+                $this->orangeSmsService->envoyerSms($owner->getPhone(), $message);
+            }
+
+            // Notifier aussi le locataire si demande urgente
+            if ($request->getTenant() && $request->getTenant()->getPhone()) {
+                $tenant = $request->getTenant();
+                $message = sprintf(
+                    "MYLOCCA: Votre demande urgente #%d a ete prise en compte. Intervention prevue sous 24h.",
+                    $request->getId()
+                );
+
+                $this->orangeSmsService->envoyerSms($tenant->getPhone(), $message);
+            }
+        } catch (\Exception $e) {
+            // Logger l'erreur mais ne pas bloquer le processus
+            error_log("Erreur envoi SMS maintenance: " . $e->getMessage());
+        }
     }
 
     /**

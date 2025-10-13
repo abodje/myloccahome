@@ -22,17 +22,38 @@ class TenantController extends AbstractController
     #[Route('/', name: 'app_tenant_index', methods: ['GET'])]
     public function index(TenantRepository $tenantRepository, Request $request): Response
     {
+        /** @var \App\Entity\User $user */
+        $user = $this->getUser();
         $search = $request->query->get('search');
         $status = $request->query->get('status'); // actif, inactif
 
-        if ($search) {
-            $tenants = $tenantRepository->findByNameOrEmail($search);
-        } elseif ($status === 'actif') {
-            $tenants = $tenantRepository->findWithActiveLeases();
-        } else {
-            $tenants = $tenantRepository->findBy([], ['lastName' => 'ASC', 'firstName' => 'ASC']);
+        // Filtrer par organization/company selon le rôle
+        $qb = $tenantRepository->createQueryBuilder('t');
+
+        // Filtrage multi-tenant
+        if ($user && method_exists($user, 'getOrganization') && $user->getOrganization()) {
+            // MANAGER: voir uniquement SA company
+            if (method_exists($user, 'getCompany') && $user->getCompany() && in_array('ROLE_MANAGER', $user->getRoles())) {
+                $qb->where('t.company = :company')
+                   ->setParameter('company', $user->getCompany());
+            }
+            // ADMIN: voir toute SON organization
+            else {
+                $qb->where('t.organization = :organization')
+                   ->setParameter('organization', $user->getOrganization());
+            }
         }
 
+        // Filtres supplémentaires
+        if ($search) {
+            $qb->andWhere('t.firstName LIKE :search OR t.lastName LIKE :search OR t.email LIKE :search')
+               ->setParameter('search', '%' . $search . '%');
+        }
+
+        $qb->orderBy('t.lastName', 'ASC')
+           ->addOrderBy('t.firstName', 'ASC');
+
+        $tenants = $qb->getQuery()->getResult();
         $stats = $tenantRepository->getStatistics();
 
         return $this->render('tenant/index.html.twig', [
@@ -46,7 +67,25 @@ class TenantController extends AbstractController
     #[Route('/nouveau', name: 'app_tenant_new', methods: ['GET', 'POST'])]
     public function new(Request $request, EntityManagerInterface $entityManager, UserPasswordHasherInterface $passwordHasher): Response
     {
+        /** @var \App\Entity\User $user */
+        $user = $this->getUser();
+
         $tenant = new Tenant();
+
+        // Auto-assigner organization et company
+        if ($user && method_exists($user, 'getOrganization') && $user->getOrganization()) {
+            $tenant->setOrganization($user->getOrganization());
+
+            if (method_exists($user, 'getCompany') && $user->getCompany()) {
+                $tenant->setCompany($user->getCompany());
+            } else {
+                $headquarter = $user->getOrganization()->getHeadquarterCompany();
+                if ($headquarter) {
+                    $tenant->setCompany($headquarter);
+                }
+            }
+        }
+
         $form = $this->createForm(TenantType::class, $tenant);
         $form->handleRequest($request);
 

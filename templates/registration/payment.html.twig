@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Paiement - {{ plan.name }} - MYLOCCA</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 50px 0;
+        }
+        .payment-card {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="payment-card p-5">
+                    <!-- En-tête -->
+                    <div class="text-center mb-5">
+                        <h2 class="mb-2">
+                            <i class="bi bi-credit-card"></i>
+                            Finaliser votre abonnement
+                        </h2>
+                        <p class="text-muted">Plan : <strong>{{ plan.name }}</strong></p>
+                    </div>
+
+                    <!-- Messages Flash -->
+                    {% for message in app.flashes('error') %}
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            <i class="bi bi-exclamation-triangle me-2"></i>
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    {% endfor %}
+
+                    <!-- Résumé de la commande -->
+                    <div class="card mb-4">
+                        <div class="card-header bg-primary text-white">
+                            <h5 class="mb-0">
+                                <i class="bi bi-receipt"></i>
+                                Résumé de votre abonnement
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row mb-3">
+                                <div class="col-6"><strong>Organisation :</strong></div>
+                                <div class="col-6">{{ organization.name }}</div>
+                            </div>
+                            <div class="row mb-3">
+                                <div class="col-6"><strong>Plan :</strong></div>
+                                <div class="col-6">{{ plan.name }}</div>
+                            </div>
+                            <div class="row mb-3">
+                                <div class="col-6"><strong>Cycle de facturation :</strong></div>
+                                <div class="col-6">{{ subscription.billingCycle == 'MONTHLY' ? 'Mensuel' : 'Annuel' }}</div>
+                            </div>
+                            <div class="row mb-3">
+                                <div class="col-6"><strong>Période d'essai :</strong></div>
+                                <div class="col-6 text-success">
+                                    <i class="bi bi-gift"></i>
+                                    {{ plan.trialDays }} jours GRATUITS
+                                </div>
+                            </div>
+                            <hr>
+                            <div class="row">
+                                <div class="col-6"><h5>Total à payer :</h5></div>
+                                <div class="col-6"><h5 class="text-primary">{{ (subscription.amount / 1000)|number_format(0) }}K FCFA</h5></div>
+                            </div>
+                            <div class="row">
+                                <div class="col-12">
+                                    <small class="text-muted">
+                                        Vous ne serez facturé qu'après les {{ plan.trialDays }} jours d'essai gratuit
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Méthodes de paiement -->
+                    <div class="card mb-4">
+                        <div class="card-header bg-success text-white">
+                            <h5 class="mb-0">
+                                <i class="bi bi-wallet2"></i>
+                                Choisissez votre méthode de paiement
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <!-- Pour l'instant, activation directe en mode développement -->
+                            <div class="alert alert-info">
+                                <i class="bi bi-info-circle"></i>
+                                <strong>Mode Développement</strong><br>
+                                L'intégration du paiement CinetPay sera activée prochainement.
+                                Pour l'instant, cliquez sur "Activer mon abonnement" pour activer directement votre compte.
+                            </div>
+
+                            <form method="POST">
+                                <div class="d-grid gap-2">
+                                    <button type="submit" class="btn btn-success btn-lg">
+                                        <i class="bi bi-check-circle me-2"></i>
+                                        Activer mon abonnement
+                                    </button>
+                                </div>
+                            </form>
+
+                            <!-- TODO: Intégration CinetPay -->
+                            <!--
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <button class="btn btn-outline-primary w-100 p-4" onclick="payCinetPay('mobile_money')">
+                                        <i class="bi bi-phone fs-1 d-block mb-2"></i>
+                                        <strong>Mobile Money</strong><br>
+                                        <small>Orange Money, MTN, Moov</small>
+                                    </button>
+                                </div>
+                                <div class="col-md-6">
+                                    <button class="btn btn-outline-primary w-100 p-4" onclick="payCinetPay('card')">
+                                        <i class="bi bi-credit-card fs-1 d-block mb-2"></i>
+                                        <strong>Carte Bancaire</strong><br>
+                                        <small>Visa, Mastercard</small>
+                                    </button>
+                                </div>
+                            </div>
+                            -->
+                        </div>
+                    </div>
+
+                    <!-- Garanties -->
+                    <div class="row text-center">
+                        <div class="col-md-4">
+                            <i class="bi bi-shield-check text-success fs-1"></i>
+                            <p class="mt-2"><strong>Paiement sécurisé</strong></p>
+                        </div>
+                        <div class="col-md-4">
+                            <i class="bi bi-arrow-left-right text-success fs-1"></i>
+                            <p class="mt-2"><strong>Remboursement 30 jours</strong></p>
+                        </div>
+                        <div class="col-md-4">
+                            <i class="bi bi-x-circle text-success fs-1"></i>
+                            <p class="mt-2"><strong>Annulation à tout moment</strong></p>
+                        </div>
+                    </div>
+
+                    <!-- Retour -->
+                    <div class="text-center mt-4">
+                        <a href="{{ path('app_registration_plans') }}" class="text-muted">
+                            <i class="bi bi-arrow-left"></i>
+                            Retour aux plans
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
+

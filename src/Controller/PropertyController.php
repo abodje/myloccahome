@@ -34,16 +34,39 @@ class PropertyController extends AbstractController
                 $properties = [];
             }
         } elseif ($user && in_array('ROLE_MANAGER', $user->getRoles())) {
-            // Si l'utilisateur est un gestionnaire, montrer ses propriétés
-            $owner = $user->getOwner();
-            if ($owner) {
-                $properties = $propertyRepository->findByOwnerWithFilters($owner->getId(), $search, $status, $type);
+            // Si l'utilisateur est un gestionnaire, montrer les propriétés de SA société
+            $company = method_exists($user, 'getCompany') ? $user->getCompany() : null;
+            if ($company) {
+                // Filtrer par company
+                $properties = $propertyRepository->createQueryBuilder('p')
+                    ->where('p.company = :company')
+                    ->setParameter('company', $company)
+                    ->orderBy('p.createdAt', 'DESC')
+                    ->getQuery()
+                    ->getResult();
             } else {
-                $properties = $propertyRepository->findWithFilters($search, $status, $type);
+                // Fallback: filtrer par owner (ancien système)
+                $owner = $user->getOwner();
+                if ($owner) {
+                    $properties = $propertyRepository->findByOwnerWithFilters($owner->getId(), $search, $status, $type);
+                } else {
+                    $properties = [];
+                }
             }
         } else {
-            // Pour les admins, montrer toutes les propriétés
-            $properties = $propertyRepository->findWithFilters($search, $status, $type);
+            // Pour les admins, filtrer par ORGANIZATION uniquement
+            if ($user && method_exists($user, 'getOrganization') && $user->getOrganization()) {
+                $organization = $user->getOrganization();
+                $properties = $propertyRepository->createQueryBuilder('p')
+                    ->where('p.organization = :organization')
+                    ->setParameter('organization', $organization)
+                    ->orderBy('p.createdAt', 'DESC')
+                    ->getQuery()
+                    ->getResult();
+            } else {
+                // Fallback si pas d'organization
+                $properties = $propertyRepository->findWithFilters($search, $status, $type);
+            }
         }
 
         // Passer une variable pour indiquer si c'est la vue locataire
@@ -70,6 +93,23 @@ class PropertyController extends AbstractController
         }
 
         $property = new Property();
+
+        // Auto-assigner organization et company
+        if ($user && method_exists($user, 'getOrganization') && $user->getOrganization()) {
+            $property->setOrganization($user->getOrganization());
+
+            // Si l'utilisateur a une company assignée, l'utiliser
+            if (method_exists($user, 'getCompany') && $user->getCompany()) {
+                $property->setCompany($user->getCompany());
+            } else {
+                // Sinon, utiliser la company par défaut (siège social)
+                $headquarter = $user->getOrganization()->getHeadquarterCompany();
+                if ($headquarter) {
+                    $property->setCompany($headquarter);
+                }
+            }
+        }
+
         $form = $this->createForm(PropertyType::class, $property);
         $form->handleRequest($request);
 

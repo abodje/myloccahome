@@ -11,6 +11,7 @@ use App\Repository\PaymentRepository;
 use App\Service\CinetPayService;
 use App\Service\AdvancePaymentService;
 use App\Service\AccountingService;
+use App\Service\OrangeSmsService;
 use App\Service\SettingsService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -261,6 +262,7 @@ class OnlinePaymentController extends AbstractController
         AdvancePaymentService $advanceService,
         AccountingService $accountingService,
         SettingsService $settingsService,
+        OrangeSmsService $orangeSmsService,
         EntityManagerInterface $em
     ): Response {
         // Récupérer les données de notification
@@ -411,6 +413,11 @@ class OnlinePaymentController extends AbstractController
 
                 $em->flush();
 
+                // Envoyer SMS de confirmation si activé
+                if ($settingsService->get('orange_sms_enabled', false)) {
+                    $this->sendPaymentConfirmationSms($onlinePayment, $orangeSmsService, $logFile);
+                }
+
                 file_put_contents($logFile, date('Y-m-d H:i:s') . " - ✅ SUCCESS: Transaction $transactionId traitée\n", FILE_APPEND);
                 return new Response('OK', 200);
 
@@ -467,6 +474,57 @@ class OnlinePaymentController extends AbstractController
         return $this->render('online_payment/show.html.twig', [
             'transaction' => $onlinePayment,
         ]);
+    }
+
+    /**
+     * Envoie un SMS de confirmation de paiement
+     */
+    private function sendPaymentConfirmationSms(
+        OnlinePayment $onlinePayment,
+        OrangeSmsService $orangeSmsService,
+        string $logFile
+    ): void {
+        try {
+            $tenant = $onlinePayment->getLease()->getTenant();
+
+            if (!$tenant->getPhone()) {
+                file_put_contents($logFile, date('Y-m-d H:i:s') . " - ⚠️ Pas de numéro de téléphone pour {$tenant->getFullName()}\n", FILE_APPEND);
+                return;
+            }
+
+            if ($onlinePayment->getPaymentType() === 'rent' && $onlinePayment->getPayment()) {
+                // Confirmation de paiement de loyer
+                $payment = $onlinePayment->getPayment();
+                $message = sprintf(
+                    "MYLOCCA: Paiement de %s bien recu le %s. Votre quittance est disponible sur mylocca.com. Merci!",
+                    number_format($payment->getAmount(), 0, ',', ' ') . ' FCFA',
+                    (new \DateTime())->format('d/m/Y')
+                );
+            } elseif ($onlinePayment->getPaymentType() === 'advance') {
+                // Confirmation d'acompte
+                $message = sprintf(
+                    "MYLOCCA: Acompte de %s bien recu. Il sera applique automatiquement a vos prochains loyers. Merci!",
+                    number_format($onlinePayment->getAmount(), 0, ',', ' ') . ' FCFA'
+                );
+            } else {
+                return;
+            }
+
+            // Limiter à 160 caractères
+            if (strlen($message) > 160) {
+                $message = substr($message, 0, 157) . '...';
+            }
+
+            $result = $orangeSmsService->envoyerSms($tenant->getPhone(), $message);
+
+            if (isset($result['error'])) {
+                file_put_contents($logFile, date('Y-m-d H:i:s') . " - ❌ Erreur SMS: {$result['error']}\n", FILE_APPEND);
+            } else {
+                file_put_contents($logFile, date('Y-m-d H:i:s') . " - ✅ SMS confirmation envoyé à {$tenant->getFullName()}\n", FILE_APPEND);
+            }
+        } catch (\Exception $e) {
+            file_put_contents($logFile, date('Y-m-d H:i:s') . " - ❌ Exception SMS: {$e->getMessage()}\n", FILE_APPEND);
+        }
     }
 }
 

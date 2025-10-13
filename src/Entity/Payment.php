@@ -14,6 +14,14 @@ class Payment
     #[ORM\Column]
     private ?int $id = null;
 
+    #[ORM\ManyToOne(targetEntity: Organization::class, inversedBy: 'payments')]
+    #[ORM\JoinColumn(nullable: true)]
+    private ?Organization $organization = null;
+
+    #[ORM\ManyToOne(targetEntity: Company::class)]
+    #[ORM\JoinColumn(nullable: true)]
+    private ?Company $company = null;
+
     #[ORM\ManyToOne(inversedBy: 'payments')]
     #[ORM\JoinColumn(nullable: false)]
     private ?Lease $lease = null;
@@ -231,6 +239,28 @@ class Payment
     public function getTenant(): ?Tenant
     {
         return $this->lease?->getTenant();
+    }
+
+    public function getOrganization(): ?Organization
+    {
+        return $this->organization;
+    }
+
+    public function setOrganization(?Organization $organization): static
+    {
+        $this->organization = $organization;
+        return $this;
+    }
+
+    public function getCompany(): ?Company
+    {
+        return $this->company;
+    }
+
+    public function setCompany(?Company $company): static
+    {
+        $this->company = $company;
+        return $this;
     }
 
     public function __toString(): string

@@ -13,7 +13,9 @@ class TaskManagerService
         private EntityManagerInterface $entityManager,
         private NotificationService $notificationService,
         private LoggerInterface $logger,
-        private RentReceiptService $rentReceiptService
+        private RentReceiptService $rentReceiptService,
+        private OrangeSmsService $orangeSmsService,
+        private SettingsService $settingsService
     ) {
     }
 
@@ -126,6 +128,58 @@ class TaskManagerService
 
         $task->setParameter('last_sent_count', $results['sent']);
         $task->setParameter('last_failed_count', $results['failed']);
+
+        // Envoyer des SMS si activé
+        if ($this->settingsService->get('orange_sms_enabled', false)) {
+            $this->sendPaymentReminderSms($task);
+        }
+    }
+
+    /**
+     * Envoie des SMS de rappel de paiement
+     */
+    private function sendPaymentReminderSms(Task $task): void
+    {
+        $paymentRepository = $this->entityManager->getRepository(\App\Entity\Payment::class);
+
+        // Récupérer les paiements en retard
+        $overduePayments = $paymentRepository->findOverdue();
+
+        $smsSent = 0;
+        $smsFailed = 0;
+
+        foreach ($overduePayments as $payment) {
+            $tenant = $payment->getLease()->getTenant();
+
+            if (!$tenant->getPhone()) {
+                continue; // Pas de numéro de téléphone
+            }
+
+            $daysLate = (new \DateTime())->diff($payment->getDueDate())->days;
+
+            $message = sprintf(
+                "Rappel MYLOCCA: Votre loyer de %s est en retard de %d jour(s). Echéance: %s. Payez sur mylocca.com",
+                number_format($payment->getAmount(), 0, ',', ' ') . ' FCFA',
+                $daysLate,
+                $payment->getDueDate()->format('d/m/Y')
+            );
+
+            // Limiter à 160 caractères
+            if (strlen($message) > 160) {
+                $message = substr($message, 0, 157) . '...';
+            }
+
+            try {
+                $this->orangeSmsService->envoyerSms($tenant->getPhone(), $message);
+                $smsSent++;
+                $this->logger->info("SMS rappel envoyé à {$tenant->getFullName()} pour paiement #{$payment->getId()}");
+            } catch (\Exception $e) {
+                $smsFailed++;
+                $this->logger->error("Erreur envoi SMS à {$tenant->getFullName()}: " . $e->getMessage());
+            }
+        }
+
+        $this->logger->info("Rappels SMS envoyés: {$smsSent} succès, {$smsFailed} échecs");
     }
 
     /**
@@ -137,6 +191,60 @@ class TaskManagerService
 
         $task->setParameter('last_sent_count', $results['sent']);
         $task->setParameter('last_failed_count', $results['failed']);
+
+        // Envoyer des SMS si activé
+        if ($this->settingsService->get('orange_sms_enabled', false)) {
+            $this->sendLeaseExpirationSms($task);
+        }
+    }
+
+    /**
+     * Envoie des SMS d'alerte d'expiration de bail
+     */
+    private function sendLeaseExpirationSms(Task $task): void
+    {
+        $leaseRepository = $this->entityManager->getRepository(\App\Entity\Lease::class);
+        $parameters = $task->getParameters() ?? [];
+        $daysBeforeExpiration = $parameters['days_before_expiration'] ?? 60;
+
+        // Récupérer les baux expirant bientôt
+        $expiringLeases = $leaseRepository->findExpiringSoon();
+
+        $smsSent = 0;
+        $smsFailed = 0;
+
+        foreach ($expiringLeases as $lease) {
+            $tenant = $lease->getTenant();
+
+            if (!$tenant->getPhone()) {
+                continue;
+            }
+
+            $daysUntilExpiration = (new \DateTime())->diff($lease->getEndDate())->days;
+
+            $message = sprintf(
+                "MYLOCCA: Votre bail %s expire dans %d jours (%s). Contactez-nous",
+                $lease->getProperty()->getAddress(),
+                $daysUntilExpiration,
+                $lease->getEndDate()->format('d/m/Y')
+            );
+
+            // Limiter à 160 caractères
+            if (strlen($message) > 160) {
+                $message = substr($message, 0, 157) . '...';
+            }
+
+            try {
+                $this->orangeSmsService->envoyerSms($tenant->getPhone(), $message);
+                $smsSent++;
+                $this->logger->info("SMS expiration bail envoyé à {$tenant->getFullName()} pour bail #{$lease->getId()}");
+            } catch (\Exception $e) {
+                $smsFailed++;
+                $this->logger->error("Erreur envoi SMS à {$tenant->getFullName()}: " . $e->getMessage());
+            }
+        }
+
+        $this->logger->info("Alertes expiration SMS envoyées: {$smsSent} succès, {$smsFailed} échecs");
     }
 
     /**
@@ -261,6 +369,154 @@ class TaskManagerService
     public function forceExecuteTask(Task $task): void
     {
         $this->executeTask($task);
+    }
+
+    /**
+     * Initialise le système : crée les tâches et les plans par défaut
+     */
+    public function initializeSystem(): array
+    {
+        $results = [
+            'tasks_created' => 0,
+            'plans_created' => 0,
+            'errors' => []
+        ];
+
+        // 1. Créer les tâches par défaut
+        try {
+            $this->createDefaultTasks();
+            $taskRepo = $this->entityManager->getRepository(Task::class);
+            $results['tasks_created'] = $taskRepo->count([]);
+        } catch (\Exception $e) {
+            $results['errors'][] = 'Erreur création tâches: ' . $e->getMessage();
+            $this->logger->error('Erreur création tâches: ' . $e->getMessage());
+        }
+
+        // 2. Créer les plans d'abonnement par défaut
+        try {
+            $this->createDefaultPlans();
+            $planRepo = $this->entityManager->getRepository(\App\Entity\Plan::class);
+            $results['plans_created'] = $planRepo->count([]);
+        } catch (\Exception $e) {
+            $results['errors'][] = 'Erreur création plans: ' . $e->getMessage();
+            $this->logger->error('Erreur création plans: ' . $e->getMessage());
+        }
+
+        return $results;
+    }
+
+    /**
+     * Crée les plans d'abonnement par défaut
+     */
+    private function createDefaultPlans(): void
+    {
+        $defaultPlans = [
+            [
+                'name' => 'Freemium',
+                'slug' => 'freemium',
+                'description' => 'Testez gratuitement pour toujours',
+                'monthly_price' => '0',
+                'yearly_price' => '0',
+                'currency' => 'FCFA',
+                'max_properties' => 2,
+                'max_tenants' => 3,
+                'max_users' => 1,
+                'max_documents' => 10,
+                'features' => [
+                    'dashboard', 'properties_management', 'tenants_management',
+                    'lease_management', 'payment_tracking',
+                ],
+                'sort_order' => 1,
+                'is_popular' => false,
+            ],
+            [
+                'name' => 'Starter',
+                'slug' => 'starter',
+                'description' => 'Parfait pour débuter dans la gestion locative',
+                'monthly_price' => '9900',
+                'yearly_price' => '99000',
+                'currency' => 'FCFA',
+                'max_properties' => 5,
+                'max_tenants' => 10,
+                'max_users' => 2,
+                'max_documents' => 50,
+                'features' => [
+                    'dashboard', 'properties_management', 'tenants_management',
+                    'lease_management', 'payment_tracking', 'documents',
+                ],
+                'sort_order' => 2,
+                'is_popular' => false,
+            ],
+            [
+                'name' => 'Professional',
+                'slug' => 'professional',
+                'description' => 'Pour les gestionnaires professionnels',
+                'monthly_price' => '24900',
+                'yearly_price' => '249000',
+                'currency' => 'FCFA',
+                'max_properties' => 20,
+                'max_tenants' => 50,
+                'max_users' => 5,
+                'max_documents' => 200,
+                'features' => [
+                    'dashboard', 'properties_management', 'tenants_management',
+                    'lease_management', 'payment_tracking', 'documents',
+                    'accounting', 'maintenance_requests', 'online_payments',
+                    'advance_payments', 'reports', 'email_notifications',
+                ],
+                'sort_order' => 3,
+                'is_popular' => true,
+            ],
+            [
+                'name' => 'Enterprise',
+                'slug' => 'enterprise',
+                'description' => 'Solution complète pour grandes entreprises',
+                'monthly_price' => '49900',
+                'yearly_price' => '499000',
+                'currency' => 'FCFA',
+                'max_properties' => null,
+                'max_tenants' => null,
+                'max_users' => null,
+                'max_documents' => null,
+                'features' => [
+                    'dashboard', 'properties_management', 'tenants_management',
+                    'lease_management', 'payment_tracking', 'documents',
+                    'accounting', 'maintenance_requests', 'online_payments',
+                    'advance_payments', 'reports', 'email_notifications',
+                    'sms_notifications', 'custom_branding', 'api_access',
+                    'priority_support', 'multi_currency',
+                ],
+                'sort_order' => 4,
+                'is_popular' => false,
+            ],
+        ];
+
+        foreach ($defaultPlans as $planData) {
+            $existingPlan = $this->entityManager->getRepository(\App\Entity\Plan::class)
+                ->findOneBy(['slug' => $planData['slug']]);
+
+            if (!$existingPlan) {
+                $plan = new \App\Entity\Plan();
+                $plan->setName($planData['name'])
+                     ->setSlug($planData['slug'])
+                     ->setDescription($planData['description'])
+                     ->setMonthlyPrice($planData['monthly_price'])
+                     ->setYearlyPrice($planData['yearly_price'])
+                     ->setCurrency($planData['currency'])
+                     ->setMaxProperties($planData['max_properties'])
+                     ->setMaxTenants($planData['max_tenants'])
+                     ->setMaxUsers($planData['max_users'])
+                     ->setMaxDocuments($planData['max_documents'])
+                     ->setFeatures($planData['features'])
+                     ->setSortOrder($planData['sort_order'])
+                     ->setIsPopular($planData['is_popular'])
+                     ->setIsActive(true);
+
+                $this->entityManager->persist($plan);
+            }
+        }
+
+        $this->entityManager->flush();
     }
 
     /**

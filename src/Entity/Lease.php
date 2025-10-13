@@ -16,6 +16,14 @@ class Lease
     #[ORM\Column]
     private ?int $id = null;
 
+    #[ORM\ManyToOne(targetEntity: Organization::class, inversedBy: 'leases')]
+    #[ORM\JoinColumn(nullable: true)]
+    private ?Organization $organization = null;
+
+    #[ORM\ManyToOne(targetEntity: Company::class, inversedBy: 'leases')]
+    #[ORM\JoinColumn(nullable: true)]
+    private ?Company $company = null;
+
     #[ORM\ManyToOne(inversedBy: 'leases')]
     #[ORM\JoinColumn(nullable: false)]
     private ?Property $property = null;
@@ -279,6 +287,28 @@ class Lease
         }
 
         return $nextDue;
+    }
+
+    public function getOrganization(): ?Organization
+    {
+        return $this->organization;
+    }
+
+    public function setOrganization(?Organization $organization): static
+    {
+        $this->organization = $organization;
+        return $this;
+    }
+
+    public function getCompany(): ?Company
+    {
+        return $this->company;
+    }
+
+    public function setCompany(?Company $company): static
+    {
+        $this->company = $company;
+        return $this;
     }
 
     public function __toString(): string
