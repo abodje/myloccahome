@@ -1,0 +1,203 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ company.name }} - Société - MYLOCCA{% endblock %}
+
+{% block page_title %}
+    <h5 class="mb-0">
+        <i class="bi bi-briefcase me-2"></i>
+        {{ company.name }}
+    </h5>
+{% endblock %}
+
+{% block page_actions %}
+    <div class="d-flex gap-2">
+        <a href="{{ path('app_admin_company_index') }}" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-arrow-left"></i> Retour
+        </a>
+        <a href="{{ path('app_admin_company_edit', {id: company.id}) }}" class="btn btn-primary btn-sm">
+            <i class="bi bi-pencil"></i> Modifier
+        </a>
+        <form method="POST" action="{{ path('app_admin_company_toggle_active', {id: company.id}) }}" class="d-inline">
+            <input type="hidden" name="_token" value="{{ csrf_token('toggle' ~ company.id) }}">
+            <button type="submit" class="btn btn-sm btn-{{ company.isActive ? 'warning' : 'success' }}">
+                <i class="bi bi-power"></i> {{ company.isActive ? 'Désactiver' : 'Activer' }}
+            </button>
+        </form>
+    </div>
+{% endblock %}
+
+{% block body %}
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="bi bi-info-circle me-2"></i>
+                        Informations de la société
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <table class="table table-borderless">
+                        <tr>
+                            <td class="text-muted" style="width: 200px;">Nom :</td>
+                            <td><strong>{{ company.name }}</strong></td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted">Organisation :</td>
+                            <td>
+                                {% if company.organization %}
+                                    <a href="{{ path('app_admin_organization_show', {id: company.organization.id}) }}">
+                                        {{ company.organization.name }}
+                                    </a>
+                                {% else %}
+                                    <span class="text-muted">Non rattachée</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted">Email :</td>
+                            <td>
+                                {% if company.email %}
+                                    <a href="mailto:{{ company.email }}">{{ company.email }}</a>
+                                {% else %}
+                                    <span class="text-muted">Non renseigné</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted">Téléphone :</td>
+                            <td>{{ company.phone ?? 'Non renseigné' }}</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted">Adresse :</td>
+                            <td>{{ company.address ?? 'Non renseignée' }}</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted">Site web :</td>
+                            <td>
+                                {% if company.website %}
+                                    <a href="{{ company.website }}" target="_blank">{{ company.website }}</a>
+                                {% else %}
+                                    <span class="text-muted">Non renseigné</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted">N° enregistrement :</td>
+                            <td>{{ company.registrationNumber ?? 'Non renseigné' }}</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted">N° fiscal :</td>
+                            <td>{{ company.taxNumber ?? 'Non renseigné' }}</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted">Statut :</td>
+                            <td>
+                                <span class="badge bg-{{ company.isActive ? 'success' : 'danger' }}">
+                                    {{ company.isActive ? 'Active' : 'Inactive' }}
+                                </span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted">Créée le :</td>
+                            <td>{{ company.createdAt|date('d/m/Y H:i') }}</td>
+                        </tr>
+                        {% if company.updatedAt %}
+                            <tr>
+                                <td class="text-muted">Modifiée le :</td>
+                                <td>{{ company.updatedAt|date('d/m/Y H:i') }}</td>
+                            </tr>
+                        {% endif %}
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <!-- Statistiques -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="bi bi-graph-up me-2"></i>
+                        Statistiques
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between">
+                            <span>Utilisateurs</span>
+                            <strong class="text-success">{{ stats.users }}</strong>
+                        </div>
+                        <div class="progress" style="height: 5px;">
+                            <div class="progress-bar bg-success" style="width: {{ stats.users > 0 ? 100 : 0 }}%"></div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between">
+                            <span>Propriétés</span>
+                            <strong class="text-info">{{ stats.properties }}</strong>
+                        </div>
+                        <div class="progress" style="height: 5px;">
+                            <div class="progress-bar bg-info" style="width: {{ stats.properties > 0 ? 100 : 0 }}%"></div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between">
+                            <span>Baux</span>
+                            <strong class="text-warning">{{ stats.leases }}</strong>
+                        </div>
+                        <div class="progress" style="height: 5px;">
+                            <div class="progress-bar bg-warning" style="width: {{ stats.leases > 0 ? 100 : 0 }}%"></div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between">
+                            <span>Paiements</span>
+                            <strong class="text-danger">{{ stats.payments }}</strong>
+                        </div>
+                        <div class="progress" style="height: 5px;">
+                            <div class="progress-bar bg-danger" style="width: {{ stats.payments > 0 ? 100 : 0 }}%"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="d-flex justify-content-between">
+                            <span>Documents</span>
+                            <strong class="text-secondary">{{ stats.documents }}</strong>
+                        </div>
+                        <div class="progress" style="height: 5px;">
+                            <div class="progress-bar bg-secondary" style="width: {{ stats.documents > 0 ? 100 : 0 }}%"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <a href="{{ path('app_admin_company_stats', {id: company.id}) }}" class="btn btn-sm btn-outline-primary w-100">
+                        <i class="bi bi-bar-chart"></i> Voir les statistiques détaillées
+                    </a>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="bi bi-gear me-2"></i>
+                        Actions rapides
+                    </h6>
+                </div>
+                <div class="card-body d-grid gap-2">
+                    <a href="{{ path('app_admin_company_edit', {id: company.id}) }}" class="btn btn-secondary">
+                        <i class="bi bi-pencil"></i> Modifier la société
+                    </a>
+                    <form method="POST" action="{{ path('app_admin_company_delete', {id: company.id}) }}"
+                          onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cette société ? Cette action est irréversible.');">
+                        <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ company.id) }}">
+                        <button type="submit" class="btn btn-danger w-100">
+                            <i class="bi bi-trash"></i> Supprimer la société
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+

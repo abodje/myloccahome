@@ -1,0 +1,135 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Organisations - Administration - MYLOCCA{% endblock %}
+
+{% block page_title %}
+    <h5 class="mb-0">
+        <i class="bi bi-building me-2"></i>
+        Gestion des Organisations
+    </h5>
+{% endblock %}
+
+{% block page_actions %}
+    <a href="{{ path('app_admin_organization_new') }}" class="btn btn-primary btn-sm">
+        <i class="bi bi-plus-circle"></i> Nouvelle organisation
+    </a>
+{% endblock %}
+
+{% block body %}
+    <div class="row mb-4">
+        <div class="col-lg-3 col-md-6">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <h3 class="mb-0">{{ organizations|length }}</h3>
+                    <small>Organisations totales</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <h3 class="mb-0">{{ organizations|filter(o => o.isActive)|length }}</h3>
+                    <small>Organisations actives</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <h3 class="mb-0">{{ stats|reduce((carry, s) => carry + s.companies, 0) }}</h3>
+                    <small>Sociétés totales</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <h3 class="mb-0">{{ stats|reduce((carry, s) => carry + s.users, 0) }}</h3>
+                    <small>Utilisateurs totaux</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            {% if organizations|length > 0 %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Nom</th>
+                                <th>Contact</th>
+                                <th>Sociétés</th>
+                                <th>Utilisateurs</th>
+                                <th>Biens</th>
+                                <th>Statut</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for organization in organizations %}
+                                {% set org_stats = stats[organization.id] %}
+                                <tr>
+                                    <td>
+                                        <strong>{{ organization.name }}</strong>
+                                        {% if organization.registrationNumber %}
+                                            <br><small class="text-muted">{{ organization.registrationNumber }}</small>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if organization.email %}
+                                            <i class="bi bi-envelope me-1"></i>{{ organization.email }}<br>
+                                        {% endif %}
+                                        {% if organization.phone %}
+                                            <i class="bi bi-phone me-1"></i>{{ organization.phone }}
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-info">{{ org_stats.companies }}</span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-secondary">{{ org_stats.users }}</span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-primary">{{ org_stats.properties }}</span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-{{ organization.isActive ? 'success' : 'danger' }}">
+                                            {{ organization.isActive ? 'Active' : 'Inactive' }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm" role="group">
+                                            <a href="{{ path('app_admin_organization_show', {id: organization.id}) }}"
+                                               class="btn btn-outline-primary"
+                                               title="Voir">
+                                                <i class="bi bi-eye"></i>
+                                            </a>
+                                            <a href="{{ path('app_admin_organization_edit', {id: organization.id}) }}"
+                                               class="btn btn-outline-secondary"
+                                               title="Modifier">
+                                                <i class="bi bi-pencil"></i>
+                                            </a>
+                                            <a href="{{ path('app_admin_organization_stats', {id: organization.id}) }}"
+                                               class="btn btn-outline-info"
+                                               title="Statistiques">
+                                                <i class="bi bi-graph-up"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle me-2"></i>
+                    Aucune organisation enregistrée. Créez votre première organisation.
+                </div>
+            {% endif %}
+        </div>
+    </div>
+{% endblock %}
+

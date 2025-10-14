@@ -116,8 +116,22 @@ class MenuService
             'divider_admin' => [
                 'type' => 'divider',
                 'label' => 'ADMINISTRATION',
-                'roles' => ['ROLE_MANAGER', 'ROLE_ADMIN'],
+                'roles' => ['ROLE_MANAGER', 'ROLE_ADMIN', 'ROLE_SUPER_ADMIN'],
                 'order' => 100,
+            ],
+            'admin_organizations' => [
+                'label' => 'Organisations',
+                'icon' => 'bi-building',
+                'route' => 'app_admin_organization_index',
+                'roles' => ['ROLE_SUPER_ADMIN'],
+                'order' => 100.5,
+            ],
+            'admin_companies' => [
+                'label' => 'Sociétés',
+                'icon' => 'bi-briefcase',
+                'route' => 'app_admin_company_index',
+                'roles' => ['ROLE_SUPER_ADMIN'],
+                'order' => 100.7,
             ],
             'admin_dashboard' => [
                 'label' => 'Administration',
