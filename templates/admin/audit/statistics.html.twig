@@ -1,0 +1,239 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Statistiques Audit Log - Administration{% endblock %}
+
+{% block page_title %}
+    <h5 class="mb-0">
+        <i class="bi bi-bar-chart me-2"></i>
+        Statistiques d'Activité
+    </h5>
+{% endblock %}
+
+{% block page_actions %}
+    <a href="{{ path('app_admin_audit_index') }}" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-arrow-left"></i> Retour à l'historique
+    </a>
+{% endblock %}
+
+{% block body %}
+    <!-- Statistiques globales -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h2 class="text-primary">{{ stats.total_count|number_format(0, ',', ' ') }}</h2>
+                    <p class="text-muted mb-0">Total d'actions</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h2 class="text-success">{{ stats.today_count|number_format(0, ',', ' ') }}</h2>
+                    <p class="text-muted mb-0">Aujourd'hui</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h2 class="text-info">{{ (stats.total_count / 30)|round|number_format(0, ',', ' ') }}</h2>
+                    <p class="text-muted mb-0">Moyenne par jour (30j)</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <!-- Actions par type -->
+        <div class="col-md-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="bi bi-pie-chart me-2"></i>Actions par Type
+                    </h6>
+                </div>
+                <div class="card-body">
+                    {% for action in stats.by_action %}
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between mb-1">
+                                <span>{{ action.action }}</span>
+                                <strong>{{ action.count }}</strong>
+                            </div>
+                            <div class="progress" style="height: 8px;">
+                                {% set total = stats.by_action|reduce((carry, item) => carry + item.count, 0) %}
+                                {% set percentage = (action.count / total * 100)|round %}
+                                <div class="progress-bar" style="width: {{ percentage }}%"></div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Entités modifiées -->
+        <div class="col-md-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="bi bi-diagram-3 me-2"></i>Entités Modifiées
+                    </h6>
+                </div>
+                <div class="card-body">
+                    {% for entity in stats.by_entity %}
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between mb-1">
+                                <span>{{ entity.entityType }}</span>
+                                <strong>{{ entity.count }}</strong>
+                            </div>
+                            <div class="progress" style="height: 8px;">
+                                {% set total = stats.by_entity|reduce((carry, item) => carry + item.count, 0) %}
+                                {% set percentage = (entity.count / total * 100)|round %}
+                                <div class="progress-bar bg-success" style="width: {{ percentage }}%"></div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Activité quotidienne -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="bi bi-graph-up me-2"></i>Activité des 30 Derniers Jours
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <canvas id="dailyActivityChart" style="max-height: 300px;"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Utilisateurs les plus actifs -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="bi bi-people me-2"></i>Utilisateurs les Plus Actifs
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Utilisateur</th>
+                                    <th>Nombre d'actions</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for user in stats.most_active_users %}
+                                    <tr>
+                                        <td>User #{{ user.userId }}</td>
+                                        <td><strong>{{ user.actionCount }}</strong></td>
+                                        <td>
+                                            <div class="progress" style="height: 8px; width: 200px;">
+                                                {% set max = stats.most_active_users|first.actionCount %}
+                                                {% set percentage = (user.actionCount / max * 100)|round %}
+                                                <div class="progress-bar" style="width: {{ percentage }}%"></div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Nettoyage -->
+    <div class="card">
+        <div class="card-header bg-warning">
+            <h6 class="mb-0">
+                <i class="bi bi-trash me-2"></i>Nettoyage Automatique
+            </h6>
+        </div>
+        <div class="card-body">
+            <p>Supprimez les enregistrements d'audit anciens pour libérer de l'espace.</p>
+            <form method="POST" action="{{ path('app_admin_audit_cleanup') }}"
+                  onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer les enregistrements anciens ?');">
+                <div class="row g-3 align-items-end">
+                    <div class="col-md-3">
+                        <label class="form-label">Conserver les</label>
+                        <select name="days" class="form-select">
+                            <option value="30">30 derniers jours</option>
+                            <option value="60">60 derniers jours</option>
+                            <option value="90" selected>90 derniers jours</option>
+                            <option value="180">180 derniers jours</option>
+                            <option value="365">1 an</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <button type="submit" class="btn btn-warning">
+                            <i class="bi bi-trash"></i> Nettoyer
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+    <script>
+        // Graphique d'activité quotidienne
+        const ctx = document.getElementById('dailyActivityChart').getContext('2d');
+        const chart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: [
+                    {% for day in daily_activity %}
+                        '{{ day.date }}'{% if not loop.last %},{% endif %}
+                    {% endfor %}
+                ],
+                datasets: [{
+                    label: 'Actions',
+                    data: [
+                        {% for day in daily_activity %}
+                            {{ day.count }}{% if not loop.last %},{% endif %}
+                        {% endfor %}
+                    ],
+                    borderColor: 'rgb(13, 110, 253)',
+                    backgroundColor: 'rgba(13, 110, 253, 0.1)',
+                    tension: 0.4,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            precision: 0
+                        }
+                    }
+                }
+            }
+        });
+    </script>
+{% endblock %}
+

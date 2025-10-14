@@ -318,3 +318,4 @@ $limit = $featureAccessService->getLimitInfo($organization, 'properties');
 
 **Le client obtient exactement ce qu'il demandait : un système professionnel où les fonctionnalités affichées correspondent exactement à ce que l'utilisateur peut réellement faire ! 🚀**
 
+

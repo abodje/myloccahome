@@ -42,3 +42,4 @@ CREATE INDEX IF NOT EXISTS IDX_expense_company ON expense(company_id);
 -- TERMINÉ ! Les colonnes sont créées, l'application peut maintenant fonctionner.
 -- Les contraintes FK seront ajoutées plus tard si nécessaire.
 
+

@@ -99,6 +99,13 @@
                         </div>
                         <div class="col-2">
                             <div class="d-flex gap-1 flex-wrap">
+                                {# Bouton Modifier #}
+                                <a href="{{ path('app_admin_currency_edit', {id: currency.id}) }}"
+                                   class="btn btn-sm btn-outline-primary"
+                                   title="Modifier">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+
                                 {% if currency.code != default_currency().code and currency.isActive %}
                                     <form method="POST" action="{{ path('app_admin_currency_set_active', {id: currency.id}) }}" class="d-inline">
                                         <button type="submit" class="btn btn-sm btn-outline-success" title="Définir comme devise active">
@@ -106,12 +113,33 @@
                                         </button>
                                     </form>
                                 {% endif %}
+
                                 {% if not currency.isDefault %}
                                     <form method="POST" action="{{ path('app_admin_currency_set_default', {id: currency.id}) }}" class="d-inline">
                                         <button type="submit" class="btn btn-sm btn-outline-warning" title="Définir par défaut">
                                             <i class="bi bi-star"></i>
                                         </button>
                                     </form>
+                                {% endif %}
+
+                                {# Bouton Supprimer (désactivé si devise par défaut) #}
+                                {% if not currency.isDefault %}
+                                    <form method="POST"
+                                          action="{{ path('app_admin_currency_delete', {id: currency.id}) }}"
+                                          class="d-inline"
+                                          onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer la devise {{ currency.code }} ? Cette action est irréversible.');">
+                                        <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ currency.id) }}">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger" title="Supprimer">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </form>
+                                {% else %}
+                                    <button type="button"
+                                            class="btn btn-sm btn-outline-secondary"
+                                            title="Impossible de supprimer la devise par défaut"
+                                            disabled>
+                                        <i class="bi bi-trash"></i>
+                                    </button>
                                 {% endif %}
                             </div>
                         </div>
@@ -150,7 +178,7 @@
                         <label class="form-label">De</label>
                         <select id="fromCurrency" class="form-select">
                             {% for currency in currencies %}
-                                <option value="{{ currency.code }}" data-rate="{{ currency.exchangeRate }}" 
+                                <option value="{{ currency.code }}" data-rate="{{ currency.exchangeRate }}"
                                         {{ currency.isDefault ? 'selected' : '' }}>
                                     {{ currency.code }} ({{ currency.symbol }})
                                 </option>
@@ -179,7 +207,7 @@
 
 {% block javascripts %}
     {{ parent() }}
-    
+
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const amountInput = document.getElementById('convertAmount');
@@ -193,11 +221,11 @@
                 const amount = parseFloat(amountInput.value) || 0;
                 const fromRate = parseFloat(fromSelect.selectedOptions[0].dataset.rate) || 1;
                 const toRate = parseFloat(toSelect.selectedOptions[0].dataset.rate) || 1;
-                
+
                 // Conversion via EUR
                 const amountInEur = amount / fromRate;
                 const convertedAmount = amountInEur * toRate;
-                
+
                 const toSymbol = toSelect.selectedOptions[0].text.match(/\(([^)]+)\)/)[1];
                 resultInput.value = convertedAmount.toLocaleString('fr-FR', {
                     minimumFractionDigits: 2,
@@ -209,7 +237,7 @@
                 amountInput.addEventListener('input', convertCurrency);
                 fromSelect.addEventListener('change', convertCurrency);
                 toSelect.addEventListener('change', convertCurrency);
-                
+
                 // Conversion initiale
                 convertCurrency();
             }

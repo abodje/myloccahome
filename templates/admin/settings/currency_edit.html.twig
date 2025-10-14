@@ -1,0 +1,184 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Modifier une devise - Administration{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>💱 Modifier la devise {{ currency.code }}</h2>
+                <a href="{{ path('app_admin_currencies') }}" class="btn btn-secondary">
+                    <i class="bi bi-arrow-left"></i> Retour
+                </a>
+            </div>
+
+            <div class="row">
+                <div class="col-md-8">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">Informations de la devise</h5>
+                        </div>
+                        <div class="card-body">
+                            {{ form_start(form) }}
+
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        {{ form_label(form.name, 'Nom de la devise', {'class': 'form-label'}) }}
+                                        {{ form_widget(form.name, {'class': 'form-control', 'placeholder': 'ex: Euro'}) }}
+                                        {{ form_errors(form.name) }}
+                                        <div class="form-text">Nom complet de la devise</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        {{ form_label(form.code, 'Code ISO', {'class': 'form-label'}) }}
+                                        {{ form_widget(form.code, {'class': 'form-control', 'placeholder': 'ex: EUR', 'maxlength': 3}) }}
+                                        {{ form_errors(form.code) }}
+                                        <div class="form-text">Code ISO 4217 (3 lettres)</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        {{ form_label(form.symbol, 'Symbole', {'class': 'form-label'}) }}
+                                        {{ form_widget(form.symbol, {'class': 'form-control', 'placeholder': 'ex: €'}) }}
+                                        {{ form_errors(form.symbol) }}
+                                        <div class="form-text">Symbole affiché (€, $, £, etc.)</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        {{ form_label(form.exchangeRate, 'Taux de change', {'class': 'form-label'}) }}
+                                        {{ form_widget(form.exchangeRate, {'class': 'form-control', 'placeholder': '1.00', 'step': '0.0001'}) }}
+                                        {{ form_errors(form.exchangeRate) }}
+                                        <div class="form-text">Taux par rapport à la devise de référence</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        {{ form_label(form.decimalPlaces, 'Décimales', {'class': 'form-label'}) }}
+                                        {{ form_widget(form.decimalPlaces, {'class': 'form-control'}) }}
+                                        {{ form_errors(form.decimalPlaces) }}
+                                        <div class="form-text">Nombre de décimales à afficher</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        {{ form_label(form.isDefault, 'Devise par défaut', {'class': 'form-label'}) }}
+                                        {{ form_widget(form.isDefault, {'class': 'form-check-input'}) }}
+                                        {{ form_errors(form.isDefault) }}
+                                        <div class="form-text">Cette devise sera utilisée par défaut</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                {{ form_label(form.isActive, 'Activée', {'class': 'form-label'}) }}
+                                {{ form_widget(form.isActive, {'class': 'form-check-input'}) }}
+                                {{ form_errors(form.isActive) }}
+                                <div class="form-text">La devise sera disponible dans l'application</div>
+                            </div>
+
+                            <div class="d-flex gap-2">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="bi bi-save"></i> Enregistrer les modifications
+                                </button>
+                                <a href="{{ path('app_admin_currencies') }}" class="btn btn-secondary">
+                                    <i class="bi bi-x-circle"></i> Annuler
+                                </a>
+                            </div>
+
+                            {{ form_end(form) }}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">ℹ️ Informations</h5>
+                        </div>
+                        <div class="card-body">
+                            <ul class="list-unstyled">
+                                <li><strong>Code actuel :</strong> {{ currency.code }}</li>
+                                <li><strong>Nom :</strong> {{ currency.name }}</li>
+                                <li><strong>Symbole :</strong> {{ currency.symbol }}</li>
+                                {% if currency.lastRateUpdate %}
+                                    <li><strong>Dernière MAJ :</strong> {{ currency.lastRateUpdate|date('d/m/Y H:i') }}</li>
+                                {% endif %}
+                            </ul>
+
+                            {% if currency.isDefault %}
+                                <div class="alert alert-info">
+                                    <i class="bi bi-info-circle"></i>
+                                    Cette devise est actuellement la devise par défaut.
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="card mt-3">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">💡 Aide</h5>
+                        </div>
+                        <div class="card-body">
+                            <h6>Conseils :</h6>
+                            <ul>
+                                <li>Le taux de change est par rapport à votre devise de référence</li>
+                                <li>Une seule devise peut être définie par défaut</li>
+                                <li>Les devises inactives ne sont pas affichées</li>
+                                <li>Les modifications prennent effet immédiatement</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="card mt-3">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">📊 Aperçu</h5>
+                        </div>
+                        <div class="card-body">
+                            <div id="currency-preview">
+                                <p><strong>Exemple d'affichage :</strong></p>
+                                <div class="alert alert-info">
+                                    <div id="preview-amount">1 234,56 {{ currency.symbol }}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const symbolField = document.querySelector('#currency_symbol');
+    const decimalField = document.querySelector('#currency_decimalPlaces');
+    const previewAmount = document.querySelector('#preview-amount');
+
+    function updatePreview() {
+        const symbol = symbolField.value || '€';
+        const decimals = parseInt(decimalField.value) || 2;
+        const amount = (1234.56789).toFixed(decimals).replace('.', ',');
+
+        previewAmount.textContent = `${amount} ${symbol}`;
+    }
+
+    if (symbolField && decimalField && previewAmount) {
+        symbolField.addEventListener('input', updatePreview);
+        decimalField.addEventListener('change', updatePreview);
+
+        updatePreview();
+    }
+});
+</script>
+{% endblock %}
+

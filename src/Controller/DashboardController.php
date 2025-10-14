@@ -10,6 +10,7 @@ use App\Repository\MaintenanceRequestRepository;
 use App\Repository\ExpenseRepository;
 use App\Repository\AccountingEntryRepository;
 use App\Repository\ConversationRepository;
+use App\Service\DashboardAnalyticsService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
@@ -25,13 +26,14 @@ class DashboardController extends AbstractController
         MaintenanceRequestRepository $maintenanceRepo,
         ExpenseRepository $expenseRepo,
         AccountingEntryRepository $accountingRepo,
-        ConversationRepository $conversationRepo
+        ConversationRepository $conversationRepo,
+        DashboardAnalyticsService $analyticsService
     ): Response {
         /** @var \App\Entity\User|null $user */
         $user = $this->getUser();
         // Adapter les données selon le rôle de l'utilisateur
         if ($user && in_array('ROLE_ADMIN', $user->getRoles())) {
-            return $this->adminDashboard($propertyRepo, $tenantRepo, $leaseRepo, $paymentRepo, $maintenanceRepo, $expenseRepo, $accountingRepo, $conversationRepo);
+            return $this->adminDashboard($propertyRepo, $tenantRepo, $leaseRepo, $paymentRepo, $maintenanceRepo, $expenseRepo, $accountingRepo, $conversationRepo, $analyticsService);
         } elseif ($user && in_array('ROLE_MANAGER', $user->getRoles())) {
             return $this->managerDashboard($user, $propertyRepo, $tenantRepo, $leaseRepo, $paymentRepo, $maintenanceRepo, $expenseRepo, $accountingRepo, $conversationRepo);
         } elseif ($user && in_array('ROLE_TENANT', $user->getRoles())) {
@@ -53,8 +55,10 @@ class DashboardController extends AbstractController
         MaintenanceRequestRepository $maintenanceRepo,
         ExpenseRepository $expenseRepo,
         AccountingEntryRepository $accountingRepo,
-        ConversationRepository $conversationRepo
+        ConversationRepository $conversationRepo,
+        DashboardAnalyticsService $analyticsService
     ): Response {
+
         // Statistiques globales
         $stats = [
             'properties' => [
@@ -99,6 +103,28 @@ class DashboardController extends AbstractController
         $urgentRequests = $maintenanceRepo->findUrgentPending();
         $overduePayments = $paymentRepo->findOverdue();
 
+        // 📊 NOUVELLES DONNÉES ANALYTIQUES
+        try {
+            $monthlyRevenueChart = $analyticsService->getMonthlyRevenueChartData();
+            $occupancyRate = $analyticsService->getOccupancyRate();
+            $paymentStatistics = $analyticsService->getPaymentStatistics();
+            $cashFlowForecast = $analyticsService->getCashFlowForecast();
+            $propertiesByType = $analyticsService->getPropertiesByType();
+            $leaseExpirationStats = $analyticsService->getLeaseExpirationStats();
+            $globalKPIs = $analyticsService->getGlobalKPIs();
+            $yearComparison = $analyticsService->getYearComparison();
+        } catch (\Exception $e) {
+            // Fallback en cas d'erreur
+            $monthlyRevenueChart = ['labels' => [], 'revenue' => [], 'expenses' => [], 'net' => []];
+            $occupancyRate = ['rate' => 0, 'occupied' => 0, 'total' => 0, 'available' => 0];
+            $paymentStatistics = ['current_month_revenue' => 0, 'evolution_percentage' => 0];
+            $cashFlowForecast = [];
+            $propertiesByType = [];
+            $leaseExpirationStats = ['expiring_30_days' => 0, 'expiring_60_days' => 0, 'expiring_90_days' => 0];
+            $globalKPIs = ['occupancy_rate' => 0, 'collection_rate' => 0, 'revenue_growth' => 0];
+            $yearComparison = ['current_year' => 0, 'last_year' => 0, 'evolution' => 0];
+        }
+
         return $this->render('dashboard/admin.html.twig', [
             'stats' => $stats,
             'monthly_revenue' => $monthlyRevenue,
@@ -108,7 +134,17 @@ class DashboardController extends AbstractController
             'recent_maintenance' => $recentMaintenanceRequests,
             'urgent_requests' => $urgentRequests,
             'overdue_payments' => $overduePayments,
-            'user_role' => 'admin'
+            'user_role' => 'admin',
+
+            // 📊 Nouvelles données analytiques
+            'monthly_revenue_chart' => $monthlyRevenueChart,
+            'occupancy_rate' => $occupancyRate,
+            'payment_statistics' => $paymentStatistics,
+            'cash_flow_forecast' => $cashFlowForecast,
+            'properties_by_type' => $propertiesByType,
+            'lease_expiration_stats' => $leaseExpirationStats,
+            'global_kpis' => $globalKPIs,
+            'year_comparison' => $yearComparison,
         ]);
     }
 
@@ -306,6 +342,60 @@ class DashboardController extends AbstractController
         return $this->render('dashboard/index.html.twig', [
             'stats' => $stats,
             'user_role' => 'default'
+        ]);
+    }
+
+    #[Route('/analytics', name: 'app_dashboard_analytics')]
+    public function analytics(
+        DashboardAnalyticsService $analyticsService
+    ): Response {
+
+        try {
+            $monthlyRevenueChart = $analyticsService->getMonthlyRevenueChartData();
+            $occupancyRate = $analyticsService->getOccupancyRate();
+            $paymentStatistics = $analyticsService->getPaymentStatistics();
+            $cashFlowForecast = $analyticsService->getCashFlowForecast();
+            $propertiesByType = $analyticsService->getPropertiesByType();
+            $leaseExpirationStats = $analyticsService->getLeaseExpirationStats();
+            $globalKPIs = $analyticsService->getGlobalKPIs();
+            $yearComparison = $analyticsService->getYearComparison();
+        } catch (\Exception $e) {
+            // Fallback en cas d'erreur
+            $this->addFlash('warning', 'Certaines statistiques ne sont pas disponibles : ' . $e->getMessage());
+
+            $monthlyRevenueChart = ['labels' => [], 'revenue' => [], 'expenses' => [], 'net' => []];
+            $occupancyRate = ['rate' => 0, 'occupied' => 0, 'total' => 0, 'available' => 0];
+            $paymentStatistics = [
+                'current_month_revenue' => 0,
+                'evolution_percentage' => 0,
+                'overdue_count' => 0,
+                'overdue_amount' => 0
+            ];
+            $cashFlowForecast = [];
+            $propertiesByType = [];
+            $leaseExpirationStats = [
+                'expiring_30_days' => 0,
+                'expiring_60_days' => 0,
+                'expiring_90_days' => 0,
+                'total_active' => 1
+            ];
+            $globalKPIs = [
+                'occupancy_rate' => 0,
+                'collection_rate' => 0,
+                'revenue_growth' => 0
+            ];
+            $yearComparison = ['current_year' => 0, 'last_year' => 0, 'evolution' => 0];
+        }
+
+        return $this->render('dashboard/admin_analytics.html.twig', [
+            'monthly_revenue_chart' => $monthlyRevenueChart,
+            'occupancy_rate' => $occupancyRate,
+            'payment_statistics' => $paymentStatistics,
+            'cash_flow_forecast' => $cashFlowForecast,
+            'properties_by_type' => $propertiesByType,
+            'lease_expiration_stats' => $leaseExpirationStats,
+            'global_kpis' => $globalKPIs,
+            'year_comparison' => $yearComparison,
         ]);
     }
 

@@ -59,6 +59,53 @@ class SettingsController extends AbstractController
         ]);
     }
 
+    #[Route('/devises/{id}/modifier', name: 'app_admin_currency_edit', methods: ['GET', 'POST'])]
+    public function editCurrency(Currency $currency, Request $request, EntityManagerInterface $entityManager): Response
+    {
+        $form = $this->createForm(CurrencyType::class, $currency);
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            $entityManager->flush();
+
+            $this->addFlash('success', 'La devise a été modifiée avec succès.');
+            return $this->redirectToRoute('app_admin_currencies');
+        }
+
+        return $this->render('admin/settings/currency_edit.html.twig', [
+            'currency' => $currency,
+            'form' => $form,
+        ]);
+    }
+
+    #[Route('/devises/{id}/supprimer', name: 'app_admin_currency_delete', methods: ['POST'])]
+    public function deleteCurrency(Currency $currency, EntityManagerInterface $entityManager, Request $request): Response
+    {
+        // Vérifier le token CSRF
+        if ($this->isCsrfTokenValid('delete'.$currency->getId(), $request->request->get('_token'))) {
+            // Ne pas permettre la suppression de la devise par défaut
+            if ($currency->isDefault()) {
+                $this->addFlash('error', 'Impossible de supprimer la devise par défaut. Définissez d\'abord une autre devise comme devise par défaut.');
+                return $this->redirectToRoute('app_admin_currencies');
+            }
+
+            // Vérifier si la devise est utilisée (optionnel, selon votre logique métier)
+            // Vous pourriez vérifier si des paiements, baux, etc. utilisent cette devise
+
+            try {
+                $code = $currency->getCode();
+                $entityManager->remove($currency);
+                $entityManager->flush();
+
+                $this->addFlash('success', "La devise {$code} a été supprimée avec succès.");
+            } catch (\Exception $e) {
+                $this->addFlash('error', 'Impossible de supprimer cette devise. Elle est peut-être utilisée dans le système.');
+            }
+        }
+
+        return $this->redirectToRoute('app_admin_currencies');
+    }
+
     #[Route('/devises/{id}/defaut', name: 'app_admin_currency_set_default', methods: ['POST'])]
     public function setDefaultCurrency(Currency $currency, CurrencyService $currencyService): Response
     {

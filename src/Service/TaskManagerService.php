@@ -3,9 +3,11 @@
 namespace App\Service;
 
 use App\Entity\Task;
+use App\Entity\User;
 use App\Repository\TaskRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
+use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
 class TaskManagerService
 {
@@ -15,7 +17,10 @@ class TaskManagerService
         private LoggerInterface $logger,
         private RentReceiptService $rentReceiptService,
         private OrangeSmsService $orangeSmsService,
-        private SettingsService $settingsService
+        private SettingsService $settingsService,
+        private UserPasswordHasherInterface $passwordHasher,
+        private ?AuditLogService $auditLogService = null,
+        private ?BackupService $backupService = null
     ) {
     }
 
@@ -86,6 +91,18 @@ class TaskManagerService
 
                 case 'GENERATE_RENT_DOCUMENTS':
                     $this->executeGenerateRentDocumentsTask($task);
+                    break;
+
+                case 'CREATE_SUPER_ADMIN':
+                    $this->executeCreateSuperAdminTask($task);
+                    break;
+
+                case 'AUDIT_CLEANUP':
+                    $this->executeAuditCleanupTask($task);
+                    break;
+
+                case 'BACKUP':
+                    $this->executeBackupTask($task);
                     break;
 
                 default:
@@ -308,6 +325,27 @@ class TaskManagerService
                 'parameters' => [
                     'day_of_month' => 7, // 1er jour du mois
                     'month' => 'current' // Mois en cours
+                ]
+            ],
+            [
+                'name' => 'Nettoyage de l\'historique d\'audit',
+                'type' => 'AUDIT_CLEANUP',
+                'description' => 'Supprime les anciens enregistrements d\'audit pour optimiser la base de données',
+                'frequency' => 'MONTHLY',
+                'parameters' => [
+                    'day_of_month' => 1, // 1er jour du mois
+                    'days' => 90 // Conserver 90 jours
+                ]
+            ],
+            [
+                'name' => 'Sauvegarde automatique',
+                'type' => 'BACKUP',
+                'description' => 'Crée une sauvegarde complète de la base de données et des fichiers',
+                'frequency' => 'DAILY',
+                'parameters' => [
+                    'hour' => 2, // 2h du matin
+                    'clean_old' => true, // Nettoyer anciennes sauvegardes
+                    'keep_days' => 30 // Conserver 30 jours
                 ]
             ]
         ];
@@ -543,22 +581,213 @@ class TaskManagerService
             }
         }
 
-        // Générer les quittances du mois
-        $receipts = $this->rentReceiptService->generateMonthlyReceipts($monthDate);
+        try {
+            // Générer les quittances du mois
+            $receipts = $this->rentReceiptService->generateMonthlyReceipts($monthDate);
 
-        // Générer les avis d'échéance pour le mois prochain
-        $nextMonth = (clone $monthDate)->modify('+1 month');
-        $notices = $this->rentReceiptService->generateUpcomingNotices($nextMonth);
+            // Générer les avis d'échéance pour le mois prochain
+            $nextMonth = (clone $monthDate)->modify('+1 month');
+            $notices = $this->rentReceiptService->generateUpcomingNotices($nextMonth);
 
-        $total = count($receipts) + count($notices);
+            $total = count($receipts) + count($notices);
 
-        // Logger le résultat
+            // Logger le résultat avec succès
+            $this->logger->info(sprintf(
+                '✅ Documents générés pour %s : %d quittances, %d avis d\'échéance (Total: %d)',
+                $monthDate->format('F Y'),
+                count($receipts),
+                count($notices),
+                $total
+            ));
+
+            if ($total === 0) {
+                $this->logger->warning(sprintf(
+                    'Aucun document généré pour %s. Vérifiez qu\'il y a des paiements correspondants.',
+                    $monthDate->format('F Y')
+                ));
+            }
+        } catch (\Exception $e) {
+            $this->logger->error(sprintf(
+                '❌ Erreur lors de la génération des documents pour %s : %s',
+                $monthDate->format('F Y'),
+                $e->getMessage()
+            ));
+            throw $e;
+        }
+    }
+
+    /**
+     * Exécute la tâche de création d'un super administrateur
+     */
+    private function executeCreateSuperAdminTask(Task $task): void
+    {
+        $parameters = $task->getParameters() ?? [];
+
+        // Récupérer les paramètres requis
+        $email = $parameters['email'] ?? null;
+        $firstName = $parameters['firstName'] ?? null;
+        $lastName = $parameters['lastName'] ?? null;
+        $password = $parameters['password'] ?? null;
+
+        // Validation des paramètres
+        if (!$email || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            throw new \InvalidArgumentException('Email invalide ou manquant dans les paramètres de la tâche');
+        }
+
+        if (!$firstName || !$lastName) {
+            throw new \InvalidArgumentException('Prénom et nom requis dans les paramètres de la tâche');
+        }
+
+        if (!$password || strlen($password) < 8) {
+            throw new \InvalidArgumentException('Mot de passe manquant ou trop court (minimum 8 caractères)');
+        }
+
+        // Vérifier si l'utilisateur existe déjà
+        $existingUser = $this->entityManager->getRepository(User::class)->findOneBy(['email' => $email]);
+
+        if ($existingUser) {
+            // Si l'utilisateur existe et a déjà le rôle SUPER_ADMIN, pas besoin de le recréer
+            if (in_array('ROLE_SUPER_ADMIN', $existingUser->getRoles())) {
+                $this->logger->info(sprintf(
+                    'Super Admin %s existe déjà avec ce rôle',
+                    $email
+                ));
+                return;
+            }
+
+            throw new \Exception(sprintf(
+                'Un utilisateur avec l\'email %s existe déjà mais n\'est pas super admin',
+                $email
+            ));
+        }
+
+        // Créer le Super Admin
+        $user = new User();
+        $user->setEmail($email);
+        $user->setFirstName($firstName);
+        $user->setLastName($lastName);
+        $user->setRoles(['ROLE_SUPER_ADMIN']);
+
+        $hashedPassword = $this->passwordHasher->hashPassword($user, $password);
+        $user->setPassword($hashedPassword);
+
+        $this->entityManager->persist($user);
+        $this->entityManager->flush();
+
+        // Logger le succès
         $this->logger->info(sprintf(
-            'Documents générés pour %s : %d quittances, %d avis d\'échéance (Total: %d)',
-            $monthDate->format('F Y'),
-            count($receipts),
-            count($notices),
-            $total
+            '✅ Super Administrateur créé avec succès : %s %s (%s)',
+            $firstName,
+            $lastName,
+            $email
         ));
+    }
+
+    /**
+     * Exécute la tâche de nettoyage de l'audit log
+     */
+    private function executeAuditCleanupTask(Task $task): void
+    {
+        if (!$this->auditLogService) {
+            throw new \Exception('AuditLogService non disponible. Vérifiez la configuration des services.');
+        }
+
+        $parameters = $task->getParameters() ?? [];
+
+        // Récupérer le nombre de jours à conserver (par défaut 90)
+        $daysToKeep = $parameters['days'] ?? 90;
+
+        // Validation
+        if ($daysToKeep < 30) {
+            throw new \InvalidArgumentException('La période minimum est de 30 jours pour des raisons de sécurité');
+        }
+
+        try {
+            $deleted = $this->auditLogService->cleanOldLogs($daysToKeep);
+
+            // Logger le résultat
+            $this->logger->info(sprintf(
+                '✅ Nettoyage de l\'audit log terminé : %d enregistrement(s) supprimé(s) (conservation: %d jours)',
+                $deleted,
+                $daysToKeep
+            ));
+
+            if ($deleted === 0) {
+                $this->logger->info(sprintf(
+                    'Aucun enregistrement à supprimer (tous plus récents que %d jours)',
+                    $daysToKeep
+                ));
+            }
+        } catch (\Exception $e) {
+            $this->logger->error(sprintf(
+                '❌ Erreur lors du nettoyage de l\'audit log : %s',
+                $e->getMessage()
+            ));
+            throw $e;
+        }
+    }
+
+    /**
+     * Exécute la tâche de sauvegarde
+     */
+    private function executeBackupTask(Task $task): void
+    {
+        if (!$this->backupService) {
+            throw new \Exception('BackupService non disponible. Vérifiez la configuration des services.');
+        }
+
+        $parameters = $task->getParameters() ?? [];
+
+        try {
+            // Créer la sauvegarde complète
+            $results = $this->backupService->createFullBackup();
+
+            if ($results['success']) {
+                $this->logger->info(sprintf(
+                    '✅ Sauvegarde créée avec succès : %s',
+                    $results['timestamp']
+                ));
+
+                // Log des détails
+                if ($results['database']) {
+                    $this->logger->info(sprintf(
+                        '   📊 Base de données : %s (%d bytes)',
+                        $results['database']['file'] ?? 'N/A',
+                        $results['database']['size'] ?? 0
+                    ));
+                }
+
+                if ($results['files']) {
+                    $this->logger->info(sprintf(
+                        '   📁 Fichiers : %s (%d bytes)',
+                        $results['files']['file'] ?? 'N/A',
+                        $results['files']['size'] ?? 0
+                    ));
+                }
+
+                // Nettoyage automatique des anciennes sauvegardes si configuré
+                if ($parameters['clean_old'] ?? false) {
+                    $keepDays = $parameters['keep_days'] ?? 30;
+                    $deleted = $this->backupService->cleanOldBackups($keepDays);
+
+                    if ($deleted > 0) {
+                        $this->logger->info(sprintf(
+                            '🧹 Nettoyage : %d ancien(s) fichier(s) supprimé(s)',
+                            $deleted
+                        ));
+                    }
+                }
+            } else {
+                $errors = implode(', ', $results['errors']);
+                throw new \Exception("Erreurs lors de la sauvegarde : {$errors}");
+            }
+
+        } catch (\Exception $e) {
+            $this->logger->error(sprintf(
+                '❌ Erreur lors de la sauvegarde : %s',
+                $e->getMessage()
+            ));
+            throw $e;
+        }
     }
 }

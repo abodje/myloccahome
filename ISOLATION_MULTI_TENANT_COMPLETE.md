@@ -174,3 +174,4 @@ Pour une isolation **100% complète**, appliquer la même logique à :
 
 **Les utilisateurs ne voient plus que LEURS données ! ✅**
 
+

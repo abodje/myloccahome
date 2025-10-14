@@ -566,3 +566,4 @@ public function getCompanyRevenue(Company $company, \DateTime $startDate, \DateT
 
 C'est un travail conséquent mais NÉCESSAIRE pour un système multi-sociétés professionnel ! 🏢
 
+

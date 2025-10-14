@@ -620,3 +620,4 @@ Revenue/an = (45 × 9,900) + (30 × 24,900) × 12
 **Date de création :** 12 octobre 2025  
 **Version :** 1.0  
 **Statut :** ✅ Plan Freemium créé et opérationnel
+

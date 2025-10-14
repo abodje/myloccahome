@@ -294,3 +294,4 @@ SELECT * FROM subscription ORDER BY id DESC LIMIT 1;
 
 **Le système SaaS MYLOCCA est OPÉRATIONNEL ! 🎊**
 
+

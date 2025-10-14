@@ -1,0 +1,384 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Calendrier de Gestion - MYLOCCA{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <!-- FullCalendar CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.9/index.global.min.css" rel="stylesheet">
+    <style>
+        #calendar {
+            max-width: 100%;
+            margin: 0 auto;
+        }
+        .fc {
+            font-family: inherit;
+        }
+        .fc-toolbar-title {
+            font-size: 1.5rem !important;
+        }
+        .legend-item {
+            display: inline-flex;
+            align-items: center;
+            margin-right: 15px;
+            margin-bottom: 10px;
+        }
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+            margin-right: 8px;
+        }
+        .filter-badge {
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .filter-badge.active {
+            transform: scale(1.1);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+        .stats-card {
+            transition: transform 0.2s;
+        }
+        .stats-card:hover {
+            transform: translateY(-3px);
+        }
+    </style>
+{% endblock %}
+
+{% block page_title %}
+    <h5 class="mb-0">
+        <i class="bi bi-calendar3 me-2"></i>
+        Calendrier de Gestion
+    </h5>
+{% endblock %}
+
+{% block page_actions %}
+    <div class="d-flex gap-2">
+        <button id="todayBtn" class="btn btn-outline-primary btn-sm">
+            <i class="bi bi-calendar-day"></i> Aujourd'hui
+        </button>
+        <a href="{{ path('app_dashboard') }}" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-arrow-left"></i> Dashboard
+        </a>
+    </div>
+{% endblock %}
+
+{% block body %}
+    <!-- Statistiques rapides -->
+    <div class="row mb-4">
+        <div class="col-md-3 mb-3">
+            <div class="card stats-card border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <div class="text-success mb-2">
+                        <i class="bi bi-check-circle" style="font-size: 2rem;"></i>
+                    </div>
+                    <h4 class="mb-0" id="stat-paid">-</h4>
+                    <small class="text-muted">Paiements reçus</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card stats-card border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <div class="text-warning mb-2">
+                        <i class="bi bi-clock" style="font-size: 2rem;"></i>
+                    </div>
+                    <h4 class="mb-0" id="stat-pending">-</h4>
+                    <small class="text-muted">Paiements en attente</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card stats-card border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <div class="text-info mb-2">
+                        <i class="bi bi-file-text" style="font-size: 2rem;"></i>
+                    </div>
+                    <h4 class="mb-0" id="stat-leases">-</h4>
+                    <small class="text-muted">Baux à renouveler</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card stats-card border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <div class="text-danger mb-2">
+                        <i class="bi bi-tools" style="font-size: 2rem;"></i>
+                    </div>
+                    <h4 class="mb-0" id="stat-maintenance">-</h4>
+                    <small class="text-muted">Maintenances planifiées</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtres et Légende -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h6 class="mb-3">
+                        <i class="bi bi-funnel me-2"></i>Filtrer par Type
+                    </h6>
+                    <div id="event-filters">
+                        <span class="badge bg-primary filter-badge active me-2" data-filter="payments">
+                            <i class="bi bi-cash"></i> Paiements
+                        </span>
+                        <span class="badge bg-info filter-badge active me-2" data-filter="leases">
+                            <i class="bi bi-file-text"></i> Baux
+                        </span>
+                        <span class="badge bg-warning filter-badge active me-2" data-filter="maintenance">
+                            <i class="bi bi-tools"></i> Maintenances
+                        </span>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <h6 class="mb-3">
+                        <i class="bi bi-palette me-2"></i>Légende
+                    </h6>
+                    <div>
+                        <div class="legend-item">
+                            <span class="legend-color" style="background-color: #28a745;"></span>
+                            <small>Payé / Terminé</small>
+                        </div>
+                        <div class="legend-item">
+                            <span class="legend-color" style="background-color: #ffc107;"></span>
+                            <small>En attente / En cours</small>
+                        </div>
+                        <div class="legend-item">
+                            <span class="legend-color" style="background-color: #dc3545;"></span>
+                            <small>En retard / Urgent</small>
+                        </div>
+                        <div class="legend-item">
+                            <span class="legend-color" style="background-color: #17a2b8;"></span>
+                            <small>Expiration bail</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Calendrier -->
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <div id="calendar"></div>
+        </div>
+    </div>
+
+    <!-- Modal Détails -->
+    <div class="modal fade" id="eventModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="eventModalTitle">Détails</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="eventModalBody">
+                    <!-- Contenu dynamique -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+                    <a href="#" id="eventModalLink" class="btn btn-primary" target="_blank">Voir détails</a>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <!-- FullCalendar JS -->
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.9/index.global.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.9/locales/fr.global.min.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const calendarEl = document.getElementById('calendar');
+            const eventModal = new bootstrap.Modal(document.getElementById('eventModal'));
+
+            // Filtres actifs
+            let activeFilters = ['payments', 'leases', 'maintenance'];
+
+            const calendar = new FullCalendar.Calendar(calendarEl, {
+                // Configuration de base
+                locale: 'fr',
+                initialView: 'dayGridMonth',
+                headerToolbar: {
+                    left: 'prev,next today',
+                    center: 'title',
+                    right: 'dayGridMonth,timeGridWeek,timeGridDay,listMonth'
+                },
+                buttonText: {
+                    today: 'Aujourd\'hui',
+                    month: 'Mois',
+                    week: 'Semaine',
+                    day: 'Jour',
+                    list: 'Agenda'
+                },
+
+                // Hauteur
+                height: 'auto',
+
+                // Source des événements
+                events: function(info, successCallback, failureCallback) {
+                    fetch('{{ path('app_calendar_events') }}?start=' + info.startStr + '&end=' + info.endStr + '&filters[types][]=' + activeFilters.join('&filters[types][]='))
+                        .then(response => response.json())
+                        .then(data => {
+                            updateStats(data);
+                            successCallback(data);
+                        })
+                        .catch(error => {
+                            console.error('Erreur chargement événements:', error);
+                            failureCallback(error);
+                        });
+                },
+
+                // Clic sur un événement
+                eventClick: function(info) {
+                    const event = info.event;
+                    const props = event.extendedProps;
+
+                    let modalBody = '';
+                    let modalLink = '#';
+
+                    if (props.type === 'payment') {
+                        modalBody = `
+                            <dl class="row mb-0">
+                                <dt class="col-sm-4">Type</dt>
+                                <dd class="col-sm-8"><span class="badge bg-primary">Paiement</span></dd>
+
+                                <dt class="col-sm-4">Statut</dt>
+                                <dd class="col-sm-8"><span class="badge bg-${props.status === 'Payé' ? 'success' : (props.status === 'En retard' ? 'danger' : 'warning')}">${props.status}</span></dd>
+
+                                <dt class="col-sm-4">Montant</dt>
+                                <dd class="col-sm-8"><strong>${props.amount} €</strong></dd>
+
+                                <dt class="col-sm-4">Locataire</dt>
+                                <dd class="col-sm-8">${props.tenant || '—'}</dd>
+
+                                <dt class="col-sm-4">Bien</dt>
+                                <dd class="col-sm-8">${props.property || '—'}</dd>
+
+                                <dt class="col-sm-4">Date</dt>
+                                <dd class="col-sm-8">${event.startStr}</dd>
+                            </dl>
+                        `;
+                        modalLink = '{{ path('app_payment_index') }}';
+                    } else if (props.type === 'lease') {
+                        modalBody = `
+                            <dl class="row mb-0">
+                                <dt class="col-sm-4">Type</dt>
+                                <dd class="col-sm-8"><span class="badge bg-info">Expiration Bail</span></dd>
+
+                                <dt class="col-sm-4">Locataire</dt>
+                                <dd class="col-sm-8">${props.tenant || '—'}</dd>
+
+                                <dt class="col-sm-4">Bien</dt>
+                                <dd class="col-sm-8">${props.property || '—'}</dd>
+
+                                <dt class="col-sm-4">Début</dt>
+                                <dd class="col-sm-8">${props.startDate || '—'}</dd>
+
+                                <dt class="col-sm-4">Fin</dt>
+                                <dd class="col-sm-8"><strong>${props.endDate || '—'}</strong></dd>
+                            </dl>
+                        `;
+                        modalLink = '{{ path('app_lease_index') }}';
+                    } else if (props.type === 'maintenance') {
+                        modalBody = `
+                            <dl class="row mb-0">
+                                <dt class="col-sm-4">Type</dt>
+                                <dd class="col-sm-8"><span class="badge bg-warning">Maintenance</span></dd>
+
+                                <dt class="col-sm-4">Statut</dt>
+                                <dd class="col-sm-8"><span class="badge bg-${props.status === 'Terminée' ? 'success' : (props.status === 'En cours' ? 'warning' : 'danger')}">${props.status}</span></dd>
+
+                                <dt class="col-sm-4">Bien</dt>
+                                <dd class="col-sm-8">${props.property || '—'}</dd>
+
+                                <dt class="col-sm-4">Description</dt>
+                                <dd class="col-sm-8">${props.description ? props.description.substring(0, 100) : '—'}</dd>
+
+                                <dt class="col-sm-4">Date</dt>
+                                <dd class="col-sm-8">${event.startStr}</dd>
+                            </dl>
+                        `;
+                        modalLink = '{{ path('app_maintenance_request_index') }}';
+                    }
+
+                    document.getElementById('eventModalTitle').textContent = event.title;
+                    document.getElementById('eventModalBody').innerHTML = modalBody;
+                    document.getElementById('eventModalLink').href = modalLink;
+
+                    eventModal.show();
+                },
+
+                // Style des événements
+                eventDisplay: 'block',
+                displayEventTime: false,
+
+                // Navigation
+                navLinks: true,
+
+                // Options
+                editable: false,
+                dayMaxEvents: 3,
+
+                // Vue mobile
+                views: {
+                    dayGridMonth: {
+                        dayMaxEvents: 3
+                    }
+                }
+            });
+
+            calendar.render();
+
+            // Bouton Aujourd'hui personnalisé
+            document.getElementById('todayBtn').addEventListener('click', function() {
+                calendar.today();
+            });
+
+            // Gestion des filtres
+            document.querySelectorAll('.filter-badge').forEach(badge => {
+                badge.addEventListener('click', function() {
+                    const filter = this.dataset.filter;
+
+                    if (this.classList.contains('active')) {
+                        this.classList.remove('active');
+                        activeFilters = activeFilters.filter(f => f !== filter);
+                    } else {
+                        this.classList.add('active');
+                        activeFilters.push(filter);
+                    }
+
+                    calendar.refetchEvents();
+                });
+            });
+
+            // Mise à jour des statistiques
+            function updateStats(events) {
+                let paid = 0, pending = 0, leases = 0, maintenance = 0;
+
+                events.forEach(event => {
+                    if (event.extendedProps.type === 'payment') {
+                        if (event.extendedProps.status === 'Payé') paid++;
+                        else if (event.extendedProps.status === 'En attente') pending++;
+                    } else if (event.extendedProps.type === 'lease') {
+                        leases++;
+                    } else if (event.extendedProps.type === 'maintenance') {
+                        maintenance++;
+                    }
+                });
+
+                document.getElementById('stat-paid').textContent = paid;
+                document.getElementById('stat-pending').textContent = pending;
+                document.getElementById('stat-leases').textContent = leases;
+                document.getElementById('stat-maintenance').textContent = maintenance;
+            }
+        });
+    </script>
+{% endblock %}
+

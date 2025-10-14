@@ -99,6 +99,13 @@ class MenuService
                 'badge_type' => 'danger',
                 'badge_value' => 'unread_count',
             ],
+            'calendar' => [
+                'label' => 'Calendrier',
+                'icon' => 'bi-calendar3',
+                'route' => 'app_calendar_index',
+                'roles' => ['ROLE_USER', 'ROLE_TENANT', 'ROLE_MANAGER', 'ROLE_ADMIN'],
+                'order' => 9.3,
+            ],
             'subscription' => [
                 'label' => 'Mon Abonnement',
                 'icon' => 'bi-credit-card-2-back',
@@ -132,6 +139,20 @@ class MenuService
                 'route' => 'app_admin_task_index',
                 'roles' => ['ROLE_ADMIN'],
                 'order' => 103,
+            ],
+            'admin_audit' => [
+                'label' => 'Historique / Audit',
+                'icon' => 'bi-journal-text',
+                'route' => 'app_admin_audit_index',
+                'roles' => ['ROLE_ADMIN'],
+                'order' => 103.5,
+            ],
+            'admin_backups' => [
+                'label' => 'Sauvegardes',
+                'icon' => 'bi-shield-check',
+                'route' => 'app_admin_backup_index',
+                'roles' => ['ROLE_ADMIN'],
+                'order' => 103.7,
             ],
             'admin_email_templates' => [
                 'label' => 'Templates emails',

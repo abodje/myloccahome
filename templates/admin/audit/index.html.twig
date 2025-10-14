@@ -1,0 +1,217 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Historique / Audit Log - Administration{% endblock %}
+
+{% block page_title %}
+    <h5 class="mb-0">
+        <i class="bi bi-clock-history me-2"></i>
+        Historique des Actions
+    </h5>
+{% endblock %}
+
+{% block page_actions %}
+    <div class="d-flex gap-2">
+        <a href="{{ path('app_admin_audit_stats') }}" class="btn btn-outline-info btn-sm">
+            <i class="bi bi-bar-chart"></i> Statistiques
+        </a>
+        <a href="{{ path('app_admin_settings_index') }}" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-arrow-left"></i> Retour
+        </a>
+    </div>
+{% endblock %}
+
+{% block body %}
+    <!-- Statistiques rapides -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h3 class="text-primary">{{ stats.total|number_format(0, ',', ' ') }}</h3>
+                    <small class="text-muted">Total d'actions enregistrées</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h3 class="text-success">{{ stats.today|number_format(0, ',', ' ') }}</h3>
+                    <small class="text-muted">Actions aujourd'hui</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtres -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h6 class="mb-0">
+                <i class="bi bi-funnel me-2"></i>Filtres
+            </h6>
+        </div>
+        <div class="card-body">
+            <form method="GET" action="{{ path('app_admin_audit_index') }}">
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <label class="form-label">Action</label>
+                        <select name="action" class="form-select">
+                            <option value="">Toutes</option>
+                            {% for action in actions %}
+                                <option value="{{ action }}" {{ current_filters.action == action ? 'selected' : '' }}>
+                                    {{ action }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="col-md-3">
+                        <label class="form-label">Type d'entité</label>
+                        <select name="entity_type" class="form-select">
+                            <option value="">Tous</option>
+                            {% for type in entity_types %}
+                                <option value="{{ type }}" {{ current_filters.entity_type == type ? 'selected' : '' }}>
+                                    {{ type }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="col-md-2">
+                        <label class="form-label">Date début</label>
+                        <input type="date" name="start_date" class="form-control" value="{{ current_filters.start_date }}">
+                    </div>
+
+                    <div class="col-md-2">
+                        <label class="form-label">Date fin</label>
+                        <input type="date" name="end_date" class="form-control" value="{{ current_filters.end_date }}">
+                    </div>
+
+                    <div class="col-md-2">
+                        <label class="form-label">Limite</label>
+                        <select name="limit" class="form-select">
+                            <option value="50" {{ current_filters.limit == 50 ? 'selected' : '' }}>50</option>
+                            <option value="100" {{ current_filters.limit == 100 ? 'selected' : '' }}>100</option>
+                            <option value="250" {{ current_filters.limit == 250 ? 'selected' : '' }}>250</option>
+                            <option value="500" {{ current_filters.limit == 500 ? 'selected' : '' }}>500</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="mt-3">
+                    <button type="submit" class="btn btn-primary btn-sm">
+                        <i class="bi bi-search"></i> Filtrer
+                    </button>
+                    <a href="{{ path('app_admin_audit_index') }}" class="btn btn-outline-secondary btn-sm">
+                        <i class="bi bi-x"></i> Réinitialiser
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Liste des logs -->
+    <div class="card">
+        <div class="card-header" style="background-color: var(--primary-color); color: white;">
+            <strong>Historique ({{ logs|length }} résultats)</strong>
+        </div>
+        <div class="card-body p-0">
+            {% if logs|length > 0 %}
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th style="width: 150px;">Date/Heure</th>
+                                <th style="width: 120px;">Action</th>
+                                <th style="width: 120px;">Entité</th>
+                                <th style="width: 150px;">Utilisateur</th>
+                                <th>Description</th>
+                                <th style="width: 120px;">IP</th>
+                                <th style="width: 80px;"></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for log in logs %}
+                                <tr>
+                                    <td>
+                                        <small>
+                                            {{ log.createdAt|date('d/m/Y') }}<br>
+                                            <span class="text-muted">{{ log.createdAt|date('H:i:s') }}</span>
+                                        </small>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-{{ log.actionBadgeClass }}">
+                                            <i class="{{ log.actionIcon }}"></i>
+                                            {{ log.actionLabel }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <strong>{{ log.entityTypeLabel }}</strong>
+                                        {% if log.entityId %}
+                                            <br><small class="text-muted">#{{ log.entityId }}</small>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if log.user %}
+                                            <i class="bi bi-person"></i>
+                                            {{ log.user.firstName }} {{ log.user.lastName }}
+                                            <br><small class="text-muted">{{ log.user.email }}</small>
+                                        {% else %}
+                                            <span class="text-muted">Système</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {{ log.description|default('—') }}
+                                        {% if log.oldValues or log.newValues %}
+                                            <br>
+                                            <button class="btn btn-sm btn-link p-0" type="button"
+                                                    data-bs-toggle="collapse"
+                                                    data-bs-target="#changes-{{ log.id }}">
+                                                <i class="bi bi-eye"></i> Voir changements
+                                            </button>
+                                            <div class="collapse mt-2" id="changes-{{ log.id }}">
+                                                <div class="card card-body p-2">
+                                                    {% if log.oldValues %}
+                                                        <strong>Anciennes valeurs:</strong>
+                                                        <pre class="mb-1">{{ log.oldValues|json_encode(constant('JSON_PRETTY_PRINT')) }}</pre>
+                                                    {% endif %}
+                                                    {% if log.newValues %}
+                                                        <strong>Nouvelles valeurs:</strong>
+                                                        <pre class="mb-0">{{ log.newValues|json_encode(constant('JSON_PRETTY_PRINT')) }}</pre>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <small class="text-muted">{{ log.ipAddress|default('—') }}</small>
+                                    </td>
+                                    <td>
+                                        <a href="{{ path('app_admin_audit_show', {id: log.id}) }}"
+                                           class="btn btn-sm btn-outline-primary"
+                                           title="Détails">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="text-center p-5">
+                    <i class="bi bi-inbox display-1 text-muted"></i>
+                    <h5 class="mt-3 text-muted">Aucun enregistrement trouvé</h5>
+                    <p class="text-muted">Essayez de modifier les filtres</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    {% if logs|length >= current_filters.limit %}
+        <div class="alert alert-info mt-3">
+            <i class="bi bi-info-circle"></i>
+            Les résultats sont limités à {{ current_filters.limit }} enregistrements.
+            Utilisez les filtres pour affiner votre recherche.
+        </div>
+    {% endif %}
+{% endblock %}
+

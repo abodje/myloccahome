@@ -376,3 +376,4 @@ php bin/console doctrine:query:dql "SELECT p.name, p.monthlyPrice FROM App\Entit
 
 **Bon succès commercial avec MYLOCCA ! 🚀**
 
+
