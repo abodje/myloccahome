@@ -1,0 +1,73 @@
+-- Migration pour enrichir l'entité Property avec de nouveaux champs
+-- Date: 2025-10-15
+
+-- Ajout des champs géographiques
+ALTER TABLE property ADD COLUMN country VARCHAR(100) DEFAULT NULL;
+ALTER TABLE property ADD COLUMN region VARCHAR(100) DEFAULT NULL;
+ALTER TABLE property ADD COLUMN district VARCHAR(100) DEFAULT NULL;
+ALTER TABLE property ADD COLUMN latitude DECIMAL(10,6) DEFAULT NULL;
+ALTER TABLE property ADD COLUMN longitude DECIMAL(10,6) DEFAULT NULL;
+
+-- Ajout des caractéristiques physiques
+ALTER TABLE property ADD COLUMN floor INT DEFAULT NULL;
+ALTER TABLE property ADD COLUMN total_floors INT DEFAULT NULL;
+ALTER TABLE property ADD COLUMN bedrooms INT DEFAULT NULL;
+ALTER TABLE property ADD COLUMN bathrooms INT DEFAULT NULL;
+ALTER TABLE property ADD COLUMN toilets INT DEFAULT NULL;
+ALTER TABLE property ADD COLUMN balconies INT DEFAULT NULL;
+ALTER TABLE property ADD COLUMN terrace_surface INT DEFAULT NULL;
+ALTER TABLE property ADD COLUMN garden_surface INT DEFAULT NULL;
+ALTER TABLE property ADD COLUMN parking_spaces INT DEFAULT NULL;
+ALTER TABLE property ADD COLUMN garage_spaces INT DEFAULT NULL;
+ALTER TABLE property ADD COLUMN cellar_surface INT DEFAULT NULL;
+ALTER TABLE property ADD COLUMN attic_surface INT DEFAULT NULL;
+ALTER TABLE property ADD COLUMN land_surface DECIMAL(10,2) DEFAULT NULL;
+
+-- Ajout des informations de construction
+ALTER TABLE property ADD COLUMN construction_year DECIMAL(10,2) DEFAULT NULL;
+ALTER TABLE property ADD COLUMN renovation_year DECIMAL(10,2) DEFAULT NULL;
+ALTER TABLE property ADD COLUMN heating_type VARCHAR(50) DEFAULT NULL;
+ALTER TABLE property ADD COLUMN hot_water_type VARCHAR(50) DEFAULT NULL;
+ALTER TABLE property ADD COLUMN energy_class VARCHAR(50) DEFAULT NULL;
+ALTER TABLE property ADD COLUMN energy_consumption DECIMAL(10,2) DEFAULT NULL;
+ALTER TABLE property ADD COLUMN orientation VARCHAR(50) DEFAULT NULL;
+
+-- Ajout des descriptions
+ALTER TABLE property ADD COLUMN equipment TEXT DEFAULT NULL;
+ALTER TABLE property ADD COLUMN proximity TEXT DEFAULT NULL;
+ALTER TABLE property ADD COLUMN restrictions TEXT DEFAULT NULL;
+ALTER TABLE property ADD COLUMN notes TEXT DEFAULT NULL;
+
+-- Ajout des informations financières
+ALTER TABLE property ADD COLUMN purchase_price DECIMAL(10,2) DEFAULT NULL;
+ALTER TABLE property ADD COLUMN purchase_date DATETIME DEFAULT NULL;
+ALTER TABLE property ADD COLUMN estimated_value DECIMAL(10,2) DEFAULT NULL;
+ALTER TABLE property ADD COLUMN monthly_charges DECIMAL(10,2) DEFAULT NULL;
+ALTER TABLE property ADD COLUMN property_tax DECIMAL(10,2) DEFAULT NULL;
+ALTER TABLE property ADD COLUMN insurance DECIMAL(10,2) DEFAULT NULL;
+ALTER TABLE property ADD COLUMN maintenance_budget DECIMAL(10,2) DEFAULT NULL;
+
+-- Ajout des informations d'accès
+ALTER TABLE property ADD COLUMN key_location VARCHAR(50) DEFAULT NULL;
+ALTER TABLE property ADD COLUMN access_code VARCHAR(50) DEFAULT NULL;
+ALTER TABLE property ADD COLUMN intercom VARCHAR(50) DEFAULT NULL;
+
+-- Ajout des caractéristiques booléennes
+ALTER TABLE property ADD COLUMN furnished TINYINT(1) DEFAULT NULL;
+ALTER TABLE property ADD COLUMN pets_allowed TINYINT(1) DEFAULT NULL;
+ALTER TABLE property ADD COLUMN smoking_allowed TINYINT(1) DEFAULT NULL;
+ALTER TABLE property ADD COLUMN elevator TINYINT(1) DEFAULT NULL;
+ALTER TABLE property ADD COLUMN has_balcony TINYINT(1) DEFAULT NULL;
+ALTER TABLE property ADD COLUMN has_parking TINYINT(1) DEFAULT NULL;
+ALTER TABLE property ADD COLUMN air_conditioning TINYINT(1) DEFAULT NULL;
+ALTER TABLE property ADD COLUMN heating TINYINT(1) DEFAULT NULL;
+ALTER TABLE property ADD COLUMN hot_water TINYINT(1) DEFAULT NULL;
+ALTER TABLE property ADD COLUMN internet TINYINT(1) DEFAULT NULL;
+ALTER TABLE property ADD COLUMN cable TINYINT(1) DEFAULT NULL;
+ALTER TABLE property ADD COLUMN dishwasher TINYINT(1) DEFAULT NULL;
+ALTER TABLE property ADD COLUMN washing_machine TINYINT(1) DEFAULT NULL;
+ALTER TABLE property ADD COLUMN dryer TINYINT(1) DEFAULT NULL;
+ALTER TABLE property ADD COLUMN refrigerator TINYINT(1) DEFAULT NULL;
+ALTER TABLE property ADD COLUMN oven TINYINT(1) DEFAULT NULL;
+ALTER TABLE property ADD COLUMN microwave TINYINT(1) DEFAULT NULL;
+ALTER TABLE property ADD COLUMN stove TINYINT(1) DEFAULT NULL;

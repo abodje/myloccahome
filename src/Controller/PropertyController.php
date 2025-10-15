@@ -190,10 +190,15 @@ class PropertyController extends AbstractController
     }
 
     #[Route('/{id}/documents', name: 'app_property_documents', methods: ['GET'])]
-    public function documents(Property $property): Response
+    public function documents(Property $property, EntityManagerInterface $entityManager): Response
     {
+        // Récupérer les documents liés à cette propriété
+        $documents = $entityManager->getRepository(\App\Entity\Document::class)
+            ->findBy(['property' => $property], ['createdAt' => 'DESC']);
+
         return $this->render('property/documents.html.twig', [
             'property' => $property,
+            'documents' => $documents,
         ]);
     }
 
@@ -222,20 +227,107 @@ class PropertyController extends AbstractController
         $data = [
             'id' => $property->getId(),
             'address' => $property->getFullAddress(),
-            'surface_total' => $property->getSurface(),
-            'surface_carrez' => $property->getSurface(), // Même valeur pour l'exemple
+            'city' => $property->getCity(),
+            'postalCode' => $property->getPostalCode(),
+            'country' => $property->getCountry(),
+            'region' => $property->getRegion(),
+            'district' => $property->getDistrict(),
+            'latitude' => $property->getLatitude(),
+            'longitude' => $property->getLongitude(),
+
+            // Caractéristiques physiques
+            'surface' => $property->getSurface(),
             'rooms' => $property->getRooms(),
-            'lot_number' => str_pad($property->getId(), 3, '0', STR_PAD_LEFT),
-            'property_type' => $property->getPropertyType(),
+            'bedrooms' => $property->getBedrooms(),
+            'bathrooms' => $property->getBathrooms(),
+            'toilets' => $property->getToilets(),
+            'floor' => $property->getFloor(),
+            'totalFloors' => $property->getTotalFloors(),
+            'balconies' => $property->getBalconies(),
+            'terraceSurface' => $property->getTerraceSurface(),
+            'gardenSurface' => $property->getGardenSurface(),
+            'parkingSpaces' => $property->getParkingSpaces(),
+            'garageSpaces' => $property->getGarageSpaces(),
+            'cellarSurface' => $property->getCellarSurface(),
+            'atticSurface' => $property->getAtticSurface(),
+            'landSurface' => $property->getLandSurface(),
+
+            // Informations de construction
+            'constructionYear' => $property->getConstructionYear(),
+            'renovationYear' => $property->getRenovationYear(),
+            'heatingType' => $property->getHeatingType(),
+            'hotWaterType' => $property->getHotWaterType(),
+            'energyClass' => $property->getEnergyClass(),
+            'energyConsumption' => $property->getEnergyConsumption(),
+            'orientation' => $property->getOrientation(),
+
+            // Informations financières
+            'monthlyRent' => $property->getMonthlyRent(),
+            'charges' => $property->getCharges(),
+            'deposit' => $property->getDeposit(),
+            'purchasePrice' => $property->getPurchasePrice(),
+            'purchaseDate' => $property->getPurchaseDate() ? $property->getPurchaseDate()->format('d/m/Y') : null,
+            'estimatedValue' => $property->getEstimatedValue(),
+            'monthlyCharges' => $property->getMonthlyCharges(),
+            'propertyTax' => $property->getPropertyTax(),
+            'insurance' => $property->getInsurance(),
+            'maintenanceBudget' => $property->getMaintenanceBudget(),
+
+            // Informations d'accès
+            'keyLocation' => $property->getKeyLocation(),
+            'accessCode' => $property->getAccessCode(),
+            'intercom' => $property->getIntercom(),
+
+            // Descriptions
+            'propertyType' => $property->getPropertyType(),
             'description' => $property->getDescription(),
+            'equipment' => $property->getEquipment(),
+            'proximity' => $property->getProximity(),
+            'restrictions' => $property->getRestrictions(),
+            'notes' => $property->getNotes(),
+
+            // Statut et propriétaire
             'status' => $property->getStatus(),
-            // Informations supplémentaires simulées
-            'gardien' => 'Oui',
-            'ascenseur' => 'Oui',
-            'jours_gardien' => 'lundi au vendredi, samedi matin',
-            'horaires_gardien' => '8h-12h, 16h00-19h30, sam 7h-12',
-            'digicode_bat1' => 'CHAUF 6905',
-            'digicode_entree' => '0169portail',
+            'owner' => $property->getOwner() ? $property->getOwner()->getFullName() : null,
+
+            // Équipements booléens
+            'furnished' => $property->isFurnished(),
+            'petsAllowed' => $property->isPetsAllowed(),
+            'smokingAllowed' => $property->isSmokingAllowed(),
+            'elevator' => $property->isElevator(),
+            'hasBalcony' => $property->isHasBalcony(),
+            'hasParking' => $property->isHasParking(),
+            'airConditioning' => $property->isAirConditioning(),
+            'heating' => $property->isHeating(),
+            'hotWater' => $property->isHotWater(),
+            'internet' => $property->isInternet(),
+            'cable' => $property->isCable(),
+            'dishwasher' => $property->isDishwasher(),
+            'washingMachine' => $property->isWashingMachine(),
+            'dryer' => $property->isDryer(),
+            'refrigerator' => $property->isRefrigerator(),
+            'oven' => $property->isOven(),
+            'microwave' => $property->isMicrowave(),
+            'stove' => $property->isStove(),
+
+            // Méthodes utilitaires
+            'totalSurface' => $property->getTotalSurface(),
+            'rentWithCharges' => $property->getRentWithCharges(),
+            'totalRooms' => $property->getTotalRooms(),
+            'equipmentList' => $property->getEquipmentList(),
+            'fullLocation' => $property->getFullLocation(),
+
+            // Locataire actuel
+            'currentLease' => $property->getCurrentLease() ? [
+                'id' => $property->getCurrentLease()->getId(),
+                'tenant' => $property->getCurrentLease()->getTenant() ? $property->getCurrentLease()->getTenant()->getFullName() : null,
+                'startDate' => $property->getCurrentLease()->getStartDate() ? $property->getCurrentLease()->getStartDate()->format('d/m/Y') : null,
+                'endDate' => $property->getCurrentLease()->getEndDate() ? $property->getCurrentLease()->getEndDate()->format('d/m/Y') : null,
+            ] : null,
+
+            // Dates
+            'createdAt' => $property->getCreatedAt() ? $property->getCreatedAt()->format('d/m/Y H:i') : null,
+            'updatedAt' => $property->getUpdatedAt() ? $property->getUpdatedAt()->format('d/m/Y H:i') : null,
         ];
 
         return $this->json($data);

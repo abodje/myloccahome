@@ -141,6 +141,10 @@ class MaintenanceRequestController extends AbstractController
     #[Route('/{id}/modifier', name: 'app_maintenance_request_edit', methods: ['GET', 'POST'])]
     public function edit(Request $request, MaintenanceRequest $maintenanceRequest, EntityManagerInterface $entityManager): Response
     {
+        /** @var \App\Entity\User|null $user */
+        $user = $this->getUser();
+        $isTenantView = $user && in_array('ROLE_TENANT', $user->getRoles());
+
         $form = $this->createForm(MaintenanceRequestType::class, $maintenanceRequest);
         $form->handleRequest($request);
 
@@ -156,6 +160,7 @@ class MaintenanceRequestController extends AbstractController
         return $this->render('maintenance_request/edit.html.twig', [
             'maintenance_request' => $maintenanceRequest,
             'form' => $form,
+            'is_tenant_view' => $isTenantView,
         ]);
     }
 

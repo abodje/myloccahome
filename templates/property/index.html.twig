@@ -24,16 +24,22 @@
 {% endblock %}
 
 {% block body %}
-    <!-- Filtres -->
+    <!-- Filtres avancés -->
     <div class="row mb-4">
         <div class="col-md-12">
             <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="bi bi-funnel me-2"></i>
+                        Filtres avancés
+                    </h6>
+                </div>
                 <div class="card-body">
                     <form method="GET" class="row g-3">
                         <div class="col-md-3">
                             <label class="form-label">Recherche</label>
                             <input type="text" name="search" class="form-control form-control-sm"
-                                   placeholder="Adresse, ville..." value="{{ search }}">
+                                   placeholder="Adresse, ville, quartier..." value="{{ search }}">
                         </div>
                         <div class="col-md-2">
                             <label class="form-label">Statut</label>
@@ -42,6 +48,7 @@
                                 <option value="Libre" {{ current_status == 'Libre' ? 'selected' : '' }}>Libre</option>
                                 <option value="Occupé" {{ current_status == 'Occupé' ? 'selected' : '' }}>Occupé</option>
                                 <option value="En travaux" {{ current_status == 'En travaux' ? 'selected' : '' }}>En travaux</option>
+                                <option value="Hors service" {{ current_status == 'Hors service' ? 'selected' : '' }}>Hors service</option>
                             </select>
                         </div>
                         <div class="col-md-2">
@@ -52,9 +59,18 @@
                                 <option value="Maison" {{ current_type == 'Maison' ? 'selected' : '' }}>Maison</option>
                                 <option value="Studio" {{ current_type == 'Studio' ? 'selected' : '' }}>Studio</option>
                                 <option value="Bureau" {{ current_type == 'Bureau' ? 'selected' : '' }}>Bureau</option>
+                                <option value="Local commercial" {{ current_type == 'Local commercial' ? 'selected' : '' }}>Local commercial</option>
+                                <option value="Garage" {{ current_type == 'Garage' ? 'selected' : '' }}>Garage</option>
                             </select>
                         </div>
-                        <div class="col-md-5 d-flex align-items-end">
+                        <div class="col-md-2">
+                            <label class="form-label">Région</label>
+                            <select name="region" class="form-select form-select-sm">
+                                <option value="">Toutes</option>
+                                <!-- Les options seront chargées dynamiquement -->
+                            </select>
+                        </div>
+                        <div class="col-md-3 d-flex align-items-end">
                             <button type="submit" class="btn btn-outline-primary btn-sm me-2">
                                 <i class="bi bi-funnel"></i> Filtrer
                             </button>
@@ -68,17 +84,177 @@
         </div>
     </div>
 
-    <!-- Liste des biens -->
+    <!-- Vue en cartes -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h6 class="mb-0">
+                    <i class="bi bi-grid-3x3-gap me-2"></i>
+                    Vue en cartes ({{ properties|length }} bien{{ properties|length > 1 ? 's' : '' }})
+                </h6>
+                <div class="btn-group btn-group-sm" role="group">
+                    <input type="radio" class="btn-check" name="view" id="cards" autocomplete="off" checked>
+                    <label class="btn btn-outline-primary" for="cards">
+                        <i class="bi bi-grid-3x3-gap"></i> Cartes
+                    </label>
+
+                    <input type="radio" class="btn-check" name="view" id="table" autocomplete="off">
+                    <label class="btn btn-outline-primary" for="table">
+                        <i class="bi bi-table"></i> Tableau
+                    </label>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Vue en cartes -->
+    <div id="cards-view">
+        <div class="row">
+            {% if properties|length > 0 %}
+                {% for property in properties %}
+                    <div class="col-lg-4 col-md-6 mb-4">
+                        <div class="card h-100 property-card" data-property-id="{{ property.id }}">
+                            <!-- Image du bien (placeholder) -->
+                            <div class="card-img-top bg-light d-flex align-items-center justify-content-center" style="height: 200px;">
+                                <i class="bi bi-house text-muted" style="font-size: 3rem;"></i>
+                            </div>
+
+                            <div class="card-body">
+                                <!-- En-tête avec statut -->
+                                <div class="d-flex justify-content-between align-items-start mb-3">
+                                    <div>
+                                        <h6 class="card-title mb-1">{{ property.getFullAddress() }}</h6>
+                                        {% if property.district %}
+                                            <small class="text-muted">{{ property.district }}</small>
+                                        {% endif %}
+                                    </div>
+                                    <span class="badge bg-{{ property.status == 'Occupé' ? 'success' : (property.status == 'Libre' ? 'warning' : 'secondary') }}">
+                                        {{ property.status }}
+                                    </span>
+                                </div>
+
+                                <!-- Informations principales -->
+                                <div class="row mb-3">
+                                    <div class="col-6">
+                                        <small class="text-muted">Type</small><br>
+                                        <strong>{{ property.propertyType }}</strong>
+                                    </div>
+                                    <div class="col-6">
+                                        <small class="text-muted">Surface</small><br>
+                                        <strong>{{ property.surface }} m²</strong>
+                                    </div>
+                                </div>
+
+                                <div class="row mb-3">
+                                    <div class="col-6">
+                                        <small class="text-muted">Pièces</small><br>
+                                        <strong>{{ property.rooms }}</strong>
+                                    </div>
+                                    <div class="col-6">
+                                        <small class="text-muted">Loyer</small><br>
+                                        <strong>{{ property.monthlyRent|number_format(0, ',', ' ') }} XOF</strong>
+                                    </div>
+                                </div>
+
+                                <!-- Caractéristiques -->
+                                {% if property.getEquipmentList()|length > 0 %}
+                                <div class="mb-3">
+                                    <small class="text-muted">Équipements</small><br>
+                                    <div class="d-flex flex-wrap gap-1">
+                                        {% for equipment in property.getEquipmentList()|slice(0, 3) %}
+                                            <span class="badge bg-light text-dark">{{ equipment }}</span>
+                                        {% endfor %}
+                                        {% if property.getEquipmentList()|length > 3 %}
+                                            <span class="badge bg-secondary">+{{ property.getEquipmentList()|length - 3 }}</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                {% endif %}
+
+                                <!-- Informations géographiques -->
+                                {% if property.country or property.region %}
+                                <div class="mb-3">
+                                    <small class="text-muted">Localisation</small><br>
+                                    <small>
+                                        {% if property.region %}{{ property.region }}{% endif %}
+                                        {% if property.country %}, {{ property.country }}{% endif %}
+                                    </small>
+                                </div>
+                                {% endif %}
+
+                                <!-- Propriétaire -->
+                                {% if property.owner %}
+                                <div class="mb-3">
+                                    <small class="text-muted">Propriétaire</small><br>
+                                    <small>{{ property.owner.fullName }}</small>
+                                </div>
+                                {% endif %}
+
+                                <!-- Locataire actuel -->
+                                {% if property.getCurrentLease() %}
+                                <div class="mb-3">
+                                    <small class="text-muted">Locataire actuel</small><br>
+                                    <small>{{ property.getCurrentLease().tenant.fullName }}</small>
+                                </div>
+                                {% endif %}
+                            </div>
+
+                            <!-- Actions -->
+                            <div class="card-footer bg-transparent">
+                                <div class="d-flex justify-content-between">
+                                    <div class="btn-group btn-group-sm">
+                                        <a href="{{ path('app_property_show', {'id': property.id}) }}" class="btn btn-outline-primary">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                        {% if not is_tenant_view %}
+                                        <a href="{{ path('app_property_edit', {'id': property.id}) }}" class="btn btn-outline-secondary">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                        {% endif %}
+                                        <a href="{{ path('app_property_maintenance', {'id': property.id}) }}" class="btn btn-outline-warning">
+                                            <i class="bi bi-tools"></i>
+                                        </a>
+                                    </div>
+                                    <small class="text-muted align-self-center">
+                                        #{{ ('00000000' ~ property.id)|slice(-8) }}
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="col-12">
+                    <div class="text-center p-5">
+                        <i class="bi bi-house display-1 text-muted"></i>
+                        <h5 class="mt-3 text-muted">Aucun bien trouvé</h5>
+                        <p class="text-muted">Commencez par ajouter votre premier bien immobilier.</p>
+                        {% if not is_tenant_view %}
+                        <a href="{{ path('app_property_new') }}" class="btn btn-primary">
+                            <i class="bi bi-plus-circle me-2"></i>
+                            Ajouter un bien
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Vue en tableau -->
+    <div id="table-view" style="display: none;">
     <div class="card">
         <div class="card-header" style="background-color: var(--primary-color); color: white;">
             <div class="row">
                 <div class="col-1"></div>
-                <div class="col-2"><strong>Réf. Immeuble</strong></div>
+                    <div class="col-2"><strong>Référence</strong></div>
                 <div class="col-3"><strong>Adresse</strong></div>
-                <div class="col-2"><strong>Ville</strong></div>
-                <div class="col-2"><strong>Tantièmes</strong></div>
-                <div class="col-2"><strong>Nombre de lots</strong></div>
-            </div>
+                    <div class="col-2"><strong>Type</strong></div>
+                    <div class="col-1"><strong>Surface</strong></div>
+                    <div class="col-1"><strong>Pièces</strong></div>
+                    <div class="col-1"><strong>Loyer</strong></div>
+                    <div class="col-1"><strong>Statut</strong></div>
+                </div>
         </div>
         <div class="card-body p-0">
             {% if properties|length > 0 %}
@@ -97,59 +273,204 @@
                         <div class="col-3">
                             <strong>{{ property.address }}</strong>
                             {% if property.postalCode %}
-                                <br><small class="text-muted">{{ property.postalCode }}</small>
+                                    <br><small class="text-muted">{{ property.postalCode }} {{ property.city }}</small>
                             {% endif %}
                         </div>
                         <div class="col-2">
-                            <span>{{ property.city|upper }}</span>
+                                <span>{{ property.propertyType }}</span>
                         </div>
-                        <div class="col-2">
-                            <span>{{ (property.surface * 100)|number_format(0, ',', '') }}</span>
+                            <div class="col-1">
+                                <span>{{ property.surface }} m²</span>
                         </div>
-                        <div class="col-2">
+                            <div class="col-1">
                             <span>{{ property.rooms }}</span>
-                        </div>
+                            </div>
+                            <div class="col-1">
+                                <span>{{ property.monthlyRent|number_format(0, ',', ' ') }}</span>
+                            </div>
+                            <div class="col-1">
+                                <span class="badge bg-{{ property.status == 'Occupé' ? 'success' : (property.status == 'Libre' ? 'warning' : 'secondary') }}">
+                                    {{ property.status }}
+                                </span>
+                            </div>
                     </div>
 
                     <!-- Détail expandable -->
                     <div class="property-details" id="details-{{ property.id }}" style="display: none;">
                         <div class="bg-light p-3">
-                            <div class="card">
-                                <div class="card-header" style="background-color: var(--primary-color); color: white;">
+                                <div class="row">
+                                    <!-- Informations géographiques -->
+                                    <div class="col-md-6 mb-3">
+                                        <h6 class="text-primary">
+                                            <i class="bi bi-geo-alt me-2"></i>
+                                            Localisation
+                                        </h6>
+                                        <div class="row">
+                                            <div class="col-6">
+                                                <small class="text-muted">Pays</small><br>
+                                                <span>{{ property.country ?: 'Non renseigné' }}</span>
+                                            </div>
+                                            <div class="col-6">
+                                                <small class="text-muted">Région</small><br>
+                                                <span>{{ property.region ?: 'Non renseigné' }}</span>
+                                            </div>
+                                        </div>
+                                        {% if property.latitude and property.longitude %}
+                                        <div class="mt-2">
+                                            <small class="text-muted">Coordonnées GPS</small><br>
+                                            <small>{{ property.latitude }}, {{ property.longitude }}</small>
+                                        </div>
+                                        {% endif %}
+                                    </div>
+
+                                    <!-- Caractéristiques physiques -->
+                                    <div class="col-md-6 mb-3">
+                                        <h6 class="text-primary">
+                                            <i class="bi bi-building me-2"></i>
+                                            Caractéristiques
+                                        </h6>
+                                        <div class="row">
+                                            <div class="col-6">
+                                                <small class="text-muted">Étage</small><br>
+                                                <span>{{ property.floor ?: 'N/A' }}</span>
+                                            </div>
+                                            <div class="col-6">
+                                                <small class="text-muted">Chambres</small><br>
+                                                <span>{{ property.bedrooms ?: 'N/A' }}</span>
+                                            </div>
+                                        </div>
+                                        <div class="row mt-2">
+                                            <div class="col-6">
+                                                <small class="text-muted">Salles de bain</small><br>
+                                                <span>{{ property.bathrooms ?: 'N/A' }}</span>
+                                            </div>
+                                            <div class="col-6">
+                                                <small class="text-muted">WC</small><br>
+                                                <span>{{ property.toilets ?: 'N/A' }}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Surfaces annexes -->
+                                    <div class="col-md-6 mb-3">
+                                        <h6 class="text-primary">
+                                            <i class="bi bi-rulers me-2"></i>
+                                            Surfaces annexes
+                                        </h6>
+                                        <div class="row">
+                                            <div class="col-6">
+                                                <small class="text-muted">Terrasse</small><br>
+                                                <span>{{ property.terraceSurface ? property.terraceSurface ~ ' m²' : 'N/A' }}</span>
+                                            </div>
+                                            <div class="col-6">
+                                                <small class="text-muted">Jardin</small><br>
+                                                <span>{{ property.gardenSurface ? property.gardenSurface ~ ' m²' : 'N/A' }}</span>
+                                            </div>
+                                        </div>
+                                        <div class="row mt-2">
+                                            <div class="col-6">
+                                                <small class="text-muted">Cave</small><br>
+                                                <span>{{ property.cellarSurface ? property.cellarSurface ~ ' m²' : 'N/A' }}</span>
+                                            </div>
+                                            <div class="col-6">
+                                                <small class="text-muted">Grenier</small><br>
+                                                <span>{{ property.atticSurface ? property.atticSurface ~ ' m²' : 'N/A' }}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Équipements -->
+                                    <div class="col-md-6 mb-3">
+                                        <h6 class="text-primary">
+                                            <i class="bi bi-check2-square me-2"></i>
+                                            Équipements
+                                        </h6>
+                                        {% if property.getEquipmentList()|length > 0 %}
+                                            <div class="d-flex flex-wrap gap-1">
+                                                {% for equipment in property.getEquipmentList() %}
+                                                    <span class="badge bg-light text-dark">{{ equipment }}</span>
+                                                {% endfor %}
+                                            </div>
+                                        {% else %}
+                                            <small class="text-muted">Aucun équipement renseigné</small>
+                                        {% endif %}
+                                    </div>
+
+                                    <!-- Informations financières -->
+                                    <div class="col-md-6 mb-3">
+                                        <h6 class="text-primary">
+                                            <i class="bi bi-currency-exchange me-2"></i>
+                                            Financier
+                                        </h6>
+                                        <div class="row">
+                                            <div class="col-6">
+                                                <small class="text-muted">Charges</small><br>
+                                                <span>{{ property.charges ? property.charges|number_format(0, ',', ' ') ~ ' XOF' : 'N/A' }}</span>
+                                            </div>
+                                            <div class="col-6">
+                                                <small class="text-muted">Dépôt</small><br>
+                                                <span>{{ property.deposit ? property.deposit|number_format(0, ',', ' ') ~ ' XOF' : 'N/A' }}</span>
+                                            </div>
+                                        </div>
+                                        {% if property.estimatedValue %}
+                                        <div class="mt-2">
+                                            <small class="text-muted">Valeur estimée</small><br>
+                                            <span>{{ property.estimatedValue|number_format(0, ',', ' ') }} XOF</span>
+                                        </div>
+                                        {% endif %}
+                                    </div>
+
+                                    <!-- Informations de construction -->
+                                    <div class="col-md-6 mb-3">
+                                        <h6 class="text-primary">
+                                            <i class="bi bi-tools me-2"></i>
+                                            Construction
+                                        </h6>
                                     <div class="row">
-                                        <div class="col-2"><strong>Num. lot</strong></div>
-                                        <div class="col-2"><strong>Type de bien</strong></div>
-                                        <div class="col-2"><strong>Date de transfert</strong></div>
-                                        <div class="col-2"><strong>Pièces</strong></div>
-                                        <div class="col-2"><strong>Surface (Carrez)</strong></div>
-                                        <div class="col-2"><strong>Tantièmes</strong></div>
+                                            <div class="col-6">
+                                                <small class="text-muted">Année construction</small><br>
+                                                <span>{{ property.constructionYear ?: 'N/A' }}</span>
+                                            </div>
+                                            <div class="col-6">
+                                                <small class="text-muted">Classe énergétique</small><br>
+                                                <span>{{ property.energyClass ?: 'N/A' }}</span>
+                                            </div>
+                                        </div>
+                                        {% if property.heatingType %}
+                                        <div class="mt-2">
+                                            <small class="text-muted">Chauffage</small><br>
+                                            <span>{{ property.heatingType }}</span>
+                                        </div>
+                                        {% endif %}
                                     </div>
                                 </div>
-                                <div class="card-body p-3">
-                                    <div class="row">
-                                        <div class="col-2">{{ ('000' ~ property.id)|slice(-3) }}</div>
-                                        <div class="col-2">{{ property.propertyType }}</div>
-                                        <div class="col-2">--</div>
-                                        <div class="col-2">{{ property.rooms }}</div>
-                                        <div class="col-2">{{ property.surface }} m²</div>
-                                        <div class="col-2">{{ (property.surface * 100)|number_format(0, ',', '') }} / {{ (property.surface * 100)|number_format(0, ',', '') }}</div>
-                                    </div>
+
+                                <!-- Actions -->
+                                <div class="row mt-3">
+                                    <div class="col-12">
+                                        <div class="d-flex gap-2">
+                                            <a href="{{ path('app_property_show', {'id': property.id}) }}" class="btn btn-primary btn-sm">
+                                                <i class="bi bi-eye me-2"></i>Voir détails
+                                            </a>
+                                            {% if not is_tenant_view %}
+                                            <a href="{{ path('app_property_edit', {'id': property.id}) }}" class="btn btn-outline-secondary btn-sm">
+                                                <i class="bi bi-pencil me-2"></i>Modifier
+                                            </a>
+                                            {% endif %}
+                                            <a href="{{ path('app_property_maintenance', {'id': property.id}) }}" class="btn btn-outline-warning btn-sm">
+                                                <i class="bi bi-tools me-2"></i>Maintenance
+                                            </a>
+                                            <a href="{{ path('app_property_documents', {'id': property.id}) }}" class="btn btn-outline-info btn-sm">
+                                                <i class="bi bi-file-text me-2"></i>Documents
+                                            </a>
+                                        </div>
                                 </div>
                             </div>
                         </div>
                     </div>
                 {% endfor %}
-            {% else %}
-                <div class="text-center p-5">
-                    <i class="bi bi-house display-1 text-muted"></i>
-                    <h5 class="mt-3 text-muted">Aucun bien trouvé</h5>
-                    <p class="text-muted">Commencez par ajouter votre premier bien immobilier.</p>
-                    <a href="{{ path('app_property_new') }}" class="btn btn-primary">
-                        <i class="bi bi-plus-circle me-2"></i>
-                        Ajouter un bien
-                    </a>
+                {% endif %}
                 </div>
-            {% endif %}
         </div>
     </div>
 {% endblock %}
@@ -162,7 +483,7 @@
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Information immeuble</h5>
+                    <h5 class="modal-title">Information détaillée du bien</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
@@ -223,6 +544,16 @@
     </div>
 
     <style>
+        .property-card {
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .property-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+
         .property-row:hover {
             background-color: #f8f9fa;
         }
@@ -262,25 +593,32 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('Page chargée, recherche des boutons d\'expansion...'); // Debug
+            // Gestion du changement de vue
+            document.querySelectorAll('input[name="view"]').forEach(radio => {
+                radio.addEventListener('change', function() {
+                    const cardsView = document.getElementById('cards-view');
+                    const tableView = document.getElementById('table-view');
 
+                    if (this.id === 'cards') {
+                        cardsView.style.display = 'block';
+                        tableView.style.display = 'none';
+                    } else {
+                        cardsView.style.display = 'none';
+                        tableView.style.display = 'block';
+                    }
+                });
+            });
+
+            // Gestion de l'expansion des détails dans la vue tableau
             const expandButtons = document.querySelectorAll('.expand-btn');
-            console.log('Boutons d\'expansion trouvés:', expandButtons.length); // Debug
-
-            // Gestion de l'expansion des détails - clic direct sur le bouton
             expandButtons.forEach(btn => {
                 btn.addEventListener('click', function(e) {
                     e.preventDefault();
                     e.stopPropagation();
 
-                    console.log('Bouton d\'expansion cliqué'); // Debug
-
                     const propertyId = this.closest('.property-row').dataset.propertyId;
                     const details = document.getElementById('details-' + propertyId);
                     const icon = this.querySelector('i');
-
-                    console.log('Property ID:', propertyId); // Debug
-                    console.log('Details element:', details); // Debug
 
                     if (!details) {
                         console.error('Élément details non trouvé pour property ID:', propertyId);
@@ -293,13 +631,19 @@
                         details.style.display = 'block';
                         icon.classList.remove('bi-chevron-right');
                         icon.classList.add('bi-chevron-down');
-                        console.log('Détails affichés'); // Debug
                     } else {
                         details.style.display = 'none';
                         icon.classList.remove('bi-chevron-down');
                         icon.classList.add('bi-chevron-right');
-                        console.log('Détails masqués'); // Debug
                     }
+                });
+            });
+
+            // Gestion du clic sur les cartes
+            document.querySelectorAll('.property-card').forEach(card => {
+                card.addEventListener('click', function() {
+                    const propertyId = this.dataset.propertyId;
+                    openPropertyModal(propertyId);
                 });
             });
 
@@ -350,74 +694,52 @@
                             <div class="col-12">
                                 <label class="form-label text-muted">Adresse du bien</label>
                                 <div class="form-control-plaintext border p-2 bg-light">
-                                    ${data.address.toUpperCase()}
+                                    ${data.address ? data.address.toUpperCase() : 'Non renseigné'}
                                 </div>
                             </div>
                         </div>
 
                         <div class="row mb-3">
                             <div class="col-6">
-                                <label class="form-label text-muted">Gardien</label>
-                                <div class="text-primary">${data.gardien}</div>
+                                <label class="form-label text-muted">Type</label>
+                                <div class="text-primary">${data.propertyType || 'Non renseigné'}</div>
                             </div>
                             <div class="col-6">
-                                <label class="form-label text-muted">Ascenseur</label>
-                                <div class="text-primary">${data.ascenseur}</div>
+                                <label class="form-label text-muted">Surface</label>
+                                <div class="text-primary">${data.surface || 'Non renseigné'} m²</div>
                             </div>
                         </div>
 
+                        <div class="row mb-3">
+                            <div class="col-6">
+                                <label class="form-label text-muted">Pièces</label>
+                                <div>${data.rooms || 'Non renseigné'}</div>
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label text-muted">Loyer mensuel</label>
+                                <div>${data.monthlyRent ? data.monthlyRent.toLocaleString() + ' XOF' : 'Non renseigné'}</div>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-6">
+                                <label class="form-label text-muted">Statut</label>
+                                <div><span class="badge bg-${data.status === 'Occupé' ? 'success' : (data.status === 'Libre' ? 'warning' : 'secondary')}">${data.status || 'Non renseigné'}</span></div>
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label text-muted">Propriétaire</label>
+                                <div>${data.owner || 'Non renseigné'}</div>
+                            </div>
+                        </div>
+
+                        ${data.description ? `
                         <div class="row mb-3">
                             <div class="col-12">
-                                <label class="form-label text-muted">Jours de présence du gardien</label>
-                                <div>${data.jours_gardien}</div>
+                                <label class="form-label text-muted">Description</label>
+                                <div class="border p-2 bg-light">${data.description}</div>
                             </div>
                         </div>
-
-                        <div class="row mb-3">
-                            <div class="col-12">
-                                <label class="form-label text-muted">Horaires du gardien</label>
-                                <div>${data.horaires_gardien}</div>
-                            </div>
-                        </div>
-
-                        <div class="row mb-3">
-                            <div class="col-6">
-                                <label class="form-label text-muted">Digicode BAT 1</label>
-                                <div>${data.digicode_bat1}</div>
-                            </div>
-                            <div class="col-6">
-                                <label class="form-label text-muted">Digicode ENTREE PRINCIPALE</label>
-                                <div>${data.digicode_entree}</div>
-                            </div>
-                        </div>
-
-                        <h6 class="mt-4 mb-3">Superficie du bien</h6>
-                        <div class="border p-3 bg-light">
-                            <div class="row mb-2">
-                                <div class="col-6">
-                                    <label class="form-label text-muted">Surface totale</label>
-                                    <div>${data.surface_total} m2</div>
-                                </div>
-                                <div class="col-6">
-                                    <label class="form-label text-muted">Surface (Loi Carrez)</label>
-                                    <div>${data.surface_carrez} m2</div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <h6 class="mt-4 mb-3">Descriptif du bien</h6>
-                        <div class="border p-3 bg-light">
-                            <div class="row mb-2">
-                                <div class="col-6">
-                                    <label class="form-label text-muted">Numéro du lot</label>
-                                    <div>${data.lot_number}</div>
-                                </div>
-                                <div class="col-6">
-                                    <label class="form-label text-muted">Pièces habitables</label>
-                                    <div>${data.rooms}</div>
-                                </div>
-                            </div>
-                        </div>
+                        ` : ''}
                     `;
 
                     document.getElementById('modal-property-content').innerHTML = modalContent;
