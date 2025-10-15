@@ -1,0 +1,379 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Exports et Rapports - Administration{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h1 class="h3 mb-0">📊 Exports et Rapports</h1>
+                    <p class="text-muted mb-0">Générez des rapports Excel/PDF pour votre comptabilité</p>
+                </div>
+                <div>
+                    <span class="badge bg-primary fs-6">Administration</span>
+                </div>
+            </div>
+
+            {% for message in app.flashes('success') %}
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    <i class="bi bi-check-circle me-2"></i>{{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+
+            {% for message in app.flashes('error') %}
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <i class="bi bi-exclamation-triangle me-2"></i>{{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+
+            <!-- Rapports Financiers -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-header bg-primary text-white">
+                            <h5 class="card-title mb-0">
+                                <i class="bi bi-graph-up me-2"></i>Rapports Financiers
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-4 mb-3">
+                                    <div class="card h-100 border-start border-primary border-4">
+                                        <div class="card-body">
+                                            <div class="d-flex align-items-center mb-3">
+                                                <div class="bg-primary bg-opacity-10 rounded-circle p-3 me-3">
+                                                    <i class="bi bi-graph-up text-primary fs-4"></i>
+                                                </div>
+                                                <div>
+                                                    <h6 class="card-title mb-0">Rapport Financier</h6>
+                                                    <small class="text-muted">Paiements, revenus, dépenses</small>
+                                                </div>
+                                            </div>
+                                            <p class="card-text text-muted small">
+                                                Rapport complet des revenus par mois avec analyse détaillée des paiements.
+                                            </p>
+                                            <div class="d-flex gap-2">
+                                                <a href="{{ path('app_admin_export_financial_reports', {'format': 'excel', 'year': 'now'|date('Y'), 'month': 'now'|date('n')}) }}" 
+                                                   class="btn btn-success btn-sm">
+                                                    <i class="bi bi-file-earmark-excel me-1"></i>Excel
+                                                </a>
+                                                <a href="{{ path('app_admin_export_financial_reports', {'format': 'pdf', 'year': 'now'|date('Y'), 'month': 'now'|date('n')}) }}" 
+                                                   class="btn btn-danger btn-sm">
+                                                    <i class="bi bi-file-earmark-pdf me-1"></i>PDF
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-4 mb-3">
+                                    <div class="card h-100 border-start border-success border-4">
+                                        <div class="card-body">
+                                            <div class="d-flex align-items-center mb-3">
+                                                <div class="bg-success bg-opacity-10 rounded-circle p-3 me-3">
+                                                    <i class="bi bi-credit-card text-success fs-4"></i>
+                                                </div>
+                                                <div>
+                                                    <h6 class="card-title mb-0">Export Paiements</h6>
+                                                    <small class="text-muted">Liste détaillée avec filtres</small>
+                                                </div>
+                                            </div>
+                                            <p class="card-text text-muted small">
+                                                Export complet des paiements avec possibilité de filtrer par date et statut.
+                                            </p>
+                                            <div class="d-flex gap-2">
+                                                <a href="{{ path('app_admin_export_payments', {'format': 'excel'}) }}" 
+                                                   class="btn btn-success btn-sm">
+                                                    <i class="bi bi-file-earmark-excel me-1"></i>Excel
+                                                </a>
+                                                <a href="{{ path('app_admin_export_payments', {'format': 'pdf'}) }}" 
+                                                   class="btn btn-danger btn-sm">
+                                                    <i class="bi bi-file-earmark-pdf me-1"></i>PDF
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-4 mb-3">
+                                    <div class="card h-100 border-start border-warning border-4">
+                                        <div class="card-body">
+                                            <div class="d-flex align-items-center mb-3">
+                                                <div class="bg-warning bg-opacity-10 rounded-circle p-3 me-3">
+                                                    <i class="bi bi-exclamation-triangle text-warning fs-4"></i>
+                                                </div>
+                                                <div>
+                                                    <h6 class="card-title mb-0">Paiements Impayés</h6>
+                                                    <small class="text-muted">Loyers en retard</small>
+                                                </div>
+                                            </div>
+                                            <p class="card-text text-muted small">
+                                                Liste des paiements en retard avec calcul des jours de retard pour relances.
+                                            </p>
+                                            <div class="d-flex gap-2">
+                                                <a href="{{ path('app_admin_export_overdue', {'format': 'excel'}) }}" 
+                                                   class="btn btn-success btn-sm">
+                                                    <i class="bi bi-file-earmark-excel me-1"></i>Excel
+                                                </a>
+                                                <a href="{{ path('app_admin_export_overdue', {'format': 'pdf'}) }}" 
+                                                   class="btn btn-danger btn-sm">
+                                                    <i class="bi bi-file-earmark-pdf me-1"></i>PDF
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Gestion Locataires et Biens -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-header bg-info text-white">
+                            <h5 class="card-title mb-0">
+                                <i class="bi bi-people me-2"></i>Gestion Locataires et Biens
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <div class="card h-100 border-start border-info border-4">
+                                        <div class="card-body">
+                                            <div class="d-flex align-items-center mb-3">
+                                                <div class="bg-info bg-opacity-10 rounded-circle p-3 me-3">
+                                                    <i class="bi bi-people text-info fs-4"></i>
+                                                </div>
+                                                <div>
+                                                    <h6 class="card-title mb-0">Liste Locataires</h6>
+                                                    <small class="text-muted">Données complètes + historique</small>
+                                                </div>
+                                            </div>
+                                            <p class="card-text text-muted small">
+                                                Export des données locataires avec option d'inclure l'historique des paiements.
+                                            </p>
+                                            <div class="d-flex gap-2">
+                                                <a href="{{ path('app_admin_export_tenants', {'format': 'excel', 'include_history': false}) }}" 
+                                                   class="btn btn-success btn-sm">
+                                                    <i class="bi bi-file-earmark-excel me-1"></i>Excel
+                                                </a>
+                                                <a href="{{ path('app_admin_export_tenants', {'format': 'pdf', 'include_history': false}) }}" 
+                                                   class="btn btn-danger btn-sm">
+                                                    <i class="bi bi-file-earmark-pdf me-1"></i>PDF
+                                                </a>
+                                                <a href="{{ path('app_admin_export_tenants', {'format': 'excel', 'include_history': true}) }}" 
+                                                   class="btn btn-outline-success btn-sm">
+                                                    <i class="bi bi-clock-history me-1"></i>Avec historique
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-6 mb-3">
+                                    <div class="card h-100 border-start border-secondary border-4">
+                                        <div class="card-body">
+                                            <div class="d-flex align-items-center mb-3">
+                                                <div class="bg-secondary bg-opacity-10 rounded-circle p-3 me-3">
+                                                    <i class="bi bi-building text-secondary fs-4"></i>
+                                                </div>
+                                                <div>
+                                                    <h6 class="card-title mb-0">Inventaire Biens</h6>
+                                                    <small class="text-muted">Propriétés + inventaire</small>
+                                                </div>
+                                            </div>
+                                            <p class="card-text text-muted small">
+                                                Inventaire complet des propriétés avec détails et état des lieux.
+                                            </p>
+                                            <div class="d-flex gap-2">
+                                                <a href="{{ path('app_admin_export_properties', {'format': 'excel', 'include_inventory': false}) }}" 
+                                                   class="btn btn-success btn-sm">
+                                                    <i class="bi bi-file-earmark-excel me-1"></i>Excel
+                                                </a>
+                                                <a href="{{ path('app_admin_export_properties', {'format': 'pdf', 'include_inventory': false}) }}" 
+                                                   class="btn btn-danger btn-sm">
+                                                    <i class="bi bi-file-earmark-pdf me-1"></i>PDF
+                                                </a>
+                                                <a href="{{ path('app_admin_export_properties', {'format': 'excel', 'include_inventory': true}) }}" 
+                                                   class="btn btn-outline-success btn-sm">
+                                                    <i class="bi bi-list-check me-1"></i>Complet
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Rapports Comptables et Fiscaux -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-header bg-success text-white">
+                            <h5 class="card-title mb-0">
+                                <i class="bi bi-calculator me-2"></i>Rapports Comptables et Fiscaux
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-4 mb-3">
+                                    <div class="card h-100 border-start border-success border-4">
+                                        <div class="card-body">
+                                            <div class="d-flex align-items-center mb-3">
+                                                <div class="bg-success bg-opacity-10 rounded-circle p-3 me-3">
+                                                    <i class="bi bi-file-earmark-check text-success fs-4"></i>
+                                                </div>
+                                                <div>
+                                                    <h6 class="card-title mb-0">Déclaration Fiscale</h6>
+                                                    <small class="text-muted">Rapport annuel fiscal</small>
+                                                </div>
+                                            </div>
+                                            <p class="card-text text-muted small">
+                                                Rapport annuel pour déclaration fiscale avec calcul de la base imposable.
+                                            </p>
+                                            <div class="d-flex gap-2">
+                                                <a href="{{ path('app_admin_export_tax_declaration', {'format': 'pdf', 'year': 'now'|date('Y')}) }}" 
+                                                   class="btn btn-danger btn-sm">
+                                                    <i class="bi bi-file-earmark-pdf me-1"></i>PDF {{ 'now'|date('Y') }}
+                                                </a>
+                                                <a href="{{ path('app_admin_export_tax_declaration', {'format': 'excel', 'year': 'now'|date('Y')}) }}" 
+                                                   class="btn btn-success btn-sm">
+                                                    <i class="bi bi-file-earmark-excel me-1"></i>Excel
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-4 mb-3">
+                                    <div class="card h-100 border-start border-primary border-4">
+                                        <div class="card-body">
+                                            <div class="d-flex align-items-center mb-3">
+                                                <div class="bg-primary bg-opacity-10 rounded-circle p-3 me-3">
+                                                    <i class="bi bi-calculator text-primary fs-4"></i>
+                                                </div>
+                                                <div>
+                                                    <h6 class="card-title mb-0">Rapport Comptable</h6>
+                                                    <small class="text-muted">Comptabilité par période</small>
+                                                </div>
+                                            </div>
+                                            <p class="card-text text-muted small">
+                                                Rapport comptable complet avec analyse des revenus par période.
+                                            </p>
+                                            <div class="d-flex gap-2">
+                                                <a href="{{ path('app_admin_export_accounting_report', {'format': 'excel'}) }}" 
+                                                   class="btn btn-success btn-sm">
+                                                    <i class="bi bi-file-earmark-excel me-1"></i>Excel
+                                                </a>
+                                                <a href="{{ path('app_admin_export_accounting_report', {'format': 'pdf'}) }}" 
+                                                   class="btn btn-danger btn-sm">
+                                                    <i class="bi bi-file-earmark-pdf me-1"></i>PDF
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-4 mb-3">
+                                    <div class="card h-100 border-start border-warning border-4">
+                                        <div class="card-body">
+                                            <div class="d-flex align-items-center mb-3">
+                                                <div class="bg-warning bg-opacity-10 rounded-circle p-3 me-3">
+                                                    <i class="bi bi-file-text text-warning fs-4"></i>
+                                                </div>
+                                                <div>
+                                                    <h6 class="card-title mb-0">Export Baux</h6>
+                                                    <small class="text-muted">Contrats par statut</small>
+                                                </div>
+                                            </div>
+                                            <p class="card-text text-muted small">
+                                                Export des contrats de location avec filtrage par statut (actifs, expirés, etc.).
+                                            </p>
+                                            <div class="d-flex gap-2">
+                                                <a href="{{ path('app_admin_export_leases', {'format': 'excel', 'status': 'all'}) }}" 
+                                                   class="btn btn-success btn-sm">
+                                                    <i class="bi bi-file-earmark-excel me-1"></i>Excel
+                                                </a>
+                                                <a href="{{ path('app_admin_export_leases', {'format': 'pdf', 'status': 'all'}) }}" 
+                                                   class="btn btn-danger btn-sm">
+                                                    <i class="bi bi-file-earmark-pdf me-1"></i>PDF
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Export Complet -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-header bg-dark text-white">
+                            <h5 class="card-title mb-0">
+                                <i class="bi bi-archive me-2"></i>Export Complet
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row align-items-center">
+                                <div class="col-md-8">
+                                    <div class="d-flex align-items-center">
+                                        <div class="bg-dark bg-opacity-10 rounded-circle p-3 me-3">
+                                            <i class="bi bi-archive text-dark fs-4"></i>
+                                        </div>
+                                        <div>
+                                            <h6 class="card-title mb-1">Export Complet MYLOCCA</h6>
+                                            <p class="text-muted mb-0 small">
+                                                Toutes les données dans un fichier ZIP : paiements, locataires, propriétés, baux, documents, maintenance.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4 text-end">
+                                    <a href="{{ path('app_admin_export_complete', {'format': 'zip', 'year': 'now'|date('Y')}) }}" 
+                                       class="btn btn-dark btn-lg">
+                                        <i class="bi bi-download me-2"></i>Télécharger ZIP Complet
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Informations -->
+            <div class="row mt-4">
+                <div class="col-12">
+                    <div class="alert alert-info border-0">
+                        <div class="d-flex align-items-start">
+                            <i class="bi bi-info-circle fs-4 me-3"></i>
+                            <div>
+                                <h6 class="alert-heading mb-2">💡 Conseils d'utilisation</h6>
+                                <ul class="mb-0 small">
+                                    <li><strong>Excel :</strong> Idéal pour l'analyse et la manipulation des données</li>
+                                    <li><strong>PDF :</strong> Parfait pour l'archivage et l'impression</li>
+                                    <li><strong>ZIP Complet :</strong> Sauvegarde complète de toutes vos données</li>
+                                    <li>Les fichiers sont générés à la demande et supprimés automatiquement après 24h</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

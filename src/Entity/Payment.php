@@ -53,8 +53,8 @@ class Payment
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
     private ?\DateTimeInterface $createdAt = null;
 
-    #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
-    private ?\DateTimeInterface $updatedAt = null;
+    #[ORM\Column(type: Types::BOOLEAN)]
+    private ?bool $isDemo = false;
 
     public function __construct()
     {
@@ -260,6 +260,17 @@ class Payment
     public function setCompany(?Company $company): static
     {
         $this->company = $company;
+        return $this;
+    }
+
+    public function getIsDemo(): ?bool
+    {
+        return $this->isDemo;
+    }
+
+    public function setIsDemo(bool $isDemo): static
+    {
+        $this->isDemo = $isDemo;
         return $this;
     }
 

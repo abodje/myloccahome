@@ -240,6 +240,20 @@ class MenuService
                 'roles' => ['ROLE_MANAGER', 'ROLE_ADMIN'],
                 'order' => 106,
             ],
+            'admin_exports' => [
+                'label' => '📊 Exports',
+                'icon' => 'bi-download',
+                'route' => 'app_admin_export_index',
+                'roles' => ['ROLE_ADMIN'],
+                'order' => 107,
+            ],
+            'admin_demo_environments' => [
+                'label' => '🌐 Environnements Démo',
+                'icon' => 'bi-globe',
+                'route' => 'app_admin_demo_index',
+                'roles' => ['ROLE_SUPER_ADMIN'],
+                'order' => 108,
+            ],
         ];
     }
 

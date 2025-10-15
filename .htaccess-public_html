@@ -1,0 +1,327 @@
+# Configuration .htaccess pour MYLOCCA - Redirection vers dossier public
+# Fichier : public_html/.htaccess
+
+# =============================================================================
+# REDIRECTION VERS LE DOSSIER PUBLIC
+# =============================================================================
+
+# Rediriger toutes les requêtes vers le dossier public
+RewriteEngine On
+
+# Redirection vers le dossier public
+RewriteCond %{REQUEST_URI} !^/public/
+RewriteRule ^(.*)$ /public/$1 [L,R=301]
+
+# =============================================================================
+# CONFIGURATION SYMFONY
+# =============================================================================
+
+# Configuration pour le dossier public
+<Directory "public">
+    # Activer le moteur de réécriture
+    RewriteEngine On
+
+    # Rediriger vers index.php si le fichier n'existe pas
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^(.*)$ index.php [QSA,L]
+
+    # Configuration des types MIME
+    <IfModule mod_mime.c>
+        AddType application/javascript .js
+        AddType text/css .css
+        AddType image/svg+xml .svg
+        AddType application/font-woff .woff
+        AddType application/font-woff2 .woff2
+    </IfModule>
+
+    # Headers de sécurité
+    <IfModule mod_headers.c>
+        Header always set X-Frame-Options "SAMEORIGIN"
+        Header always set X-Content-Type-Options "nosniff"
+        Header always set X-XSS-Protection "1; mode=block"
+        Header always set Referrer-Policy "strict-origin-when-cross-origin"
+    </IfModule>
+
+    # Configuration des erreurs
+    ErrorDocument 404 /public/index.php
+    ErrorDocument 500 /public/index.php
+</Directory>
+
+# =============================================================================
+# SÉCURITÉ
+# =============================================================================
+
+# Bloquer l'accès aux fichiers sensibles
+<FilesMatch "\.(env|log|sql|bak|backup|gitignore|htaccess)$">
+    Order Allow,Deny
+    Deny from all
+</FilesMatch>
+
+# Bloquer l'accès aux dossiers sensibles
+<DirectoryMatch "(^|/)\.(git|svn|hg|bzr)">
+    Order Allow,Deny
+    Deny from all
+</DirectoryMatch>
+
+# Bloquer l'accès aux fichiers de configuration
+<FilesMatch "\.(ini|conf|config)$">
+    Order Allow,Deny
+    Deny from all
+</FilesMatch>
+
+# =============================================================================
+# PERFORMANCE
+# =============================================================================
+
+# Compression des fichiers
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/plain
+    AddOutputFilterByType DEFLATE text/html
+    AddOutputFilterByType DEFLATE text/xml
+    AddOutputFilterByType DEFLATE text/css
+    AddOutputFilterByType DEFLATE application/xml
+    AddOutputFilterByType DEFLATE application/xhtml+xml
+    AddOutputFilterByType DEFLATE application/rss+xml
+    AddOutputFilterByType DEFLATE application/javascript
+    AddOutputFilterByType DEFLATE application/x-javascript
+    AddOutputFilterByType DEFLATE application/json
+</IfModule>
+
+# Cache des ressources statiques
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresByType text/css "access plus 1 month"
+    ExpiresByType application/javascript "access plus 1 month"
+    ExpiresByType image/png "access plus 1 month"
+    ExpiresByType image/jpg "access plus 1 month"
+    ExpiresByType image/jpeg "access plus 1 month"
+    ExpiresByType image/gif "access plus 1 month"
+    ExpiresByType image/svg+xml "access plus 1 month"
+    ExpiresByType application/font-woff "access plus 1 month"
+    ExpiresByType application/font-woff2 "access plus 1 month"
+</IfModule>
+
+# =============================================================================
+# CONFIGURATION SPÉCIFIQUE MYLOCCA
+# =============================================================================
+
+# Variables d'environnement
+SetEnv APP_ENV prod
+SetEnv APP_DEBUG 0
+
+# Configuration pour les environnements de démo
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Détecter les sous-domaines de démo
+    RewriteCond %{HTTP_HOST} ^([^.]+)\.demo\.mylocca\.local$ [NC]
+    RewriteRule ^(.*)$ - [E=DEMO_SUBDOMAIN:%1]
+
+    # Rediriger vers le dossier public
+    RewriteCond %{REQUEST_URI} !^/public/
+    RewriteRule ^(.*)$ /public/$1 [L,R=301]
+</IfModule>
+
+# =============================================================================
+# CONFIGURATION DES TYPES DE FICHIERS
+# =============================================================================
+
+# Types MIME pour les fichiers modernes
+<IfModule mod_mime.c>
+    # JavaScript
+    AddType application/javascript .js
+    AddType application/javascript .mjs
+
+    # CSS
+    AddType text/css .css
+
+    # Images
+    AddType image/svg+xml .svg
+    AddType image/webp .webp
+    AddType image/avif .avif
+
+    # Fonts
+    AddType application/font-woff .woff
+    AddType application/font-woff2 .woff2
+    AddType application/vnd.ms-fontobject .eot
+    AddType font/truetype .ttf
+
+    # Documents
+    AddType application/pdf .pdf
+    AddType application/msword .doc
+    AddType application/vnd.openxmlformats-officedocument.wordprocessingml.document .docx
+    AddType application/vnd.ms-excel .xls
+    AddType application/vnd.openxmlformats-officedocument.spreadsheetml.sheet .xlsx
+
+    # Archives
+    AddType application/zip .zip
+    AddType application/x-rar-compressed .rar
+    AddType application/x-7z-compressed .7z
+</IfModule>
+
+# =============================================================================
+# CONFIGURATION DES ERREURS
+# =============================================================================
+
+# Pages d'erreur personnalisées
+ErrorDocument 400 /public/index.php
+ErrorDocument 401 /public/index.php
+ErrorDocument 403 /public/index.php
+ErrorDocument 404 /public/index.php
+ErrorDocument 500 /public/index.php
+ErrorDocument 502 /public/index.php
+ErrorDocument 503 /public/index.php
+
+# =============================================================================
+# CONFIGURATION DES EN-TÊTES
+# =============================================================================
+
+<IfModule mod_headers.c>
+    # Sécurité
+    Header always set X-Frame-Options "SAMEORIGIN"
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set X-XSS-Protection "1; mode=block"
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+
+    # Performance
+    Header always set Cache-Control "public, max-age=31536000" "expr=%{REQUEST_URI} =~ m#\.(css|js|png|jpg|jpeg|gif|svg|woff|woff2)$#"
+
+    # CORS (si nécessaire)
+    Header always set Access-Control-Allow-Origin "*"
+    Header always set Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
+    Header always set Access-Control-Allow-Headers "Content-Type, Authorization, X-Requested-With"
+</IfModule>
+
+# =============================================================================
+# CONFIGURATION DES RÉPERTOIRES
+# =============================================================================
+
+# Configuration du répertoire racine
+Options -Indexes
+Options -ExecCGI
+AllowOverride All
+
+# Configuration du répertoire public
+<Directory "public">
+    Options -Indexes
+    Options -ExecCGI
+    AllowOverride All
+
+    # Activer le moteur de réécriture
+    RewriteEngine On
+
+    # Rediriger vers index.php si le fichier n'existe pas
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^(.*)$ index.php [QSA,L]
+</Directory>
+
+# =============================================================================
+# CONFIGURATION DES FICHIERS
+# =============================================================================
+
+# Bloquer l'accès aux fichiers sensibles
+<FilesMatch "\.(env|log|sql|bak|backup|gitignore|htaccess|htpasswd)$">
+    Order Allow,Deny
+    Deny from all
+</FilesMatch>
+
+# Bloquer l'accès aux fichiers de configuration
+<FilesMatch "\.(ini|conf|config|xml|yaml|yml)$">
+    Order Allow,Deny
+    Deny from all
+</FilesMatch>
+
+# Bloquer l'accès aux fichiers de développement
+<FilesMatch "\.(md|txt|log)$">
+    Order Allow,Deny
+    Deny from all
+</FilesMatch>
+
+# =============================================================================
+# CONFIGURATION DES RÉPERTOIRES SENSIBLES
+# =============================================================================
+
+# Bloquer l'accès aux dossiers sensibles
+<DirectoryMatch "(^|/)\.(git|svn|hg|bzr)">
+    Order Allow,Deny
+    Deny from all
+</DirectoryMatch>
+
+<DirectoryMatch "(^|/)(var|vendor|node_modules|tests)">
+    Order Allow,Deny
+    Deny from all
+</DirectoryMatch>
+
+# =============================================================================
+# CONFIGURATION DES ENVIRONNEMENTS DE DÉMO
+# =============================================================================
+
+# Configuration spécifique pour les environnements de démo
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Détecter les sous-domaines de démo
+    RewriteCond %{HTTP_HOST} ^([^.]+)\.demo\.mylocca\.local$ [NC]
+    RewriteRule ^(.*)$ - [E=DEMO_SUBDOMAIN:%1]
+
+    # Rediriger vers le dossier public
+    RewriteCond %{REQUEST_URI} !^/public/
+    RewriteRule ^(.*)$ /public/$1 [L,R=301]
+</IfModule>
+
+# =============================================================================
+# CONFIGURATION DES LOGS
+# =============================================================================
+
+# Activer les logs d'erreur
+LogLevel warn
+ErrorLog logs/error.log
+CustomLog logs/access.log combined
+
+# =============================================================================
+# CONFIGURATION DES LIMITES
+# =============================================================================
+
+# Limites de taille de fichier
+LimitRequestBody 104857600
+
+# Limites de temps
+TimeOut 300
+
+# =============================================================================
+# CONFIGURATION DES MODULES
+# =============================================================================
+
+# Vérifier que les modules requis sont activés
+<IfModule !mod_rewrite.c>
+    # Le module mod_rewrite est requis
+    ErrorDocument 500 "Module mod_rewrite requis"
+</IfModule>
+
+<IfModule !mod_headers.c>
+    # Le module mod_headers est recommandé
+    # Les headers de sécurité ne seront pas appliqués
+</IfModule>
+
+<IfModule !mod_deflate.c>
+    # Le module mod_deflate est recommandé
+    # La compression ne sera pas appliquée
+</IfModule>
+
+<IfModule !mod_expires.c>
+    # Le module mod_expires est recommandé
+    # Le cache ne sera pas configuré
+</IfModule>
+
+# =============================================================================
+# NOTES IMPORTANTES
+# =============================================================================
+
+# 1. Ce fichier .htaccess doit être placé dans le dossier public_html
+# 2. Il redirige automatiquement toutes les requêtes vers le dossier public
+# 3. La configuration Symfony est dans le dossier public
+# 4. Les environnements de démo sont supportés
+# 5. La sécurité et les performances sont optimisées
+# 6. Les modules Apache requis sont vérifiés

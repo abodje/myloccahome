@@ -479,9 +479,25 @@ class Organization
         return $this->isActive;
     }
 
-    public function setIsActive(bool $isActive): static
+    public function getIsDemo(): ?bool
     {
-        $this->isActive = $isActive;
+        return $this->isDemo;
+    }
+
+    public function setIsDemo(bool $isDemo): static
+    {
+        $this->isDemo = $isDemo;
+        return $this;
+    }
+
+    public function getSubdomain(): ?string
+    {
+        return $this->subdomain;
+    }
+
+    public function setSubdomain(?string $subdomain): static
+    {
+        $this->subdomain = $subdomain;
         return $this;
     }
 

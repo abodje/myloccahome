@@ -7,6 +7,7 @@ use App\Entity\User;
 use App\Entity\Plan;
 use App\Repository\PlanRepository;
 use App\Service\SubscriptionService;
+use App\Service\DemoEnvironmentService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -42,7 +43,8 @@ class RegistrationController extends AbstractController
         EntityManagerInterface $entityManager,
         UserPasswordHasherInterface $passwordHasher,
         SluggerInterface $slugger,
-        SubscriptionService $subscriptionService
+        SubscriptionService $subscriptionService,
+        DemoEnvironmentService $demoEnvironmentService
     ): Response {
         $plan = $planRepository->findBySlug($planSlug);
 
@@ -135,6 +137,17 @@ class RegistrationController extends AbstractController
                 );
 
                 $entityManager->flush();
+
+                // Créer l'environnement de démo automatiquement
+                $demoResult = $demoEnvironmentService->createDemoEnvironment($user);
+
+                if ($demoResult['success']) {
+                    $this->addFlash('success', '🎉 Votre compte et environnement de démo ont été créés avec succès !');
+                    $this->addFlash('info', "🌐 Votre environnement de démo : {$demoResult['demo_url']}");
+                    $this->addFlash('info', "📊 Données de démo créées : {$demoResult['demo_data']['properties']} propriétés, {$demoResult['demo_data']['tenants']} locataires, {$demoResult['demo_data']['leases']} baux, {$demoResult['demo_data']['payments']} paiements");
+                } else {
+                    $this->addFlash('warning', '⚠️ Compte créé mais erreur lors de la création de l\'environnement de démo : ' . $demoResult['error']);
+                }
 
                 // Si plan gratuit (Freemium), activer directement
                 if ($plan->getSlug() === 'freemium' || (float)$plan->getMonthlyPrice() == 0) {
