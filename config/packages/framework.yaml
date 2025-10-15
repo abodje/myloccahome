@@ -8,6 +8,10 @@ framework:
     # Enable CSRF protection
     csrf_protection: true
 
+    # Configuration pour éviter les problèmes de cache
+    http_cache:
+        enabled: false
+
     #esi: true
     #fragments: true
 

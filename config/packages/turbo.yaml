@@ -1,0 +1,4 @@
+# Configuration Turbo pour éviter les problèmes de cache
+turbo:
+    broadcast:
+        enabled: false
