@@ -78,7 +78,14 @@ class RegistrationController extends AbstractController
                 // Vérifier si l'email existe déjà
                 $existingUser = $entityManager->getRepository(User::class)->findOneBy(['email' => $userEmail]);
                 if ($existingUser) {
-                    $this->addFlash('error', 'Cet email est déjà utilisé.');
+                    $this->addFlash('error', 'Cet email est déjà utilisé. Si vous avez déjà un compte, veuillez vous connecter. Si votre inscription précédente a échoué, veuillez contacter le support ou utiliser un autre email.');
+                    return $this->render('registration/register.html.twig', ['plan' => $plan]);
+                }
+
+                // Vérifier aussi si l'email existe dans la table Tenant pour éviter les conflits futurs
+                $existingTenant = $entityManager->getRepository(\App\Entity\Tenant::class)->findOneBy(['email' => $userEmail]);
+                if ($existingTenant) {
+                    $this->addFlash('warning', 'Cet email existe déjà dans notre système. Veuillez utiliser un autre email.');
                     return $this->render('registration/register.html.twig', ['plan' => $plan]);
                 }
 
