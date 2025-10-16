@@ -46,6 +46,13 @@ class MenuService
                 'roles' => ['ROLE_USER', 'ROLE_TENANT', 'ROLE_MANAGER', 'ROLE_ADMIN'],
                 'order' => 3,
             ],
+            'owners' => [
+                'label' => 'Propriétaires',
+                'icon' => 'bi-person-badge',
+                'route' => 'app_owner_index',
+                'roles' => ['ROLE_MANAGER', 'ROLE_ADMIN'],
+                'order' => 3.5,
+            ],
             'tenants' => [
                 'label' => 'Locataires',
                 'icon' => 'bi-people',

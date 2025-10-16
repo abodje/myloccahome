@@ -82,6 +82,9 @@ class Company
     #[ORM\OneToMany(targetEntity: Lease::class, mappedBy: 'company')]
     private Collection $leases;
 
+    #[ORM\OneToMany(targetEntity: Owner::class, mappedBy: 'company')]
+    private Collection $owners;
+
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
     private ?\DateTimeInterface $createdAt = null;
 
@@ -100,6 +103,7 @@ class Company
         $this->managers = new ArrayCollection();
         $this->tenants = new ArrayCollection();
         $this->leases = new ArrayCollection();
+        $this->owners = new ArrayCollection();
         $this->createdAt = new \DateTime();
         $this->status = 'ACTIVE';
     }
@@ -487,6 +491,35 @@ class Company
     public function setIsDemo(bool $isDemo): static
     {
         $this->isDemo = $isDemo;
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Owner>
+     */
+    public function getOwners(): Collection
+    {
+        return $this->owners;
+    }
+
+    public function addOwner(Owner $owner): static
+    {
+        if (!$this->owners->contains($owner)) {
+            $this->owners->add($owner);
+            $owner->setCompany($this);
+        }
+
+        return $this;
+    }
+
+    public function removeOwner(Owner $owner): static
+    {
+        if ($this->owners->removeElement($owner)) {
+            if ($owner->getCompany() === $this) {
+                $owner->setCompany(null);
+            }
+        }
+
         return $this;
     }
 }

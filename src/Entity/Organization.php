@@ -82,6 +82,9 @@ class Organization
     #[ORM\OneToMany(targetEntity: Company::class, mappedBy: 'organization', cascade: ['persist', 'remove'])]
     private Collection $companies;
 
+    #[ORM\OneToMany(targetEntity: Owner::class, mappedBy: 'organization')]
+    private Collection $owners;
+
     #[ORM\Column(type: Types::JSON, nullable: true)]
     private ?array $settings = null; // Paramètres spécifiques à l'organisation
 
@@ -115,6 +118,7 @@ class Organization
         $this->payments = new ArrayCollection();
         $this->subscriptions = new ArrayCollection();
         $this->companies = new ArrayCollection();
+        $this->owners = new ArrayCollection();
         $this->createdAt = new \DateTime();
         $this->isActive = true;
         $this->status = 'TRIAL';
@@ -657,6 +661,35 @@ class Organization
             }
         }
         return $this->companies->first() ?: null;
+    }
+
+    /**
+     * @return Collection<int, Owner>
+     */
+    public function getOwners(): Collection
+    {
+        return $this->owners;
+    }
+
+    public function addOwner(Owner $owner): static
+    {
+        if (!$this->owners->contains($owner)) {
+            $this->owners->add($owner);
+            $owner->setOrganization($this);
+        }
+
+        return $this;
+    }
+
+    public function removeOwner(Owner $owner): static
+    {
+        if ($this->owners->removeElement($owner)) {
+            if ($owner->getOrganization() === $this) {
+                $owner->setOrganization(null);
+            }
+        }
+
+        return $this;
     }
 }
 

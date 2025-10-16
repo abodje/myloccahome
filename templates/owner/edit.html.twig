@@ -1,0 +1,176 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Modifier {{ owner.fullName }} - MYLOCCA{% endblock %}
+
+{% block page_title %}
+    <h5 class="mb-0">
+        <i class="bi bi-person-badge me-2"></i>
+        Modifier {{ owner.fullName }}
+    </h5>
+{% endblock %}
+
+{% block page_actions %}
+    <a href="{{ path('app_owner_show', {'id': owner.id}) }}" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-arrow-left me-2"></i>
+        Retour aux détails
+    </a>
+{% endblock %}
+
+{% block body %}
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow">
+                <div class="card-header" style="background-color: var(--primary-color); color: white;">
+                    <h6 class="mb-0">
+                        <i class="bi bi-pencil me-2"></i>
+                        Modifier les informations du propriétaire
+                    </h6>
+                </div>
+                <div class="card-body">
+                    {{ form_start(form, {'attr': {'novalidate': 'novalidate'}}) }}
+                    
+                    <div class="row">
+                        <div class="col-md-12 mb-3">
+                            {{ form_row(form.ownerType) }}
+                        </div>
+                    </div>
+
+                    <h6 class="border-bottom pb-2 mb-3">Informations personnelles</h6>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            {{ form_row(form.firstName) }}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            {{ form_row(form.lastName) }}
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            {{ form_row(form.email) }}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            {{ form_row(form.phone) }}
+                        </div>
+                    </div>
+
+                    <h6 class="border-bottom pb-2 mb-3 mt-4">Adresse</h6>
+
+                    <div class="mb-3">
+                        {{ form_row(form.address) }}
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-8 mb-3">
+                            {{ form_row(form.city) }}
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            {{ form_row(form.postalCode) }}
+                        </div>
+                    </div>
+
+                    <h6 class="border-bottom pb-2 mb-3 mt-4">Informations complémentaires</h6>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            {{ form_row(form.siret) }}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            {{ form_row(form.commissionRate) }}
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        {{ form_row(form.bankAccount) }}
+                    </div>
+
+                    <div class="mb-3">
+                        {{ form_row(form.notes) }}
+                    </div>
+
+                    {{ form_rest(form) }}
+
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle me-2"></i>
+                        <strong>Note :</strong> Si vous modifiez le taux de commission, cela n'affectera pas les loyers déjà calculés.
+                    </div>
+
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+                        <a href="{{ path('app_owner_show', {'id': owner.id}) }}" class="btn btn-outline-secondary">
+                            <i class="bi bi-x-circle me-2"></i>
+                            Annuler
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-circle me-2"></i>
+                            Enregistrer les modifications
+                        </button>
+                    </div>
+
+                    {{ form_end(form) }}
+                </div>
+            </div>
+
+            <!-- Informations complémentaires -->
+            <div class="card mt-3">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0">
+                        <i class="bi bi-clock-history me-2"></i>
+                        Historique
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <p class="mb-1">
+                        <strong>Créé le :</strong> {{ owner.createdAt|date('d/m/Y à H:i') }}
+                    </p>
+                    {% if owner.updatedAt %}
+                    <p class="mb-0">
+                        <strong>Dernière modification :</strong> {{ owner.updatedAt|date('d/m/Y à H:i') }}
+                    </p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        .form-label {
+            font-weight: 500;
+            color: #495057;
+        }
+        
+        h6.border-bottom {
+            color: var(--primary-color);
+        }
+    </style>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script>
+        // Masquer/afficher le champ SIRET selon le type
+        document.addEventListener('DOMContentLoaded', function() {
+            const ownerTypeSelect = document.querySelector('select[name*="[ownerType]"]');
+            const siretField = document.querySelector('input[name*="[siret]"]');
+            
+            if (ownerTypeSelect && siretField) {
+                const siretRow = siretField.closest('.mb-3');
+                
+                function toggleSiretField() {
+                    if (ownerTypeSelect.value === 'Particulier') {
+                        siretRow.style.display = 'none';
+                    } else {
+                        siretRow.style.display = 'block';
+                    }
+                }
+                
+                ownerTypeSelect.addEventListener('change', toggleSiretField);
+                toggleSiretField(); // Initial call
+            }
+        });
+    </script>
+{% endblock %}
+

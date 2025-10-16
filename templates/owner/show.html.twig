@@ -1,0 +1,244 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ owner.fullName }} - MYLOCCA{% endblock %}
+
+{% block page_title %}
+    <h5 class="mb-0">
+        <i class="bi bi-person-badge me-2"></i>
+        {{ owner.fullName }}
+    </h5>
+{% endblock %}
+
+{% block page_actions %}
+    <div class="d-flex gap-2">
+        <a href="{{ path('app_owner_index') }}" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-arrow-left me-2"></i>
+            Retour
+        </a>
+        <a href="{{ path('app_owner_edit', {'id': owner.id}) }}" class="btn btn-outline-primary btn-sm">
+            <i class="bi bi-pencil me-2"></i>
+            Modifier
+        </a>
+    </div>
+{% endblock %}
+
+{% block body %}
+    <!-- Statistiques -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card text-center shadow-sm">
+                <div class="card-body">
+                    <h6 class="text-muted mb-2">Total Propriétés</h6>
+                    <h3 class="text-primary mb-0">{{ stats.total_properties }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center shadow-sm">
+                <div class="card-body">
+                    <h6 class="text-muted mb-2">Propriétés Actives</h6>
+                    <h3 class="text-success mb-0">{{ stats.active_properties }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center shadow-sm">
+                <div class="card-body">
+                    <h6 class="text-muted mb-2">Propriétés Libres</h6>
+                    <h3 class="text-info mb-0">{{ stats.available_properties }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center shadow-sm">
+                <div class="card-body">
+                    <h6 class="text-muted mb-2">Loyers mensuels</h6>
+                    <h3 class="text-warning mb-0">{{ stats.total_monthly_rent|currency }}</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Informations du propriétaire -->
+        <div class="col-md-6 mb-4">
+            <div class="card shadow h-100">
+                <div class="card-header" style="background-color: var(--primary-color); color: white;">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h6 class="mb-0">
+                            <i class="bi bi-info-circle me-2"></i>
+                            Informations du propriétaire
+                        </h6>
+                        <span class="badge bg-{{ owner.ownerType == 'Particulier' ? 'success' : 'info' }}">
+                            {{ owner.ownerType }}
+                        </span>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-4"><strong>Nom complet :</strong></div>
+                        <div class="col-8">{{ owner.fullName }}</div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-4"><strong>Email :</strong></div>
+                        <div class="col-8">
+                            <i class="bi bi-envelope me-1"></i>
+                            <a href="mailto:{{ owner.email }}">{{ owner.email }}</a>
+                        </div>
+                    </div>
+
+                    {% if owner.phone %}
+                    <div class="row mb-3">
+                        <div class="col-4"><strong>Téléphone :</strong></div>
+                        <div class="col-8">
+                            <i class="bi bi-telephone me-1"></i>
+                            <a href="tel:{{ owner.phone }}">{{ owner.phone }}</a>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if owner.fullAddress %}
+                    <div class="row mb-3">
+                        <div class="col-4"><strong>Adresse :</strong></div>
+                        <div class="col-8">
+                            <i class="bi bi-geo-alt me-1"></i>
+                            {{ owner.fullAddress }}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if owner.siret %}
+                    <div class="row mb-3">
+                        <div class="col-4"><strong>SIRET :</strong></div>
+                        <div class="col-8">{{ owner.siret }}</div>
+                    </div>
+                    {% endif %}
+
+                    {% if owner.bankAccount %}
+                    <div class="row mb-3">
+                        <div class="col-4"><strong>Compte bancaire :</strong></div>
+                        <div class="col-8">
+                            <code>{{ owner.bankAccount }}</code>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if owner.commissionRate %}
+                    <div class="row mb-3">
+                        <div class="col-4"><strong>Commission :</strong></div>
+                        <div class="col-8">
+                            <span class="badge bg-primary">{{ owner.commissionRate }}%</span>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if owner.notes %}
+                    <div class="row mb-3">
+                        <div class="col-12"><strong>Notes :</strong></div>
+                        <div class="col-12 mt-2">
+                            <p class="text-muted">{{ owner.notes|nl2br }}</p>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <hr>
+
+                    <div class="row">
+                        <div class="col-12">
+                            <small class="text-muted">
+                                <i class="bi bi-clock me-1"></i>
+                                Créé le {{ owner.createdAt|date('d/m/Y à H:i') }}
+                                {% if owner.updatedAt %}
+                                    <br>Modifié le {{ owner.updatedAt|date('d/m/Y à H:i') }}
+                                {% endif %}
+                            </small>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer bg-light">
+                    <div class="d-flex justify-content-between">
+                        <form method="post" action="{{ path('app_owner_delete', {'id': owner.id}) }}" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer ce propriétaire ? Cette action est irréversible.');">
+                            <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ owner.id) }}">
+                            <button type="submit" class="btn btn-outline-danger btn-sm" {% if owner.properties|length > 0 %}disabled title="Impossible de supprimer un propriétaire avec des biens"{% endif %}>
+                                <i class="bi bi-trash me-2"></i>
+                                Supprimer
+                            </button>
+                        </form>
+                        <a href="{{ path('app_owner_edit', {'id': owner.id}) }}" class="btn btn-primary btn-sm">
+                            <i class="bi bi-pencil me-2"></i>
+                            Modifier
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Liste des propriétés -->
+        <div class="col-md-6 mb-4">
+            <div class="card shadow h-100">
+                <div class="card-header" style="background-color: var(--primary-color); color: white;">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h6 class="mb-0">
+                            <i class="bi bi-building me-2"></i>
+                            Propriétés ({{ owner.properties|length }})
+                        </h6>
+                        <a href="{{ path('app_property_new') }}" class="btn btn-sm btn-light">
+                            <i class="bi bi-plus-circle"></i> Ajouter
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if owner.properties|length > 0 %}
+                        <div class="list-group">
+                            {% for property in owner.properties %}
+                                <a href="{{ path('app_property_show', {'id': property.id}) }}" class="list-group-item list-group-item-action">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div>
+                                            <h6 class="mb-1">{{ property.address }}</h6>
+                                            <p class="mb-1 text-muted">
+                                                <small>
+                                                    {{ property.propertyType }} - {{ property.surface }}m² - {{ property.rooms }} pièce(s)
+                                                </small>
+                                            </p>
+                                            <small>
+                                                <span class="badge bg-{{ property.status == 'Occupé' ? 'success' : 'secondary' }}">
+                                                    {{ property.status }}
+                                                </span>
+                                                {{ property.monthlyRent|currency }}/mois
+                                            </small>
+                                        </div>
+                                        <i class="bi bi-chevron-right"></i>
+                                    </div>
+                                </a>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center p-4">
+                            <i class="bi bi-building display-4 text-muted"></i>
+                            <p class="mt-3 text-muted">Aucune propriété enregistrée</p>
+                            <a href="{{ path('app_property_new') }}" class="btn btn-primary btn-sm">
+                                <i class="bi bi-plus-circle me-2"></i>
+                                Ajouter une propriété
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        .card-header {
+            font-weight: 600;
+        }
+        
+        .list-group-item:hover {
+            background-color: #f8f9fa;
+        }
+    </style>
+{% endblock %}
+
