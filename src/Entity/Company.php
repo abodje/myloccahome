@@ -322,6 +322,14 @@ class Company
         return $this->managers;
     }
 
+    /**
+     * @return Collection<int, User>
+     */
+    public function getUsers(): Collection
+    {
+        return $this->managers;
+    }
+
     public function addManager(User $manager): static
     {
         if (!$this->managers->contains($manager)) {
