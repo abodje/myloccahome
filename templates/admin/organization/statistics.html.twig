@@ -1,0 +1,197 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Statistiques - {{ organization.name }}{% endblock %}
+
+{% block page_title %}
+    <h5 class="mb-0">
+        <i class="bi bi-graph-up me-2"></i>
+        Statistiques - {{ organization.name }}
+    </h5>
+{% endblock %}
+
+{% block page_actions %}
+    <a href="{{ path('app_admin_organization_show', {id: organization.id}) }}" class="btn btn-outline-primary btn-sm">
+        <i class="bi bi-arrow-left"></i> Retour
+    </a>
+{% endblock %}
+
+{% block body %}
+    <div class="row">
+        <!-- Statistiques générales -->
+        <div class="col-12 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="bi bi-bar-chart me-2"></i>
+                        Vue d'ensemble
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3 mb-3">
+                            <div class="text-center">
+                                <div class="h2 text-primary">{{ stats.companies.total }}</div>
+                                <div class="text-muted">Sociétés</div>
+                                <small class="text-success">{{ stats.companies.active }} actives</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <div class="text-center">
+                                <div class="h2 text-info">{{ stats.users.total }}</div>
+                                <div class="text-muted">Utilisateurs</div>
+                                <small class="text-muted">{{ stats.users.admins }} admins, {{ stats.users.managers }} managers</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <div class="text-center">
+                                <div class="h2 text-success">{{ stats.properties.total }}</div>
+                                <div class="text-muted">Propriétés</div>
+                                <small class="text-success">{{ stats.properties.occupied }} occupées</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <div class="text-center">
+                                <div class="h2 text-warning">{{ stats.leases.total }}</div>
+                                <div class="text-muted">Baux</div>
+                                <small class="text-success">{{ stats.leases.active }} actifs</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Détails par catégorie -->
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="bi bi-building me-2"></i>
+                        Sociétés
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span>Total</span>
+                        <span class="badge bg-primary">{{ stats.companies.total }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span>Actives</span>
+                        <span class="badge bg-success">{{ stats.companies.active }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span>Inactives</span>
+                        <span class="badge bg-danger">{{ stats.companies.total - stats.companies.active }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="bi bi-people me-2"></i>
+                        Utilisateurs
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span>Total</span>
+                        <span class="badge bg-primary">{{ stats.users.total }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span>Administrateurs</span>
+                        <span class="badge bg-danger">{{ stats.users.admins }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span>Gestionnaires</span>
+                        <span class="badge bg-warning">{{ stats.users.managers }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="bi bi-house me-2"></i>
+                        Propriétés
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span>Total</span>
+                        <span class="badge bg-primary">{{ stats.properties.total }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span>Occupées</span>
+                        <span class="badge bg-success">{{ stats.properties.occupied }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span>Libres</span>
+                        <span class="badge bg-info">{{ stats.properties.total - stats.properties.occupied }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="bi bi-file-text me-2"></i>
+                        Baux
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span>Total</span>
+                        <span class="badge bg-primary">{{ stats.leases.total }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span>Actifs</span>
+                        <span class="badge bg-success">{{ stats.leases.active }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span>Inactifs</span>
+                        <span class="badge bg-secondary">{{ stats.leases.total - stats.leases.active }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Informations sur l'organisation -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="bi bi-info-circle me-2"></i>
+                        Informations sur l'organisation
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>Nom :</strong> {{ organization.name }}</p>
+                            <p><strong>Email :</strong> {{ organization.email ?? 'Non renseigné' }}</p>
+                            <p><strong>Téléphone :</strong> {{ organization.phone ?? 'Non renseigné' }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Statut :</strong>
+                                <span class="badge bg-{{ organization.isActive ? 'success' : 'danger' }}">
+                                    {{ organization.isActive ? 'Active' : 'Inactive' }}
+                                </span>
+                            </p>
+                            <p><strong>Créée le :</strong> {{ organization.createdAt|date('d/m/Y H:i') }}</p>
+                            <p><strong>Dernière mise à jour :</strong> {{ organization.updatedAt ? organization.updatedAt|date('d/m/Y H:i') : 'Jamais' }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
