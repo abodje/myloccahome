@@ -31,7 +31,6 @@ class DashboardController extends AbstractController
     ): Response {
         /** @var \App\Entity\User|null $user */
         $user = $this->getUser();
-<<<<<<< HEAD
 
         // Debug: Log user roles for troubleshooting
         if ($user) {
@@ -51,17 +50,6 @@ class DashboardController extends AbstractController
         } else {
             // Dashboard par défaut pour les utilisateurs sans rôle spécifique
             error_log('DashboardController: Using defaultDashboard');
-=======
-        // Adapter les données selon le rôle de l'utilisateur
-        if ($user && in_array('ROLE_ADMIN', $user->getRoles())) {
-            return $this->adminDashboard($propertyRepo, $tenantRepo, $leaseRepo, $paymentRepo, $maintenanceRepo, $expenseRepo, $accountingRepo, $conversationRepo, $analyticsService);
-        } elseif ($user && in_array('ROLE_MANAGER', $user->getRoles())) {
-            return $this->managerDashboard($user, $propertyRepo, $tenantRepo, $leaseRepo, $paymentRepo, $maintenanceRepo, $expenseRepo, $accountingRepo, $conversationRepo);
-        } elseif ($user && in_array('ROLE_TENANT', $user->getRoles())) {
-            return $this->tenantDashboard($user, $propertyRepo, $leaseRepo, $paymentRepo, $maintenanceRepo, $accountingRepo, $conversationRepo);
-        } else {
-            // Dashboard par défaut pour les utilisateurs sans rôle spécifique
->>>>>>> 6e87c3851b8abe300389f1559fefe39834f199e8
             return $this->defaultDashboard($propertyRepo, $tenantRepo, $leaseRepo, $paymentRepo, $maintenanceRepo, $expenseRepo);
         }
     }
@@ -361,7 +349,6 @@ class DashboardController extends AbstractController
             ],
         ];
 
-<<<<<<< HEAD
         // Revenus et dépenses du mois pour le dashboard par défaut
         $currentMonth = new \DateTime('first day of this month');
         $nextMonth = new \DateTime('first day of next month');
@@ -383,10 +370,6 @@ class DashboardController extends AbstractController
             'recent_maintenance' => $recentMaintenanceRequests,
             'urgent_requests' => $urgentRequests,
             'overdue_payments' => $overduePayments,
-=======
-        return $this->render('dashboard/index.html.twig', [
-            'stats' => $stats,
->>>>>>> 6e87c3851b8abe300389f1559fefe39834f199e8
             'user_role' => 'default'
         ]);
     }

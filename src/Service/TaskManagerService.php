@@ -105,13 +105,10 @@ class TaskManagerService
                     $this->executeBackupTask($task);
                     break;
 
-<<<<<<< HEAD
                 case 'TEST_EMAIL_CONFIG':
                     $this->executeTestEmailConfigTask($task);
                     break;
 
-=======
->>>>>>> 6e87c3851b8abe300389f1559fefe39834f199e8
                 default:
                     throw new \Exception("Type de tâche non reconnu: {$task->getType()}");
             }
@@ -354,7 +351,6 @@ class TaskManagerService
                     'clean_old' => true, // Nettoyer anciennes sauvegardes
                     'keep_days' => 30 // Conserver 30 jours
                 ]
-<<<<<<< HEAD
             ],
             [
                 'name' => 'Test de configuration email',
@@ -364,8 +360,6 @@ class TaskManagerService
                 'parameters' => [
                     'email' => 'admin@mylocca.com' // Email par défaut pour le test
                 ]
-=======
->>>>>>> 6e87c3851b8abe300389f1559fefe39834f199e8
             ]
         ];
 
@@ -809,7 +803,6 @@ class TaskManagerService
             throw $e;
         }
     }
-<<<<<<< HEAD
 
     /**
      * Exécute la tâche de test de configuration email
@@ -949,6 +942,4 @@ class TaskManagerService
 </html>
 HTML;
     }
-=======
->>>>>>> 6e87c3851b8abe300389f1559fefe39834f199e8
 }

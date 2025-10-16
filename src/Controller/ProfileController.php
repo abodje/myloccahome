@@ -57,11 +57,6 @@ class ProfileController extends AbstractController
             $user->setAddress($request->request->get('address', $user->getAddress()));
             $user->setCity($request->request->get('city', $user->getCity()));
             $user->setPostalCode($request->request->get('postalCode', $user->getPostalCode()));
-<<<<<<< HEAD
-            $user->setCountry($request->request->get('country', $user->getCountry()));
-            $user->setMaritalStatus($request->request->get('maritalStatus', $user->getMaritalStatus()));
-=======
->>>>>>> 6e87c3851b8abe300389f1559fefe39834f199e8
 
             if ($request->request->get('birthDate')) {
                 $user->setBirthDate(new \DateTime($request->request->get('birthDate')));
@@ -77,27 +72,14 @@ class ProfileController extends AbstractController
     }
 
     #[Route('/mode-paiement', name: 'app_profile_payment_method', methods: ['GET', 'POST'])]
-<<<<<<< HEAD
-    public function paymentMethod(Request $request, EntityManagerInterface $entityManager): Response
-=======
     public function paymentMethod(Request $request): Response
->>>>>>> 6e87c3851b8abe300389f1559fefe39834f199e8
     {
         $user = $this->getUser();
 
         if ($request->isMethod('POST')) {
-<<<<<<< HEAD
-            $preferredMethod = $request->request->get('preferredPaymentMethod');
-            if ($preferredMethod) {
-                $user->setPreferredPaymentMethod($preferredMethod);
-                $entityManager->flush();
-                $this->addFlash('success', 'Mode de paiement préféré mis à jour avec succès.');
-            }
-=======
             // Note: User n'a pas de champ preferredPaymentMethod
             // Cette fonctionnalité devrait être gérée via Tenant ou une autre entité
             $this->addFlash('info', 'Cette fonctionnalité sera bientôt disponible.');
->>>>>>> 6e87c3851b8abe300389f1559fefe39834f199e8
         }
 
         return $this->render('profile/payment_method.html.twig', [
@@ -106,79 +88,14 @@ class ProfileController extends AbstractController
     }
 
     #[Route('/confidentialite', name: 'app_profile_privacy', methods: ['GET', 'POST'])]
-<<<<<<< HEAD
-    public function privacy(Request $request, EntityManagerInterface $entityManager): Response
-=======
     public function privacy(Request $request): Response
->>>>>>> 6e87c3851b8abe300389f1559fefe39834f199e8
     {
         $user = $this->getUser();
 
         if ($request->isMethod('POST')) {
-<<<<<<< HEAD
-            // Vérifier le token CSRF
-            $submittedToken = $request->request->get('token');
-            if (!$this->isCsrfTokenValid('profile_privacy', $submittedToken)) {
-                $this->addFlash('error', 'Token de sécurité invalide.');
-                return $this->redirectToRoute('app_profile_privacy');
-            }
-
-            // Gérer les consentements
-            $consents = [];
-
-            // Communications Foncia
-            if ($request->request->has('foncia_communications')) {
-                $consents['foncia_communications'] = true;
-            } else {
-                $consents['foncia_communications'] = false;
-            }
-
-            // Communications Partenaires
-            if ($request->request->has('partner_communications')) {
-                $consents['partner_communications'] = true;
-            } else {
-                $consents['partner_communications'] = false;
-            }
-
-            // Cookies d'analyse
-            if ($request->request->has('analytics_cookies')) {
-                $consents['analytics_cookies'] = true;
-            } else {
-                $consents['analytics_cookies'] = false;
-            }
-
-            // Cookies marketing
-            if ($request->request->has('marketing_cookies')) {
-                $consents['marketing_cookies'] = true;
-            } else {
-                $consents['marketing_cookies'] = false;
-            }
-
-            // Authentification à deux facteurs
-            if ($request->request->has('two_factor_auth')) {
-                $consents['two_factor_auth'] = true;
-            } else {
-                $consents['two_factor_auth'] = false;
-            }
-
-            // Notifications de connexion
-            if ($request->request->has('login_notifications')) {
-                $consents['login_notifications'] = true;
-            } else {
-                $consents['login_notifications'] = false;
-            }
-
-            // Sauvegarder les consentements
-            $user->setConsents($consents);
-            $entityManager->flush();
-
-            $this->addFlash('success', 'Vos paramètres de confidentialité ont été mis à jour avec succès.');
-            return $this->redirectToRoute('app_profile_privacy');
-=======
             // Note: User n'a pas de champ consentSettings
             // Cette fonctionnalité devrait être gérée via une table séparée
             $this->addFlash('info', 'Paramètres de confidentialité enregistrés.');
->>>>>>> 6e87c3851b8abe300389f1559fefe39834f199e8
         }
 
         return $this->render('profile/privacy.html.twig', [

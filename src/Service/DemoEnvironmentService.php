@@ -12,40 +12,27 @@ use App\Entity\Payment;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
-<<<<<<< HEAD
 use Symfony\Component\String\Slugger\SluggerInterface;
-=======
->>>>>>> 6e87c3851b8abe300389f1559fefe39834f199e8
 
 class DemoEnvironmentService
 {
     private EntityManagerInterface $entityManager;
     private Filesystem $filesystem;
     private ParameterBagInterface $params;
-<<<<<<< HEAD
     private SluggerInterface $slugger;
-=======
->>>>>>> 6e87c3851b8abe300389f1559fefe39834f199e8
     private string $demoBaseUrl;
     private string $demoDataDir;
 
     public function __construct(
         EntityManagerInterface $entityManager,
         Filesystem $filesystem,
-<<<<<<< HEAD
         ParameterBagInterface $params,
         SluggerInterface $slugger
-=======
-        ParameterBagInterface $params
->>>>>>> 6e87c3851b8abe300389f1559fefe39834f199e8
     ) {
         $this->entityManager = $entityManager;
         $this->filesystem = $filesystem;
         $this->params = $params;
-<<<<<<< HEAD
         $this->slugger = $slugger;
-=======
->>>>>>> 6e87c3851b8abe300389f1559fefe39834f199e8
         $this->demoBaseUrl = $_ENV['DEMO_BASE_URL'] ?? 'demo.mylocca.local';
         $this->demoDataDir = $this->params->get('kernel.project_dir') . '/demo_data';
 
@@ -64,12 +51,9 @@ class DemoEnvironmentService
         $demoUrl = "https://{$subdomain}.{$this->demoBaseUrl}";
 
         try {
-<<<<<<< HEAD
             // Utiliser un EntityManager frais pour éviter les problèmes de fermeture
             $this->entityManager->clear();
 
-=======
->>>>>>> 6e87c3851b8abe300389f1559fefe39834f199e8
             // 1. Créer l'organisation de démo
             $organization = $this->createDemoOrganization($user, $subdomain);
 
@@ -96,13 +80,10 @@ class DemoEnvironmentService
             ];
 
         } catch (\Exception $e) {
-<<<<<<< HEAD
             // Log l'erreur complète
             error_log('Erreur DemoEnvironmentService: ' . $e->getMessage());
             error_log('Stack trace: ' . $e->getTraceAsString());
 
-=======
->>>>>>> 6e87c3851b8abe300389f1559fefe39834f199e8
             return [
                 'success' => false,
                 'error' => $e->getMessage(),
@@ -133,20 +114,13 @@ class DemoEnvironmentService
     {
         $organization = new Organization();
         $organization->setName("Organisation Démo - {$user->getFirstName()} {$user->getLastName()}");
-<<<<<<< HEAD
         $organization->setSlug($this->slugger->slug($organization->getName())->lower()); // Ajouter le slug
-=======
->>>>>>> 6e87c3851b8abe300389f1559fefe39834f199e8
         $organization->setDescription("Environnement de démo pour tester MYLOCCA");
         $organization->setSubdomain($subdomain);
         $organization->setIsDemo(true);
         $organization->setCreatedAt(new \DateTime());
-<<<<<<< HEAD
         $organization->setStatus('TRIAL'); // Utiliser le statut correct
         $organization->setIsActive(true);
-=======
-        $organization->setStatus('active');
->>>>>>> 6e87c3851b8abe300389f1559fefe39834f199e8
 
         $this->entityManager->persist($organization);
         $this->entityManager->flush();
@@ -165,12 +139,8 @@ class DemoEnvironmentService
         $company->setOrganization($organization);
         $company->setIsDemo(true);
         $company->setCreatedAt(new \DateTime());
-<<<<<<< HEAD
         $company->setStatus('ACTIVE'); // Utiliser le statut correct
         $company->setIsHeadquarter(true); // C'est le siège social
-=======
-        $company->setStatus('active');
->>>>>>> 6e87c3851b8abe300389f1559fefe39834f199e8
 
         $this->entityManager->persist($company);
         $this->entityManager->flush();
@@ -237,25 +207,15 @@ class DemoEnvironmentService
         for ($i = 0; $i < 5; $i++) {
             $property = new Property();
             $property->setAddress($addresses[$i]);
-<<<<<<< HEAD
             $property->setMonthlyRent($rents[$i]); // Utiliser setMonthlyRent au lieu de setRentAmount
             $property->setSurface($surfaces[$i]);
             $property->setPropertyType('Appartement'); // Utiliser setPropertyType au lieu de setType
-=======
-            $property->setRentAmount($rents[$i]);
-            $property->setSurface($surfaces[$i]);
-            $property->setType('Appartement');
->>>>>>> 6e87c3851b8abe300389f1559fefe39834f199e8
             $property->setDescription("Appartement de démo - {$surfaces[$i]}m²");
             $property->setOrganization($organization);
             $property->setCompany($company);
             $property->setIsDemo(true);
             $property->setCreatedAt(new \DateTime());
-<<<<<<< HEAD
             $property->setStatus('Libre'); // Utiliser le statut correct
-=======
-            $property->setStatus('available');
->>>>>>> 6e87c3851b8abe300389f1559fefe39834f199e8
 
             $this->entityManager->persist($property);
             $properties[] = $property;
@@ -289,11 +249,7 @@ class DemoEnvironmentService
             $tenant->setCompany($company);
             $tenant->setIsDemo(true);
             $tenant->setCreatedAt(new \DateTime());
-<<<<<<< HEAD
             $tenant->setStatus('Actif'); // Utiliser le statut correct
-=======
-            $tenant->setStatus('active');
->>>>>>> 6e87c3851b8abe300389f1559fefe39834f199e8
 
             $this->entityManager->persist($tenant);
             $tenants[] = $tenant;
@@ -314,19 +270,11 @@ class DemoEnvironmentService
             $lease = new Lease();
             $lease->setProperty($properties[$i]);
             $lease->setTenant($tenants[$i]);
-<<<<<<< HEAD
             $lease->setMonthlyRent($properties[$i]->getMonthlyRent()); // Utiliser getMonthlyRent
             $lease->setSecurityDeposit($properties[$i]->getMonthlyRent() * 2);
             $lease->setStartDate(new \DateTime());
             $lease->setEndDate((new \DateTime())->modify('+12 months'));
             $lease->setStatus('Actif'); // Utiliser le statut correct
-=======
-            $lease->setMonthlyRent($properties[$i]->getRentAmount());
-            $lease->setSecurityDeposit($properties[$i]->getRentAmount() * 2);
-            $lease->setStartDate(new \DateTime());
-            $lease->setEndDate((new \DateTime())->modify('+12 months'));
-            $lease->setStatus('active');
->>>>>>> 6e87c3851b8abe300389f1559fefe39834f199e8
             $lease->setOrganization($organization);
             $lease->setCompany($company);
             $lease->setIsDemo(true);
@@ -355,11 +303,7 @@ class DemoEnvironmentService
                 $payment->setAmount($lease->getMonthlyRent());
                 $payment->setDueDate((new \DateTime())->modify("-{$i} months")->modify('+1 day'));
                 $payment->setPaidDate((new \DateTime())->modify("-{$i} months")->modify('+2 days'));
-<<<<<<< HEAD
                 $payment->setStatus('Payé'); // Utiliser le statut correct
-=======
-                $payment->setStatus('Payé');
->>>>>>> 6e87c3851b8abe300389f1559fefe39834f199e8
                 $payment->setType('Loyer');
                 $payment->setPaymentMethod('Virement');
                 $payment->setReference('DEMO-' . str_pad($i, 3, '0', STR_PAD_LEFT));

@@ -1,0 +1,155 @@
+[15-Oct-2025 14:29:16 UTC] Erreur génération quittance pour paiement #13: An exception occurred while executing a query: SQLSTATE[23000]: Integrity constraint violation: 1452 Cannot add or update a child row: a foreign key constraint fails (`lokaprot_app`.`document`, CONSTRAINT `FK_D8698A7632C8A3DE` FOREIGN KEY (`organization_id`) REFERENCES `organization` (`id`))
+Stack trace: #0 /home/lokaprot/mylokka/vendor/doctrine/dbal/src/Connection.php(1976): Doctrine\DBAL\Driver\API\MySQL\ExceptionConverter->convert()
+#1 /home/lokaprot/mylokka/vendor/doctrine/dbal/src/Connection.php(1918): Doctrine\DBAL\Connection->handleDriverException()
+#2 /home/lokaprot/mylokka/vendor/doctrine/dbal/src/Statement.php(194): Doctrine\DBAL\Connection->convertExceptionDuringQuery()
+#3 /home/lokaprot/mylokka/vendor/doctrine/dbal/src/Statement.php(249): Doctrine\DBAL\Statement->execute()
+#4 /home/lokaprot/mylokka/vendor/doctrine/orm/src/Persisters/Entity/BasicEntityPersister.php(255): Doctrine\DBAL\Statement->executeStatement()
+#5 /home/lokaprot/mylokka/vendor/doctrine/orm/src/UnitOfWork.php(1059): Doctrine\ORM\Persisters\Entity\BasicEntityPersister->executeInserts()
+#6 /home/lokaprot/mylokka/vendor/doctrine/orm/src/UnitOfWork.php(402): Doctrine\ORM\UnitOfWork->executeInserts()
+#7 /home/lokaprot/mylokka/vendor/doctrine/orm/src/EntityManager.php(268): Doctrine\ORM\UnitOfWork->commit()
+#8 /home/lokaprot/mylokka/src/Service/RentReceiptService.php(131): Doctrine\ORM\EntityManager->flush()
+#9 /home/lokaprot/mylokka/src/Service/RentReceiptService.php(264): App\Service\RentReceiptService->generateRentReceipt()
+#10 /home/lokaprot/mylokka/src/Service/TaskManagerService.php(586): App\Service\RentReceiptService->generateMonthlyReceipts()
+#11 /home/lokaprot/mylokka/src/Service/TaskManagerService.php(93): App\Service\TaskManagerService->executeGenerateRentDocumentsTask()
+#12 /home/lokaprot/mylokka/src/Service/TaskManagerService.php(409): App\Service\TaskManagerService->executeTask()
+#13 /home/lokaprot/mylokka/src/Controller/Admin/TaskController.php(69): App\Service\TaskManagerService->forceExecuteTask()
+#14 /home/lokaprot/mylokka/vendor/symfony/http-kernel/HttpKernel.php(183): App\Controller\Admin\TaskController->execute()
+#15 /home/lokaprot/mylokka/vendor/symfony/http-kernel/HttpKernel.php(76): Symfony\Component\HttpKernel\HttpKernel->handleRaw()
+#16 /home/lokaprot/mylokka/vendor/symfony/http-kernel/Kernel.php(182): Symfony\Component\HttpKernel\HttpKernel->handle()
+#17 /home/lokaprot/mylokka/vendor/symfony/runtime/Runner/Symfony/HttpKernelRunner.php(35): Symfony\Component\HttpKernel\Kernel->handle()
+#18 /home/lokaprot/mylokka/vendor/autoload_runtime.php(29): Symfony\Component\Runtime\Runner\Symfony\HttpKernelRunner->run()
+#19 /home/lokaprot/mylokka/public/index.php(5): require_once('/home/lokaprot/...')
+#20 {main}
+[15-Oct-2025 14:29:16 UTC] EntityManager fermé - impossible de continuer la génération
+[15-Oct-2025 14:29:16 UTC] Erreur génération avis pour paiement #19: The EntityManager is closed.
+Stack trace: #0 /home/lokaprot/mylokka/vendor/doctrine/orm/src/EntityManager.php(532): Doctrine\ORM\Exception\EntityManagerClosed::create()
+#1 /home/lokaprot/mylokka/vendor/doctrine/orm/src/EntityManager.php(441): Doctrine\ORM\EntityManager->errorIfClosed()
+#2 /home/lokaprot/mylokka/src/Service/RentReceiptService.php(231): Doctrine\ORM\EntityManager->persist()
+#3 /home/lokaprot/mylokka/src/Service/RentReceiptService.php(317): App\Service\RentReceiptService->generatePaymentNotice()
+#4 /home/lokaprot/mylokka/src/Service/TaskManagerService.php(590): App\Service\RentReceiptService->generateUpcomingNotices()
+#5 /home/lokaprot/mylokka/src/Service/TaskManagerService.php(93): App\Service\TaskManagerService->executeGenerateRentDocumentsTask()
+#6 /home/lokaprot/mylokka/src/Service/TaskManagerService.php(409): App\Service\TaskManagerService->executeTask()
+#7 /home/lokaprot/mylokka/src/Controller/Admin/TaskController.php(69): App\Service\TaskManagerService->forceExecuteTask()
+#8 /home/lokaprot/mylokka/vendor/symfony/http-kernel/HttpKernel.php(183): App\Controller\Admin\TaskController->execute()
+#9 /home/lokaprot/mylokka/vendor/symfony/http-kernel/HttpKernel.php(76): Symfony\Component\HttpKernel\HttpKernel->handleRaw()
+#10 /home/lokaprot/mylokka/vendor/symfony/http-kernel/Kernel.php(182): Symfony\Component\HttpKernel\HttpKernel->handle()
+#11 /home/lokaprot/mylokka/vendor/symfony/runtime/Runner/Symfony/HttpKernelRunner.php(35): Symfony\Component\HttpKernel\Kernel->handle()
+#12 /home/lokaprot/mylokka/vendor/autoload_runtime.php(29): Symfony\Component\Runtime\Runner\Symfony\HttpKernelRunner->run()
+#13 /home/lokaprot/mylokka/public/index.php(5): require_once('/home/lokaprot/...')
+#14 {main}
+[15-Oct-2025 14:29:16 UTC] EntityManager fermé - impossible de continuer la génération
+[15-Oct-2025 14:41:10 UTC] === DEBUG PAYMENT ===
+[15-Oct-2025 14:41:10 UTC] Payment ID: 24
+[15-Oct-2025 14:41:10 UTC] Amount: 1000.00
+[15-Oct-2025 14:41:10 UTC] Amount as int: 1000
+[15-Oct-2025 14:41:10 UTC] Tenant: Kouame paul arnaud Abodje
+[15-Oct-2025 14:41:10 UTC] Transaction ID: RENT-24-68efb286e691f
+[15-Oct-2025 14:41:10 UTC] Payment Method: mobile_money
+[15-Oct-2025 14:41:10 UTC] === CONFIGURING CINETPAY ===
+[15-Oct-2025 14:41:10 UTC] Notify URL: https://app.lokapro.tech/paiement-en-ligne/notification
+[15-Oct-2025 14:41:10 UTC] Return URL: https://app.lokapro.tech/paiement-en-ligne/retour/RENT-24-68efb286e691f
+[15-Oct-2025 14:41:10 UTC] === SETTING CINETPAY PARAMETERS ===
+[15-Oct-2025 20:51:33 UTC] Erreur génération quittance pour paiement #13: An exception occurred while executing a query: SQLSTATE[23000]: Integrity constraint violation: 1452 Cannot add or update a child row: a foreign key constraint fails (`lokaprot_app`.`document`, CONSTRAINT `FK_D8698A7632C8A3DE` FOREIGN KEY (`organization_id`) REFERENCES `organization` (`id`))
+Stack trace: #0 /home/lokaprot/mylokka/vendor/doctrine/dbal/src/Connection.php(1976): Doctrine\DBAL\Driver\API\MySQL\ExceptionConverter->convert()
+#1 /home/lokaprot/mylokka/vendor/doctrine/dbal/src/Connection.php(1918): Doctrine\DBAL\Connection->handleDriverException()
+#2 /home/lokaprot/mylokka/vendor/doctrine/dbal/src/Statement.php(194): Doctrine\DBAL\Connection->convertExceptionDuringQuery()
+#3 /home/lokaprot/mylokka/vendor/doctrine/dbal/src/Statement.php(249): Doctrine\DBAL\Statement->execute()
+#4 /home/lokaprot/mylokka/vendor/doctrine/orm/src/Persisters/Entity/BasicEntityPersister.php(255): Doctrine\DBAL\Statement->executeStatement()
+#5 /home/lokaprot/mylokka/vendor/doctrine/orm/src/UnitOfWork.php(1059): Doctrine\ORM\Persisters\Entity\BasicEntityPersister->executeInserts()
+#6 /home/lokaprot/mylokka/vendor/doctrine/orm/src/UnitOfWork.php(402): Doctrine\ORM\UnitOfWork->executeInserts()
+#7 /home/lokaprot/mylokka/vendor/doctrine/orm/src/EntityManager.php(268): Doctrine\ORM\UnitOfWork->commit()
+#8 /home/lokaprot/mylokka/src/Service/RentReceiptService.php(131): Doctrine\ORM\EntityManager->flush()
+#9 /home/lokaprot/mylokka/src/Service/RentReceiptService.php(264): App\Service\RentReceiptService->generateRentReceipt()
+#10 /home/lokaprot/mylokka/src/Controller/DocumentController.php(466): App\Service\RentReceiptService->generateMonthlyReceipts()
+#11 /home/lokaprot/mylokka/vendor/symfony/http-kernel/HttpKernel.php(183): App\Controller\DocumentController->generateMonthlyDocuments()
+#12 /home/lokaprot/mylokka/vendor/symfony/http-kernel/HttpKernel.php(76): Symfony\Component\HttpKernel\HttpKernel->handleRaw()
+#13 /home/lokaprot/mylokka/vendor/symfony/http-kernel/Kernel.php(182): Symfony\Component\HttpKernel\HttpKernel->handle()
+#14 /home/lokaprot/mylokka/vendor/symfony/runtime/Runner/Symfony/HttpKernelRunner.php(35): Symfony\Component\HttpKernel\Kernel->handle()
+#15 /home/lokaprot/mylokka/vendor/autoload_runtime.php(29): Symfony\Component\Runtime\Runner\Symfony\HttpKernelRunner->run()
+#16 /home/lokaprot/mylokka/public/index.php(5): require_once('/home/lokaprot/...')
+#17 {main}
+[15-Oct-2025 20:51:33 UTC] EntityManager fermé - impossible de continuer la génération
+[15-Oct-2025 20:51:33 UTC] Erreur génération avis pour paiement #19: The EntityManager is closed.
+Stack trace: #0 /home/lokaprot/mylokka/vendor/doctrine/orm/src/EntityManager.php(532): Doctrine\ORM\Exception\EntityManagerClosed::create()
+#1 /home/lokaprot/mylokka/vendor/doctrine/orm/src/EntityManager.php(441): Doctrine\ORM\EntityManager->errorIfClosed()
+#2 /home/lokaprot/mylokka/src/Service/RentReceiptService.php(231): Doctrine\ORM\EntityManager->persist()
+#3 /home/lokaprot/mylokka/src/Service/RentReceiptService.php(317): App\Service\RentReceiptService->generatePaymentNotice()
+#4 /home/lokaprot/mylokka/src/Controller/DocumentController.php(470): App\Service\RentReceiptService->generateUpcomingNotices()
+#5 /home/lokaprot/mylokka/vendor/symfony/http-kernel/HttpKernel.php(183): App\Controller\DocumentController->generateMonthlyDocuments()
+#6 /home/lokaprot/mylokka/vendor/symfony/http-kernel/HttpKernel.php(76): Symfony\Component\HttpKernel\HttpKernel->handleRaw()
+#7 /home/lokaprot/mylokka/vendor/symfony/http-kernel/Kernel.php(182): Symfony\Component\HttpKernel\HttpKernel->handle()
+#8 /home/lokaprot/mylokka/vendor/symfony/runtime/Runner/Symfony/HttpKernelRunner.php(35): Symfony\Component\HttpKernel\Kernel->handle()
+#9 /home/lokaprot/mylokka/vendor/autoload_runtime.php(29): Symfony\Component\Runtime\Runner\Symfony\HttpKernelRunner->run()
+#10 /home/lokaprot/mylokka/public/index.php(5): require_once('/home/lokaprot/...')
+#11 {main}
+[15-Oct-2025 20:51:33 UTC] EntityManager fermé - impossible de continuer la génération
+[15-Oct-2025 20:51:37 UTC] Erreur génération quittance pour paiement #13: An exception occurred while executing a query: SQLSTATE[23000]: Integrity constraint violation: 1452 Cannot add or update a child row: a foreign key constraint fails (`lokaprot_app`.`document`, CONSTRAINT `FK_D8698A7632C8A3DE` FOREIGN KEY (`organization_id`) REFERENCES `organization` (`id`))
+Stack trace: #0 /home/lokaprot/mylokka/vendor/doctrine/dbal/src/Connection.php(1976): Doctrine\DBAL\Driver\API\MySQL\ExceptionConverter->convert()
+#1 /home/lokaprot/mylokka/vendor/doctrine/dbal/src/Connection.php(1918): Doctrine\DBAL\Connection->handleDriverException()
+#2 /home/lokaprot/mylokka/vendor/doctrine/dbal/src/Statement.php(194): Doctrine\DBAL\Connection->convertExceptionDuringQuery()
+#3 /home/lokaprot/mylokka/vendor/doctrine/dbal/src/Statement.php(249): Doctrine\DBAL\Statement->execute()
+#4 /home/lokaprot/mylokka/vendor/doctrine/orm/src/Persisters/Entity/BasicEntityPersister.php(255): Doctrine\DBAL\Statement->executeStatement()
+#5 /home/lokaprot/mylokka/vendor/doctrine/orm/src/UnitOfWork.php(1059): Doctrine\ORM\Persisters\Entity\BasicEntityPersister->executeInserts()
+#6 /home/lokaprot/mylokka/vendor/doctrine/orm/src/UnitOfWork.php(402): Doctrine\ORM\UnitOfWork->executeInserts()
+#7 /home/lokaprot/mylokka/vendor/doctrine/orm/src/EntityManager.php(268): Doctrine\ORM\UnitOfWork->commit()
+#8 /home/lokaprot/mylokka/src/Service/RentReceiptService.php(131): Doctrine\ORM\EntityManager->flush()
+#9 /home/lokaprot/mylokka/src/Service/RentReceiptService.php(264): App\Service\RentReceiptService->generateRentReceipt()
+#10 /home/lokaprot/mylokka/src/Controller/DocumentController.php(466): App\Service\RentReceiptService->generateMonthlyReceipts()
+#11 /home/lokaprot/mylokka/vendor/symfony/http-kernel/HttpKernel.php(183): App\Controller\DocumentController->generateMonthlyDocuments()
+#12 /home/lokaprot/mylokka/vendor/symfony/http-kernel/HttpKernel.php(76): Symfony\Component\HttpKernel\HttpKernel->handleRaw()
+#13 /home/lokaprot/mylokka/vendor/symfony/http-kernel/Kernel.php(182): Symfony\Component\HttpKernel\HttpKernel->handle()
+#14 /home/lokaprot/mylokka/vendor/symfony/runtime/Runner/Symfony/HttpKernelRunner.php(35): Symfony\Component\HttpKernel\Kernel->handle()
+#15 /home/lokaprot/mylokka/vendor/autoload_runtime.php(29): Symfony\Component\Runtime\Runner\Symfony\HttpKernelRunner->run()
+#16 /home/lokaprot/mylokka/public/index.php(5): require_once('/home/lokaprot/...')
+#17 {main}
+[15-Oct-2025 20:51:37 UTC] EntityManager fermé - impossible de continuer la génération
+[15-Oct-2025 20:51:37 UTC] Erreur génération avis pour paiement #19: The EntityManager is closed.
+Stack trace: #0 /home/lokaprot/mylokka/vendor/doctrine/orm/src/EntityManager.php(532): Doctrine\ORM\Exception\EntityManagerClosed::create()
+#1 /home/lokaprot/mylokka/vendor/doctrine/orm/src/EntityManager.php(441): Doctrine\ORM\EntityManager->errorIfClosed()
+#2 /home/lokaprot/mylokka/src/Service/RentReceiptService.php(231): Doctrine\ORM\EntityManager->persist()
+#3 /home/lokaprot/mylokka/src/Service/RentReceiptService.php(317): App\Service\RentReceiptService->generatePaymentNotice()
+#4 /home/lokaprot/mylokka/src/Controller/DocumentController.php(470): App\Service\RentReceiptService->generateUpcomingNotices()
+#5 /home/lokaprot/mylokka/vendor/symfony/http-kernel/HttpKernel.php(183): App\Controller\DocumentController->generateMonthlyDocuments()
+#6 /home/lokaprot/mylokka/vendor/symfony/http-kernel/HttpKernel.php(76): Symfony\Component\HttpKernel\HttpKernel->handleRaw()
+#7 /home/lokaprot/mylokka/vendor/symfony/http-kernel/Kernel.php(182): Symfony\Component\HttpKernel\HttpKernel->handle()
+#8 /home/lokaprot/mylokka/vendor/symfony/runtime/Runner/Symfony/HttpKernelRunner.php(35): Symfony\Component\HttpKernel\Kernel->handle()
+#9 /home/lokaprot/mylokka/vendor/autoload_runtime.php(29): Symfony\Component\Runtime\Runner\Symfony\HttpKernelRunner->run()
+#10 /home/lokaprot/mylokka/public/index.php(5): require_once('/home/lokaprot/...')
+#11 {main}
+[15-Oct-2025 20:51:37 UTC] EntityManager fermé - impossible de continuer la génération
+[15-Oct-2025 20:55:45 UTC] Erreur génération quittance pour paiement #13: An exception occurred while executing a query: SQLSTATE[23000]: Integrity constraint violation: 1452 Cannot add or update a child row: a foreign key constraint fails (`lokaprot_app`.`document`, CONSTRAINT `FK_D8698A7632C8A3DE` FOREIGN KEY (`organization_id`) REFERENCES `organization` (`id`))
+Stack trace: #0 /home/lokaprot/mylokka/vendor/doctrine/dbal/src/Connection.php(1976): Doctrine\DBAL\Driver\API\MySQL\ExceptionConverter->convert()
+#1 /home/lokaprot/mylokka/vendor/doctrine/dbal/src/Connection.php(1918): Doctrine\DBAL\Connection->handleDriverException()
+#2 /home/lokaprot/mylokka/vendor/doctrine/dbal/src/Statement.php(194): Doctrine\DBAL\Connection->convertExceptionDuringQuery()
+#3 /home/lokaprot/mylokka/vendor/doctrine/dbal/src/Statement.php(249): Doctrine\DBAL\Statement->execute()
+#4 /home/lokaprot/mylokka/vendor/doctrine/orm/src/Persisters/Entity/BasicEntityPersister.php(255): Doctrine\DBAL\Statement->executeStatement()
+#5 /home/lokaprot/mylokka/vendor/doctrine/orm/src/UnitOfWork.php(1059): Doctrine\ORM\Persisters\Entity\BasicEntityPersister->executeInserts()
+#6 /home/lokaprot/mylokka/vendor/doctrine/orm/src/UnitOfWork.php(402): Doctrine\ORM\UnitOfWork->executeInserts()
+#7 /home/lokaprot/mylokka/vendor/doctrine/orm/src/EntityManager.php(268): Doctrine\ORM\UnitOfWork->commit()
+#8 /home/lokaprot/mylokka/src/Service/RentReceiptService.php(131): Doctrine\ORM\EntityManager->flush()
+#9 /home/lokaprot/mylokka/src/Service/RentReceiptService.php(264): App\Service\RentReceiptService->generateRentReceipt()
+#10 /home/lokaprot/mylokka/src/Controller/DocumentController.php(466): App\Service\RentReceiptService->generateMonthlyReceipts()
+#11 /home/lokaprot/mylokka/vendor/symfony/http-kernel/HttpKernel.php(183): App\Controller\DocumentController->generateMonthlyDocuments()
+#12 /home/lokaprot/mylokka/vendor/symfony/http-kernel/HttpKernel.php(76): Symfony\Component\HttpKernel\HttpKernel->handleRaw()
+#13 /home/lokaprot/mylokka/vendor/symfony/http-kernel/Kernel.php(182): Symfony\Component\HttpKernel\HttpKernel->handle()
+#14 /home/lokaprot/mylokka/vendor/symfony/runtime/Runner/Symfony/HttpKernelRunner.php(35): Symfony\Component\HttpKernel\Kernel->handle()
+#15 /home/lokaprot/mylokka/vendor/autoload_runtime.php(29): Symfony\Component\Runtime\Runner\Symfony\HttpKernelRunner->run()
+#16 /home/lokaprot/mylokka/public/index.php(5): require_once('/home/lokaprot/...')
+#17 {main}
+[15-Oct-2025 20:55:45 UTC] EntityManager fermé - impossible de continuer la génération
+[15-Oct-2025 20:55:45 UTC] Erreur génération avis pour paiement #19: The EntityManager is closed.
+Stack trace: #0 /home/lokaprot/mylokka/vendor/doctrine/orm/src/EntityManager.php(532): Doctrine\ORM\Exception\EntityManagerClosed::create()
+#1 /home/lokaprot/mylokka/vendor/doctrine/orm/src/EntityManager.php(441): Doctrine\ORM\EntityManager->errorIfClosed()
+#2 /home/lokaprot/mylokka/src/Service/RentReceiptService.php(231): Doctrine\ORM\EntityManager->persist()
+#3 /home/lokaprot/mylokka/src/Service/RentReceiptService.php(317): App\Service\RentReceiptService->generatePaymentNotice()
+#4 /home/lokaprot/mylokka/src/Controller/DocumentController.php(470): App\Service\RentReceiptService->generateUpcomingNotices()
+#5 /home/lokaprot/mylokka/vendor/symfony/http-kernel/HttpKernel.php(183): App\Controller\DocumentController->generateMonthlyDocuments()
+#6 /home/lokaprot/mylokka/vendor/symfony/http-kernel/HttpKernel.php(76): Symfony\Component\HttpKernel\HttpKernel->handleRaw()
+#7 /home/lokaprot/mylokka/vendor/symfony/http-kernel/Kernel.php(182): Symfony\Component\HttpKernel\HttpKernel->handle()
+#8 /home/lokaprot/mylokka/vendor/symfony/runtime/Runner/Symfony/HttpKernelRunner.php(35): Symfony\Component\HttpKernel\Kernel->handle()
+#9 /home/lokaprot/mylokka/vendor/autoload_runtime.php(29): Symfony\Component\Runtime\Runner\Symfony\HttpKernelRunner->run()
+#10 /home/lokaprot/mylokka/public/index.php(5): require_once('/home/lokaprot/...')
+#11 {main}
+[15-Oct-2025 20:55:45 UTC] EntityManager fermé - impossible de continuer la génération
+[16-Oct-2025 17:18:53 UTC] DashboardController: User roles: ["ROLE_SUPER_ADMIN","ROLE_USER"]
+[16-Oct-2025 17:18:53 UTC] DashboardController: Using defaultDashboard

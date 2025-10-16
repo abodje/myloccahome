@@ -50,10 +50,7 @@ class Organization
     private ?string $email = null;
 
     #[ORM\Column(length: 100, nullable: true)]
-    private ?string $registrationNumber = null; // RCCM, SIRET, SIREN, etc.
-
-    #[ORM\Column(length: 100, nullable: true)]
-    private ?string $taxNumber = null; // Numéro de TVA
+    private ?string $taxNumber = null; // SIRET, SIREN, etc.
 
     #[ORM\Column(length: 50)]
     private ?string $status = null; // ACTIVE, SUSPENDED, CANCELLED, TRIAL
@@ -105,6 +102,7 @@ class Organization
 
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $subdomain = null;
+
     public function __construct()
     {
         $this->users = new ArrayCollection();
@@ -236,17 +234,6 @@ class Organization
     public function setEmail(?string $email): static
     {
         $this->email = $email;
-        return $this;
-    }
-
-    public function getRegistrationNumber(): ?string
-    {
-        return $this->registrationNumber;
-    }
-
-    public function setRegistrationNumber(?string $registrationNumber): static
-    {
-        $this->registrationNumber = $registrationNumber;
         return $this;
     }
 

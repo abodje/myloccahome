@@ -229,12 +229,9 @@ class Property
     #[ORM\Column(type: Types::BOOLEAN, nullable: true)]
     private ?bool $stove = null; // Cuisinière
 
-<<<<<<< HEAD
     #[ORM\Column(type: Types::BOOLEAN, options: ['default' => false])]
     private ?bool $isDemo = false;
 
-=======
->>>>>>> 6e87c3851b8abe300389f1559fefe39834f199e8
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
     private ?\DateTimeInterface $createdAt = null;
 
@@ -1197,7 +1194,6 @@ class Property
     {
         return $this->getFullAddress();
     }
-<<<<<<< HEAD
 
     public function getIsDemo(): ?bool
     {
@@ -1209,6 +1205,4 @@ class Property
         $this->isDemo = $isDemo;
         return $this;
     }
-=======
->>>>>>> 6e87c3851b8abe300389f1559fefe39834f199e8
 }

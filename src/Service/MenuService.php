@@ -254,7 +254,6 @@ class MenuService
                 'roles' => ['ROLE_SUPER_ADMIN'],
                 'order' => 108,
             ],
-<<<<<<< HEAD
             'admin_ai' => [
                 'label' => '🤖 Intelligence Artificielle',
                 'icon' => 'bi-robot',
@@ -270,8 +269,6 @@ class MenuService
                     ],
                 ],
             ],
-=======
->>>>>>> 6e87c3851b8abe300389f1559fefe39834f199e8
         ];
     }
 

@@ -69,15 +69,12 @@ class Tenant
     #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
     private ?\DateTimeInterface $updatedAt = null;
 
-<<<<<<< HEAD
     #[ORM\Column(type: Types::BOOLEAN, options: ['default' => false])]
     private ?bool $isDemo = false;
 
     #[ORM\Column(length: 50, nullable: true)]
     private ?string $status = null;
 
-=======
->>>>>>> 6e87c3851b8abe300389f1559fefe39834f199e8
     /**
      * @var Collection<int, Lease>
      */
@@ -354,7 +351,6 @@ class Tenant
     {
         return $this->getFullName();
     }
-<<<<<<< HEAD
 
     public function getIsDemo(): ?bool
     {
@@ -377,6 +373,4 @@ class Tenant
         $this->status = $status;
         return $this;
     }
-=======
->>>>>>> 6e87c3851b8abe300389f1559fefe39834f199e8
 }

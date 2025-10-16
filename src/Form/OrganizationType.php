@@ -41,11 +41,6 @@ class OrganizationType extends AbstractType
                 'required' => false,
                 'attr' => ['class' => 'form-control', 'placeholder' => 'https://www.organisation.com'],
             ])
-            ->add('registrationNumber', TextType::class, [
-                'label' => 'Numéro d\'enregistrement',
-                'required' => false,
-                'attr' => ['class' => 'form-control', 'placeholder' => 'RCCM, SIRET, etc.'],
-            ])
             ->add('taxNumber', TextType::class, [
                 'label' => 'Numéro fiscal',
                 'required' => false,

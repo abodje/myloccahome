@@ -47,7 +47,6 @@ class NotificationService
             }
         }
 
-<<<<<<< HEAD
         // Vérifier si les notifications email sont activées
         if (!$this->settingsService->get('email_notifications', true)) {
             return; // Les notifications email sont désactivées
@@ -61,13 +60,6 @@ class NotificationService
 
         $email = (new Email())
             ->from($fromEmail, $fromName)
-=======
-        // Utiliser le template Twig par défaut
-        $emailContent = $this->twig->render($fallbackTwigTemplate, $fallbackData);
-
-        $email = (new Email())
-            ->from($this->settingsService->get('email_from', 'noreply@mylocca.com'))
->>>>>>> 6e87c3851b8abe300389f1559fefe39834f199e8
             ->to($toEmail)
             ->subject($fallbackSubject)
             ->html($emailContent);
@@ -145,7 +137,6 @@ class NotificationService
             'company' => $this->settingsService->getAppSettings(),
         ]);
 
-<<<<<<< HEAD
         // Vérifier si les notifications email sont activées
         if (!$this->settingsService->get('email_notifications', true)) {
             return; // Les notifications email sont désactivées
@@ -157,11 +148,6 @@ class NotificationService
 
         $email = (new Email())
             ->from($fromEmail, $fromName)
-=======
-        // Créer et envoyer l'email
-        $email = (new Email())
-            ->from($this->settingsService->get('email_from', 'noreply@mylocca.com'))
->>>>>>> 6e87c3851b8abe300389f1559fefe39834f199e8
             ->to($tenant->getEmail())
             ->subject("Quittance de loyer - " . $forMonth->format('F Y'))
             ->html($emailContent);
@@ -217,7 +203,6 @@ class NotificationService
             'company' => $this->settingsService->getAppSettings(),
         ]);
 
-<<<<<<< HEAD
         // Vérifier si les notifications email sont activées
         if (!$this->settingsService->get('email_notifications', true)) {
             return; // Les notifications email sont désactivées
@@ -228,10 +213,6 @@ class NotificationService
 
         $email = (new Email())
             ->from($fromEmail, $fromName)
-=======
-        $email = (new Email())
-            ->from($this->settingsService->get('email_from', 'noreply@mylocca.com'))
->>>>>>> 6e87c3851b8abe300389f1559fefe39834f199e8
             ->to($tenant->getEmail())
             ->subject("Rappel de paiement - Loyer en retard")
             ->html($emailContent);
@@ -280,7 +261,6 @@ class NotificationService
             'company' => $this->settingsService->getAppSettings(),
         ]);
 
-<<<<<<< HEAD
         // Vérifier si les notifications email sont activées
         if (!$this->settingsService->get('email_notifications', true)) {
             return; // Les notifications email sont désactivées
@@ -291,10 +271,6 @@ class NotificationService
 
         $email = (new Email())
             ->from($fromEmail, $fromName)
-=======
-        $email = (new Email())
-            ->from($this->settingsService->get('email_from', 'noreply@mylocca.com'))
->>>>>>> 6e87c3851b8abe300389f1559fefe39834f199e8
             ->to($tenant->getEmail())
             ->subject("Expiration de contrat - " . $property->getFullAddress())
             ->html($emailContent);
@@ -359,7 +335,6 @@ class NotificationService
      */
     public function testEmailConfiguration(string $testEmail): bool
     {
-<<<<<<< HEAD
         // Vérifier si les notifications email sont activées
         if (!$this->settingsService->get('email_notifications', true)) {
             return false; // Les notifications email sont désactivées
@@ -371,11 +346,6 @@ class NotificationService
 
             $email = (new Email())
                 ->from($fromEmail, $fromName)
-=======
-        try {
-            $email = (new Email())
-                ->from($this->settingsService->get('email_from', 'noreply@mylocca.com'))
->>>>>>> 6e87c3851b8abe300389f1559fefe39834f199e8
                 ->to($testEmail)
                 ->subject('Test de configuration email - MYLOCCA')
                 ->html($this->twig->render('emails/test.html.twig', [
@@ -395,7 +365,6 @@ class NotificationService
      */
     public function notifyMaintenanceAssignment($maintenanceRequest, $user): void
     {
-<<<<<<< HEAD
         // Vérifier si les notifications email sont activées
         if (!$this->settingsService->get('email_notifications', true)) {
             return; // Les notifications email sont désactivées
@@ -407,11 +376,6 @@ class NotificationService
 
             $email = (new Email())
                 ->from($fromEmail, $fromName)
-=======
-        try {
-            $email = (new Email())
-                ->from($this->settingsService->get('email_from', 'noreply@mylocca.com'))
->>>>>>> 6e87c3851b8abe300389f1559fefe39834f199e8
                 ->to($user->getEmail())
                 ->subject('Nouvelle demande de maintenance assignée')
                 ->html($this->twig->render('emails/maintenance_assignment.html.twig', [
@@ -431,30 +395,21 @@ class NotificationService
      */
     public function sendUrgentMaintenanceAlert($maintenanceRequest): void
     {
-<<<<<<< HEAD
         // Vérifier si les notifications email sont activées
         if (!$this->settingsService->get('email_notifications', true)) {
             return; // Les notifications email sont désactivées
         }
 
-=======
->>>>>>> 6e87c3851b8abe300389f1559fefe39834f199e8
         try {
             // Envoyer à tous les admins
             $admins = $this->entityManager->getRepository('App\Entity\User')->findByRole('ROLE_ADMIN');
 
-<<<<<<< HEAD
             $fromEmail = $this->settingsService->get('email_from', 'noreply@mylocca.com');
             $fromName = $this->settingsService->get('email_from_name', 'MYLOCCA');
 
             foreach ($admins as $admin) {
                 $email = (new Email())
                     ->from($fromEmail, $fromName)
-=======
-            foreach ($admins as $admin) {
-                $email = (new Email())
-                    ->from($this->settingsService->get('email_from', 'noreply@mylocca.com'))
->>>>>>> 6e87c3851b8abe300389f1559fefe39834f199e8
                     ->to($admin->getEmail())
                     ->subject('⚠️ Demande de maintenance URGENTE')
                     ->html($this->twig->render('emails/urgent_maintenance.html.twig', [
@@ -474,30 +429,21 @@ class NotificationService
      */
     public function sendOverdueMaintenanceAlert($maintenanceRequest): void
     {
-<<<<<<< HEAD
         // Vérifier si les notifications email sont activées
         if (!$this->settingsService->get('email_notifications', true)) {
             return; // Les notifications email sont désactivées
         }
 
-=======
->>>>>>> 6e87c3851b8abe300389f1559fefe39834f199e8
         try {
             // Envoyer à tous les admins
             $admins = $this->entityManager->getRepository('App\Entity\User')->findByRole('ROLE_ADMIN');
 
-<<<<<<< HEAD
             $fromEmail = $this->settingsService->get('email_from', 'noreply@mylocca.com');
             $fromName = $this->settingsService->get('email_from_name', 'MYLOCCA');
 
             foreach ($admins as $admin) {
                 $email = (new Email())
                     ->from($fromEmail, $fromName)
-=======
-            foreach ($admins as $admin) {
-                $email = (new Email())
-                    ->from($this->settingsService->get('email_from', 'noreply@mylocca.com'))
->>>>>>> 6e87c3851b8abe300389f1559fefe39834f199e8
                     ->to($admin->getEmail())
                     ->subject('🔴 Demande de maintenance EN RETARD')
                     ->html($this->twig->render('emails/overdue_maintenance.html.twig', [

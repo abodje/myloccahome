@@ -44,21 +44,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(length: 10, nullable: true)]
     private ?string $postalCode = null;
 
-<<<<<<< HEAD
-    #[ORM\Column(length: 100, nullable: true)]
-    private ?string $country = null;
-
-    #[ORM\Column(length: 50, nullable: true)]
-    private ?string $maritalStatus = null;
-
-    #[ORM\Column(length: 50, nullable: true)]
-    private ?string $preferredPaymentMethod = null;
-
-    #[ORM\Column(type: Types::JSON, nullable: true)]
-    private ?array $consents = null;
-
-=======
->>>>>>> 6e87c3851b8abe300389f1559fefe39834f199e8
     #[ORM\Column(type: Types::DATE_MUTABLE, nullable: true)]
     private ?\DateTimeInterface $birthDate = null;
 
@@ -226,67 +211,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
-<<<<<<< HEAD
-    public function getCountry(): ?string
-    {
-        return $this->country;
-    }
-
-    public function setCountry(?string $country): static
-    {
-        $this->country = $country;
-        return $this;
-    }
-
-    public function getMaritalStatus(): ?string
-    {
-        return $this->maritalStatus;
-    }
-
-    public function setMaritalStatus(?string $maritalStatus): static
-    {
-        $this->maritalStatus = $maritalStatus;
-        return $this;
-    }
-
-    public function getPreferredPaymentMethod(): ?string
-    {
-        return $this->preferredPaymentMethod;
-    }
-
-    public function setPreferredPaymentMethod(?string $preferredPaymentMethod): static
-    {
-        $this->preferredPaymentMethod = $preferredPaymentMethod;
-        return $this;
-    }
-
-    public function getConsents(): ?array
-    {
-        return $this->consents ?? [];
-    }
-
-    public function setConsents(?array $consents): static
-    {
-        $this->consents = $consents;
-        return $this;
-    }
-
-    public function hasConsent(string $consentType): bool
-    {
-        $consents = $this->getConsents();
-        return isset($consents[$consentType]) && $consents[$consentType] === true;
-    }
-
-    public function setConsent(string $consentType, bool $value): static
-    {
-        $consents = $this->getConsents();
-        $consents[$consentType] = $value;
-        $this->setConsents($consents);
-        return $this;
-    }
-
-=======
->>>>>>> 6e87c3851b8abe300389f1559fefe39834f199e8
     public function getBirthDate(): ?\DateTimeInterface
     {
         return $this->birthDate;
