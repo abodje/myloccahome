@@ -1,0 +1,86 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Nouvelle Société - MYLOCCA{% endblock %}
+
+{% block page_title %}
+    <h5 class="mb-0">
+        <i class="bi bi-plus-circle me-2"></i>
+        Nouvelle Société
+    </h5>
+{% endblock %}
+
+{% block page_actions %}
+    <a href="{{ path('app_admin_company_index') }}" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-arrow-left"></i> Retour
+    </a>
+{% endblock %}
+
+{% block body %}
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">Informations de la société</h6>
+                </div>
+                <div class="card-body">
+                    {{ form_start(form) }}
+                        <div class="mb-3">
+                            {{ form_row(form.organization) }}
+                        </div>
+
+                        <div class="mb-3">
+                            {{ form_row(form.name) }}
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    {{ form_row(form.email) }}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    {{ form_row(form.phone) }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            {{ form_row(form.address) }}
+                        </div>
+
+                        <div class="mb-3">
+                            {{ form_row(form.website) }}
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    {{ form_row(form.registrationNumber) }}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    {{ form_row(form.taxNumber) }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3 form-check">
+                            {{ form_widget(form.isActive) }}
+                            {{ form_label(form.isActive) }}
+                        </div>
+
+                        <div class="d-flex justify-content-end gap-2">
+                            <a href="{{ path('app_admin_company_index') }}" class="btn btn-secondary">Annuler</a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-check-circle"></i> Créer la société
+                            </button>
+                        </div>
+                    {{ form_end(form) }}
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+

@@ -1,0 +1,164 @@
+{% extends 'admin/menu/new.html.twig' %}
+
+{% block title %}Modifier {{ menu.label }} - MYLOCCA{% endblock %}
+
+{% block page_title %}
+    <h5 class="mb-0">
+        <i class="bi bi-pencil me-2"></i>
+        Modifier : {{ menu.label }}
+    </h5>
+{% endblock %}
+
+{% block body %}
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">Informations du menu</h6>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Label *</label>
+                                    <input type="text" name="label" class="form-control" required
+                                           value="{{ menu.label }}">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Clé unique *</label>
+                                    <input type="text" name="menu_key" class="form-control" required
+                                           value="{{ menu.menuKey }}">
+                                    <small class="text-muted">Identifiant unique du menu</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Icône Bootstrap</label>
+                                    <input type="text" name="icon" class="form-control"
+                                           value="{{ menu.icon }}">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Route Symfony</label>
+                                    <input type="text" name="route" class="form-control"
+                                           value="{{ menu.route }}">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Rôles autorisés *</label>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="roles[]" value="ROLE_USER" id="role_user"
+                                       {{ 'ROLE_USER' in menu.roles ? 'checked' : '' }}>
+                                <label class="form-check-label" for="role_user">ROLE_USER</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="roles[]" value="ROLE_TENANT" id="role_tenant"
+                                       {{ 'ROLE_TENANT' in menu.roles ? 'checked' : '' }}>
+                                <label class="form-check-label" for="role_tenant">ROLE_TENANT</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="roles[]" value="ROLE_MANAGER" id="role_manager"
+                                       {{ 'ROLE_MANAGER' in menu.roles ? 'checked' : '' }}>
+                                <label class="form-check-label" for="role_manager">ROLE_MANAGER</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="roles[]" value="ROLE_ADMIN" id="role_admin"
+                                       {{ 'ROLE_ADMIN' in menu.roles ? 'checked' : '' }}>
+                                <label class="form-check-label" for="role_admin">ROLE_ADMIN</label>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label class="form-label">Ordre d'affichage</label>
+                                    <input type="number" name="display_order" class="form-control"
+                                           value="{{ menu.displayOrder }}">
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label class="form-label">Type</label>
+                                    <select name="type" class="form-select">
+                                        <option value="menu" {{ menu.type == 'menu' ? 'selected' : '' }}>Menu normal</option>
+                                        <option value="divider" {{ menu.type == 'divider' ? 'selected' : '' }}>Séparateur</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label class="form-label">Menu parent</label>
+                                    <select name="parent" class="form-select">
+                                        <option value="">Aucun (menu principal)</option>
+                                        {% for parent in parent_menus %}
+                                            {% if parent.id != menu.id %}
+                                                <option value="{{ parent.id }}"
+                                                        {{ menu.parent and menu.parent.id == parent.id ? 'selected' : '' }}>
+                                                    {{ parent.label }}
+                                                </option>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Badge de notification</label>
+                            <input type="text" name="badge_type" class="form-control"
+                                   value="{{ menu.badgeType }}">
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Description</label>
+                            <textarea name="description" class="form-control" rows="3">{{ menu.description }}</textarea>
+                        </div>
+
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-check-circle"></i> Enregistrer
+                            </button>
+                            <a href="{{ path('app_admin_menu_index') }}" class="btn btn-secondary">
+                                Annuler
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">ℹ️ Informations</h6>
+                </div>
+                <div class="card-body">
+                    <p class="small"><strong>Créé le :</strong> {{ menu.createdAt|date('d/m/Y H:i') }}</p>
+                    {% if menu.updatedAt %}
+                        <p class="small"><strong>Modifié le :</strong> {{ menu.updatedAt|date('d/m/Y H:i') }}</p>
+                    {% endif %}
+                    <p class="small"><strong>Statut :</strong>
+                        {% if menu.isActive %}
+                            <span class="badge bg-success">Actif</span>
+                        {% else %}
+                            <span class="badge bg-secondary">Inactif</span>
+                        {% endif %}
+                    </p>
+                    {% if menu.subMenuItems|length > 0 %}
+                        <p class="small"><strong>Sous-menus :</strong> {{ menu.subMenuItems|length }}</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+

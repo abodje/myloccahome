@@ -1,0 +1,88 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Historique {{ entity_type }} #{{ entity_id }} - Audit Log{% endblock %}
+
+{% block page_title %}
+    <h5 class="mb-0">
+        <i class="bi bi-clock-history me-2"></i>
+        Historique {{ entity_type }} #{{ entity_id }}
+    </h5>
+{% endblock %}
+
+{% block page_actions %}
+    <a href="{{ path('app_admin_audit_index') }}" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-arrow-left"></i> Retour à l'historique
+    </a>
+{% endblock %}
+
+{% block body %}
+    <div class="card">
+        <div class="card-header" style="background-color: var(--primary-color); color: white;">
+            <strong>Historique Complet ({{ logs|length }} actions)</strong>
+        </div>
+        <div class="card-body p-0">
+            {% if logs|length > 0 %}
+                <div class="list-group list-group-flush">
+                    {% for log in logs %}
+                        <div class="list-group-item">
+                            <div class="d-flex w-100 justify-content-between align-items-start">
+                                <div>
+                                    <h6 class="mb-1">
+                                        <span class="badge bg-{{ log.actionBadgeClass }}">
+                                            <i class="{{ log.actionIcon }}"></i>
+                                            {{ log.actionLabel }}
+                                        </span>
+                                        {{ log.description }}
+                                    </h6>
+                                    <p class="mb-1 text-muted">
+                                        {% if log.user %}
+                                            <i class="bi bi-person"></i> {{ log.user.firstName }} {{ log.user.lastName }}
+                                        {% else %}
+                                            <i class="bi bi-robot"></i> Système
+                                        {% endif %}
+                                        <span class="mx-2">•</span>
+                                        <i class="bi bi-geo-alt"></i> {{ log.ipAddress|default('—') }}
+                                    </p>
+
+                                    {% if log.oldValues or log.newValues %}
+                                        <button class="btn btn-sm btn-link p-0 mt-1" type="button"
+                                                data-bs-toggle="collapse"
+                                                data-bs-target="#details-{{ log.id }}">
+                                            <i class="bi bi-chevron-down"></i> Voir les détails
+                                        </button>
+                                        <div class="collapse mt-2" id="details-{{ log.id }}">
+                                            <div class="row">
+                                                {% if log.oldValues %}
+                                                    <div class="col-md-6">
+                                                        <small class="text-muted d-block mb-1">Avant :</small>
+                                                        <pre class="bg-light p-2 rounded">{{ log.oldValues|json_encode(constant('JSON_PRETTY_PRINT'))|raw }}</pre>
+                                                    </div>
+                                                {% endif %}
+                                                {% if log.newValues %}
+                                                    <div class="col-md-6">
+                                                        <small class="text-primary d-block mb-1">Après :</small>
+                                                        <pre class="bg-light p-2 rounded">{{ log.newValues|json_encode(constant('JSON_PRETTY_PRINT'))|raw }}</pre>
+                                                    </div>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                <small class="text-muted">
+                                    {{ log.createdAt|date('d/m/Y H:i:s') }}
+                                </small>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="text-center p-5">
+                    <i class="bi bi-inbox display-1 text-muted"></i>
+                    <h5 class="mt-3 text-muted">Aucune action enregistrée</h5>
+                    <p class="text-muted">Cette entité n'a pas encore d'historique</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+{% endblock %}
+

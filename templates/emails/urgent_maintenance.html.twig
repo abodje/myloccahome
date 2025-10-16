@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background: #dc3545; color: white; padding: 20px; text-align: center; }
+        .content { background: #fff3cd; padding: 20px; margin: 20px 0; border: 2px solid #dc3545; }
+        .alert-box { background: white; padding: 15px; margin: 10px 0; border-left: 4px solid #dc3545; }
+        .footer { text-align: center; padding: 20px; font-size: 12px; color: #666; }
+        .button { display: inline-block; padding: 10px 20px; background: #dc3545; color: white; text-decoration: none; border-radius: 5px; }
+        .urgent-icon { font-size: 48px; text-align: center; margin: 20px 0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>⚠️ ALERTE : Demande URGENTE</h1>
+        </div>
+
+        <div class="content">
+            <div class="urgent-icon">🚨</div>
+
+            <p style="text-align: center; font-size: 18px; font-weight: bold; color: #dc3545;">
+                ATTENTION : Une demande de maintenance urgente nécessite votre intervention !
+            </p>
+
+            <div class="alert-box">
+                <h3>{{ request.title }}</h3>
+                <p><strong>Priorité :</strong> <span style="color: #dc3545; font-weight: bold;">{{ request.priority }}</span></p>
+                <p><strong>Statut :</strong> {{ request.status }}</p>
+                <p><strong>Catégorie :</strong> {{ request.category }}</p>
+                <p><strong>Propriété :</strong> {{ request.property.fullAddress }}</p>
+                {% if request.tenant %}
+                    <p><strong>Locataire :</strong> {{ request.tenant.fullName }} ({{ request.tenant.phone }})</p>
+                {% endif %}
+                <p><strong>Date de création :</strong> {{ request.createdAt|date('d/m/Y H:i') }}</p>
+                {% if request.scheduledDate %}
+                    <p><strong>Date prévue :</strong> {{ request.scheduledDate|date('d/m/Y H:i') }}</p>
+                {% endif %}
+                <p><strong>Description :</strong><br>{{ request.description }}</p>
+            </div>
+
+            <p style="text-align: center; margin: 20px 0;">
+                <a href="{{ absolute_url(path('app_maintenance_request_show', {id: request.id})) }}" class="button">
+                    🚀 TRAITER MAINTENANT
+                </a>
+            </p>
+
+            <p style="background: #f8d7da; padding: 10px; border-radius: 5px;">
+                <strong>⏰ Action requise :</strong> Cette demande est marquée comme urgente et nécessite une intervention rapide.
+            </p>
+        </div>
+
+        <div class="footer">
+            <p>{{ company.company_name ?? 'MYLOCCA Gestion' }}<br>
+            {{ company.company_address ?? '' }}<br>
+            {{ company.company_phone ?? '' }}</p>
+            <p style="color: #dc3545; font-size: 10px;">Ceci est une notification automatique du système MYLOCCA</p>
+        </div>
+    </div>
+</body>
+</html>
+

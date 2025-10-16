@@ -1,0 +1,125 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Nouvelle tâche - Administration{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>➕ Créer une nouvelle tâche</h2>
+                <a href="{{ path('app_admin_task_index') }}" class="btn btn-secondary">
+                    <i class="bi bi-arrow-left"></i> Retour
+                </a>
+            </div>
+
+            <div class="row">
+                <div class="col-md-8">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">Informations de la tâche</h5>
+                        </div>
+                        <div class="card-body">
+                            {{ form_start(form) }}
+                            
+                            <div class="mb-3">
+                                {{ form_label(form.name) }}
+                                {{ form_widget(form.name) }}
+                                {{ form_errors(form.name) }}
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        {{ form_label(form.type) }}
+                                        {{ form_widget(form.type) }}
+                                        {{ form_errors(form.type) }}
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        {{ form_label(form.frequency) }}
+                                        {{ form_widget(form.frequency) }}
+                                        {{ form_errors(form.frequency) }}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                {{ form_label(form.description) }}
+                                {{ form_widget(form.description) }}
+                                {{ form_errors(form.description) }}
+                            </div>
+
+                            <div class="mb-3">
+                                {{ form_label(form.cronExpression) }}
+                                {{ form_widget(form.cronExpression) }}
+                                {{ form_errors(form.cronExpression) }}
+                                {{ form_help(form.cronExpression) }}
+                            </div>
+
+                            <div class="mb-3">
+                                {{ form_label(form.status) }}
+                                {{ form_widget(form.status) }}
+                                {{ form_errors(form.status) }}
+                            </div>
+
+                            <div class="d-flex gap-2">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="bi bi-check-circle"></i> Créer la tâche
+                                </button>
+                                <a href="{{ path('app_admin_task_index') }}" class="btn btn-secondary">
+                                    <i class="bi bi-x-circle"></i> Annuler
+                                </a>
+                            </div>
+
+                            {{ form_end(form) }}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">💡 Aide</h5>
+                        </div>
+                        <div class="card-body">
+                            <h6>Types de tâches disponibles :</h6>
+                            <ul class="small">
+                                <li><strong>RENT_RECEIPT</strong> : Envoi de quittances</li>
+                                <li><strong>PAYMENT_REMINDER</strong> : Rappels de paiement</li>
+                                <li><strong>LEASE_EXPIRATION</strong> : Alertes d'expiration</li>
+                                <li><strong>GENERATE_RENTS</strong> : Génération de loyers</li>
+                                <li><strong>CUSTOM</strong> : Tâche personnalisée</li>
+                            </ul>
+
+                            <hr>
+
+                            <h6>Fréquences :</h6>
+                            <ul class="small">
+                                <li><strong>Quotidienne</strong> : Tous les jours</li>
+                                <li><strong>Hebdomadaire</strong> : Toutes les semaines</li>
+                                <li><strong>Mensuelle</strong> : Tous les mois</li>
+                                <li><strong>Annuelle</strong> : Tous les ans</li>
+                                <li><strong>Personnalisée</strong> : Selon expression CRON</li>
+                            </ul>
+
+                            <hr>
+
+                            <h6>Expression CRON :</h6>
+                            <p class="small">Format : <code>minute heure jour mois jour_semaine</code></p>
+                            <p class="small">Exemples :</p>
+                            <ul class="small">
+                                <li><code>0 9 * * *</code> : Tous les jours à 9h</li>
+                                <li><code>0 9 * * 1</code> : Tous les lundis à 9h</li>
+                                <li><code>0 9 1 * *</code> : Le 1er de chaque mois à 9h</li>
+                                <li><code>0 0 1 1 *</code> : Le 1er janvier à minuit</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,174 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Contrats arrivant à échéance - MYLOCCA{% endblock %}
+
+{% block page_title %}
+    <h5 class="mb-0">
+        <i class="bi bi-calendar-x me-2"></i>
+        Contrats arrivant à échéance
+    </h5>
+{% endblock %}
+
+{% block page_actions %}
+    <a href="{{ path('app_lease_index') }}" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-arrow-left"></i> Retour
+    </a>
+{% endblock %}
+
+{% block body %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="alert alert-warning">
+                <i class="bi bi-exclamation-triangle me-2"></i>
+                <strong>{{ leases|length }} contrat(s)</strong> arrivera(ont) à échéance dans les 60 prochains jours.
+                Pensez à les renouveler ou à préparer la libération des propriétés.
+            </div>
+        </div>
+    </div>
+
+    {% if leases|length > 0 %}
+        <div class="card">
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>Contrat</th>
+                                <th>Locataire</th>
+                                <th>Propriété</th>
+                                <th>Date de fin</th>
+                                <th>Jours restants</th>
+                                <th>Loyer</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for lease in leases %}
+                                {% set daysRemaining = (lease.endDate.timestamp - 'now'|date('U')) // 86400 %}
+                                <tr class="{{ daysRemaining < 15 ? 'table-danger' : (daysRemaining < 30 ? 'table-warning' : '') }}">
+                                    <td>
+                                        <a href="{{ path('app_lease_show', {id: lease.id}) }}">
+                                            #{{ ('0000' ~ lease.id)|slice(-4) }}
+                                        </a>
+                                    </td>
+                                    <td>
+                                        <a href="{{ path('app_tenant_show', {id: lease.tenant.id}) }}">
+                                            {{ lease.tenant.fullName }}
+                                        </a>
+                                        <br>
+                                        <small class="text-muted">
+                                            <i class="bi bi-envelope me-1"></i>{{ lease.tenant.email }}
+                                        </small>
+                                    </td>
+                                    <td>
+                                        <a href="{{ path('app_property_show', {id: lease.property.id}) }}">
+                                            {{ lease.property.address }}
+                                        </a>
+                                        <br>
+                                        <small class="text-muted">{{ lease.property.city }}</small>
+                                    </td>
+                                    <td>
+                                        <strong>{{ lease.endDate|date('d/m/Y') }}</strong>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-{{ daysRemaining < 15 ? 'danger' : (daysRemaining < 30 ? 'warning' : 'info') }}">
+                                            {{ daysRemaining }} jour{{ daysRemaining > 1 ? 's' : '' }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <strong>{{ lease.monthlyRent|currency }}</strong>
+                                    </td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm" role="group">
+                                            <a href="{{ path('app_lease_show', {id: lease.id}) }}"
+                                               class="btn btn-outline-primary"
+                                               title="Voir">
+                                                <i class="bi bi-eye"></i>
+                                            </a>
+                                            {% if lease.status == 'Actif' %}
+                                                <a href="{{ path('app_lease_renew', {id: lease.id}) }}"
+                                                   class="btn btn-outline-success"
+                                                   title="Renouveler">
+                                                    <i class="bi bi-arrow-repeat"></i>
+                                                </a>
+                                            {% endif %}
+                                            <a href="{{ path('app_message_new') }}?to={{ lease.tenant.id }}"
+                                               class="btn btn-outline-info"
+                                               title="Contacter">
+                                                <i class="bi bi-envelope"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Statistiques -->
+        <div class="row mt-4">
+            <div class="col-md-3">
+                <div class="card text-center border-danger">
+                    <div class="card-body">
+                        <h3 class="text-danger mb-0">
+                            {{ leases|filter(l => (l.endDate.timestamp - 'now'|date('U')) // 86400 < 15)|length }}
+                        </h3>
+                        <small class="text-muted">Moins de 15 jours</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-center border-warning">
+                    <div class="card-body">
+                        <h3 class="text-warning mb-0">
+                            {{ leases|filter(l => (l.endDate.timestamp - 'now'|date('U')) // 86400 < 30 and (l.endDate.timestamp - 'now'|date('U')) // 86400 >= 15)|length }}
+                        </h3>
+                        <small class="text-muted">15 à 30 jours</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-center border-info">
+                    <div class="card-body">
+                        <h3 class="text-info mb-0">
+                            {{ leases|filter(l => (l.endDate.timestamp - 'now'|date('U')) // 86400 >= 30)|length }}
+                        </h3>
+                        <small class="text-muted">30 à 60 jours</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-center border-primary">
+                    <div class="card-body">
+                        <h3 class="text-primary mb-0">
+                            {{ leases|reduce((carry, l) => carry + l.monthlyRent, 0)|currency }}
+                        </h3>
+                        <small class="text-muted">Loyers mensuels totaux</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% else %}
+        <div class="alert alert-success">
+            <i class="bi bi-check-circle me-2"></i>
+            Aucun contrat n'arrive à échéance dans les 60 prochains jours.
+        </div>
+    {% endif %}
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Tri du tableau
+            const table = document.querySelector('table');
+            if (table) {
+                // Vous pouvez ajouter ici un plugin de tri comme DataTables
+            }
+        });
+    </script>
+{% endblock %}
+

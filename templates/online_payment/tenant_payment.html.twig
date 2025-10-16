@@ -1,0 +1,407 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Paiement en ligne - {{ payment.type }} - MYLOCCA{% endblock %}
+
+{% block page_title %}
+    <h5 class="mb-0">
+        <i class="bi bi-credit-card me-2"></i>
+        Paiement en ligne
+    </h5>
+{% endblock %}
+
+{% block page_actions %}
+    <a href="{{ path('app_payment_index') }}" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-arrow-left"></i> Retour
+    </a>
+{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+
+            <!-- Informations du paiement -->
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-receipt me-2"></i>
+                        Détails du paiement
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="text-muted mb-3">Informations générales</h6>
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td><strong>Type :</strong></td>
+                                    <td>
+                                        <span class="badge bg-info">{{ payment.type }}</span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Date d'échéance :</strong></td>
+                                    <td>{{ payment.dueDate|date('d/m/Y') }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Montant :</strong></td>
+                                    <td class="h5 text-primary">{{ payment.amount|currency }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Statut :</strong></td>
+                                    <td>
+                                        {% if payment.status == 'Payé' %}
+                                            <span class="badge bg-success">Payé</span>
+                                        {% elseif payment.isOverdue %}
+                                            <span class="badge bg-danger">En retard</span>
+                                        {% else %}
+                                            <span class="badge bg-warning">En attente</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-muted mb-3">Informations du bail</h6>
+                            {% if payment.lease %}
+                                <table class="table table-borderless">
+                                    <tr>
+                                        <td><strong>Locataire :</strong></td>
+                                        <td>
+                                            {% if payment.lease.tenant %}
+                                                {{ payment.lease.tenant.fullName }}
+                                            {% else %}
+                                                <span class="text-muted">Non renseigné</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Propriété :</strong></td>
+                                        <td>
+                                            {% if payment.lease.property %}
+                                                {{ payment.lease.property.address }}
+                                            {% else %}
+                                                <span class="text-muted">Non renseigné</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Période :</strong></td>
+                                        <td>
+                                            {{ payment.lease.startDate|date('m/Y') }}
+                                            {% if payment.lease.endDate %}
+                                                - {{ payment.lease.endDate|date('m/Y') }}
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                </table>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Moyens de paiement -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-phone me-2"></i>
+                        Choisissez votre moyen de paiement
+                    </h5>
+                </div>
+                <div class="card-body">
+
+                    {% if payment.status == 'En attente' %}
+                        <!-- Paiement en ligne -->
+                        <div class="row g-4">
+                            <div class="col-md-6">
+                                <div class="card h-100 payment-method-card" onclick="initiatePayment('mobile_money')">
+                                    <div class="card-body text-center">
+                                        <i class="bi bi-phone display-4 text-success mb-3"></i>
+                                        <h6 class="card-title">Mobile Money</h6>
+                                        <p class="text-muted small">
+                                            Payer avec Orange Money, MTN Money, Moov Money ou Wave
+                                        </p>
+                                        <div class="mt-3">
+                                            <span class="badge bg-success">{{ payment.amount|currency }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="card h-100 payment-method-card" onclick="initiatePayment('card')">
+                                    <div class="card-body text-center">
+                                        <i class="bi bi-credit-card display-4 text-primary mb-3"></i>
+                                        <h6 class="card-title">Carte bancaire</h6>
+                                        <p class="text-muted small">
+                                            Payer avec votre carte Visa ou Mastercard
+                                        </p>
+                                        <div class="mt-3">
+                                            <span class="badge bg-primary">{{ payment.amount|currency }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Acompte optionnel -->
+                        {% if app_setting('allow_advance_payments') %}
+                        <div class="row mt-4">
+                            <div class="col-12">
+                                <div class="card border-info">
+                                    <div class="card-header bg-info text-white">
+                                        <h6 class="card-title mb-0">
+                                            <i class="bi bi-piggy-bank me-2"></i>
+                                            Paiement anticipé (Acompte)
+                                        </h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <p class="mb-3">
+                                            Vous pouvez constituer un acompte qui sera automatiquement utilisé pour vos futurs loyers.
+                                        </p>
+                                        <div class="row">
+                                            <div class="col-md-8">
+                                                <div class="input-group">
+                                                    <input type="number"
+                                                           id="advanceAmount"
+                                                           class="form-control"
+                                                           placeholder="Montant de l'acompte"
+                                                           min="{{ app_setting('minimum_advance_amount', 50) }}"
+                                                           step="100">
+                                                    <span class="input-group-text">{{ ''|currency_symbol }}</span>
+                                                </div>
+                                                <div class="form-text">
+                                                    Montant minimum : {{ app_setting('minimum_advance_amount', 50)|currency }}
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <button type="button" class="btn btn-info w-100" onclick="initiateAdvancePayment()">
+                                                    <i class="bi bi-piggy-bank me-2"></i>
+                                                    Constituer un acompte
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                    {% else %}
+                        <!-- Paiement déjà effectué -->
+                        <div class="alert alert-success text-center">
+                            <i class="bi bi-check-circle display-4 mb-3"></i>
+                            <h5>Paiement effectué</h5>
+                            <p class="mb-0">Ce paiement a déjà été traité.</p>
+                            {% if payment.paidDate %}
+                                <small class="text-muted">
+                                    Payé le {{ payment.paidDate|date('d/m/Y à H:i') }}
+                                </small>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+
+                </div>
+            </div>
+
+            <!-- Informations de sécurité -->
+            <div class="card">
+                <div class="card-body">
+                    <h6 class="text-muted mb-3">
+                        <i class="bi bi-shield-check me-2"></i>
+                        Sécurité et confidentialité
+                    </h6>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <ul class="list-unstyled small">
+                                <li class="mb-2">
+                                    <i class="bi bi-check-circle text-success me-2"></i>
+                                    Paiement sécurisé SSL
+                                </li>
+                                <li class="mb-2">
+                                    <i class="bi bi-check-circle text-success me-2"></i>
+                                    Conformité PCI DSS
+                                </li>
+                                <li class="mb-2">
+                                    <i class="bi bi-check-circle text-success me-2"></i>
+                                    Données chiffrées
+                                </li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <ul class="list-unstyled small">
+                                <li class="mb-2">
+                                    <i class="bi bi-check-circle text-success me-2"></i>
+                                    Support 24/7
+                                </li>
+                                <li class="mb-2">
+                                    <i class="bi bi-check-circle text-success me-2"></i>
+                                    Reçu automatique
+                                </li>
+                                <li class="mb-2">
+                                    <i class="bi bi-check-circle text-success me-2"></i>
+                                    Historique complet
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<!-- Modal de confirmation -->
+<div class="modal fade" id="paymentModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirmation du paiement</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="paymentDetails"></div>
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle me-2"></i>
+                    Vous allez être redirigé vers la plateforme CinetPay pour finaliser votre paiement.
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                <button type="button" class="btn btn-primary" id="confirmPayment">Confirmer et payer</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+(function() {
+    let currentPaymentType = null;
+    let currentPaymentUrl = null;
+
+function initiatePayment(paymentType) {
+    currentPaymentType = paymentType;
+
+    // Afficher les détails du paiement
+    const paymentDetails = document.getElementById('paymentDetails');
+    paymentDetails.innerHTML = `
+        <h6>Récapitulatif du paiement :</h6>
+        <ul class="list-unstyled">
+            <li><strong>Type :</strong> ${paymentType === 'mobile_money' ? 'Mobile Money' : 'Carte bancaire'}</li>
+            <li><strong>Montant :</strong> {{ payment.amount|currency }}</li>
+            <li><strong>Description :</strong> {{ payment.type }} - {{ payment.lease.property ? payment.lease.property.address : 'N/A' }}</li>
+        </ul>
+    `;
+
+    // Afficher la modal
+    const modal = new bootstrap.Modal(document.getElementById('paymentModal'));
+    modal.show();
+}
+
+function initiateAdvancePayment() {
+    const amount = document.getElementById('advanceAmount').value;
+    const minAmount = {{ app_setting('minimum_advance_amount', 50) }};
+
+    if (!amount || amount < minAmount) {
+        alert(`Le montant minimum pour un acompte est de ${minAmount} {{ ''|currency_symbol }}`);
+        return;
+    }
+
+    currentPaymentType = 'advance';
+
+    const paymentDetails = document.getElementById('paymentDetails');
+    paymentDetails.innerHTML = `
+        <h6>Récapitulatif de l'acompte :</h6>
+        <ul class="list-unstyled">
+            <li><strong>Type :</strong> Acompte</li>
+            <li><strong>Montant :</strong> ${amount} {{ ''|currency_symbol }}</li>
+            <li><strong>Description :</strong> Constitution d'un acompte pour le bail</li>
+        </ul>
+    `;
+
+    const modal = new bootstrap.Modal(document.getElementById('paymentModal'));
+    modal.show();
+}
+
+document.getElementById('confirmPayment').addEventListener('click', function() {
+    if (!currentPaymentType) return;
+
+    // Désactiver le bouton pour éviter les doubles clics
+    this.disabled = true;
+    this.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Redirection...';
+
+    // Construire l'URL selon le type de paiement
+    let url;
+    if (currentPaymentType === 'advance') {
+        const amount = document.getElementById('advanceAmount').value;
+        url = `{{ path('app_online_payment_pay_advance', {leaseId: payment.lease.id}) }}?amount=${amount}`;
+    } else {
+        url = `{{ path('app_online_payment_pay_rent', {id: payment.id}) }}?method=${currentPaymentType}`;
+    }
+
+    // Rediriger vers le paiement
+    window.location.href = url;
+});
+
+// Auto-focus sur le champ acompte
+document.addEventListener('DOMContentLoaded', function() {
+    const advanceInput = document.getElementById('advanceAmount');
+    if (advanceInput) {
+        advanceInput.focus();
+    }
+});
+
+    // Exposer les fonctions nécessaires au scope global
+    window.initiatePayment = initiatePayment;
+    window.initiateAdvancePayment = initiateAdvancePayment;
+
+})(); // Fermeture de la fonction auto-exécutante
+</script>
+
+{% endblock %}
+
+{% block stylesheets %}
+{{ parent() }}
+<style>
+.payment-method-card {
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+}
+
+.payment-method-card:hover {
+    border-color: var(--bs-primary);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.table-borderless td {
+    border: none;
+    padding: 0.5rem 0;
+}
+
+.card-header.bg-primary {
+    background-color: var(--bs-primary) !important;
+}
+
+.card-header.bg-info {
+    background-color: var(--bs-info) !important;
+}
+
+.badge {
+    font-size: 0.9em;
+}
+
+.display-4 {
+    font-size: 3rem;
+}
+
+@media (max-width: 768px) {
+    .display-4 {
+        font-size: 2rem;
+    }
+}
+</style>
+{% endblock %}

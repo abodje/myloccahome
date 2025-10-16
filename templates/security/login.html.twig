@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Connexion - MYLOCCA</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .login-card {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+            max-width: 900px;
+            width: 100%;
+        }
+        .login-left {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 60px 40px;
+        }
+        .login-right {
+            padding: 60px 40px;
+        }
+        .login-logo {
+            font-size: 48px;
+            margin-bottom: 20px;
+        }
+        .btn-login {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            padding: 12px;
+            font-size: 16px;
+            font-weight: bold;
+        }
+        .btn-login:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="login-card">
+            <div class="row g-0">
+                <div class="col-md-6 login-left">
+                    <div class="text-center">
+                        <div class="login-logo">
+                            <i class="bi bi-building"></i>
+                        </div>
+                        <h2 class="mb-4">MYLOCCA</h2>
+                        <p class="lead">Gestion locative simplifiée</p>
+                        <hr class="my-4" style="border-color: rgba(255,255,255,0.3);">
+                        <ul class="list-unstyled text-start">
+                            <li class="mb-3"><i class="bi bi-check-circle me-2"></i> Gestion des biens immobiliers</li>
+                            <li class="mb-3"><i class="bi bi-check-circle me-2"></i> Suivi des paiements</li>
+                            <li class="mb-3"><i class="bi bi-check-circle me-2"></i> Comptabilité automatique</li>
+                            <li class="mb-3"><i class="bi bi-check-circle me-2"></i> Documents en ligne</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-md-6 login-right">
+                    <h3 class="text-center mb-4">Connexion</h3>
+
+                    {% if error %}
+                        <div class="alert alert-danger" role="alert">
+                            <i class="bi bi-exclamation-triangle me-2"></i>
+                            {{ error.messageKey|trans(error.messageData, 'security') }}
+                        </div>
+                    {% endif %}
+
+                    {% if app.request.hasPreviousSession %}
+                        {% for message in app.flashes('info') %}
+                            <div class="alert alert-info">{{ message }}</div>
+                        {% endfor %}
+                    {% endif %}
+
+                    <form method="post" action="{{ path('app_login') }}">
+                        <div class="mb-4">
+                            <label for="username" class="form-label">
+                                <i class="bi bi-envelope me-2"></i>Adresse email
+                            </label>
+                            <input type="email"
+                                   class="form-control form-control-lg"
+                                   id="username"
+                                   name="_username"
+                                   value="{{ last_username }}"
+                                   required
+                                   autofocus
+                                   placeholder="votre@email.com">
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="password" class="form-label">
+                                <i class="bi bi-lock me-2"></i>Mot de passe
+                            </label>
+                            <input type="password"
+                                   class="form-control form-control-lg"
+                                   id="password"
+                                   name="_password"
+                                   required
+                                   placeholder="••••••••">
+                        </div>
+
+                        <div class="mb-4 form-check">
+                            <input type="checkbox" class="form-check-input" id="remember_me" name="_remember_me" checked>
+                            <label class="form-check-label" for="remember_me">
+                                Se souvenir de moi
+                            </label>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary btn-login w-100">
+                            <i class="bi bi-box-arrow-in-right me-2"></i>
+                            Se connecter
+                        </button>
+                    </form>
+
+                    <hr class="my-4">
+
+                    <div class="text-center text-muted small">
+                        <p>Besoin d'aide ? Contactez votre administrateur</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="text-center mt-4 text-white">
+            <p>&copy; {{ 'now'|date('Y') }} MYLOCCA - Tous droits réservés</p>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

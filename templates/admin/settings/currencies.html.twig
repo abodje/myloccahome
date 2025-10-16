@@ -1,0 +1,246 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Gestion des devises - Administration - MYLOCCA{% endblock %}
+
+{% block page_title %}
+    <h5 class="mb-0">
+        <i class="bi bi-currency-exchange me-2"></i>
+        Gestion des devises
+    </h5>
+{% endblock %}
+
+{% block page_actions %}
+    <div class="d-flex gap-2">
+        <a href="{{ path('app_admin_settings') }}" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-arrow-left"></i> Retour
+        </a>
+        <form method="POST" action="{{ path('app_admin_currencies_update_rates') }}" class="d-inline">
+            <button type="submit" class="btn btn-outline-info btn-sm">
+                <i class="bi bi-arrow-clockwise"></i> Mettre à jour les taux
+            </button>
+        </form>
+        <a href="{{ path('app_admin_currency_new') }}" class="btn btn-primary btn-sm">
+            <i class="bi bi-plus-circle me-2"></i>
+            Nouvelle devise
+        </a>
+    </div>
+{% endblock %}
+
+{% block body %}
+    <!-- Statistiques -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h4 class="text-primary">{{ stats.total }}</h4>
+                    <small class="text-muted">Total devises</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h4 class="text-success">{{ stats.active }}</h4>
+                    <small class="text-muted">Devises actives</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h4 class="text-warning">{{ stats.default }}</h4>
+                    <small class="text-muted">Devise par défaut</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Liste des devises -->
+    <div class="card">
+        <div class="card-header" style="background-color: var(--primary-color); color: white;">
+            <div class="row">
+                <div class="col-2"><strong>Code</strong></div>
+                <div class="col-3"><strong>Nom</strong></div>
+                <div class="col-2"><strong>Symbole</strong></div>
+                <div class="col-2"><strong>Taux de change</strong></div>
+                <div class="col-1"><strong>Statut</strong></div>
+                <div class="col-2"><strong>Actions</strong></div>
+            </div>
+        </div>
+        <div class="card-body p-0">
+            {% if currencies|length > 0 %}
+                {% for currency in currencies %}
+                    <div class="row align-items-center p-3 border-bottom">
+                        <div class="col-2">
+                            <strong>{{ currency.code }}</strong>
+                            {% if currency.isDefault %}
+                                <br><span class="badge bg-primary">Par défaut</span>
+                            {% endif %}
+                            {% if currency.code == default_currency().code %}
+                                <br><span class="badge bg-success">Active</span>
+                            {% endif %}
+                        </div>
+                        <div class="col-3">
+                            {{ currency.name }}
+                        </div>
+                        <div class="col-2">
+                            <span class="fs-5">{{ currency.symbol }}</span>
+                        </div>
+                        <div class="col-2">
+                            <strong>{{ currency.exchangeRate|number_format(6, ',', ' ') }}</strong>
+                            {% if currency.lastRateUpdate %}
+                                <br><small class="text-muted">MAJ: {{ currency.lastRateUpdate|date('d/m H:i') }}</small>
+                            {% endif %}
+                        </div>
+                        <div class="col-1">
+                            <span class="badge bg-{{ currency.isActive ? 'success' : 'secondary' }}">
+                                {{ currency.isActive ? 'Actif' : 'Inactif' }}
+                            </span>
+                        </div>
+                        <div class="col-2">
+                            <div class="d-flex gap-1 flex-wrap">
+                                {# Bouton Modifier #}
+                                <a href="{{ path('app_admin_currency_edit', {id: currency.id}) }}"
+                                   class="btn btn-sm btn-outline-primary"
+                                   title="Modifier">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+
+                                {% if currency.code != default_currency().code and currency.isActive %}
+                                    <form method="POST" action="{{ path('app_admin_currency_set_active', {id: currency.id}) }}" class="d-inline">
+                                        <button type="submit" class="btn btn-sm btn-outline-success" title="Définir comme devise active">
+                                            <i class="bi bi-check-circle"></i>
+                                        </button>
+                                    </form>
+                                {% endif %}
+
+                                {% if not currency.isDefault %}
+                                    <form method="POST" action="{{ path('app_admin_currency_set_default', {id: currency.id}) }}" class="d-inline">
+                                        <button type="submit" class="btn btn-sm btn-outline-warning" title="Définir par défaut">
+                                            <i class="bi bi-star"></i>
+                                        </button>
+                                    </form>
+                                {% endif %}
+
+                                {# Bouton Supprimer (désactivé si devise par défaut) #}
+                                {% if not currency.isDefault %}
+                                    <form method="POST"
+                                          action="{{ path('app_admin_currency_delete', {id: currency.id}) }}"
+                                          class="d-inline"
+                                          onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer la devise {{ currency.code }} ? Cette action est irréversible.');">
+                                        <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ currency.id) }}">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger" title="Supprimer">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </form>
+                                {% else %}
+                                    <button type="button"
+                                            class="btn btn-sm btn-outline-secondary"
+                                            title="Impossible de supprimer la devise par défaut"
+                                            disabled>
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="text-center p-5">
+                    <i class="bi bi-currency-exchange display-1 text-muted"></i>
+                    <h5 class="mt-3 text-muted">Aucune devise configurée</h5>
+                    <p class="text-muted">Commencez par ajouter votre première devise.</p>
+                    <a href="{{ path('app_admin_currency_new') }}" class="btn btn-primary">
+                        <i class="bi bi-plus-circle me-2"></i>
+                        Ajouter une devise
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Convertisseur de devises -->
+    {% if currencies|length > 1 %}
+        <div class="card mt-4">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="bi bi-calculator me-2"></i>
+                    Convertisseur de devises
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <label class="form-label">Montant</label>
+                        <input type="number" id="convertAmount" class="form-control" value="1000" step="0.01">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">De</label>
+                        <select id="fromCurrency" class="form-select">
+                            {% for currency in currencies %}
+                                <option value="{{ currency.code }}" data-rate="{{ currency.exchangeRate }}"
+                                        {{ currency.isDefault ? 'selected' : '' }}>
+                                    {{ currency.code }} ({{ currency.symbol }})
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Vers</label>
+                        <select id="toCurrency" class="form-select">
+                            {% for currency in currencies %}
+                                <option value="{{ currency.code }}" data-rate="{{ currency.exchangeRate }}">
+                                    {{ currency.code }} ({{ currency.symbol }})
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Résultat</label>
+                        <input type="text" id="convertResult" class="form-control" readonly>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const amountInput = document.getElementById('convertAmount');
+            const fromSelect = document.getElementById('fromCurrency');
+            const toSelect = document.getElementById('toCurrency');
+            const resultInput = document.getElementById('convertResult');
+
+            function convertCurrency() {
+                if (!amountInput || !fromSelect || !toSelect || !resultInput) return;
+
+                const amount = parseFloat(amountInput.value) || 0;
+                const fromRate = parseFloat(fromSelect.selectedOptions[0].dataset.rate) || 1;
+                const toRate = parseFloat(toSelect.selectedOptions[0].dataset.rate) || 1;
+
+                // Conversion via EUR
+                const amountInEur = amount / fromRate;
+                const convertedAmount = amountInEur * toRate;
+
+                const toSymbol = toSelect.selectedOptions[0].text.match(/\(([^)]+)\)/)[1];
+                resultInput.value = convertedAmount.toLocaleString('fr-FR', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                }) + ' ' + toSymbol;
+            }
+
+            if (amountInput && fromSelect && toSelect) {
+                amountInput.addEventListener('input', convertCurrency);
+                fromSelect.addEventListener('change', convertCurrency);
+                toSelect.addEventListener('change', convertCurrency);
+
+                // Conversion initiale
+                convertCurrency();
+            }
+        });
+    </script>
+{% endblock %}

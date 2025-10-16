@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rappel de paiement</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background: linear-gradient(135deg, #dc3545, #c82333);
+            color: white;
+            padding: 30px;
+            text-align: center;
+            border-radius: 8px 8px 0 0;
+        }
+        .content {
+            background: white;
+            padding: 30px;
+            border: 1px solid #ddd;
+            border-top: none;
+            border-radius: 0 0 8px 8px;
+        }
+        .alert {
+            background-color: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .payment-info {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .amount-due {
+            font-size: 24px;
+            font-weight: bold;
+            color: #dc3545;
+            text-align: center;
+            margin: 20px 0;
+        }
+        .footer {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #ddd;
+            font-size: 12px;
+            color: #666;
+            text-align: center;
+        }
+        .btn {
+            display: inline-block;
+            padding: 12px 24px;
+            background-color: #198754;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: bold;
+            text-align: center;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>{{ company.app_name ?? 'MYLOCCA' }}</h1>
+        <p>Rappel de paiement</p>
+    </div>
+
+    <div class="content">
+        <h2>Bonjour {{ tenant.firstName }},</h2>
+
+        <div class="alert">
+            <strong>⚠️ Votre loyer est en retard de {{ days_overdue }} jour(s)</strong>
+        </div>
+
+        <p>
+            Nous vous informons que votre paiement de loyer n'a pas encore été reçu pour la propriété située au :
+        </p>
+
+        <div class="payment-info">
+            <h3>Détails du paiement en retard</h3>
+            <p>
+                <strong>Propriété:</strong> {{ property.fullAddress }}<br>
+                <strong>Type de paiement:</strong> {{ payment.type }}<br>
+                <strong>Date d'échéance:</strong> {{ payment.dueDate|date('d/m/Y') }}<br>
+                <strong>Jours de retard:</strong> {{ days_overdue }}
+            </p>
+
+            <div class="amount-due">
+                Montant dû: {{ payment.amount|currency }}
+            </div>
+        </div>
+
+        <p>
+            Nous vous rappelons que selon les termes de votre contrat de location,
+            le loyer doit être payé le {{ lease.rentDueDay ?? 1 }} de chaque mois.
+        </p>
+
+        <p>
+            <strong>Modes de paiement acceptés:</strong>
+        </p>
+        <ul>
+            <li>Virement bancaire</li>
+            <li>Prélèvement automatique</li>
+            <li>Chèque à l'ordre de {{ company.company_name ?? 'MYLOCCA Gestion' }}</li>
+        </ul>
+
+        <div style="text-align: center;">
+            <a href="#" class="btn">Effectuer le paiement en ligne</a>
+        </div>
+
+        <p>
+            Si vous avez déjà effectué ce paiement, merci de nous transmettre le justificatif
+            à {{ company.company_email ?? 'contact@mylocca.com' }}.
+        </p>
+
+        <p>
+            En cas de difficultés financières, n'hésitez pas à nous contacter au
+            {{ company.company_phone ?? '04 72 00 00 00' }} pour étudier ensemble une solution.
+        </p>
+
+        <div class="footer">
+            <p>
+                Email envoyé automatiquement le {{ 'now'|date('d/m/Y à H:i') }}<br>
+                {{ company.company_name ?? 'MYLOCCA Gestion' }} - {{ company.company_address ?? '123 Avenue de la République, 69000 Lyon' }}
+            </p>
+        </div>
+    </div>
+</body>
+</html>

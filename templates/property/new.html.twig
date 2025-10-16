@@ -1,0 +1,633 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Nouveau bien - MYLOCCA{% endblock %}
+
+{% block page_title %}
+    <h5 class="mb-0">
+        <i class="bi bi-plus-circle me-2"></i>
+        Nouveau bien immobilier
+    </h5>
+{% endblock %}
+
+{% block page_actions %}
+    <a href="{{ path('app_property_index') }}" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-arrow-left"></i> Retour
+    </a>
+{% endblock %}
+
+{% block body %}
+    <div class="row justify-content-center">
+        <div class="col-lg-12">
+            {{ form_start(form) }}
+
+            <!-- Informations de base -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="bi bi-house me-2"></i>
+                        Informations de base
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="mb-3">
+                                {{ form_label(form.address) }}
+                                {{ form_widget(form.address) }}
+                                {{ form_errors(form.address) }}
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                {{ form_label(form.postalCode) }}
+                                {{ form_widget(form.postalCode) }}
+                                {{ form_errors(form.postalCode) }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form_label(form.city) }}
+                                {{ form_widget(form.city) }}
+                                {{ form_errors(form.city) }}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form_label(form.owner) }}
+                                {{ form_widget(form.owner) }}
+                                {{ form_errors(form.owner) }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                {{ form_label(form.propertyType) }}
+                                {{ form_widget(form.propertyType) }}
+                                {{ form_errors(form.propertyType) }}
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                {{ form_label(form.surface) }}
+                                {{ form_widget(form.surface) }}
+                                {{ form_errors(form.surface) }}
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                {{ form_label(form.rooms) }}
+                                {{ form_widget(form.rooms) }}
+                                {{ form_errors(form.rooms) }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form_label(form.status) }}
+                                {{ form_widget(form.status) }}
+                                {{ form_errors(form.status) }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        {{ form_label(form.description) }}
+                        {{ form_widget(form.description) }}
+                        {{ form_errors(form.description) }}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Informations géographiques -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="bi bi-geo-alt me-2"></i>
+                        Localisation géographique
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                {{ form_label(form.country) }}
+                                {{ form_widget(form.country) }}
+                                {{ form_errors(form.country) }}
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                {{ form_label(form.region) }}
+                                {{ form_widget(form.region) }}
+                                {{ form_errors(form.region) }}
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                {{ form_label(form.district) }}
+                                {{ form_widget(form.district) }}
+                                {{ form_errors(form.district) }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form_label(form.latitude) }}
+                                {{ form_widget(form.latitude) }}
+                                {{ form_errors(form.latitude) }}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form_label(form.longitude) }}
+                                {{ form_widget(form.longitude) }}
+                                {{ form_errors(form.longitude) }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Caractéristiques physiques -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="bi bi-building me-2"></i>
+                        Caractéristiques physiques
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                {{ form_label(form.floor) }}
+                                {{ form_widget(form.floor) }}
+                                {{ form_errors(form.floor) }}
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                {{ form_label(form.totalFloors) }}
+                                {{ form_widget(form.totalFloors) }}
+                                {{ form_errors(form.totalFloors) }}
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                {{ form_label(form.bedrooms) }}
+                                {{ form_widget(form.bedrooms) }}
+                                {{ form_errors(form.bedrooms) }}
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                {{ form_label(form.bathrooms) }}
+                                {{ form_widget(form.bathrooms) }}
+                                {{ form_errors(form.bathrooms) }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                {{ form_label(form.toilets) }}
+                                {{ form_widget(form.toilets) }}
+                                {{ form_errors(form.toilets) }}
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                {{ form_label(form.balconies) }}
+                                {{ form_widget(form.balconies) }}
+                                {{ form_errors(form.balconies) }}
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                {{ form_label(form.terraceSurface) }}
+                                {{ form_widget(form.terraceSurface) }}
+                                {{ form_errors(form.terraceSurface) }}
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                {{ form_label(form.gardenSurface) }}
+                                {{ form_widget(form.gardenSurface) }}
+                                {{ form_errors(form.gardenSurface) }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                {{ form_label(form.parkingSpaces) }}
+                                {{ form_widget(form.parkingSpaces) }}
+                                {{ form_errors(form.parkingSpaces) }}
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                {{ form_label(form.garageSpaces) }}
+                                {{ form_widget(form.garageSpaces) }}
+                                {{ form_errors(form.garageSpaces) }}
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                {{ form_label(form.cellarSurface) }}
+                                {{ form_widget(form.cellarSurface) }}
+                                {{ form_errors(form.cellarSurface) }}
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                {{ form_label(form.atticSurface) }}
+                                {{ form_widget(form.atticSurface) }}
+                                {{ form_errors(form.atticSurface) }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form_label(form.landSurface) }}
+                                {{ form_widget(form.landSurface) }}
+                                {{ form_errors(form.landSurface) }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Informations de construction -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="bi bi-tools me-2"></i>
+                        Informations de construction
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                {{ form_label(form.constructionYear) }}
+                                {{ form_widget(form.constructionYear) }}
+                                {{ form_errors(form.constructionYear) }}
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                {{ form_label(form.renovationYear) }}
+                                {{ form_widget(form.renovationYear) }}
+                                {{ form_errors(form.renovationYear) }}
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                {{ form_label(form.heatingType) }}
+                                {{ form_widget(form.heatingType) }}
+                                {{ form_errors(form.heatingType) }}
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                {{ form_label(form.hotWaterType) }}
+                                {{ form_widget(form.hotWaterType) }}
+                                {{ form_errors(form.hotWaterType) }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                {{ form_label(form.energyClass) }}
+                                {{ form_widget(form.energyClass) }}
+                                {{ form_errors(form.energyClass) }}
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                {{ form_label(form.energyConsumption) }}
+                                {{ form_widget(form.energyConsumption) }}
+                                {{ form_errors(form.energyConsumption) }}
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                {{ form_label(form.orientation) }}
+                                {{ form_widget(form.orientation) }}
+                                {{ form_errors(form.orientation) }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Informations financières -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="bi bi-currency-exchange me-2"></i>
+                        Informations financières
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                {{ form_label(form.monthlyRent) }}
+                                {{ form_widget(form.monthlyRent) }}
+                                {{ form_errors(form.monthlyRent) }}
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                {{ form_label(form.charges) }}
+                                {{ form_widget(form.charges) }}
+                                {{ form_errors(form.charges) }}
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                {{ form_label(form.deposit) }}
+                                {{ form_widget(form.deposit) }}
+                                {{ form_errors(form.deposit) }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                {{ form_label(form.purchasePrice) }}
+                                {{ form_widget(form.purchasePrice) }}
+                                {{ form_errors(form.purchasePrice) }}
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                {{ form_label(form.purchaseDate) }}
+                                {{ form_widget(form.purchaseDate) }}
+                                {{ form_errors(form.purchaseDate) }}
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                {{ form_label(form.estimatedValue) }}
+                                {{ form_widget(form.estimatedValue) }}
+                                {{ form_errors(form.estimatedValue) }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                {{ form_label(form.monthlyCharges) }}
+                                {{ form_widget(form.monthlyCharges) }}
+                                {{ form_errors(form.monthlyCharges) }}
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                {{ form_label(form.propertyTax) }}
+                                {{ form_widget(form.propertyTax) }}
+                                {{ form_errors(form.propertyTax) }}
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                {{ form_label(form.insurance) }}
+                                {{ form_widget(form.insurance) }}
+                                {{ form_errors(form.insurance) }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form_label(form.maintenanceBudget) }}
+                                {{ form_widget(form.maintenanceBudget) }}
+                                {{ form_errors(form.maintenanceBudget) }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Équipements et caractéristiques -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="bi bi-check2-square me-2"></i>
+                        Équipements et caractéristiques
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="text-muted mb-3">Caractéristiques générales</h6>
+                            <div class="form-check mb-2">
+                                {{ form_widget(form.furnished) }}
+                                {{ form_label(form.furnished) }}
+                            </div>
+                            <div class="form-check mb-2">
+                                {{ form_widget(form.petsAllowed) }}
+                                {{ form_label(form.petsAllowed) }}
+                            </div>
+                            <div class="form-check mb-2">
+                                {{ form_widget(form.smokingAllowed) }}
+                                {{ form_label(form.smokingAllowed) }}
+                            </div>
+                            <div class="form-check mb-2">
+                                {{ form_widget(form.elevator) }}
+                                {{ form_label(form.elevator) }}
+                            </div>
+                            <div class="form-check mb-2">
+                                {{ form_widget(form.hasBalcony) }}
+                                {{ form_label(form.hasBalcony) }}
+                            </div>
+                            <div class="form-check mb-2">
+                                {{ form_widget(form.hasParking) }}
+                                {{ form_label(form.hasParking) }}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-muted mb-3">Équipements techniques</h6>
+                            <div class="form-check mb-2">
+                                {{ form_widget(form.airConditioning) }}
+                                {{ form_label(form.airConditioning) }}
+                            </div>
+                            <div class="form-check mb-2">
+                                {{ form_widget(form.heating) }}
+                                {{ form_label(form.heating) }}
+                            </div>
+                            <div class="form-check mb-2">
+                                {{ form_widget(form.hotWater) }}
+                                {{ form_label(form.hotWater) }}
+                            </div>
+                            <div class="form-check mb-2">
+                                {{ form_widget(form.internet) }}
+                                {{ form_label(form.internet) }}
+                            </div>
+                            <div class="form-check mb-2">
+                                {{ form_widget(form.cable) }}
+                                {{ form_label(form.cable) }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row mt-3">
+                        <div class="col-md-6">
+                            <h6 class="text-muted mb-3">Équipements cuisine</h6>
+                            <div class="form-check mb-2">
+                                {{ form_widget(form.dishwasher) }}
+                                {{ form_label(form.dishwasher) }}
+                            </div>
+                            <div class="form-check mb-2">
+                                {{ form_widget(form.washingMachine) }}
+                                {{ form_label(form.washingMachine) }}
+                            </div>
+                            <div class="form-check mb-2">
+                                {{ form_widget(form.dryer) }}
+                                {{ form_label(form.dryer) }}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-muted mb-3">Électroménager</h6>
+                            <div class="form-check mb-2">
+                                {{ form_widget(form.refrigerator) }}
+                                {{ form_label(form.refrigerator) }}
+                            </div>
+                            <div class="form-check mb-2">
+                                {{ form_widget(form.oven) }}
+                                {{ form_label(form.oven) }}
+                            </div>
+                            <div class="form-check mb-2">
+                                {{ form_widget(form.microwave) }}
+                                {{ form_label(form.microwave) }}
+                            </div>
+                            <div class="form-check mb-2">
+                                {{ form_widget(form.stove) }}
+                                {{ form_label(form.stove) }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Descriptions et notes -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="bi bi-file-text me-2"></i>
+                        Descriptions et notes
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form_label(form.equipment) }}
+                                {{ form_widget(form.equipment) }}
+                                {{ form_errors(form.equipment) }}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form_label(form.proximity) }}
+                                {{ form_widget(form.proximity) }}
+                                {{ form_errors(form.proximity) }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form_label(form.restrictions) }}
+                                {{ form_widget(form.restrictions) }}
+                                {{ form_errors(form.restrictions) }}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form_label(form.notes) }}
+                                {{ form_widget(form.notes) }}
+                                {{ form_errors(form.notes) }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Informations d'accès -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="bi bi-key me-2"></i>
+                        Informations d'accès
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                {{ form_label(form.keyLocation) }}
+                                {{ form_widget(form.keyLocation) }}
+                                {{ form_errors(form.keyLocation) }}
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                {{ form_label(form.accessCode) }}
+                                {{ form_widget(form.accessCode) }}
+                                {{ form_errors(form.accessCode) }}
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                {{ form_label(form.intercom) }}
+                                {{ form_widget(form.intercom) }}
+                                {{ form_errors(form.intercom) }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-end gap-2">
+                        <a href="{{ path('app_property_index') }}" class="btn btn-secondary">
+                            <i class="bi bi-x-circle me-2"></i>
+                            Annuler
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-circle me-2"></i>
+                            Créer le bien
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            {{ form_end(form) }}
+        </div>
+    </div>
+{% endblock %}

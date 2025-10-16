@@ -1,0 +1,153 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ template.name }} - Templates d'emails{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>📧 {{ template.name }}</h2>
+                <div class="d-flex gap-2">
+                    <a href="{{ path('app_admin_email_template_edit', {id: template.id}) }}" class="btn btn-warning">
+                        <i class="bi bi-pencil"></i> Modifier
+                    </a>
+                    <a href="{{ path('app_admin_email_template_index') }}" class="btn btn-secondary">
+                        <i class="bi bi-arrow-left"></i> Retour
+                    </a>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-8">
+                    <!-- Informations -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">Informations</h5>
+                        </div>
+                        <div class="card-body">
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td class="text-muted" width="200">Code :</td>
+                                    <td><code>{{ template.code }}</code></td>
+                                </tr>
+                                <tr>
+                                    <td class="text-muted">Nom :</td>
+                                    <td><strong>{{ template.name }}</strong></td>
+                                </tr>
+                                <tr>
+                                    <td class="text-muted">Sujet :</td>
+                                    <td>{{ template.subject }}</td>
+                                </tr>
+                                {% if template.description %}
+                                <tr>
+                                    <td class="text-muted">Description :</td>
+                                    <td>{{ template.description }}</td>
+                                </tr>
+                                {% endif %}
+                                <tr>
+                                    <td class="text-muted">Type :</td>
+                                    <td>
+                                        <span class="badge bg-{{ template.isSystem ? 'info' : 'secondary' }}">
+                                            {{ template.isSystem ? 'Système' : 'Personnalisé' }}
+                                        </span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="text-muted">Statut :</td>
+                                    <td>
+                                        <span class="badge bg-{{ template.isActive ? 'success' : 'secondary' }}">
+                                            {{ template.isActive ? 'Actif' : 'Inactif' }}
+                                        </span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="text-muted">Utilisations :</td>
+                                    <td>
+                                        <strong>{{ template.usageCount }}</strong> envoi(s)
+                                        {% if template.lastUsedAt %}
+                                            <br><small class="text-muted">Dernier envoi : {{ template.lastUsedAt|date('d/m/Y H:i') }}</small>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="text-muted">Créé le :</td>
+                                    <td>{{ template.createdAt|date('d/m/Y H:i') }}</td>
+                                </tr>
+                                {% if template.updatedAt %}
+                                <tr>
+                                    <td class="text-muted">Modifié le :</td>
+                                    <td>{{ template.updatedAt|date('d/m/Y H:i') }}</td>
+                                </tr>
+                                {% endif %}
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Prévisualisation -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">Prévisualisation</h5>
+                        </div>
+                        <div class="card-body">
+                            <iframe srcdoc="{{ preview|e('html_attr') }}"
+                                    style="width: 100%; height: 600px; border: 1px solid #ddd;"></iframe>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <!-- Actions -->
+                    <div class="card mb-3">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">Actions</h5>
+                        </div>
+                        <div class="card-body">
+                            <a href="{{ path('app_admin_email_template_edit', {id: template.id}) }}"
+                               class="btn btn-warning w-100 mb-2">
+                                <i class="bi bi-pencil"></i> Modifier
+                            </a>
+
+                            <form method="POST" action="{{ path('app_admin_email_template_toggle', {id: template.id}) }}">
+                                <button type="submit" class="btn btn-{{ template.isActive ? 'secondary' : 'success' }} w-100 mb-2">
+                                    <i class="bi bi-{{ template.isActive ? 'pause' : 'play' }}-circle"></i>
+                                    {{ template.isActive ? 'Désactiver' : 'Activer' }}
+                                </button>
+                            </form>
+
+                            <form method="POST" action="{{ path('app_admin_email_template_duplicate', {id: template.id}) }}">
+                                <button type="submit" class="btn btn-info w-100 mb-2">
+                                    <i class="bi bi-files"></i> Dupliquer
+                                </button>
+                            </form>
+
+                            {% if not template.isSystem %}
+                            <form method="POST" action="{{ path('app_admin_email_template_delete', {id: template.id}) }}"
+                                  onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer ce template ?')">
+                                <button type="submit" class="btn btn-danger w-100">
+                                    <i class="bi bi-trash"></i> Supprimer
+                                </button>
+                            </form>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Variables utilisées -->
+                    {% if template.availableVariables %}
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">Variables utilisables</h5>
+                        </div>
+                        <div class="card-body">
+                            {% for var in template.availableVariables %}
+                            <span class="badge bg-secondary mb-1">{{ '{{' ~ var ~ '}}' }}</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

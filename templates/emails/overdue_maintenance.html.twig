@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background: #6c757d; color: white; padding: 20px; text-align: center; }
+        .content { background: #f8d7da; padding: 20px; margin: 20px 0; border: 2px solid #842029; }
+        .overdue-box { background: white; padding: 15px; margin: 10px 0; border-left: 4px solid #842029; }
+        .footer { text-align: center; padding: 20px; font-size: 12px; color: #666; }
+        .button { display: inline-block; padding: 10px 20px; background: #842029; color: white; text-decoration: none; border-radius: 5px; }
+        .overdue-icon { font-size: 48px; text-align: center; margin: 20px 0; }
+        .days-overdue { background: #842029; color: white; padding: 10px; border-radius: 5px; text-align: center; font-size: 20px; font-weight: bold; margin: 15px 0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔴 RETARD : Demande non traitée</h1>
+        </div>
+
+        <div class="content">
+            <div class="overdue-icon">⏰</div>
+
+            <p style="text-align: center; font-size: 18px; font-weight: bold; color: #842029;">
+                Une demande de maintenance est en retard !
+            </p>
+
+            {% if request.scheduledDate %}
+                {% set daysOverdue = date().diff(request.scheduledDate).days %}
+                <div class="days-overdue">
+                    Retard : {{ daysOverdue }} jour(s)
+                </div>
+            {% endif %}
+
+            <div class="overdue-box">
+                <h3>{{ request.title }}</h3>
+                <p><strong>Statut :</strong> <span style="color: #842029; font-weight: bold;">{{ request.status }}</span></p>
+                <p><strong>Priorité :</strong> {{ request.priority }}</p>
+                <p><strong>Catégorie :</strong> {{ request.category }}</p>
+                <p><strong>Propriété :</strong> {{ request.property.fullAddress }}</p>
+                {% if request.tenant %}
+                    <p><strong>Locataire :</strong> {{ request.tenant.fullName }} ({{ request.tenant.phone }})</p>
+                {% endif %}
+                <p><strong>Date de création :</strong> {{ request.createdAt|date('d/m/Y H:i') }}</p>
+                {% if request.scheduledDate %}
+                    <p><strong>Date prévue (dépassée) :</strong> <span style="color: #842029;">{{ request.scheduledDate|date('d/m/Y H:i') }}</span></p>
+                {% endif %}
+                <p><strong>Description :</strong><br>{{ request.description }}</p>
+            </div>
+
+            <p style="text-align: center; margin: 20px 0;">
+                <a href="{{ absolute_url(path('app_maintenance_request_show', {id: request.id})) }}" class="button">
+                    📋 VOIR LA DEMANDE
+                </a>
+            </p>
+
+            <p style="background: #842029; color: white; padding: 10px; border-radius: 5px; text-align: center;">
+                <strong>⚠️ Attention :</strong> Cette demande aurait dû être traitée. Merci de prendre les mesures nécessaires.
+            </p>
+        </div>
+
+        <div class="footer">
+            <p>{{ company.company_name ?? 'MYLOCCA Gestion' }}<br>
+            {{ company.company_address ?? '' }}<br>
+            {{ company.company_phone ?? '' }}</p>
+            <p style="color: #842029; font-size: 10px;">Ceci est une notification automatique du système MYLOCCA</p>
+        </div>
+    </div>
+</body>
+</html>
+

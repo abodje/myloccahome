@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Quittance de Loyer</title>
+    <style>
+        body {
+            font-family: 'DejaVu Sans', Arial, sans-serif;
+            font-size: 12pt;
+            line-height: 1.6;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 3px solid #2c3e50;
+            padding-bottom: 20px;
+        }
+        .header h1 {
+            color: #2c3e50;
+            font-size: 24pt;
+            margin: 0;
+            font-weight: bold;
+        }
+        .header .subtitle {
+            color: #7f8c8d;
+            font-size: 10pt;
+            margin-top: 5px;
+        }
+        .company-info {
+            margin-bottom: 30px;
+            font-size: 10pt;
+        }
+        .company-info strong {
+            color: #2c3e50;
+        }
+        .section {
+            margin-bottom: 25px;
+        }
+        .section-title {
+            background-color: #ecf0f1;
+            padding: 10px;
+            font-weight: bold;
+            color: #2c3e50;
+            border-left: 4px solid #3498db;
+            margin-bottom: 15px;
+        }
+        .info-grid {
+            display: table;
+            width: 100%;
+            margin-bottom: 15px;
+        }
+        .info-row {
+            display: table-row;
+        }
+        .info-label {
+            display: table-cell;
+            width: 40%;
+            padding: 8px;
+            font-weight: bold;
+            background-color: #f8f9fa;
+        }
+        .info-value {
+            display: table-cell;
+            width: 60%;
+            padding: 8px;
+            background-color: #ffffff;
+        }
+        .amount-box {
+            background-color: #d5f4e6;
+            border: 2px solid #27ae60;
+            padding: 20px;
+            text-align: center;
+            margin: 30px 0;
+        }
+        .amount-box .label {
+            font-size: 12pt;
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+        .amount-box .amount {
+            font-size: 28pt;
+            font-weight: bold;
+            color: #27ae60;
+        }
+        .payment-details {
+            border: 1px solid #bdc3c7;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        .footer {
+            margin-top: 50px;
+            text-align: center;
+            font-size: 9pt;
+            color: #7f8c8d;
+            border-top: 1px solid #bdc3c7;
+            padding-top: 15px;
+        }
+        .signature-section {
+            margin-top: 60px;
+            display: table;
+            width: 100%;
+        }
+        .signature-box {
+            display: table-cell;
+            width: 50%;
+            text-align: center;
+            padding: 20px;
+        }
+        .signature-box .label {
+            font-weight: bold;
+            margin-bottom: 40px;
+        }
+        .stamp {
+            margin-top: 80px;
+            text-align: right;
+            font-style: italic;
+            color: #7f8c8d;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        table th, table td {
+            padding: 10px;
+            border: 1px solid #bdc3c7;
+        }
+        table th {
+            background-color: #ecf0f1;
+            color: #2c3e50;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <!-- En-tête -->
+    <div class="header">
+        <h1>QUITTANCE DE LOYER</h1>
+        <div class="subtitle">Document officiel de paiement de loyer</div>
+    </div>
+
+    <!-- Informations de la société émettrice -->
+    <div class="company-info">
+        <strong>{{ settings.company_name }}</strong><br>
+        {% if settings.company_siret %}SIRET : {{ settings.company_siret }}<br>{% endif %}
+        {% if settings.company_address %}{{ settings.company_address }}<br>{% endif %}
+        {% if settings.company_city %}{{ settings.company_city }}<br>{% endif %}
+        {% if settings.company_phone %}Tél : {{ settings.company_phone }} | {% endif %}
+        {% if settings.company_email %}Email : {{ settings.company_email }}{% endif %}
+        {% if settings.company_website %}<br>Web : {{ settings.company_website }}{% endif %}
+    </div>
+
+    <!-- Date d'émission -->
+    <div style="text-align: right; margin-bottom: 20px;">
+        <strong>Date d'émission :</strong> {{ payment.paidDate|date('d/m/Y') }}
+    </div>
+
+    <!-- Informations du locataire -->
+    <div class="section">
+        <div class="section-title">LOCATAIRE</div>
+        <div class="info-grid">
+            <div class="info-row">
+                <div class="info-label">Nom et Prénom</div>
+                <div class="info-value">{{ tenant.firstName }} {{ tenant.lastName }}</div>
+            </div>
+            <div class="info-row">
+                <div class="info-label">Adresse</div>
+                <div class="info-value">{{ tenant.address }}, {{ tenant.postalCode }} {{ tenant.city }}</div>
+            </div>
+            <div class="info-row">
+                <div class="info-label">Téléphone</div>
+                <div class="info-value">{{ tenant.phone }}</div>
+            </div>
+            <div class="info-row">
+                <div class="info-label">Email</div>
+                <div class="info-value">{{ tenant.email }}</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Informations du bien loué -->
+    <div class="section">
+        <div class="section-title">BIEN LOUÉ</div>
+        <div class="info-grid">
+            <div class="info-row">
+                <div class="info-label">Adresse du bien</div>
+                <div class="info-value">{{ property.address }}, {{ property.postalCode }} {{ property.city }}</div>
+            </div>
+            <div class="info-row">
+                <div class="info-label">Type de bien</div>
+                <div class="info-value">{{ property.propertyType }}</div>
+            </div>
+            <div class="info-row">
+                <div class="info-label">Surface</div>
+                <div class="info-value">{{ property.surface }} m²</div>
+            </div>
+            <div class="info-row">
+                <div class="info-label">Nombre de pièces</div>
+                <div class="info-value">{{ property.rooms }}</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Détails du paiement -->
+    <div class="section">
+        <div class="section-title">DÉTAILS DU PAIEMENT</div>
+        <table>
+            <thead>
+                <tr>
+                    <th>Désignation</th>
+                    <th style="width: 30%; text-align: right;">Montant</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>{{ payment.type }} - {{ payment.dueDate|date('F Y') }}</td>
+                    <td style="text-align: right;">{{ payment.amount|currency }}</td>
+                </tr>
+                {% if lease.charges > 0 %}
+                <tr>
+                    <td>Charges locatives</td>
+                    <td style="text-align: right;">{{ lease.charges|currency }}</td>
+                </tr>
+                {% endif %}
+            </tbody>
+            <tfoot>
+                <tr>
+                    <th>TOTAL PAYÉ</th>
+                    <th style="text-align: right;">{{ payment.amount|currency }}</th>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+
+    <!-- Montant total -->
+    <div class="amount-box">
+        <div class="label">MONTANT TOTAL RÉGLÉ</div>
+        <div class="amount">{{ payment.amount|currency }}</div>
+    </div>
+
+    <!-- Informations de paiement -->
+    <div class="payment-details">
+        <strong>Informations de paiement :</strong><br>
+        <strong>Méthode :</strong> {{ payment.paymentMethod|default('Non spécifié') }}<br>
+        <strong>Date de paiement :</strong> {{ payment.paidDate|date('d/m/Y') }}<br>
+        {% if payment.reference %}
+        <strong>Référence :</strong> {{ payment.reference }}<br>
+        {% endif %}
+    </div>
+
+    <!-- Mentions légales -->
+    <div style="margin-top: 30px; font-size: 10pt; color: #7f8c8d;">
+        <p>
+            <strong>Note :</strong> Cette quittance atteste du paiement intégral du loyer et des charges
+            pour la période mentionnée ci-dessus. Elle est remise au locataire en application de
+            l'article 21 de la loi n° 89-462 du 6 juillet 1989.
+        </p>
+        <p>
+            Le propriétaire ou son mandataire est tenu de transmettre gratuitement une quittance au
+            locataire qui en fait la demande.
+        </p>
+    </div>
+
+    <!-- Signatures -->
+    <div class="signature-section">
+        <div class="signature-box">
+            <div class="label">Le Propriétaire / Gestionnaire</div>
+            <div style="margin-top: 60px; border-top: 1px solid #333; display: inline-block; padding-top: 5px;">
+                Signature et cachet
+            </div>
+        </div>
+        <div class="signature-box">
+            <div class="label">Le Locataire</div>
+            <div style="margin-top: 60px; border-top: 1px solid #333; display: inline-block; padding-top: 5px;">
+                Signature
+            </div>
+        </div>
+    </div>
+
+    <!-- Pied de page -->
+    <div class="footer">
+        <strong>{{ settings.company_name }}</strong>
+        {% if settings.company_siret %} - SIRET : {{ settings.company_siret }}{% endif %}<br>
+        {{ settings.company_address }}{% if settings.company_city %}, {{ settings.company_city }}{% endif %}<br>
+        {% if settings.company_phone %}Tél : {{ settings.company_phone }} | {% endif %}
+        {% if settings.company_email %}Email : {{ settings.company_email }}{% endif %}<br>
+        <small>Document généré automatiquement le {{ "now"|date('d/m/Y à H:i') }} - Quittance #{{ payment.id }} - Bail #{{ lease.id }}</small>
+    </div>
+
+    <div class="stamp">
+        Document généré électroniquement - Valable sans signature
+    </div>
+</body>
+</html>
+

@@ -1,0 +1,416 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Dashboard Analytique - MYLOCCA{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        .kpi-card {
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .kpi-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+        .trend-up {
+            color: #28a745;
+        }
+        .trend-down {
+            color: #dc3545;
+        }
+        .chart-container {
+            position: relative;
+            height: 300px;
+        }
+        .forecast-item {
+            border-left: 4px solid var(--primary-color);
+            padding-left: 15px;
+            margin-bottom: 10px;
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h3 mb-1">
+                        <i class="bi bi-graph-up me-2"></i>Dashboard Analytique
+                    </h1>
+                    <p class="text-muted mb-0">Vue d'ensemble de votre activité</p>
+                </div>
+                <div>
+                    <span class="badge bg-success">
+                        <i class="bi bi-clock"></i> Mis à jour : {{ "now"|date("d/m/Y H:i") }}
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 📊 KPIs Principaux -->
+    <div class="row mb-4">
+        <div class="col-md-3 mb-3">
+            <div class="card kpi-card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <p class="text-muted mb-1 small">Taux d'Occupation</p>
+                            <h2 class="mb-0">{{ occupancy_rate.rate }}%</h2>
+                            <small class="text-muted">{{ occupancy_rate.occupied }}/{{ occupancy_rate.total }} biens</small>
+                        </div>
+                        <div class="text-primary">
+                            <i class="bi bi-building" style="font-size: 2.5rem;"></i>
+                        </div>
+                    </div>
+                    <div class="progress mt-3" style="height: 5px;">
+                        <div class="progress-bar bg-primary" style="width: {{ occupancy_rate.rate }}%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3 mb-3">
+            <div class="card kpi-card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <p class="text-muted mb-1 small">Revenus Mois</p>
+                            <h2 class="mb-0">{{ payment_statistics.current_month_revenue|currency }}</h2>
+                            <small class="{{ payment_statistics.evolution_percentage >= 0 ? 'trend-up' : 'trend-down' }}">
+                                <i class="bi bi-arrow-{{ payment_statistics.evolution_percentage >= 0 ? 'up' : 'down' }}"></i>
+                                {{ payment_statistics.evolution_percentage }}%
+                            </small>
+                        </div>
+                        <div class="text-success">
+                            <i class="bi bi-cash-coin" style="font-size: 2.5rem;"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3 mb-3">
+            <div class="card kpi-card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <p class="text-muted mb-1 small">Taux de Recouvrement</p>
+                            <h2 class="mb-0">{{ global_kpis.collection_rate }}%</h2>
+                            <small class="text-muted">Objectif: 95%</small>
+                        </div>
+                        <div class="text-info">
+                            <i class="bi bi-check-circle" style="font-size: 2.5rem;"></i>
+                        </div>
+                    </div>
+                    <div class="progress mt-3" style="height: 5px;">
+                        <div class="progress-bar bg-info" style="width: {{ global_kpis.collection_rate }}%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3 mb-3">
+            <div class="card kpi-card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <p class="text-muted mb-1 small">Paiements en Retard</p>
+                            <h2 class="mb-0 {{ payment_statistics.overdue_count > 0 ? 'text-danger' : 'text-success' }}">
+                                {{ payment_statistics.overdue_count }}
+                            </h2>
+                            <small class="text-muted">{{ payment_statistics.overdue_amount|currency }}</small>
+                        </div>
+                        <div class="{{ payment_statistics.overdue_count > 0 ? 'text-danger' : 'text-success' }}">
+                            <i class="bi bi-exclamation-triangle" style="font-size: 2.5rem;"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 📈 Graphiques Principaux -->
+    <div class="row mb-4">
+        <!-- Graphique Revenus 12 Mois -->
+        <div class="col-lg-8 mb-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-graph-up me-2"></i>Évolution Revenus vs Dépenses (12 mois)
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="revenueChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Statistiques Baux -->
+        <div class="col-lg-4 mb-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-file-text me-2"></i>Baux à Expirer
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span>30 jours</span>
+                            <span class="badge bg-danger">{{ lease_expiration_stats.expiring_30_days }}</span>
+                        </div>
+                        <div class="progress" style="height: 8px;">
+                            <div class="progress-bar bg-danger" style="width: {{ (lease_expiration_stats.expiring_30_days / lease_expiration_stats.total_active * 100)|round }}%"></div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span>60 jours</span>
+                            <span class="badge bg-warning">{{ lease_expiration_stats.expiring_60_days }}</span>
+                        </div>
+                        <div class="progress" style="height: 8px;">
+                            <div class="progress-bar bg-warning" style="width: {{ (lease_expiration_stats.expiring_60_days / lease_expiration_stats.total_active * 100)|round }}%"></div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span>90 jours</span>
+                            <span class="badge bg-info">{{ lease_expiration_stats.expiring_90_days }}</span>
+                        </div>
+                        <div class="progress" style="height: 8px;">
+                            <div class="progress-bar bg-info" style="width: {{ (lease_expiration_stats.expiring_90_days / lease_expiration_stats.total_active * 100)|round }}%"></div>
+                        </div>
+                    </div>
+
+                    <hr>
+                    <div class="text-center">
+                        <h4 class="mb-0">{{ lease_expiration_stats.total_active }}</h4>
+                        <small class="text-muted">Baux actifs au total</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 💰 Prévisions de Trésorerie -->
+    <div class="row mb-4">
+        <div class="col-lg-6 mb-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-calendar-check me-2"></i>Prévisions de Trésorerie (3 mois)
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% for forecast in cash_flow_forecast %}
+                    <div class="forecast-item">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <strong>{{ forecast.month }}</strong>
+                            <span class="badge {{ forecast.projected_net >= 0 ? 'bg-success' : 'bg-danger' }}">
+                                {{ forecast.projected_net|currency }}
+                            </span>
+                        </div>
+                        <div class="small text-muted">
+                            <i class="bi bi-arrow-down-circle text-success"></i> Revenus: {{ forecast.expected_revenue|currency }}
+                            <i class="bi bi-arrow-up-circle text-danger ms-2"></i> Dépenses: {{ forecast.estimated_expenses|currency }}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Répartition par Type de Bien -->
+        <div class="col-lg-6 mb-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-pie-chart me-2"></i>Répartition par Type de Bien
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="propertyTypeChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 📊 Comparaison Année en Cours -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-bar-chart-line me-2"></i>Performance Annuelle
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-md-4">
+                            <h3 class="text-primary">{{ year_comparison.current_year|currency }}</h3>
+                            <p class="text-muted">Année {{ "now"|date("Y") }}</p>
+                        </div>
+                        <div class="col-md-4">
+                            <h3 class="{{ year_comparison.evolution >= 0 ? 'text-success' : 'text-danger' }}">
+                                <i class="bi bi-arrow-{{ year_comparison.evolution >= 0 ? 'up' : 'down' }}"></i>
+                                {{ year_comparison.evolution }}%
+                            </h3>
+                            <p class="text-muted">Évolution</p>
+                        </div>
+                        <div class="col-md-4">
+                            <h3 class="text-secondary">{{ year_comparison.last_year|currency }}</h3>
+                            <p class="text-muted">Année {{ ("now"|date("Y") - 1) }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lien vers dashboard complet (ancien) -->
+    <div class="row">
+        <div class="col-12 text-center mb-4">
+            <a href="{{ path('app_dashboard') }}" class="btn btn-outline-primary">
+                <i class="bi bi-grid me-2"></i>Voir le Dashboard Classique
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    
+    <script>
+        // Graphique Revenus vs Dépenses
+        const revenueCtx = document.getElementById('revenueChart').getContext('2d');
+        const revenueChart = new Chart(revenueCtx, {
+            type: 'line',
+            data: {
+                labels: {{ monthly_revenue_chart.labels|json_encode|raw }},
+                datasets: [
+                    {
+                        label: 'Revenus',
+                        data: {{ monthly_revenue_chart.revenue|json_encode|raw }},
+                        borderColor: 'rgb(40, 167, 69)',
+                        backgroundColor: 'rgba(40, 167, 69, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    },
+                    {
+                        label: 'Dépenses',
+                        data: {{ monthly_revenue_chart.expenses|json_encode|raw }},
+                        borderColor: 'rgb(220, 53, 69)',
+                        backgroundColor: 'rgba(220, 53, 69, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    },
+                    {
+                        label: 'Net',
+                        data: {{ monthly_revenue_chart.net|json_encode|raw }},
+                        borderColor: 'rgb(0, 123, 255)',
+                        backgroundColor: 'rgba(0, 123, 255, 0.1)',
+                        tension: 0.4,
+                        fill: true,
+                        borderDash: [5, 5]
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    },
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false,
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.dataset.label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+                                label += new Intl.NumberFormat('fr-FR', { 
+                                    style: 'currency', 
+                                    currency: '{{ default_currency().code }}' 
+                                }).format(context.parsed.y);
+                                return label;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return new Intl.NumberFormat('fr-FR', { 
+                                    style: 'currency', 
+                                    currency: '{{ default_currency().code }}',
+                                    minimumFractionDigits: 0
+                                }).format(value);
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        // Graphique Répartition par Type
+        const propertyTypeCtx = document.getElementById('propertyTypeChart').getContext('2d');
+        const propertyTypeChart = new Chart(propertyTypeCtx, {
+            type: 'doughnut',
+            data: {
+                labels: [
+                    {% for property in properties_by_type %}
+                        '{{ property.type }}'{% if not loop.last %},{% endif %}
+                    {% endfor %}
+                ],
+                datasets: [{
+                    data: [
+                        {% for property in properties_by_type %}
+                            {{ property.count }}{% if not loop.last %},{% endif %}
+                        {% endfor %}
+                    ],
+                    backgroundColor: [
+                        'rgb(0, 123, 255)',
+                        'rgb(40, 167, 69)',
+                        'rgb(255, 193, 7)',
+                        'rgb(220, 53, 69)',
+                        'rgb(108, 117, 125)',
+                        'rgb(23, 162, 184)'
+                    ]
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'right'
+                    }
+                }
+            }
+        });
+
+        // Auto-refresh toutes les 5 minutes
+        setTimeout(function() {
+            location.reload();
+        }, 300000); // 5 minutes
+    </script>
+{% endblock %}
+

@@ -1,0 +1,115 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Paramètres système - MYLOCCA{% endblock %}
+
+{% block page_title %}
+    <h5 class="mb-0">
+        <i class="bi bi-gear me-2"></i>
+        Paramètres système
+    </h5>
+{% endblock %}
+
+{% block page_actions %}
+    <div class="d-flex gap-2">
+        <a href="{{ path('app_admin_dashboard') }}" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-arrow-left"></i> Retour
+        </a>
+        <button type="button" class="btn btn-outline-warning btn-sm" onclick="resetToDefaults()">
+            <i class="bi bi-arrow-clockwise"></i> Valeurs par défaut
+        </button>
+    </div>
+{% endblock %}
+
+{% block body %}
+    <form method="POST">
+        {% for category, settings in settings_by_category %}
+            <div class="card mb-4">
+                <div class="card-header" style="background-color: var(--primary-color); color: white;">
+                    <h6 class="mb-0">
+                        {% if category == 'GENERAL' %}
+                            <i class="bi bi-gear me-2"></i>Paramètres généraux
+                        {% elseif category == 'PAYMENT' %}
+                            <i class="bi bi-credit-card me-2"></i>Paramètres de paiement
+                        {% elseif category == 'EMAIL' %}
+                            <i class="bi bi-envelope me-2"></i>Configuration email
+                        {% elseif category == 'MAINTENANCE' %}
+                            <i class="bi bi-tools me-2"></i>Paramètres maintenance
+                        {% else %}
+                            <i class="bi bi-folder me-2"></i>{{ category }}
+                        {% endif %}
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        {% for setting in settings %}
+                            {% if setting.isEditable %}
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">{{ setting.description }}</label>
+
+                                    {% if setting.dataType == 'BOOLEAN' %}
+                                        <div class="form-check form-switch">
+                                            <input class="form-check-input" type="checkbox"
+                                                   name="setting_{{ setting.settingKey }}"
+                                                   id="setting_{{ setting.settingKey }}"
+                                                   {{ setting.parsedValue ? 'checked' : '' }}>
+                                            <label class="form-check-label" for="setting_{{ setting.settingKey }}">
+                                                {{ setting.parsedValue ? 'Activé' : 'Désactivé' }}
+                                            </label>
+                                        </div>
+                                    {% elseif setting.dataType == 'INTEGER' %}
+                                        <input type="number" class="form-control"
+                                               name="setting_{{ setting.settingKey }}"
+                                               value="{{ setting.settingValue }}"
+                                               min="0">
+                                    {% elseif setting.dataType == 'FLOAT' %}
+                                        <input type="number" class="form-control"
+                                               name="setting_{{ setting.settingKey }}"
+                                               value="{{ setting.settingValue }}"
+                                               step="0.01" min="0">
+                                    {% else %}
+                                        <input type="text" class="form-control"
+                                               name="setting_{{ setting.settingKey }}"
+                                               value="{{ setting.settingValue }}">
+                                    {% endif %}
+
+                                    <div class="form-text">
+                                        Clé : <code>{{ setting.settingKey }}</code>
+                                    </div>
+                                </div>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+
+        <div class="d-flex justify-content-end gap-2">
+            <a href="{{ path('app_admin_dashboard') }}" class="btn btn-secondary">Annuler</a>
+            <button type="submit" class="btn btn-primary">
+                <i class="bi bi-check-circle me-2"></i>
+                Enregistrer les paramètres
+            </button>
+        </div>
+    </form>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+
+    <script>
+        function resetToDefaults() {
+            if (confirm('Êtes-vous sûr de vouloir restaurer les paramètres par défaut ? Cette action est irréversible.')) {
+                // Ici vous pourriez implémenter la restauration des valeurs par défaut
+                alert('Fonctionnalité de restauration à implémenter');
+            }
+        }
+
+        // Mise à jour dynamique des labels pour les switches
+        document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+            checkbox.addEventListener('change', function() {
+                const label = this.nextElementSibling;
+                label.textContent = this.checked ? 'Activé' : 'Désactivé';
+            });
+        });
+    </script>
+{% endblock %}

@@ -1,0 +1,271 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Mes acomptes - MYLOCCA{% endblock %}
+
+{% block page_title %}
+    <h5 class="mb-0">
+        <i class="bi bi-piggy-bank me-2"></i>
+        Mes acomptes
+    </h5>
+{% endblock %}
+
+{% block page_actions %}
+    <a href="{{ path('app_online_payment_pay_advance') }}" class="btn btn-success btn-sm">
+        <i class="bi bi-plus-circle me-2"></i>
+        Nouveau paiement en avance
+    </a>
+{% endblock %}
+
+{% block body %}
+    <div class="container-fluid">
+        <!-- Statistiques des acomptes -->
+        <div class="row mb-4">
+            <div class="col-md-4">
+                <div class="card border-left-success shadow h-100 py-2">
+                    <div class="card-body">
+                        <div class="row no-gutters align-items-center">
+                            <div class="col mr-2">
+                                <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                    Solde Disponible
+                                </div>
+                                <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                    {{ stats.total_available|default(0)|currency }}
+                                </div>
+                            </div>
+                            <div class="col-auto">
+                                <i class="bi bi-piggy-bank fa-2x text-gray-300"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="card border-left-info shadow h-100 py-2">
+                    <div class="card-body">
+                        <div class="row no-gutters align-items-center">
+                            <div class="col mr-2">
+                                <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                    Solde Utilisé
+                                </div>
+                                <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                    {{ stats.total_used|default(0)|currency }}
+                                </div>
+                            </div>
+                            <div class="col-auto">
+                                <i class="bi bi-cash-coin fa-2x text-gray-300"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="card border-left-primary shadow h-100 py-2">
+                    <div class="card-body">
+                        <div class="row no-gutters align-items-center">
+                            <div class="col mr-2">
+                                <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                    Total Acomptes
+                                </div>
+                                <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                    {{ stats.active_count|default(0) }}
+                                </div>
+                            </div>
+                            <div class="col-auto">
+                                <i class="bi bi-list-ol fa-2x text-gray-300"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Message d'information -->
+        {% if stats.total_available|default(0) > 0 %}
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="alert alert-success">
+                    <i class="bi bi-check-circle me-2"></i>
+                    <strong>Excellent !</strong> Vous avez un solde d'acompte disponible de <strong>{{ stats.total_available|currency }}</strong>.
+                    Ce montant sera automatiquement déduit de vos prochaines échéances de loyer.
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle me-2"></i>
+                    <strong>Aucun acompte disponible.</strong> Vous pouvez effectuer un paiement en avance pour faciliter la gestion de vos loyers futurs.
+                    <a href="{{ path('app_online_payment_pay_advance') }}" class="alert-link">Cliquez ici pour payer un acompte</a>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Liste des acomptes -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card shadow">
+                    <div class="card-header py-3">
+                        <h6 class="m-0 font-weight-bold text-primary">
+                            <i class="bi bi-list me-2"></i>
+                            Historique des acomptes
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        {% if advances|length > 0 %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th><i class="bi bi-calendar me-1"></i>Date</th>
+                                        <th><i class="bi bi-file-text me-1"></i>Bail</th>
+                                        <th><i class="bi bi-cash me-1"></i>Montant</th>
+                                        <th><i class="bi bi-piggy-bank me-1"></i>Solde Restant</th>
+                                        <th><i class="bi bi-tag me-1"></i>Statut</th>
+                                        <th><i class="bi bi-gear me-1"></i>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for advance in advances %}
+                                    <tr>
+                                        <td>
+                                            <span class="badge bg-light text-dark">
+                                                {{ advance.paidDate|date('d/m/Y') }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <strong>{{ advance.lease.property.address }}</strong>
+                                            <br>
+                                            <small class="text-muted">
+                                                Bail #{{ advance.lease.id }}
+                                            </small>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-primary">
+                                                {{ advance.amount|currency }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            {% if advance.remainingBalance > 0 %}
+                                                <span class="badge bg-success">
+                                                    {{ advance.remainingBalance|currency }}
+                                                </span>
+                                            {% else %}
+                                                <span class="badge bg-secondary">
+                                                    {{ advance.remainingBalance|currency }}
+                                                </span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if advance.status == 'Disponible' %}
+                                                <span class="badge bg-success">
+                                                    <i class="bi bi-check-circle me-1"></i>
+                                                    Disponible
+                                                </span>
+                                            {% elseif advance.status == 'Utilisé partiellement' %}
+                                                <span class="badge bg-warning">
+                                                    <i class="bi bi-hourglass-split me-1"></i>
+                                                    Partiellement utilisé
+                                                </span>
+                                            {% elseif advance.status == 'Utilisé' %}
+                                                <span class="badge bg-info">
+                                                    <i class="bi bi-check-all me-1"></i>
+                                                    Utilisé
+                                                </span>
+                                            {% elseif advance.status == 'Remboursé' %}
+                                                <span class="badge bg-secondary">
+                                                    <i class="bi bi-arrow-return-left me-1"></i>
+                                                    Remboursé
+                                                </span>
+                                            {% else %}
+                                                <span class="badge bg-dark">
+                                                    {{ advance.status }}
+                                                </span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <a href="{{ path('app_advance_payment_show', {'id': advance.id}) }}"
+                                               class="btn btn-sm btn-outline-primary"
+                                               title="Voir les détails">
+                                                <i class="bi bi-eye"></i>
+                                            </a>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        {% else %}
+                        <div class="text-center py-5">
+                            <i class="bi bi-piggy-bank text-muted" style="font-size: 4rem;"></i>
+                            <p class="text-muted mt-3">
+                                Aucun acompte enregistré pour le moment.
+                            </p>
+                            <a href="{{ path('app_online_payment_pay_advance') }}" class="btn btn-success">
+                                <i class="bi bi-plus-circle me-2"></i>
+                                Effectuer mon premier paiement en avance
+                            </a>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Informations complémentaires -->
+        <div class="row mt-4">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header bg-info text-white">
+                        <h6 class="mb-0">
+                            <i class="bi bi-info-circle me-2"></i>
+                            Comment fonctionnent les acomptes ?
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <p>Les acomptes sont des <strong>paiements en avance</strong> qui vous permettent de :</p>
+                        <ul>
+                            <li>💰 <strong>Gérer votre budget</strong> : Payez quand vous le souhaitez</li>
+                            <li>🔄 <strong>Automatisation</strong> : Les acomptes sont déduits automatiquement de vos loyers futurs</li>
+                            <li>📊 <strong>Transparence</strong> : Suivez l'utilisation de vos acomptes en temps réel</li>
+                            <li>✅ <strong>Flexibilité</strong> : Choisissez le montant de votre choix</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header bg-success text-white">
+                        <h6 class="mb-0">
+                            <i class="bi bi-lightning me-2"></i>
+                            Avantages des acomptes
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <strong>✓ Aucun frais supplémentaire</strong>
+                            <br><small class="text-muted">Les acomptes sont gratuits, aucun frais de gestion</small>
+                        </div>
+                        <div class="mb-3">
+                            <strong>✓ Application automatique</strong>
+                            <br><small class="text-muted">Vos acomptes sont utilisés automatiquement pour vos loyers</small>
+                        </div>
+                        <div class="mb-3">
+                            <strong>✓ Traçabilité complète</strong>
+                            <br><small class="text-muted">Consultez l'historique détaillé de vos acomptes</small>
+                        </div>
+                        <div>
+                            <strong>✓ Sérénité garantie</strong>
+                            <br><small class="text-muted">Ne vous souciez plus de vos prochaines échéances</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+

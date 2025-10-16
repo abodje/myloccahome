@@ -1,0 +1,132 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Nouveau paiement - MYLOCCA{% endblock %}
+
+{% block page_title %}
+    <h5 class="mb-0">
+        <i class="bi bi-plus-circle me-2"></i>
+        Nouveau paiement
+    </h5>
+{% endblock %}
+
+{% block page_actions %}
+    <a href="{{ path('app_payment_index') }}" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-arrow-left"></i> Retour
+    </a>
+{% endblock %}
+
+{% block body %}
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="bi bi-credit-card me-2"></i>
+                        Informations du paiement
+                    </h6>
+                </div>
+                <div class="card-body">
+                    {{ form_start(form) }}
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    {{ form_label(form.lease) }}
+                                    {{ form_widget(form.lease) }}
+                                    {{ form_errors(form.lease) }}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    {{ form_label(form.type) }}
+                                    {{ form_widget(form.type) }}
+                                    {{ form_errors(form.type) }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    {{ form_label(form.amount) }}
+                                    {{ form_widget(form.amount) }}
+                                    {{ form_errors(form.amount) }}
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    {{ form_label(form.dueDate) }}
+                                    {{ form_widget(form.dueDate) }}
+                                    {{ form_errors(form.dueDate) }}
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    {{ form_label(form.status) }}
+                                    {{ form_widget(form.status) }}
+                                    {{ form_errors(form.status) }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    {{ form_label(form.paidDate) }}
+                                    {{ form_widget(form.paidDate) }}
+                                    {{ form_errors(form.paidDate) }}
+                                    <div class="form-text">Laisser vide si pas encore payé</div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    {{ form_label(form.paymentMethod) }}
+                                    {{ form_widget(form.paymentMethod) }}
+                                    {{ form_errors(form.paymentMethod) }}
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    {{ form_label(form.reference) }}
+                                    {{ form_widget(form.reference) }}
+                                    {{ form_errors(form.reference) }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            {{ form_label(form.notes) }}
+                            {{ form_widget(form.notes) }}
+                            {{ form_errors(form.notes) }}
+                        </div>
+
+                        <div class="d-flex justify-content-end gap-2">
+                            <a href="{{ path('app_payment_index') }}" class="btn btn-secondary">Annuler</a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-check-circle me-2"></i>
+                                Créer le paiement
+                            </button>
+                        </div>
+                    {{ form_end(form) }}
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script>
+        // Auto-remplir le montant selon le contrat sélectionné
+        document.addEventListener('DOMContentLoaded', function() {
+            const leaseSelect = document.getElementById('payment_lease');
+            const amountInput = document.getElementById('payment_amount');
+
+            if (leaseSelect && amountInput) {
+                leaseSelect.addEventListener('change', function() {
+                    // Ici vous pourriez faire un appel AJAX pour récupérer le montant du loyer
+                    // Pour l'instant, on laisse l'utilisateur saisir manuellement
+                });
+            }
+        });
+    </script>
+{% endblock %}

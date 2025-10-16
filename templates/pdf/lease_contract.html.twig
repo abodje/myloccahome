@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="{{ contract_language ?? 'fr' }}">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ contract_title ?? 'Contrat de Bail' }}</title>
+    <style>
+        body {
+            font-family: {{ contract_font_family ?? 'DejaVu Sans, sans-serif' }};
+            font-size: {{ contract_font_size ?? '11pt' }};
+            line-height: {{ contract_line_height ?? '1.6' }};
+            color: {{ contract_text_color ?? '#333' }};
+            margin: {{ contract_margin ?? '40px' }};
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            border-bottom: 3px solid {{ contract_primary_color ?? '#0066cc' }};
+            padding-bottom: 20px;
+        }
+        .header h1 {
+            color: {{ contract_primary_color ?? '#0066cc' }};
+            font-size: {{ contract_title_size ?? '24pt' }};
+            margin: 0 0 10px 0;
+        }
+        .section {
+            margin-bottom: 30px;
+        }
+        .section-title {
+            background-color: {{ contract_primary_color ?? '#0066cc' }};
+            color: white;
+            padding: 8px 15px;
+            font-size: 14pt;
+            font-weight: bold;
+            margin: 20px 0 15px 0;
+        }
+        .info-block {
+            background-color: {{ contract_info_bg_color ?? '#f5f5f5' }};
+            padding: 15px;
+            margin: 10px 0;
+            border-left: 4px solid {{ contract_primary_color ?? '#0066cc' }};
+        }
+        .info-row {
+            margin: 5px 0;
+        }
+        .label {
+            font-weight: bold;
+            display: inline-block;
+            width: {{ contract_label_width ?? '180px' }};
+        }
+        .article {
+            margin: 15px 0;
+        }
+        .article-title {
+            font-weight: bold;
+            color: {{ contract_primary_color ?? '#0066cc' }};
+            margin-bottom: 5px;
+        }
+        .signatures {
+            margin-top: 60px;
+            display: table;
+            width: 100%;
+        }
+        .signature-block {
+            display: table-cell;
+            width: 50%;
+            text-align: center;
+            padding: 20px;
+        }
+        .signature-line {
+            border-top: 1px solid #333;
+            margin-top: 80px;
+            padding-top: 10px;
+        }
+        .footer {
+            position: fixed;
+            bottom: 20px;
+            left: {{ contract_margin ?? '40px' }};
+            right: {{ contract_margin ?? '40px' }};
+            text-align: center;
+            font-size: 9pt;
+            color: #666;
+            border-top: 1px solid #ccc;
+            padding-top: 10px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+        table th {
+            background-color: {{ contract_primary_color ?? '#0066cc' }};
+            color: white;
+            padding: 10px;
+            text-align: left;
+        }
+        table td {
+            padding: 8px;
+            border-bottom: 1px solid #ddd;
+        }
+        .highlight-row {
+            background-color: {{ contract_highlight_color ?? '#f0f8ff' }};
+        }
+    </style>
+</head>
+<body>
+    <!-- En-tête -->
+    <div class="header">
+        <h1>{{ contract_main_title ?? 'CONTRAT DE BAIL D\'HABITATION' }}</h1>
+        <p><strong>{{ company.company_name ?? contract_company_name ?? 'MYLOCCA Gestion' }}</strong></p>
+        <p>{{ company.company_address ?? contract_company_address ?? '' }}</p>
+        {% if contract_logo_url %}
+            <img src="{{ contract_logo_url }}" alt="Logo" style="max-height: 60px; margin: 10px 0;">
+        {% endif %}
+    </div>
+
+    <!-- Référence -->
+    <div class="section">
+        <p><strong>Référence du contrat :</strong> {{ ('00000000' ~ lease.id)|slice(-8) }}</p>
+        <p><strong>Date du contrat :</strong> {{ generated_at|date('d/m/Y') }}</p>
+    </div>
+
+    <!-- Les parties -->
+    <div class="section-title">{{ contract_section_1_title ?? 'ARTICLE 1 : LES PARTIES' }}</div>
+
+    <div class="info-block">
+        <h3 style="margin-top: 0;">{{ contract_landlord_title ?? 'LE BAILLEUR' }}</h3>
+        {% if owner %}
+        <div class="info-row">
+            <span class="label">Nom :</span>
+            {{ owner.firstName }} {{ owner.lastName }}
+        </div>
+        <div class="info-row">
+            <span class="label">Adresse :</span>
+            {{ owner.address ?? 'Non renseignée' }}
+        </div>
+        <div class="info-row">
+            <span class="label">Email :</span>
+            {{ owner.email ?? 'Non renseigné' }}
+        </div>
+        <div class="info-row">
+            <span class="label">Téléphone :</span>
+            {{ owner.phone ?? 'Non renseigné' }}
+        </div>
+        {% else %}
+        <p>{{ company.company_name ?? 'MYLOCCA Gestion' }}</p>
+        <p>{{ company.company_address ?? '' }}</p>
+        {% endif %}
+    </div>
+
+    <div class="info-block">
+        <h3 style="margin-top: 0;">{{ contract_tenant_title ?? 'LE LOCATAIRE' }}</h3>
+        <div class="info-row">
+            <span class="label">Nom complet :</span>
+            {{ tenant.firstName }} {{ tenant.lastName }}
+        </div>
+        <div class="info-row">
+            <span class="label">Date de naissance :</span>
+            {{ tenant.birthDate|date('d/m/Y') }}
+        </div>
+        <div class="info-row">
+            <span class="label">Email :</span>
+            {{ tenant.email }}
+        </div>
+        <div class="info-row">
+            <span class="label">Téléphone :</span>
+            {{ tenant.phone }}
+        </div>
+        <div class="info-row">
+            <span class="label">Profession :</span>
+            {{ tenant.profession ?? 'Non renseignée' }}
+        </div>
+    </div>
+
+    <!-- Le bien loué -->
+    <div class="section-title">{{ contract_section_2_title ?? 'ARTICLE 2 : DÉSIGNATION DU BIEN LOUÉ' }}</div>
+
+    <div class="info-block">
+        <div class="info-row">
+            <span class="label">Adresse :</span>
+            {{ property.address }}, {{ property.postalCode }} {{ property.city }}
+        </div>
+        <div class="info-row">
+            <span class="label">Type de bien :</span>
+            {{ property.propertyType }}
+        </div>
+        <div class="info-row">
+            <span class="label">Surface habitable :</span>
+            {{ property.surface }} m²
+        </div>
+        <div class="info-row">
+            <span class="label">Nombre de pièces :</span>
+            {{ property.rooms }}
+        </div>
+    </div>
+
+    <!-- Durée du bail -->
+    <div class="section-title">{{ contract_section_3_title ?? 'ARTICLE 3 : DURÉE DU BAIL' }}</div>
+
+    <div class="article">
+        <p>Le présent bail est consenti et accepté pour une durée de :</p>
+        <div class="info-block">
+            <div class="info-row">
+                <span class="label">Date de début :</span>
+                {{ lease.startDate|date('d/m/Y') }}
+            </div>
+            {% if lease.endDate %}
+            <div class="info-row">
+                <span class="label">Date de fin :</span>
+                {{ lease.endDate|date('d/m/Y') }}
+            </div>
+            <div class="info-row">
+                <span class="label">Durée :</span>
+                {{ lease.startDate.diff(lease.endDate).days // 30 }} mois
+            </div>
+            {% else %}
+            <div class="info-row">
+                <span class="label">Type :</span>
+                Bail à durée indéterminée
+            </div>
+            {% endif %}
+        </div>
+        <p>Le bail se renouvellera automatiquement par tacite reconduction, sauf préavis donné selon les conditions légales.</p>
+    </div>
+
+    <!-- Loyer et charges -->
+    <div class="section-title">{{ contract_section_4_title ?? 'ARTICLE 4 : LOYER ET CHARGES' }}</div>
+
+    <div class="article">
+        <table>
+            <tr>
+                <th>Désignation</th>
+                <th style="text-align: right;">Montant</th>
+            </tr>
+            <tr>
+                <td>Loyer mensuel hors charges</td>
+                <td style="text-align: right;"><strong>{{ lease.monthlyRent|currency }}</strong></td>
+            </tr>
+            {% if lease.charges %}
+            <tr>
+                <td>Provisions sur charges</td>
+                <td style="text-align: right;">{{ lease.charges|currency }}</td>
+            </tr>
+            <tr style="background-color: #f0f8ff;">
+                <td><strong>Total loyer charges comprises</strong></td>
+                <td style="text-align: right;">
+                    <strong>{{ (lease.monthlyRent + lease.charges)|currency }}</strong>
+                </td>
+            </tr>
+            {% endif %}
+        </table>
+
+        <p><strong>Échéance de paiement :</strong> Le loyer est payable d'avance le {{ lease.rentDueDay ?? 1 }} de chaque mois.</p>
+        <p><strong>Mode de paiement :</strong> Virement bancaire, prélèvement automatique ou chèque.</p>
+    </div>
+
+    <!-- Dépôt de garantie -->
+    <div class="section-title">{{ contract_section_5_title ?? 'ARTICLE 5 : DÉPÔT DE GARANTIE' }}</div>
+
+    <div class="article">
+        <p>Un dépôt de garantie de <strong>{{ lease.deposit|currency }}</strong> a été versé par le locataire lors de la signature du présent bail.</p>
+        <p>Ce dépôt sera restitué au locataire dans un délai maximal de deux mois après la remise des clés, déduction faite le cas échéant des sommes restant dues au bailleur et du coût des réparations locatives.</p>
+    </div>
+
+    <!-- Obligations du locataire -->
+    <div class="section-title">{{ contract_section_6_title ?? 'ARTICLE 6 : OBLIGATIONS DU LOCATAIRE' }}</div>
+
+    <div class="article">
+        <p>Le locataire s'engage à :</p>
+        <ul>
+            <li>Payer le loyer et les charges aux termes convenus</li>
+            <li>Jouir paisiblement des lieux loués</li>
+            <li>Entretenir les lieux loués en bon état</li>
+            <li>Laisser exécuter les travaux d'amélioration et les réparations urgentes</li>
+            <li>Souscrire une assurance habitation pour les risques locatifs</li>
+            <li>Ne pas transformer les lieux loués sans accord écrit du bailleur</li>
+        </ul>
+    </div>
+
+    <!-- Obligations du bailleur -->
+    <div class="section-title">{{ contract_section_7_title ?? 'ARTICLE 7 : OBLIGATIONS DU BAILLEUR' }}</div>
+
+    <div class="article">
+        <p>Le bailleur s'engage à :</p>
+        <ul>
+            <li>Délivrer au locataire un logement décent</li>
+            <li>Assurer au locataire la jouissance paisible du logement</li>
+            <li>Entretenir les locaux en état de servir à l'usage prévu</li>
+            <li>Effectuer les réparations autres que locatives</li>
+        </ul>
+    </div>
+
+    <!-- Clause résolutoire -->
+    <div class="section-title">{{ contract_section_8_title ?? 'ARTICLE 8 : CLAUSE RÉSOLUTOIRE' }}</div>
+
+    <div class="article">
+        <p>À défaut de paiement du loyer et des charges aux termes convenus, et un mois après un commandement de payer demeuré infructueux, le présent bail sera résilié de plein droit si bon semble au bailleur, sans qu'il soit besoin d'une décision de justice.</p>
+    </div>
+
+    <!-- Signatures -->
+    <div class="signatures">
+        <div class="signature-block">
+            <p><strong>{{ contract_signature_landlord_title ?? 'Le Bailleur' }}</strong></p>
+            <p>{{ contract_signature_place ?? 'Fait à ____________' }}</p>
+            <p>Le {{ generated_at|date('d/m/Y') }}</p>
+            <div class="signature-line">
+                {{ contract_signature_landlord_text ?? 'Signature' }}
+            </div>
+        </div>
+        <div class="signature-block">
+            <p><strong>{{ contract_signature_tenant_title ?? 'Le Locataire' }}</strong></p>
+            <p>{{ tenant.firstName }} {{ tenant.lastName }}</p>
+            <p>Le {{ generated_at|date('d/m/Y') }}</p>
+            <div class="signature-line">
+                {{ contract_signature_tenant_text ?? 'Signature précédée de la mention "Lu et approuvé"' }}
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+        <p>{{ company.company_name ?? contract_company_name ?? 'MYLOCCA Gestion' }} - {{ contract_footer_text ?? 'Document généré le' }} {{ generated_at|date('d/m/Y à H:i') }}</p>
+    </div>
+</body>
+</html>

@@ -1,0 +1,145 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Nouveau contrat - MYLOCCA{% endblock %}
+
+{% block page_title %}
+    <h5 class="mb-0">
+        <i class="bi bi-file-plus me-2"></i>
+        Nouveau contrat de location
+    </h5>
+{% endblock %}
+
+{% block page_actions %}
+    <a href="{{ path('app_lease_index') }}" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-arrow-left"></i> Retour
+    </a>
+{% endblock %}
+
+{% block body %}
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="bi bi-file-text me-2"></i>
+                        Informations du contrat
+                    </h6>
+                </div>
+                <div class="card-body">
+                    {{ form_start(form) }}
+                        <!-- Propriété et locataire -->
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    {{ form_label(form.property) }}
+                                    {{ form_widget(form.property) }}
+                                    {{ form_errors(form.property) }}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    {{ form_label(form.tenant) }}
+                                    {{ form_widget(form.tenant) }}
+                                    {{ form_errors(form.tenant) }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Période -->
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    {{ form_label(form.startDate) }}
+                                    {{ form_widget(form.startDate) }}
+                                    {{ form_errors(form.startDate) }}
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    {{ form_label(form.endDate) }}
+                                    {{ form_widget(form.endDate) }}
+                                    {{ form_errors(form.endDate) }}
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    {{ form_label(form.status) }}
+                                    {{ form_widget(form.status) }}
+                                    {{ form_errors(form.status) }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Conditions financières -->
+                        <h6 class="mt-4 mb-3">Conditions financières</h6>
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    {{ form_label(form.monthlyRent) }}
+                                    {{ form_widget(form.monthlyRent) }}
+                                    {{ form_errors(form.monthlyRent) }}
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    {{ form_label(form.charges) }}
+                                    {{ form_widget(form.charges) }}
+                                    {{ form_errors(form.charges) }}
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    {{ form_label(form.deposit) }}
+                                    {{ form_widget(form.deposit) }}
+                                    {{ form_errors(form.deposit) }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            {{ form_label(form.rentDueDay) }}
+                            {{ form_widget(form.rentDueDay) }}
+                            {{ form_errors(form.rentDueDay) }}
+                        </div>
+
+                        <!-- Conditions particulières -->
+                        <div class="mb-3">
+                            {{ form_label(form.terms) }}
+                            {{ form_widget(form.terms) }}
+                            {{ form_errors(form.terms) }}
+                        </div>
+
+                        <div class="d-flex justify-content-end gap-2">
+                            <a href="{{ path('app_lease_index') }}" class="btn btn-secondary">Annuler</a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-check-circle me-2"></i>
+                                Créer le contrat
+                            </button>
+                        </div>
+                    {{ form_end(form) }}
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const propertySelect = document.getElementById('lease_property');
+            const rentInput = document.getElementById('lease_monthlyRent');
+            const chargesInput = document.getElementById('lease_charges');
+            const depositInput = document.getElementById('lease_deposit');
+
+            // Auto-remplir les montants selon la propriété sélectionnée
+            if (propertySelect) {
+                propertySelect.addEventListener('change', function() {
+                    // Ici vous pourriez faire un appel AJAX pour récupérer les montants de la propriété
+                    // Pour l'instant, on laisse l'utilisateur saisir manuellement
+                });
+            }
+        });
+    </script>
+{% endblock %}

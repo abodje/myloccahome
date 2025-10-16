@@ -1,0 +1,286 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Paiement #{{ payment.id }} - MYLOCCA{% endblock %}
+
+{% block page_title %}
+    <h5 class="mb-0">
+        <i class="bi bi-credit-card me-2"></i>
+        Détail du paiement #{{ payment.id }}
+    </h5>
+{% endblock %}
+
+{% block page_actions %}
+    <div class="d-flex gap-2">
+        <a href="{{ path('app_payment_index') }}" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-arrow-left"></i> Retour
+        </a>
+        {% if payment.status != 'Payé' %}
+            <button type="button" class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#markPaidModal">
+                <i class="bi bi-check-circle"></i> Marquer comme payé
+            </button>
+        {% endif %}
+        <a href="{{ path('app_payment_edit', {id: payment.id}) }}" class="btn btn-primary btn-sm">
+            <i class="bi bi-pencil"></i> Modifier
+        </a>
+    </div>
+{% endblock %}
+
+{% block body %}
+    <div class="row">
+        <div class="col-lg-8">
+            <!-- Informations principales -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="bi bi-info-circle me-2"></i>
+                        Informations du paiement
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td class="text-muted">Type :</td>
+                                    <td><strong>{{ payment.type }}</strong></td>
+                                </tr>
+                                <tr>
+                                    <td class="text-muted">Montant :</td>
+                                    <td><strong class="text-primary">{{ payment.amount|currency }}</strong></td>
+                                </tr>
+                                <tr>
+                                    <td class="text-muted">Date d'échéance :</td>
+                                    <td>{{ payment.dueDate|date('d/m/Y') }}</td>
+                                </tr>
+                                <tr>
+                                    <td class="text-muted">Statut :</td>
+                                    <td>
+                                        {% if payment.status == 'Payé' %}
+                                            <span class="badge bg-success">{{ payment.status }}</span>
+                                        {% elseif payment.isOverdue %}
+                                            <span class="badge bg-danger">En retard</span>
+                                        {% else %}
+                                            <span class="badge bg-warning">{{ payment.status }}</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <table class="table table-borderless">
+                                {% if payment.paidDate %}
+                                    <tr>
+                                        <td class="text-muted">Date de paiement :</td>
+                                        <td>{{ payment.paidDate|date('d/m/Y') }}</td>
+                                    </tr>
+                                {% endif %}
+                                {% if payment.paymentMethod %}
+                                    <tr>
+                                        <td class="text-muted">Mode de paiement :</td>
+                                        <td>{{ payment.paymentMethod }}</td>
+                                    </tr>
+                                {% endif %}
+                                {% if payment.reference %}
+                                    <tr>
+                                        <td class="text-muted">Référence :</td>
+                                        <td><code>{{ payment.reference }}</code></td>
+                                    </tr>
+                                {% endif %}
+                                <tr>
+                                    <td class="text-muted">Créé le :</td>
+                                    <td>{{ payment.createdAt|date('d/m/Y H:i') }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+
+                    {% if payment.notes %}
+                        <div class="mt-3">
+                            <h6>Notes :</h6>
+                            <p class="text-muted">{{ payment.notes }}</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Informations du contrat -->
+            {% if payment.lease %}
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h6 class="mb-0">
+                            <i class="bi bi-file-text me-2"></i>
+                            Contrat de location
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6>Propriété</h6>
+                                <p class="mb-1"><strong>{{ payment.lease.property.fullAddress }}</strong></p>
+                                <p class="text-muted small">
+                                    {{ payment.lease.property.propertyType }} -
+                                    {{ payment.lease.property.rooms }} pièces -
+                                    {{ payment.lease.property.surface }} m²
+                                </p>
+                            </div>
+                            <div class="col-md-6">
+                                <h6>Locataire</h6>
+                                <p class="mb-1"><strong>{{ payment.lease.tenant.fullName }}</strong></p>
+                                <p class="text-muted small">
+                                    <i class="bi bi-envelope me-1"></i>{{ payment.lease.tenant.email }}
+                                    {% if payment.lease.tenant.phone %}
+                                        <br><i class="bi bi-phone me-1"></i>{{ payment.lease.tenant.phone }}
+                                    {% endif %}
+                                </p>
+                            </div>
+                        </div>
+                        <hr>
+                        <div class="row">
+                            <div class="col-md-4">
+                                <small class="text-muted">Loyer mensuel</small>
+                                <p class="mb-0"><strong>{{ payment.lease.monthlyRent|currency }}</strong></p>
+                            </div>
+                            <div class="col-md-4">
+                                <small class="text-muted">Charges</small>
+                                <p class="mb-0">{{ payment.lease.charges ? payment.lease.charges|currency : 'N/A' }}</p>
+                            </div>
+                            <div class="col-md-4">
+                                <small class="text-muted">Jour d'échéance</small>
+                                <p class="mb-0">{{ payment.lease.rentDueDay ?? 1 }} de chaque mois</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+
+        <div class="col-lg-4">
+            <!-- Actions rapides -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="bi bi-lightning me-2"></i>
+                        Actions
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        {% if payment.status != 'Payé' %}
+                            <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#markPaidModal">
+                                <i class="bi bi-check-circle me-2"></i>
+                                Marquer comme payé
+                            </button>
+                        {% endif %}
+
+                        <a href="{{ path('app_payment_edit', {id: payment.id}) }}" class="btn btn-outline-primary">
+                            <i class="bi bi-pencil me-2"></i>
+                            Modifier le paiement
+                        </a>
+
+                        {% if payment.status == 'Payé' %}
+                            <button class="btn btn-outline-info" onclick="window.print()">
+                                <i class="bi bi-printer me-2"></i>
+                                Imprimer la quittance
+                            </button>
+                        {% endif %}
+
+                        <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteModal">
+                            <i class="bi bi-trash me-2"></i>
+                            Supprimer
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Historique -->
+            {% if payment.isOverdue %}
+                <div class="card">
+                    <div class="card-header bg-warning text-dark">
+                        <h6 class="mb-0">
+                            <i class="bi bi-exclamation-triangle me-2"></i>
+                            Paiement en retard
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <p class="mb-2">Ce paiement est en retard de <strong>{{ payment.daysOverdue }} jour(s)</strong>.</p>
+                        <p class="text-muted small">
+                            Date d'échéance : {{ payment.dueDate|date('d/m/Y') }}
+                        </p>
+                        <button class="btn btn-warning btn-sm">
+                            <i class="bi bi-envelope me-2"></i>
+                            Envoyer un rappel
+                        </button>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+
+    <!-- Modal marquer comme payé -->
+    <div class="modal fade" id="markPaidModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Marquer comme payé</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form action="{{ path('app_payment_mark_paid', {id: payment.id}) }}" method="POST">
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label">Date de paiement</label>
+                            <input type="date" name="paid_date" class="form-control" value="{{ 'now'|date('Y-m-d') }}">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Mode de paiement</label>
+                            <select name="payment_method" class="form-select">
+                                <option value="Virement">Virement bancaire</option>
+                                <option value="Chèque">Chèque</option>
+                                <option value="Espèces">Espèces</option>
+                                <option value="Prélèvement">Prélèvement automatique</option>
+                                <option value="Carte">Carte bancaire</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Référence</label>
+                            <input type="text" name="reference" class="form-control" placeholder="Numéro de chèque, référence...">
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                        <button type="submit" class="btn btn-success">
+                            <input type="hidden" name="_token" value="{{ csrf_token('mark_paid' ~ payment.id) }}">
+                            Confirmer le paiement
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal suppression -->
+    <div class="modal fade" id="deleteModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Confirmer la suppression</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Êtes-vous sûr de vouloir supprimer ce paiement ?</p>
+                    <p class="text-muted">Cette action est irréversible.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <form action="{{ path('app_payment_delete', {id: payment.id}) }}" method="POST" class="d-inline">
+                        <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ payment.id) }}">
+                        <button type="submit" class="btn btn-danger">Supprimer</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

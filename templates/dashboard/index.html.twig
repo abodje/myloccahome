@@ -1,0 +1,246 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Tableau de bord - MYLOCCA{% endblock %}
+
+{% block page_title %}
+    <h5 class="mb-0">
+        <i class="bi bi-speedometer2 me-2"></i>
+        Tableau de bord
+    </h5>
+{% endblock %}
+
+{% block page_actions %}
+    <a href="{{ path('app_dashboard_full') }}" class="btn btn-outline-primary btn-sm">
+        <i class="bi bi-graph-up"></i> Vue détaillée
+    </a>
+{% endblock %}
+
+{% block body %}
+    <!-- Statistiques principales -->
+    <div class="row mb-4">
+        <div class="col-md-3 mb-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">Propriétés</h6>
+                            <h3 class="mb-0">{{ stats.properties.total }}</h3>
+                            <small>{{ stats.properties.occupied }} occupées</small>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="bi bi-house fs-1 opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3 mb-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">Revenus du mois</h6>
+                            <h3 class="mb-0">{{ monthly_revenue|currency }}</h3>
+                            <small>Net: {{ net_income|currency }}</small>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="bi bi-cash-coin fs-1 opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3 mb-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">Paiements en attente</h6>
+                            <h3 class="mb-0">{{ stats.payments.pending }}</h3>
+                            <small>{{ stats.payments.overdue }} en retard</small>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="bi bi-clock-history fs-1 opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3 mb-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">Demandes maintenance</h6>
+                            <h3 class="mb-0">{{ stats.maintenance.pending }}</h3>
+                            <small>{{ stats.maintenance.urgent }} urgentes</small>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="bi bi-tools fs-1 opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Alertes et notifications -->
+        <div class="col-lg-8">
+            {% if urgent_requests|length > 0 %}
+                <div class="card mb-4">
+                    <div class="card-header bg-danger text-white">
+                        <h6 class="mb-0">
+                            <i class="bi bi-exclamation-triangle me-2"></i>
+                            Demandes urgentes ({{ urgent_requests|length }})
+                        </h6>
+                    </div>
+                    <div class="card-body p-0">
+                        {% for request in urgent_requests %}
+                            <div class="d-flex justify-content-between align-items-center p-3 border-bottom">
+                                <div>
+                                    <h6 class="mb-1">{{ request.title }}</h6>
+                                    <small class="text-muted">
+                                        {{ request.property.fullAddress }} -
+                                        {{ request.createdAt|date('d/m/Y') }}
+                                    </small>
+                                </div>
+                                <a href="{{ path('app_maintenance_request_show', {id: request.id}) }}"
+                                   class="btn btn-sm btn-outline-primary">
+                                    Voir
+                                </a>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endif %}
+
+            {% if overdue_payments|length > 0 %}
+                <div class="card mb-4">
+                    <div class="card-header bg-warning text-dark">
+                        <h6 class="mb-0">
+                            <i class="bi bi-exclamation-circle me-2"></i>
+                            Paiements en retard ({{ overdue_payments|length }})
+                        </h6>
+                    </div>
+                    <div class="card-body p-0">
+                        {% for payment in overdue_payments %}
+                            <div class="d-flex justify-content-between align-items-center p-3 border-bottom">
+                                <div>
+                                    <h6 class="mb-1">{{ payment.type }} - {{ payment.amount|currency }}</h6>
+                                    <small class="text-muted">
+                                        {{ payment.lease.tenant.fullName }} -
+                                        Échéance: {{ payment.dueDate|date('d/m/Y') }}
+                                        ({{ payment.daysOverdue }} jours de retard)
+                                    </small>
+                                </div>
+                                <a href="{{ path('app_payment_show', {id: payment.id}) }}"
+                                   class="btn btn-sm btn-outline-primary">
+                                    Voir
+                                </a>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endif %}
+
+            <!-- Derniers paiements -->
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="bi bi-credit-card me-2"></i>
+                        Derniers paiements
+                    </h6>
+                </div>
+                <div class="card-body p-0">
+                    {% if recent_payments|length > 0 %}
+                        {% for payment in recent_payments %}
+                            <div class="d-flex justify-content-between align-items-center p-3 border-bottom">
+                                <div>
+                                    <h6 class="mb-1">{{ payment.type }} - {{ payment.amount|currency }}</h6>
+                                    <small class="text-muted">
+                                        {{ payment.lease.tenant.fullName }} -
+                                        {{ payment.createdAt|date('d/m/Y H:i') }}
+                                    </small>
+                                </div>
+                                <span class="badge bg-{{ payment.status == 'Payé' ? 'success' : (payment.isOverdue ? 'danger' : 'warning') }}">
+                                    {{ payment.status }}
+                                </span>
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="p-3 text-center text-muted">
+                            Aucun paiement récent
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Actions rapides -->
+        <div class="col-lg-4">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="bi bi-lightning me-2"></i>
+                        Actions rapides
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{{ path('app_maintenance_request_new') }}" class="btn btn-primary">
+                            <i class="bi bi-plus-circle me-2"></i>
+                            Nouvelle demande
+                        </a>
+                        <a href="{{ path('app_property_new') }}" class="btn btn-outline-primary">
+                            <i class="bi bi-house-add me-2"></i>
+                            Ajouter un bien
+                        </a>
+                        <a href="{{ path('app_payment_new') }}" class="btn btn-outline-primary">
+                            <i class="bi bi-credit-card-2-front me-2"></i>
+                            Enregistrer un paiement
+                        </a>
+                        <a href="{{ path('app_payment_overdue') }}" class="btn btn-outline-warning">
+                            <i class="bi bi-exclamation-triangle me-2"></i>
+                            Voir les retards
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dernières demandes de maintenance -->
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="bi bi-tools me-2"></i>
+                        Dernières demandes
+                    </h6>
+                </div>
+                <div class="card-body p-0">
+                    {% if recent_maintenance|length > 0 %}
+                        {% for request in recent_maintenance %}
+                            <div class="d-flex justify-content-between align-items-center p-3 border-bottom">
+                                <div>
+                                    <h6 class="mb-1">{{ request.title }}</h6>
+                                    <small class="text-muted">
+                                        {{ request.category }} - {{ request.createdAt|date('d/m/Y') }}
+                                    </small>
+                                </div>
+                                <span class="badge bg-{{ request.statusColor }}">
+                                    {{ request.status }}
+                                </span>
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="p-3 text-center text-muted">
+                            Aucune demande récente
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

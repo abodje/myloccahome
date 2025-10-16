@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quittance de loyer - {{ month|date('F Y') }}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background: linear-gradient(135deg, #5a8db3, #4a7ba7);
+            color: white;
+            padding: 30px;
+            text-align: center;
+            border-radius: 8px 8px 0 0;
+        }
+        .content {
+            background: white;
+            padding: 30px;
+            border: 1px solid #ddd;
+            border-top: none;
+            border-radius: 0 0 8px 8px;
+        }
+        .company-info {
+            text-align: right;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+        .tenant-info {
+            margin-bottom: 30px;
+        }
+        .payment-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        .payment-table th,
+        .payment-table td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+        .payment-table th {
+            background-color: #f8f9fa;
+            font-weight: bold;
+        }
+        .total-row {
+            background-color: #e3f2fd;
+            font-weight: bold;
+        }
+        .footer {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #ddd;
+            font-size: 12px;
+            color: #666;
+            text-align: center;
+        }
+        .amount {
+            font-weight: bold;
+            color: #198754;
+        }
+        .property-info {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>{{ company.app_name ?? 'MYLOCCA' }}</h1>
+        <p>Quittance de loyer</p>
+    </div>
+
+    <div class="content">
+        <!-- Informations société -->
+        <div class="company-info">
+            <strong>{{ company.company_name ?? 'MYLOCCA Gestion' }}</strong><br>
+            {{ company.company_address ?? '123 Avenue de la République, 69000 Lyon' }}<br>
+            {% if company.company_phone %}Tél: {{ company.company_phone }}<br>{% endif %}
+            {% if company.company_email %}Email: {{ company.company_email }}{% endif %}
+        </div>
+
+        <!-- Informations locataire -->
+        <div class="tenant-info">
+            <h3>Locataire</h3>
+            <strong>{{ tenant.fullName }}</strong><br>
+            {% if tenant.fullAddress %}{{ tenant.fullAddress }}<br>{% endif %}
+            {{ tenant.email }}
+        </div>
+
+        <!-- Informations propriété -->
+        <div class="property-info">
+            <h3>Propriété louée</h3>
+            <strong>{{ property.fullAddress }}</strong><br>
+            {{ property.propertyType }} - {{ property.rooms }} pièces - {{ property.surface }} m²
+        </div>
+
+        <!-- Détail des paiements -->
+        <h3>Détail des paiements pour {{ month|date('F Y') }}</h3>
+
+        <table class="payment-table">
+            <thead>
+                <tr>
+                    <th>Date de paiement</th>
+                    <th>Désignation</th>
+                    <th>Période</th>
+                    <th>Montant</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for payment in payments %}
+                    <tr>
+                        <td>{{ payment.paidDate|date('d/m/Y') }}</td>
+                        <td>{{ payment.type }}</td>
+                        <td>{{ payment.dueDate|date('m/Y') }}</td>
+                        <td class="amount">{{ payment.amount|currency }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+            <tfoot>
+                <tr class="total-row">
+                    <td colspan="3"><strong>Total payé</strong></td>
+                    <td class="amount"><strong>{{ total_amount|currency }}</strong></td>
+                </tr>
+            </tfoot>
+        </table>
+
+        <!-- Informations du contrat -->
+        <div style="margin-top: 30px;">
+            <h4>Informations du contrat</h4>
+            <p>
+                <strong>Loyer mensuel:</strong> {{ lease.monthlyRent|currency }}<br>
+                {% if lease.charges %}
+                    <strong>Charges:</strong> {{ lease.charges|currency }}<br>
+                {% endif %}
+                <strong>Échéance:</strong> {{ lease.rentDueDay ?? 1 }} de chaque mois
+            </p>
+        </div>
+
+        <!-- Mentions légales -->
+        <div class="footer">
+            <p>
+                <strong>Cette quittance annule tous les reçus qui auraient pu être donnés précédemment
+                pour acomptes versés sur la présente location.</strong>
+            </p>
+            <p>
+                Document généré automatiquement le {{ 'now'|date('d/m/Y à H:i') }}<br>
+                En cas de question, contactez-nous à {{ company.company_email ?? 'contact@mylocca.com' }}
+            </p>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,104 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Fonctionnalité Non Disponible - MYLOCCA{% endblock %}
+
+{% block body %}
+<div class="container">
+    <div class="row justify-content-center mt-5">
+        <div class="col-lg-8">
+            <div class="card shadow-lg">
+                <div class="card-body text-center p-5">
+                    <!-- Icône de blocage -->
+                    <div class="mb-4">
+                        <i class="bi bi-lock-fill text-warning" style="font-size: 5rem;"></i>
+                    </div>
+
+                    <!-- Titre -->
+                    <h2 class="mb-3">
+                        <i class="bi {{ featureIcon }}"></i>
+                        {{ featureLabel }}
+                    </h2>
+
+                    <!-- Message -->
+                    <div class="alert alert-warning mb-4">
+                        <i class="bi bi-exclamation-triangle"></i>
+                        {{ blockMessage }}
+                    </div>
+
+                    <!-- Plan actuel vs requis -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    <h6 class="text-muted">Votre plan actuel</h6>
+                                    <h4>{{ currentPlan ? currentPlan.name : 'Aucun' }}</h4>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card bg-success text-white">
+                                <div class="card-body">
+                                    <h6>Plan requis minimum</h6>
+                                    <h4>{{ requiredPlanSlug|title }}</h4>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Plans disponibles -->
+                    {% if availablePlans is not empty %}
+                    <div class="text-start mb-4">
+                        <h5 class="mb-3">
+                            <i class="bi bi-star"></i>
+                            Plans incluant cette fonctionnalité :
+                        </h5>
+                        <div class="row g-3">
+                            {% for plan in availablePlans %}
+                            <div class="col-md-4">
+                                <div class="card h-100 {{ plan.isPopular ? 'border-warning border-2' : '' }}">
+                                    <div class="card-body">
+                                        <h6 class="card-title">{{ plan.name }}</h6>
+                                        <p class="card-text">
+                                            {% if plan.slug == 'freemium' %}
+                                                <strong class="text-success">GRATUIT</strong>
+                                            {% else %}
+                                                <strong>{{ (plan.monthlyPrice / 1000)|number_format(0) }}K FCFA/mois</strong>
+                                            {% endif %}
+                                        </p>
+                                        <small class="text-muted">
+                                            {{ plan.features|length }} fonctionnalités
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Boutons d'action -->
+                    <div class="d-flex gap-2 justify-content-center">
+                        <a href="{{ path('app_subscription_upgrade') }}" class="btn btn-warning btn-lg">
+                            <i class="bi bi-arrow-up-circle"></i>
+                            Voir les Plans
+                        </a>
+                        <a href="{{ path('app_dashboard') }}" class="btn btn-outline-secondary btn-lg">
+                            <i class="bi bi-house"></i>
+                            Retour au Tableau de bord
+                        </a>
+                    </div>
+
+                    <!-- Information supplémentaire -->
+                    <div class="mt-4">
+                        <small class="text-muted">
+                            <i class="bi bi-info-circle"></i>
+                            Vous pouvez changer de plan à tout moment. Les changements prennent effet immédiatement.
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

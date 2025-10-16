@@ -1,0 +1,82 @@
+# Configuration Intelligence Artificielle - MYLOCCA
+# config/packages/ai.yaml
+
+parameters:
+    # Configuration OpenAI
+    app.ai.openai.api_key: '%env(OPENAI_API_KEY)%'
+    app.ai.openai.model: '%env(OPENAI_MODEL)%'
+    app.ai.openai.temperature: '%env(OPENAI_TEMPERATURE)%'
+    app.ai.openai.max_tokens: '%env(OPENAI_MAX_TOKENS)%'
+    app.ai.openai.timeout: '%env(OPENAI_TIMEOUT)%'
+
+    # Configuration Google AI
+    app.ai.google.api_key: '%env(GOOGLE_AI_API_KEY)%'
+    app.ai.google.vision_api_url: '%env(GOOGLE_VISION_API_URL)%'
+    app.ai.google.timeout: '%env(GOOGLE_TIMEOUT)%'
+
+    # Fonctionnalités IA
+    app.ai.features.rent_prediction_enabled: '%env(AI_RENT_PREDICTION_ENABLED)%'
+    app.ai.features.risk_assessment_enabled: '%env(AI_RISK_ASSESSMENT_ENABLED)%'
+    app.ai.features.contract_generation_enabled: '%env(AI_CONTRACT_GENERATION_ENABLED)%'
+    app.ai.features.image_analysis_enabled: '%env(AI_IMAGE_ANALYSIS_ENABLED)%'
+    app.ai.features.recommendations_enabled: '%env(AI_RECOMMENDATIONS_ENABLED)%'
+    app.ai.features.customer_response_enabled: '%env(AI_CUSTOMER_RESPONSE_ENABLED)%'
+    app.ai.features.market_analysis_enabled: '%env(AI_MARKET_ANALYSIS_ENABLED)%'
+
+    # Limites et quotas
+    app.ai.limits.requests_per_hour: '%env(AI_REQUESTS_PER_HOUR)%'
+    app.ai.limits.requests_per_day: '%env(AI_REQUESTS_PER_DAY)%'
+    app.ai.limits.max_cost_per_day: '%env(AI_MAX_COST_PER_DAY)%'
+
+    # Configuration du cache
+    app.ai.cache.enabled: '%env(AI_CACHE_ENABLED)%'
+    app.ai.cache.ttl: '%env(AI_CACHE_TTL)%'
+
+    # Configuration du logging
+    app.ai.logging.enabled: '%env(AI_LOGGING_ENABLED)%'
+    app.ai.logging.log_level: '%env(AI_LOG_LEVEL)%'
+    app.ai.logging.log_requests: '%env(AI_LOG_REQUESTS)%'
+    app.ai.logging.log_responses: '%env(AI_LOG_RESPONSES)%'
+
+services:
+    # Service principal d'intégration IA
+    App\Service\AIIntegrationService:
+        arguments:
+            $logger: '@logger'
+            $entityManager: '@doctrine.orm.entity_manager'
+            $openaiApiKey: '%app.ai.openai.api_key%'
+            $googleAiApiKey: '%app.ai.google.api_key%'
+        tags:
+            - { name: 'monolog.logger', channel: 'ai' }
+
+    # Service de configuration IA
+    App\Service\AIConfigurationService:
+        arguments:
+            $params: '@parameter_bag'
+            $logger: '@logger'
+        tags:
+            - { name: 'monolog.logger', channel: 'ai' }
+
+# Configuration du cache pour l'IA
+framework:
+    cache:
+        pools:
+            ai.cache:
+                adapter: cache.adapter.filesystem
+                default_lifetime: '%app.ai.cache.ttl%'
+
+# Configuration des logs pour l'IA
+monolog:
+    channels: ['ai']
+    handlers:
+        ai_file:
+            type: stream
+            path: '%kernel.logs_dir%/ai.log'
+            level: '%app.ai.logging.log_level%'
+            channels: ['ai']
+            formatter: monolog.formatter.line
+        ai_console:
+            type: console
+            level: '%app.ai.logging.log_level%'
+            channels: ['ai']
+            formatter: monolog.formatter.line

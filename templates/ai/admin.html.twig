@@ -1,0 +1,513 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Administration IA - MYLOCCA{% endblock %}
+
+{% block page_title %}
+    <h5 class="mb-0">
+        <i class="bi bi-robot me-2"></i>
+        Administration Intelligence Artificielle
+    </h5>
+{% endblock %}
+
+{% block page_actions %}
+    <button class="btn btn-primary btn-sm" onclick="testAI()">
+        <i class="bi bi-play-circle me-2"></i> Tester l'IA
+    </button>
+    <button class="btn btn-outline-secondary btn-sm" onclick="refreshStats()">
+        <i class="bi bi-arrow-clockwise me-2"></i> Actualiser
+    </button>
+{% endblock %}
+
+{% block body %}
+<div class="row">
+    <!-- Statistiques IA -->
+    <div class="col-lg-3 col-md-6 mb-4">
+        <div class="card bg-primary text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="mb-0">1,247</h4>
+                        <p class="mb-0">Prédictions loyers</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="bi bi-graph-up fs-2"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-3 col-md-6 mb-4">
+        <div class="card bg-success text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="mb-0">892</h4>
+                        <p class="mb-0">Évaluations risques</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="bi bi-shield-check fs-2"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-3 col-md-6 mb-4">
+        <div class="card bg-info text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="mb-0">156</h4>
+                        <p class="mb-0">Contrats générés</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="bi bi-file-text fs-2"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-3 col-md-6 mb-4">
+        <div class="card bg-warning text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="mb-0">2,341</h4>
+                        <p class="mb-0">Réponses automatiques</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="bi bi-chat-dots fs-2"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Configuration IA -->
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="bi bi-gear me-2"></i> Configuration IA</h6>
+            </div>
+            <div class="card-body">
+                <form id="aiConfigForm">
+                    <div class="mb-3">
+                        <label for="openaiKey" class="form-label">Clé API OpenAI</label>
+                        <input type="password" class="form-control" id="openaiKey" placeholder="sk-...">
+                        <div class="form-text">Clé API pour GPT-4 et autres modèles OpenAI</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="googleAiKey" class="form-label">Clé API Google AI</label>
+                        <input type="password" class="form-control" id="googleAiKey" placeholder="AIza...">
+                        <div class="form-text">Clé API pour Google Vision et autres services</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="aiModel" class="form-label">Modèle IA Principal</label>
+                        <select class="form-select" id="aiModel">
+                            <option value="gpt-4">GPT-4 (Recommandé)</option>
+                            <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
+                            <option value="claude-3">Claude 3</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="aiTemperature" class="form-label">Température (0-1)</label>
+                        <input type="range" class="form-range" id="aiTemperature" min="0" max="1" step="0.1" value="0.3">
+                        <div class="form-text">0 = Déterministe, 1 = Créatif</div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-save me-2"></i> Sauvegarder
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Fonctionnalités IA -->
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="bi bi-robot me-2"></i> Fonctionnalités IA</h6>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{{ path('app_property_index') }}" class="btn btn-outline-primary">
+                        <i class="bi bi-calculator me-2"></i> Prédiction des Loyers
+                        <small class="d-block text-muted">Sélectionnez une propriété pour prédire son loyer</small>
+                    </a>
+                    
+                    <a href="{{ path('app_tenant_index') }}" class="btn btn-outline-success">
+                        <i class="bi bi-shield-check me-2"></i> Évaluation des Risques
+                        <small class="d-block text-muted">Sélectionnez un locataire pour évaluer son risque</small>
+                    </a>
+                    
+                    <a href="{{ path('app_lease_index') }}" class="btn btn-outline-info">
+                        <i class="bi bi-file-text me-2"></i> Génération de Contrats
+                        <small class="d-block text-muted">Sélectionnez un bail pour générer le contrat</small>
+                    </a>
+                    
+                    <button class="btn btn-outline-warning" onclick="showImageAnalysisModal()">
+                        <i class="bi bi-image me-2"></i> Analyse d'Images
+                        <small class="d-block text-muted">Analysez les photos de propriétés</small>
+                    </button>
+                    
+                    <a href="{{ path('app_tenant_index') }}" class="btn btn-outline-secondary">
+                        <i class="bi bi-lightbulb me-2"></i> Recommandations
+                        <small class="d-block text-muted">Sélectionnez un locataire pour des recommandations</small>
+                    </a>
+                    
+                    <button class="btn btn-outline-dark" onclick="showMarketAnalysisModal()">
+                        <i class="bi bi-graph-up me-2"></i> Analyse du Marché
+                        <small class="d-block text-muted">Analysez les tendances du marché</small>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Logs IA -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h6 class="mb-0"><i class="bi bi-list-ul me-2"></i> Logs IA</h6>
+                <div>
+                    <button class="btn btn-sm btn-outline-secondary" onclick="clearLogs()">
+                        <i class="bi bi-trash me-1"></i> Vider
+                    </button>
+                    <button class="btn btn-sm btn-outline-primary" onclick="exportLogs()">
+                        <i class="bi bi-download me-1"></i> Exporter
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                <div id="aiLogs" class="bg-dark text-light p-3 rounded" style="height: 300px; overflow-y: auto;">
+                    <div class="text-muted">Aucun log disponible</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modales -->
+<div class="modal fade" id="aiTestModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Test IA</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="testContent"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Analyse d'Images -->
+<div class="modal fade" id="imageAnalysisModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Analyse d'Images IA</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="imageAnalysisForm">
+                    <div class="mb-3">
+                        <label for="imageUrls" class="form-label">URLs des images à analyser</label>
+                        <textarea class="form-control" id="imageUrls" rows="3" placeholder="Entrez les URLs des images, une par ligne"></textarea>
+                        <div class="form-text">Exemple: https://example.com/image1.jpg</div>
+                    </div>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-search me-2"></i> Analyser les Images
+                    </button>
+                </form>
+                <div id="imageAnalysisResults" class="mt-3" style="display: none;">
+                    <div class="alert alert-info">
+                        <h6>Résultats de l'analyse :</h6>
+                        <pre id="imageAnalysisOutput" class="mb-0"></pre>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Analyse du Marché -->
+<div class="modal fade" id="marketAnalysisModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Analyse du Marché IA</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="marketAnalysisForm">
+                    <div class="mb-3">
+                        <label for="cityName" class="form-label">Ville à analyser</label>
+                        <input type="text" class="form-control" id="cityName" placeholder="Ex: Paris, Lyon, Marseille..." required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-graph-up me-2"></i> Analyser le Marché
+                    </button>
+                </form>
+                <div id="marketAnalysisResults" class="mt-3" style="display: none;">
+                    <div class="alert alert-info">
+                        <h6>Résultats de l'analyse :</h6>
+                        <pre id="marketAnalysisOutput" class="mb-0"></pre>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block javascripts %}
+<script>
+// Configuration IA
+document.getElementById('aiConfigForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+
+    const config = {
+        openaiKey: document.getElementById('openaiKey').value,
+        googleAiKey: document.getElementById('googleAiKey').value,
+        model: document.getElementById('aiModel').value,
+        temperature: parseFloat(document.getElementById('aiTemperature').value)
+    };
+
+    // Sauvegarder la configuration
+    fetch('/ai/config', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(config)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showAlert('Configuration sauvegardée avec succès', 'success');
+        } else {
+            showAlert('Erreur lors de la sauvegarde', 'danger');
+        }
+    });
+});
+
+// Tests IA
+function testRentPrediction() {
+    showTestModal('Test Prédiction Loyers', 'Test en cours...');
+
+    fetch('/ai/test/rent-prediction')
+    .then(response => response.json())
+    .then(data => {
+        document.getElementById('testContent').innerHTML = `
+            <div class="alert alert-${data.success ? 'success' : 'danger'}">
+                <h6>Résultat :</h6>
+                <pre>${JSON.stringify(data, null, 2)}</pre>
+            </div>
+        `;
+    });
+}
+
+function testRiskAssessment() {
+    showTestModal('Test Évaluation Risques', 'Test en cours...');
+
+    fetch('/ai/test/risk-assessment')
+    .then(response => response.json())
+    .then(data => {
+        document.getElementById('testContent').innerHTML = `
+            <div class="alert alert-${data.success ? 'success' : 'danger'}">
+                <h6>Résultat :</h6>
+                <pre>${JSON.stringify(data, null, 2)}</pre>
+            </div>
+        `;
+    });
+}
+
+function testContractGeneration() {
+    showTestModal('Test Génération Contrats', 'Test en cours...');
+
+    fetch('/ai/test/contract-generation')
+    .then(response => response.json())
+    .then(data => {
+        document.getElementById('testContent').innerHTML = `
+            <div class="alert alert-${data.success ? 'success' : 'danger'}">
+                <h6>Résultat :</h6>
+                <pre>${JSON.stringify(data, null, 2)}</pre>
+            </div>
+        `;
+    });
+}
+
+function testImageAnalysis() {
+    showTestModal('Test Analyse Images', 'Test en cours...');
+
+    fetch('/ai/test/image-analysis')
+    .then(response => response.json())
+    .then(data => {
+        document.getElementById('testContent').innerHTML = `
+            <div class="alert alert-${data.success ? 'success' : 'danger'}">
+                <h6>Résultat :</h6>
+                <pre>${JSON.stringify(data, null, 2)}</pre>
+            </div>
+        `;
+    });
+}
+
+function testRecommendations() {
+    showTestModal('Test Recommandations', 'Test en cours...');
+
+    fetch('/ai/test/recommendations')
+    .then(response => response.json())
+    .then(data => {
+        document.getElementById('testContent').innerHTML = `
+            <div class="alert alert-${data.success ? 'success' : 'danger'}">
+                <h6>Résultat :</h6>
+                <pre>${JSON.stringify(data, null, 2)}</pre>
+            </div>
+        `;
+    });
+}
+
+function showTestModal(title, content) {
+    document.querySelector('#aiTestModal .modal-title').textContent = title;
+    document.getElementById('testContent').innerHTML = content;
+    new bootstrap.Modal(document.getElementById('aiTestModal')).show();
+}
+
+function showAlert(message, type) {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+    alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+
+    document.body.insertBefore(alertDiv, document.body.firstChild);
+
+    setTimeout(() => {
+        alertDiv.remove();
+    }, 5000);
+}
+
+function refreshStats() {
+    // Actualiser les statistiques
+    location.reload();
+}
+
+function clearLogs() {
+    document.getElementById('aiLogs').innerHTML = '<div class="text-muted">Logs vidés</div>';
+}
+
+function exportLogs() {
+    const logs = document.getElementById('aiLogs').textContent;
+    const blob = new Blob([logs], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'ai-logs-' + new Date().toISOString().split('T')[0] + '.txt';
+    a.click();
+    URL.revokeObjectURL(url);
+}
+
+// Fonctions pour les modales IA
+function showImageAnalysisModal() {
+    new bootstrap.Modal(document.getElementById('imageAnalysisModal')).show();
+}
+
+function showMarketAnalysisModal() {
+    new bootstrap.Modal(document.getElementById('marketAnalysisModal')).show();
+}
+
+// Gestion du formulaire d'analyse d'images
+document.getElementById('imageAnalysisForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const imageUrls = document.getElementById('imageUrls').value.split('\n').filter(url => url.trim());
+    
+    if (imageUrls.length === 0) {
+        alert('Veuillez entrer au moins une URL d\'image');
+        return;
+    }
+    
+    // Appel à l'API d'analyse d'images
+    fetch('/ai/analyze-images', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            image_urls: imageUrls
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        document.getElementById('imageAnalysisOutput').textContent = JSON.stringify(data, null, 2);
+        document.getElementById('imageAnalysisResults').style.display = 'block';
+    })
+    .catch(error => {
+        document.getElementById('imageAnalysisOutput').textContent = 'Erreur: ' + error.message;
+        document.getElementById('imageAnalysisResults').style.display = 'block';
+    });
+});
+
+// Gestion du formulaire d'analyse du marché
+document.getElementById('marketAnalysisForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const cityName = document.getElementById('cityName').value.trim();
+    
+    if (!cityName) {
+        alert('Veuillez entrer le nom d\'une ville');
+        return;
+    }
+    
+    // Appel à l'API d'analyse du marché
+    fetch(`/ai/analyze-market/${encodeURIComponent(cityName)}`)
+    .then(response => response.json())
+    .then(data => {
+        document.getElementById('marketAnalysisOutput').textContent = JSON.stringify(data, null, 2);
+        document.getElementById('marketAnalysisResults').style.display = 'block';
+    })
+    .catch(error => {
+        document.getElementById('marketAnalysisOutput').textContent = 'Erreur: ' + error.message;
+        document.getElementById('marketAnalysisResults').style.display = 'block';
+    });
+});
+
+// Initialisation
+document.addEventListener('DOMContentLoaded', function() {
+    // Charger la configuration actuelle
+    fetch('/ai/config')
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            const config = data.config;
+            document.getElementById('openaiKey').value = config.openaiKey || '';
+            document.getElementById('googleAiKey').value = config.googleAiKey || '';
+            document.getElementById('aiModel').value = config.model || 'gpt-4';
+            document.getElementById('aiTemperature').value = config.temperature || 0.3;
+        }
+    });
+});
+</script>
+{% endblock %}

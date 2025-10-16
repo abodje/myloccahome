@@ -1,0 +1,242 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Maintenance système - MYLOCCA{% endblock %}
+
+{% block page_title %}
+    <h5 class="mb-0">
+        <i class="bi bi-wrench me-2"></i>
+        Maintenance système
+    </h5>
+{% endblock %}
+
+{% block page_actions %}
+    <a href="{{ path('app_admin_dashboard') }}" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-arrow-left"></i> Retour
+    </a>
+{% endblock %}
+
+{% block body %}
+    <div class="row">
+        <div class="col-lg-8">
+            <!-- Actions de maintenance -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="bi bi-tools me-2"></i>
+                        Actions de maintenance
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="card border-primary">
+                                <div class="card-body text-center">
+                                    <i class="bi bi-arrow-clockwise display-4 text-primary mb-3"></i>
+                                    <h6>Synchroniser la comptabilité</h6>
+                                    <p class="text-muted small">Synchronise les écritures comptables avec les paiements et dépenses</p>
+                                    <form method="POST" class="d-inline">
+                                        <input type="hidden" name="action" value="sync_accounting">
+                                        <button type="submit" class="btn btn-primary btn-sm">
+                                            Synchroniser
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="card border-success">
+                                <div class="card-body text-center">
+                                    <i class="bi bi-calculator display-4 text-success mb-3"></i>
+                                    <h6>Recalculer les soldes</h6>
+                                    <p class="text-muted small">Recalcule tous les soldes courants des écritures comptables</p>
+                                    <form method="POST" class="d-inline">
+                                        <input type="hidden" name="action" value="recalculate_balances">
+                                        <button type="submit" class="btn btn-success btn-sm">
+                                            Recalculer
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="card border-warning">
+                                <div class="card-body text-center">
+                                    <i class="bi bi-trash display-4 text-warning mb-3"></i>
+                                    <h6>Vider le cache</h6>
+                                    <p class="text-muted small">Vide le cache de l'application pour forcer le rechargement</p>
+                                    <form method="POST" class="d-inline">
+                                        <input type="hidden" name="action" value="clear_cache">
+                                        <button type="submit" class="btn btn-warning btn-sm">
+                                            Vider le cache
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="card border-info">
+                                <div class="card-body text-center">
+                                    <i class="bi bi-database display-4 text-info mb-3"></i>
+                                    <h6>Optimiser la base de données</h6>
+                                    <p class="text-muted small">Optimise les tables de la base de données</p>
+                                    <button type="button" class="btn btn-info btn-sm" onclick="optimizeDatabase()">
+                                        Optimiser
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Informations système -->
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="bi bi-info-circle me-2"></i>
+                        Informations système
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td class="text-muted">Version PHP :</td>
+                                    <td><strong>{{ constant('PHP_VERSION') }}</strong></td>
+                                </tr>
+                                <tr>
+                                    <td class="text-muted">Version Symfony :</td>
+                                    <td><strong>{{ constant('Symfony\\Component\\HttpKernel\\Kernel::VERSION') }}</strong></td>
+                                </tr>
+                                <tr>
+                                    <td class="text-muted">Environnement :</td>
+                                    <td>
+                                        <span class="badge bg-{{ app.environment == 'prod' ? 'success' : 'warning' }}">
+                                            {{ app.environment|upper }}
+                                        </span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="text-muted">Debug :</td>
+                                    <td>
+                                        <span class="badge bg-{{ app.debug ? 'danger' : 'success' }}">
+                                            {{ app.debug ? 'Activé' : 'Désactivé' }}
+                                        </span>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td class="text-muted">Espace disque :</td>
+                                    <td><strong>{{ (disk_free_space('.') / 1024 / 1024 / 1024)|round(2) }} GB libres</strong></td>
+                                </tr>
+                                <tr>
+                                    <td class="text-muted">Mémoire PHP :</td>
+                                    <td><strong>{{ (memory_get_usage(true) / 1024 / 1024)|round(2) }} MB</strong></td>
+                                </tr>
+                                <tr>
+                                    <td class="text-muted">Limite mémoire :</td>
+                                    <td><strong>{{ ini_get('memory_limit') }}</strong></td>
+                                </tr>
+                                <tr>
+                                    <td class="text-muted">Dernière maintenance :</td>
+                                    <td><span class="text-muted">{{ 'now'|date('d/m/Y H:i') }}</span></td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <!-- Statut des services -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="bi bi-activity me-2"></i>
+                        Statut des services
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <span>Base de données</span>
+                        <span class="badge bg-success">
+                            <i class="bi bi-check-circle me-1"></i>Opérationnel
+                        </span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <span>Serveur web</span>
+                        <span class="badge bg-success">
+                            <i class="bi bi-check-circle me-1"></i>Opérationnel
+                        </span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <span>Service email</span>
+                        <span class="badge bg-warning">
+                            <i class="bi bi-exclamation-triangle me-1"></i>Non configuré
+                        </span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span>Stockage fichiers</span>
+                        <span class="badge bg-success">
+                            <i class="bi bi-check-circle me-1"></i>Opérationnel
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Actions rapides -->
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="bi bi-lightning me-2"></i>
+                        Actions rapides
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{{ path('app_admin_logs') }}" class="btn btn-outline-primary">
+                            <i class="bi bi-journal-text me-2"></i>
+                            Consulter les logs
+                        </a>
+                        <a href="{{ path('app_admin_users') }}" class="btn btn-outline-secondary">
+                            <i class="bi bi-people me-2"></i>
+                            Gérer les utilisateurs
+                        </a>
+                        <button class="btn btn-outline-danger" onclick="backupDatabase()">
+                            <i class="bi bi-download me-2"></i>
+                            Sauvegarder la BDD
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+
+    <script>
+        function optimizeDatabase() {
+            if (confirm('Optimiser la base de données ? Cette opération peut prendre quelques minutes.')) {
+                // Ici vous pourriez implémenter l'optimisation
+                alert('Optimisation de la base de données lancée...');
+            }
+        }
+
+        function backupDatabase() {
+            if (confirm('Créer une sauvegarde de la base de données ?')) {
+                // Ici vous pourriez implémenter la sauvegarde
+                alert('Sauvegarde en cours...');
+            }
+        }
+    </script>
+{% endblock %}

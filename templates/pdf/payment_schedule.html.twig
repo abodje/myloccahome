@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Échéancier de Paiement</title>
+    <style>
+        body {
+            font-family: DejaVu Sans, sans-serif;
+            font-size: 10pt;
+            line-height: 1.5;
+            color: #333;
+            margin: 30px;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 3px solid #0dcaf0;
+            padding-bottom: 20px;
+        }
+        .header h1 {
+            color: #0dcaf0;
+            font-size: 22pt;
+            margin: 0 0 5px 0;
+        }
+        .company-info {
+            text-align: right;
+            margin-bottom: 20px;
+            font-size: 9pt;
+        }
+        .info-section {
+            background-color: #e8f8fc;
+            padding: 15px;
+            margin: 20px 0;
+            border-left: 5px solid #0dcaf0;
+        }
+        .info-row {
+            margin: 5px 0;
+        }
+        .label {
+            font-weight: bold;
+            display: inline-block;
+            width: 150px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        table th {
+            background-color: #0dcaf0;
+            color: white;
+            padding: 10px;
+            text-align: left;
+            font-size: 10pt;
+        }
+        table td {
+            padding: 8px;
+            border-bottom: 1px solid #ddd;
+        }
+        table tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+        .total-row {
+            background-color: #e8f8fc !important;
+            font-weight: bold;
+            font-size: 11pt;
+        }
+        .summary-box {
+            background-color: #0dcaf0;
+            color: white;
+            padding: 20px;
+            margin: 30px 0;
+            text-align: center;
+        }
+        .summary-item {
+            display: inline-block;
+            margin: 0 20px;
+        }
+        .footer {
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #ccc;
+            text-align: center;
+            font-size: 8pt;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <!-- Company Info -->
+    <div class="company-info">
+        <strong>{{ company.company_name ?? 'MYLOCCA Gestion' }}</strong><br>
+        {{ company.company_address ?? '' }}<br>
+        {% if company.company_phone %}Tél: {{ company.company_phone }}<br>{% endif %}
+        {% if company.company_email %}Email: {{ company.company_email }}{% endif %}
+    </div>
+
+    <!-- Header -->
+    <div class="header">
+        <h1>ÉCHÉANCIER DE PAIEMENT</h1>
+        <p>Période : {{ months }} mois</p>
+    </div>
+
+    <!-- Tenant Info -->
+    <div class="info-section">
+        <h3 style="margin-top: 0; color: #0dcaf0;">LOCATAIRE</h3>
+        <div class="info-row">
+            <span class="label">Nom complet :</span>
+            {{ tenant.firstName }} {{ tenant.lastName }}
+        </div>
+        <div class="info-row">
+            <span class="label">Email :</span>
+            {{ tenant.email }}
+        </div>
+        <div class="info-row">
+            <span class="label">Téléphone :</span>
+            {{ tenant.phone }}
+        </div>
+    </div>
+
+    <!-- Property Info -->
+    <div class="info-section">
+        <h3 style="margin-top: 0; color: #0dcaf0;">BIEN LOUÉ</h3>
+        <div class="info-row">
+            <span class="label">Adresse :</span>
+            {{ property.address }}, {{ property.postalCode }} {{ property.city }}
+        </div>
+        <div class="info-row">
+            <span class="label">Type de bien :</span>
+            {{ property.propertyType }} - {{ property.rooms }} pièces - {{ property.surface }} m²
+        </div>
+    </div>
+
+    <!-- Lease Info -->
+    <div class="info-section">
+        <h3 style="margin-top: 0; color: #0dcaf0;">CONDITIONS DU BAIL</h3>
+        <div class="info-row">
+            <span class="label">Date de début :</span>
+            {{ lease.startDate|date('d/m/Y') }}
+        </div>
+        {% if lease.endDate %}
+        <div class="info-row">
+            <span class="label">Date de fin :</span>
+            {{ lease.endDate|date('d/m/Y') }}
+        </div>
+        {% endif %}
+        <div class="info-row">
+            <span class="label">Loyer mensuel :</span>
+            {{ lease.monthlyRent|currency }}
+        </div>
+        {% if lease.charges %}
+        <div class="info-row">
+            <span class="label">Charges mensuelles :</span>
+            {{ lease.charges|currency }}
+        </div>
+        {% endif %}
+        <div class="info-row">
+            <span class="label">Jour d'échéance :</span>
+            Le {{ lease.rentDueDay ?? 1 }} de chaque mois
+        </div>
+    </div>
+
+    <!-- Payment Schedule Table -->
+    <h3 style="color: #0dcaf0; border-bottom: 2px solid #0dcaf0; padding-bottom: 5px;">
+        CALENDRIER DES ÉCHÉANCES
+    </h3>
+
+    <table>
+        <thead>
+            <tr>
+                <th>N°</th>
+                <th>Mois</th>
+                <th>Date d'échéance</th>
+                <th style="text-align: right;">Loyer</th>
+                {% if lease.charges %}
+                <th style="text-align: right;">Charges</th>
+                {% endif %}
+                <th style="text-align: right;">Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% set total_rent = 0 %}
+            {% set total_charges = 0 %}
+            {% set total_all = 0 %}
+
+            {% for item in schedule %}
+            {% set total_rent = total_rent + item.rent %}
+            {% set total_charges = total_charges + item.charges %}
+            {% set total_all = total_all + item.total %}
+
+            <tr>
+                <td>{{ loop.index }}</td>
+                <td><strong>{{ item.month|capitalize }}</strong></td>
+                <td>{{ item.due_date|date('d/m/Y') }}</td>
+                <td style="text-align: right;">{{ item.rent|currency }}</td>
+                {% if lease.charges %}
+                <td style="text-align: right;">{{ item.charges|currency }}</td>
+                {% endif %}
+                <td style="text-align: right;"><strong>{{ item.total|currency }}</strong></td>
+            </tr>
+            {% endfor %}
+        </tbody>
+        <tfoot>
+            <tr class="total-row">
+                <td colspan="3"><strong>TOTAL SUR {{ months }} MOIS</strong></td>
+                <td style="text-align: right;"><strong>{{ total_rent|currency }}</strong></td>
+                {% if lease.charges %}
+                <td style="text-align: right;"><strong>{{ total_charges|currency }}</strong></td>
+                {% endif %}
+                <td style="text-align: right;"><strong>{{ total_all|currency }}</strong></td>
+            </tr>
+        </tfoot>
+    </table>
+
+    <!-- Summary -->
+    <div class="summary-box">
+        <div class="summary-item">
+            <div style="font-size: 12pt;">Loyer mensuel</div>
+            <div style="font-size: 18pt; font-weight: bold;">{{ lease.monthlyRent|currency }}</div>
+        </div>
+        {% if lease.charges %}
+        <div class="summary-item">
+            <div style="font-size: 12pt;">Charges mensuelles</div>
+            <div style="font-size: 18pt; font-weight: bold;">{{ lease.charges|currency }}</div>
+        </div>
+        {% endif %}
+        <div class="summary-item">
+            <div style="font-size: 12pt;">Total mensuel</div>
+            <div style="font-size: 20pt; font-weight: bold;">
+                {{ (lease.monthlyRent + (lease.charges ?? 0))|currency }}
+            </div>
+        </div>
+    </div>
+
+    <!-- Payment Info -->
+    <div style="margin: 30px 0; padding: 15px; background-color: #fff3cd; border-left: 4px solid #ffc107;">
+        <h4 style="margin-top: 0; color: #856404;">💡 INFORMATIONS IMPORTANTES</h4>
+        <ul style="margin: 10px 0; padding-left: 20px;">
+            <li>Le loyer doit être payé <strong>d'avance</strong> le {{ lease.rentDueDay ?? 1 }} de chaque mois</li>
+            <li>Modes de paiement acceptés : Virement bancaire, prélèvement automatique, chèque</li>
+            <li>Tout retard de paiement peut entraîner l'application de pénalités</li>
+            <li>Une quittance vous sera envoyée après chaque paiement</li>
+        </ul>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+        <p>
+            <strong>{{ company.company_name ?? 'MYLOCCA Gestion' }}</strong><br>
+            {{ company.company_address ?? '' }}
+        </p>
+        <p style="margin-top: 10px;">
+            Document généré le {{ generated_at|date('d/m/Y à H:i') }}<br>
+            Cet échéancier est fourni à titre indicatif et ne constitue pas un engagement contractuel définitif.
+        </p>
+    </div>
+</body>
+</html>

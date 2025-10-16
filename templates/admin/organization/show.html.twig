@@ -1,0 +1,240 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ organization.name }} - Organisation - MYLOCCA{% endblock %}
+
+{% block page_title %}
+    <h5 class="mb-0">
+        <i class="bi bi-building me-2"></i>
+        {{ organization.name }}
+    </h5>
+{% endblock %}
+
+{% block page_actions %}
+    <div class="d-flex gap-2">
+        <a href="{{ path('app_admin_organization_index') }}" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-arrow-left"></i> Retour
+        </a>
+        <a href="{{ path('app_admin_organization_edit', {id: organization.id}) }}" class="btn btn-primary btn-sm">
+            <i class="bi bi-pencil"></i> Modifier
+        </a>
+        <form method="POST" action="{{ path('app_admin_organization_toggle_active', {id: organization.id}) }}" class="d-inline">
+            <input type="hidden" name="_token" value="{{ csrf_token('toggle' ~ organization.id) }}">
+            <button type="submit" class="btn btn-sm btn-{{ organization.isActive ? 'warning' : 'success' }}">
+                <i class="bi bi-power"></i> {{ organization.isActive ? 'Désactiver' : 'Activer' }}
+            </button>
+        </form>
+    </div>
+{% endblock %}
+
+{% block body %}
+    <div class="row">
+        <div class="col-lg-8">
+            <!-- Informations de l'organisation -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="bi bi-info-circle me-2"></i>
+                        Informations de l'organisation
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <table class="table table-borderless">
+                        <tr>
+                            <td class="text-muted" style="width: 200px;">Nom :</td>
+                            <td><strong>{{ organization.name }}</strong></td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted">Email :</td>
+                            <td>
+                                {% if organization.email %}
+                                    <a href="mailto:{{ organization.email }}">{{ organization.email }}</a>
+                                {% else %}
+                                    <span class="text-muted">Non renseigné</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted">Téléphone :</td>
+                            <td>{{ organization.phone ?? 'Non renseigné' }}</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted">Adresse :</td>
+                            <td>{{ organization.address ?? 'Non renseignée' }}</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted">Site web :</td>
+                            <td>
+                                {% if organization.website %}
+                                    <a href="{{ organization.website }}" target="_blank">{{ organization.website }}</a>
+                                {% else %}
+                                    <span class="text-muted">Non renseigné</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted">N° enregistrement :</td>
+                            <td>{{ organization.registrationNumber ?? 'Non renseigné' }}</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted">N° fiscal :</td>
+                            <td>{{ organization.taxNumber ?? 'Non renseigné' }}</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted">Statut :</td>
+                            <td>
+                                <span class="badge bg-{{ organization.isActive ? 'success' : 'danger' }}">
+                                    {{ organization.isActive ? 'Active' : 'Inactive' }}
+                                </span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted">Créée le :</td>
+                            <td>{{ organization.createdAt|date('d/m/Y H:i') }}</td>
+                        </tr>
+                        {% if organization.updatedAt %}
+                            <tr>
+                                <td class="text-muted">Modifiée le :</td>
+                                <td>{{ organization.updatedAt|date('d/m/Y H:i') }}</td>
+                            </tr>
+                        {% endif %}
+                    </table>
+                </div>
+            </div>
+
+            <!-- Liste des sociétés -->
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0">
+                        <i class="bi bi-briefcase me-2"></i>
+                        Sociétés ({{ organization.companies|length }})
+                    </h6>
+                    <a href="{{ path('app_admin_company_new') }}?organization={{ organization.id }}" class="btn btn-sm btn-primary">
+                        <i class="bi bi-plus"></i> Ajouter
+                    </a>
+                </div>
+                <div class="card-body p-0">
+                    {% if organization.companies|length > 0 %}
+                        <div class="list-group list-group-flush">
+                            {% for company in organization.companies %}
+                                <a href="{{ path('app_admin_company_show', {id: company.id}) }}" class="list-group-item list-group-item-action">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <strong>{{ company.name }}</strong>
+                                            <br><small class="text-muted">{{ company.email ?? 'Pas d\'email' }}</small>
+                                        </div>
+                                        <span class="badge bg-{{ company.isActive ? 'success' : 'danger' }}">
+                                            {{ company.isActive ? 'Active' : 'Inactive' }}
+                                        </span>
+                                    </div>
+                                </a>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="p-3 text-muted text-center">
+                            Aucune société dans cette organisation
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <!-- Statistiques -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="bi bi-graph-up me-2"></i>
+                        Statistiques
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between">
+                            <span>Sociétés</span>
+                            <strong class="text-primary">{{ stats.companies }}</strong>
+                        </div>
+                        <div class="progress" style="height: 5px;">
+                            <div class="progress-bar bg-primary" style="width: 100%"></div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between">
+                            <span>Utilisateurs</span>
+                            <strong class="text-success">{{ stats.users }}</strong>
+                        </div>
+                        <div class="progress" style="height: 5px;">
+                            <div class="progress-bar bg-success" style="width: {{ stats.users > 0 ? 100 : 0 }}%"></div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between">
+                            <span>Propriétés</span>
+                            <strong class="text-info">{{ stats.properties }}</strong>
+                        </div>
+                        <div class="progress" style="height: 5px;">
+                            <div class="progress-bar bg-info" style="width: {{ stats.properties > 0 ? 100 : 0 }}%"></div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between">
+                            <span>Baux</span>
+                            <strong class="text-warning">{{ stats.leases }}</strong>
+                        </div>
+                        <div class="progress" style="height: 5px;">
+                            <div class="progress-bar bg-warning" style="width: {{ stats.leases > 0 ? 100 : 0 }}%"></div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between">
+                            <span>Paiements</span>
+                            <strong class="text-danger">{{ stats.payments }}</strong>
+                        </div>
+                        <div class="progress" style="height: 5px;">
+                            <div class="progress-bar bg-danger" style="width: {{ stats.payments > 0 ? 100 : 0 }}%"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="d-flex justify-content-between">
+                            <span>Documents</span>
+                            <strong class="text-secondary">{{ stats.documents }}</strong>
+                        </div>
+                        <div class="progress" style="height: 5px;">
+                            <div class="progress-bar bg-secondary" style="width: {{ stats.documents > 0 ? 100 : 0 }}%"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <a href="{{ path('app_admin_organization_stats', {id: organization.id}) }}" class="btn btn-sm btn-outline-primary w-100">
+                        <i class="bi bi-bar-chart"></i> Voir les statistiques détaillées
+                    </a>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="bi bi-gear me-2"></i>
+                        Actions rapides
+                    </h6>
+                </div>
+                <div class="card-body d-grid gap-2">
+                    <a href="{{ path('app_admin_company_new') }}?organization={{ organization.id }}" class="btn btn-primary">
+                        <i class="bi bi-plus-circle"></i> Ajouter une société
+                    </a>
+                    <a href="{{ path('app_admin_organization_edit', {id: organization.id}) }}" class="btn btn-secondary">
+                        <i class="bi bi-pencil"></i> Modifier l'organisation
+                    </a>
+                    <form method="POST" action="{{ path('app_admin_organization_delete', {id: organization.id}) }}"
+                          onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cette organisation ? Cette action est irréversible.');">
+                        <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ organization.id) }}">
+                        <button type="submit" class="btn btn-danger w-100">
+                            <i class="bi bi-trash"></i> Supprimer l'organisation
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+

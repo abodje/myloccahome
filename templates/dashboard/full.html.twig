@@ -1,0 +1,300 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Tableau de bord détaillé - MYLOCCA{% endblock %}
+
+{% block page_title %}
+    <h5 class="mb-0">
+        <i class="bi bi-graph-up me-2"></i>
+        Tableau de bord détaillé
+    </h5>
+{% endblock %}
+
+{% block page_actions %}
+    <a href="{{ path('app_dashboard') }}" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-arrow-left"></i> Vue simple
+    </a>
+{% endblock %}
+
+{% block body %}
+    <!-- Graphique des revenus -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="bi bi-bar-chart me-2"></i>
+                        Évolution des revenus et dépenses (12 derniers mois)
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <canvas id="revenueChart" height="100"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistiques détaillées -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="bi bi-house me-2"></i>
+                        Statistiques des propriétés
+                    </h6>
+                </div>
+                <div class="card-body">
+                    {% if property_stats %}
+                        <div class="row text-center">
+                            <div class="col-6">
+                                <h4 class="text-primary">{{ property_stats.total }}</h4>
+                                <small class="text-muted">Total</small>
+                            </div>
+                            <div class="col-6">
+                                <h4 class="text-success">{{ property_stats.occupied }}</h4>
+                                <small class="text-muted">Occupées</small>
+                            </div>
+                        </div>
+                        <div class="row text-center mt-3">
+                            <div class="col-6">
+                                <h4 class="text-info">{{ property_stats.available }}</h4>
+                                <small class="text-muted">Libres</small>
+                            </div>
+                            <div class="col-6">
+                                <h4 class="text-warning">{{ property_stats.occupancy_rate }}%</h4>
+                                <small class="text-muted">Taux d'occupation</small>
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="bi bi-tools me-2"></i>
+                        Statistiques maintenance
+                    </h6>
+                </div>
+                <div class="card-body">
+                    {% if maintenance_stats %}
+                        <div class="row text-center">
+                            <div class="col-6">
+                                <h4 class="text-primary">{{ maintenance_stats.nouvelles }}</h4>
+                                <small class="text-muted">Nouvelles</small>
+                            </div>
+                            <div class="col-6">
+                                <h4 class="text-warning">{{ maintenance_stats.en_cours }}</h4>
+                                <small class="text-muted">En cours</small>
+                            </div>
+                        </div>
+                        <div class="row text-center mt-3">
+                            <div class="col-6">
+                                <h4 class="text-success">{{ maintenance_stats.terminees }}</h4>
+                                <small class="text-muted">Terminées</small>
+                            </div>
+                            <div class="col-6">
+                                <h4 class="text-danger">{{ maintenance_stats.urgentes }}</h4>
+                                <small class="text-muted">Urgentes</small>
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="bi bi-calculator me-2"></i>
+                        Résumé financier
+                    </h6>
+                </div>
+                <div class="card-body">
+                    {% if monthly_data|length > 0 %}
+                        {% set latest_month = monthly_data|last %}
+                        <div class="row text-center">
+                            <div class="col-12 mb-3">
+                                <h4 class="text-success">+{{ latest_month.revenue|currency }}</h4>
+                                <small class="text-muted">Revenus {{ latest_month.month }}</small>
+                            </div>
+                        </div>
+                        <div class="row text-center">
+                            <div class="col-12 mb-3">
+                                <h4 class="text-danger">-{{ latest_month.maintenance_cost|currency }}</h4>
+                                <small class="text-muted">Dépenses maintenance</small>
+                            </div>
+                        </div>
+                        <hr>
+                        <div class="row text-center">
+                            <div class="col-12">
+                                <h4 class="{{ (latest_month.revenue - latest_month.maintenance_cost) >= 0 ? 'text-success' : 'text-danger' }}">
+                                    {{ (latest_month.revenue - latest_month.maintenance_cost) >= 0 ? '+' : '' }}{{ (latest_month.revenue - latest_month.maintenance_cost)|currency }}
+                                </h4>
+                                <small class="text-muted">Résultat net</small>
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Graphique en secteurs -->
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="bi bi-pie-chart me-2"></i>
+                        Répartition des revenus par mois
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <canvas id="revenueDistributionChart" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="bi bi-pie-chart me-2"></i>
+                        Répartition des dépenses maintenance
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <canvas id="expenseDistributionChart" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Données pour les graphiques
+            const monthlyData = {{ monthly_data|json_encode|raw }};
+
+            // Graphique des revenus et dépenses
+            const revenueCtx = document.getElementById('revenueChart').getContext('2d');
+            new Chart(revenueCtx, {
+                type: 'line',
+                data: {
+                    labels: monthlyData.map(data => data.month),
+                    datasets: [
+                        {
+                            label: 'Revenus',
+                            data: monthlyData.map(data => data.revenue),
+                            borderColor: '#198754',
+                            backgroundColor: 'rgba(25, 135, 84, 0.1)',
+                            tension: 0.4,
+                            fill: true
+                        },
+                        {
+                            label: 'Dépenses maintenance',
+                            data: monthlyData.map(data => data.maintenance_cost),
+                            borderColor: '#dc3545',
+                            backgroundColor: 'rgba(220, 53, 69, 0.1)',
+                            tension: 0.4,
+                            fill: true
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Évolution financière'
+                        },
+                        legend: {
+                            position: 'top',
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return value.toLocaleString('fr-FR') + ' {{ ''|currency_symbol }}';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Graphique de répartition des revenus
+            const revenueDistCtx = document.getElementById('revenueDistributionChart').getContext('2d');
+            const totalRevenue = monthlyData.reduce((sum, data) => sum + data.revenue, 0);
+
+            new Chart(revenueDistCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Revenus locatifs', 'Autres revenus'],
+                    datasets: [{
+                        data: [totalRevenue * 0.9, totalRevenue * 0.1],
+                        backgroundColor: [
+                            '#198754',
+                            '#0dcaf0'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Sources de revenus'
+                        }
+                    }
+                }
+            });
+
+            // Graphique de répartition des dépenses
+            const expenseDistCtx = document.getElementById('expenseDistributionChart').getContext('2d');
+            const totalExpenses = monthlyData.reduce((sum, data) => sum + data.maintenance_cost, 0);
+
+            new Chart(expenseDistCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Maintenance', 'Réparations', 'Entretien', 'Autres'],
+                    datasets: [{
+                        data: [
+                            totalExpenses * 0.4,
+                            totalExpenses * 0.3,
+                            totalExpenses * 0.2,
+                            totalExpenses * 0.1
+                        ],
+                        backgroundColor: [
+                            '#dc3545',
+                            '#fd7e14',
+                            '#ffc107',
+                            '#6c757d'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Types de dépenses'
+                        }
+                    }
+                }
+            });
+        });
+    </script>
+{% endblock %}

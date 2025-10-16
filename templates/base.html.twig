@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="fr">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>{% block title %}{{ app_setting('app_name', 'MYLOCCA') }} - Gestion Locative{% endblock %}</title>
+
+        <!-- Bootstrap CSS -->
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+        <!-- Bootstrap Icons -->
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+
+        <!-- Headers anti-cache pour éviter les problèmes Turbo -->
+        <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+        <meta http-equiv="Pragma" content="no-cache">
+        <meta http-equiv="Expires" content="0">
+        <!-- Custom CSS -->
+        <style>
+            :root {
+                --primary-color: #5a8db3;
+                --secondary-color: #6c757d;
+                --success-color: #198754;
+                --danger-color: #dc3545;
+                --warning-color: #ffc107;
+                --info-color: #0dcaf0;
+            }
+
+            .sidebar {
+                background: linear-gradient(135deg, var(--primary-color), #4a7ba7);
+                min-height: 100vh;
+                color: white;
+            }
+
+            .sidebar .nav-link {
+                color: rgba(255, 255, 255, 0.8);
+                padding: 0.75rem 1rem;
+                border-radius: 0.375rem;
+                margin: 0.25rem 0;
+                transition: all 0.3s ease;
+            }
+
+            .sidebar .nav-link:hover,
+            .sidebar .nav-link.active {
+                background-color: rgba(255, 255, 255, 0.1);
+                color: white;
+            }
+
+            .main-content {
+                background-color: #f8f9fa;
+                min-height: 100vh;
+            }
+
+            .card {
+                border: none;
+                box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+                border-radius: 0.5rem;
+            }
+
+            .btn-primary {
+                background-color: var(--primary-color);
+                border-color: var(--primary-color);
+            }
+
+            .btn-primary:hover {
+                background-color: #4a7ba7;
+                border-color: #4a7ba7;
+            }
+
+            .property-card {
+                background: white;
+                border-radius: 0.5rem;
+                padding: 1.5rem;
+                margin-bottom: 1rem;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            }
+
+            .status-badge {
+                font-size: 0.75rem;
+                padding: 0.25rem 0.5rem;
+                border-radius: 0.25rem;
+            }
+
+            .navbar-brand {
+                font-weight: bold;
+                font-size: 1.5rem;
+            }
+        </style>
+
+        {% block stylesheets %}
+        {% endblock %}
+    </head>
+    <body>
+        <div class="container-fluid">
+            <div class="row">
+                <!-- Sidebar with ACL -->
+                {% include '_partials/sidebar.html.twig' %}
+
+                <!-- Main content -->
+                <div class="col-md-9 col-lg-10 main-content">
+                    <!-- Top navigation -->
+                    <nav class="navbar navbar-expand-lg navbar-light bg-white border-bottom">
+                        <div class="container-fluid">
+                            <div class="d-flex align-items-center">
+                                <button class="btn btn-outline-secondary d-md-none me-3" type="button" id="sidebarToggle">
+                                    <i class="bi bi-list"></i>
+                                </button>
+                                {% block page_title %}
+                                    <h5 class="mb-0">Tableau de bord</h5>
+                                {% endblock %}
+                            </div>
+
+                            <div class="d-flex align-items-center">
+                                {% block page_actions %}{% endblock %}
+
+                                <!-- Recherche globale -->
+                                <button type="button" class="btn btn-outline-secondary ms-3" id="openSearchBtn" title="Rechercher (Ctrl+K)">
+                                    <i class="bi bi-search"></i>
+                                    <span class="d-none d-md-inline ms-2">Rechercher</span>
+                                    <span class="badge bg-light text-dark ms-2 d-none d-md-inline">Ctrl+K</span>
+                                </button>
+
+                                <div class="dropdown ms-3">
+                                    <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                        <i class="bi bi-person-circle"></i>
+                                    </button>
+                                    <ul class="dropdown-menu">
+                                        <li><a class="dropdown-item" href="{{ path('app_profile_index') }}">
+                                            <i class="bi bi-person me-2"></i>Mon profil
+                                        </a></li>
+                                        <li><hr class="dropdown-divider"></li>
+                                        <li><a class="dropdown-item" href="{{ path('app_logout') }}">
+                                            <i class="bi bi-box-arrow-right me-2"></i>Déconnexion
+                                        </a></li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </nav>
+
+                    <!-- Flash messages -->
+                    {% for type, messages in app.flashes %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ type == 'error' ? 'danger' : type }} alert-dismissible fade show m-3" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        {% endfor %}
+                    {% endfor %}
+
+                    <!-- Page content -->
+                    <div class="p-3">
+                        {% block body %}{% endblock %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal de recherche globale -->
+        <div class="modal fade" id="globalSearchModal" tabindex="-1" aria-labelledby="searchModalLabel" data-bs-backdrop="static" data-bs-keyboard="true">
+            <div class="modal-dialog modal-dialog-centered modal-lg">
+                <div class="modal-content shadow-lg">
+                    <div class="modal-body p-0">
+                        <div class="search-container">
+                            <div class="search-input-wrapper p-3 border-bottom bg-light">
+                                <div class="d-flex align-items-center">
+                                    <i class="bi bi-search text-primary fs-4 me-3"></i>
+                                    <input type="text"
+                                           id="globalSearchInput"
+                                           class="form-control form-control-lg border-0 bg-light"
+                                           placeholder="Rechercher biens, locataires, paiements..."
+                                           autocomplete="off"
+                                           autofocus>
+                                    <button type="button" class="btn-close ms-3" data-bs-dismiss="modal" aria-label="Fermer"></button>
+                                </div>
+                                <div class="mt-2">
+                                    <small class="text-muted">
+                                        <kbd>↑</kbd> <kbd>↓</kbd> pour naviguer •
+                                        <kbd>Entrée</kbd> pour sélectionner •
+                                        <kbd>Esc</kbd> pour fermer
+                                    </small>
+                                </div>
+                            </div>
+                            <div id="searchResults" class="search-results p-3" style="max-height: 500px; overflow-y: auto;">
+                                <div class="text-center p-5 text-muted">
+                                    <i class="bi bi-search" style="font-size: 3rem; opacity: 0.3;"></i>
+                                    <p class="mt-3 mb-1"><strong>Commencez à taper pour rechercher...</strong></p>
+                                    <small>Recherche dans : Biens • Locataires • Baux • Paiements • Documents • Maintenances</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bootstrap JS -->
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+        {% block javascripts %}
+            {% block importmap %}{{ importmap('app') }}{% endblock %}
+
+            <!-- Configuration Turbo pour éviter les problèmes de cache -->
+            <script>
+                // Configuration Turbo globale
+                document.addEventListener('turbo:load', function() {
+                    // Forcer le rechargement des données critiques
+                    const criticalElements = document.querySelectorAll('[data-turbo-refresh]');
+                    criticalElements.forEach(element => {
+                        element.addEventListener('click', function() {
+                            setTimeout(() => {
+                                window.location.reload();
+                            }, 500);
+                        });
+                    });
+                });
+
+                // Désactiver Turbo pour les formulaires critiques
+                document.addEventListener('DOMContentLoaded', function() {
+                    const criticalForms = document.querySelectorAll('form[data-turbo="false"], .critical-form');
+                    criticalForms.forEach(form => {
+                        form.addEventListener('submit', function() {
+                            setTimeout(() => {
+                                window.location.reload();
+                            }, 1000);
+                        });
+                    });
+
+                    // Désactiver Turbo pour tous les formulaires POST
+                    const allForms = document.querySelectorAll('form');
+                    allForms.forEach(form => {
+                        if (form.method === 'POST') {
+                            form.setAttribute('data-turbo', 'false');
+                        }
+                    });
+
+                    // Désactiver Turbo pour les boutons critiques
+                    const criticalButtons = document.querySelectorAll('button[type="submit"], .btn-danger, .btn-warning');
+                    criticalButtons.forEach(button => {
+                        button.setAttribute('data-turbo', 'false');
+                    });
+                });
+            </script>
+        {% endblock %}
+
+        <script>
+            // Sidebar toggle pour mobile
+            document.addEventListener('DOMContentLoaded', function() {
+                const sidebarToggle = document.getElementById('sidebarToggle');
+                const sidebar = document.querySelector('.sidebar');
+
+                if (sidebarToggle && sidebar) {
+                    sidebarToggle.addEventListener('click', function() {
+                        sidebar.classList.toggle('show');
+                    });
+
+                    // Fermer la sidebar en cliquant à l'extérieur
+                    document.addEventListener('click', function(event) {
+                        if (window.innerWidth < 768 &&
+                            !sidebar.contains(event.target) &&
+                            !sidebarToggle.contains(event.target)) {
+                            sidebar.classList.remove('show');
+                        }
+                    });
+                }
+
+                // ═══════════════════════════════════════════
+                // RECHERCHE GLOBALE INTELLIGENTE
+                // ═══════════════════════════════════════════
+
+                const searchModalEl = document.getElementById('globalSearchModal');
+                const searchInput = document.getElementById('globalSearchInput');
+                const searchResults = document.getElementById('searchResults');
+                const openSearchBtn = document.getElementById('openSearchBtn');
+                let searchTimeout = null;
+                let selectedIndex = -1;
+
+                if (!searchModalEl || !searchInput || !searchResults) {
+                    console.error('Éléments de recherche non trouvés');
+                    return;
+                }
+
+                const searchModal = new bootstrap.Modal(searchModalEl, {
+                    backdrop: 'static',
+                    keyboard: true,
+                    focus: true
+                });
+
+                // Ouvrir avec bouton
+                if (openSearchBtn) {
+                    openSearchBtn.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        searchInput.value = ''; // Reset
+                        searchModal.show();
+                    });
+                }
+
+                // Raccourci clavier Ctrl+K ou Cmd+K
+                document.addEventListener('keydown', function(e) {
+                    // Ctrl+K ou Cmd+K
+                    if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        searchInput.value = ''; // Reset
+                        searchModal.show();
+                        return false;
+                    }
+                });
+
+                // Focus automatique quand modal s'ouvre
+                searchModalEl.addEventListener('shown.bs.modal', function() {
+                    console.log('Modal ouverte, focus sur input');
+                    searchInput.value = '';
+                    searchInput.focus();
+
+                    // Reset résultats
+                    searchResults.innerHTML = `
+                        <div class="text-center p-5 text-muted">
+                            <i class="bi bi-search" style="font-size: 3rem; opacity: 0.3;"></i>
+                            <p class="mt-3 mb-1"><strong>Commencez à taper pour rechercher...</strong></p>
+                            <small>Recherche dans : Biens • Locataires • Baux • Paiements • Documents • Maintenances</small>
+                        </div>
+                    `;
+                    selectedIndex = -1;
+                });
+
+                // Recherche en temps réel
+                if (searchInput) {
+                    searchInput.addEventListener('input', function() {
+                        clearTimeout(searchTimeout);
+                        const query = this.value.trim();
+
+                        if (query.length < 2) {
+                            searchResults.innerHTML = `
+                                <div class="text-center p-5 text-muted">
+                                    <i class="bi bi-search" style="font-size: 3rem;"></i>
+                                    <p class="mt-3">Tapez au moins 2 caractères...</p>
+                                </div>
+                            `;
+                            return;
+                        }
+
+                        // Afficher loading
+                        searchResults.innerHTML = `
+                            <div class="text-center p-5">
+                                <div class="spinner-border text-primary" role="status"></div>
+                                <p class="mt-3 text-muted">Recherche en cours...</p>
+                            </div>
+                        `;
+
+                        // Debounce 300ms
+                        searchTimeout = setTimeout(() => {
+                            fetch('{{ path('app_search_api') }}?q=' + encodeURIComponent(query))
+                                .then(response => response.json())
+                                .then(data => displayResults(data))
+                                .catch(error => {
+                                    searchResults.innerHTML = `
+                                        <div class="text-center p-5 text-danger">
+                                            <i class="bi bi-exclamation-triangle" style="font-size: 3rem;"></i>
+                                            <p class="mt-3">Erreur de recherche</p>
+                                        </div>
+                                    `;
+                                });
+                        }, 300);
+                    });
+
+                    // Navigation au clavier
+                    searchInput.addEventListener('keydown', function(e) {
+                        const items = searchResults.querySelectorAll('.search-result-item');
+
+                        if (e.key === 'ArrowDown') {
+                            e.preventDefault();
+                            selectedIndex = Math.min(selectedIndex + 1, items.length - 1);
+                            updateSelection(items);
+                        } else if (e.key === 'ArrowUp') {
+                            e.preventDefault();
+                            selectedIndex = Math.max(selectedIndex - 1, -1);
+                            updateSelection(items);
+                        } else if (e.key === 'Enter' && selectedIndex >= 0 && items[selectedIndex]) {
+                            e.preventDefault();
+                            items[selectedIndex].click();
+                        }
+                    });
+                }
+
+                function displayResults(suggestions) {
+                    if (suggestions.length === 0) {
+                        searchResults.innerHTML = `
+                            <div class="text-center p-5 text-muted">
+                                <i class="bi bi-inbox" style="font-size: 3rem;"></i>
+                                <p class="mt-3">Aucun résultat trouvé</p>
+                                <small>Essayez avec d'autres mots-clés</small>
+                            </div>
+                        `;
+                        return;
+                    }
+
+                    let html = '<div class="list-group list-group-flush">';
+
+                    suggestions.forEach((item, index) => {
+                        const badgeColor = getBadgeColor(item.badge);
+                        html += `
+                            <a href="${item.url}" class="search-result-item list-group-item list-group-item-action" data-index="${index}">
+                                <div class="d-flex align-items-center">
+                                    <i class="${item.icon} fs-4 text-primary me-3"></i>
+                                    <div class="flex-grow-1">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <strong>${item.title}</strong>
+                                            ${item.badge ? `<span class="badge bg-${badgeColor}">${item.badge}</span>` : ''}
+                                        </div>
+                                        <small class="text-muted">${item.subtitle || ''}</small>
+                                    </div>
+                                    <i class="bi bi-arrow-right text-muted ms-3"></i>
+                                </div>
+                            </a>
+                        `;
+                    });
+
+                    html += '</div>';
+                    searchResults.innerHTML = html;
+                    selectedIndex = -1;
+                }
+
+                function updateSelection(items) {
+                    items.forEach((item, index) => {
+                        if (index === selectedIndex) {
+                            item.classList.add('active');
+                            item.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+                        } else {
+                            item.classList.remove('active');
+                        }
+                    });
+                }
+
+                function getBadgeColor(status) {
+                    const colorMap = {
+                        'Payé': 'success',
+                        'En attente': 'warning',
+                        'En retard': 'danger',
+                        'Actif': 'success',
+                        'Libre': 'info',
+                        'Occupé': 'primary',
+                        'Terminée': 'success',
+                        'En cours': 'warning',
+                        'Nouvelle': 'danger'
+                    };
+                    return colorMap[status] || 'secondary';
+                }
+            });
+        </script>
+
+        <style>
+            .search-result-item {
+                transition: background-color 0.2s;
+                cursor: pointer;
+            }
+            .search-result-item:hover,
+            .search-result-item.active {
+                background-color: #f8f9fa;
+            }
+            .search-result-item.active {
+                border-left: 3px solid var(--primary-color);
+            }
+            kbd {
+                padding: 2px 6px;
+                font-size: 0.75rem;
+                background-color: #f8f9fa;
+                border: 1px solid #dee2e6;
+                border-radius: 3px;
+            }
+            #globalSearchInput:focus {
+                outline: none !important;
+                box-shadow: none !important;
+                border: none !important;
+            }
+            .modal-content {
+                border: none;
+                border-radius: 12px;
+                overflow: hidden;
+            }
+        </style>
+    </body>
+</html>

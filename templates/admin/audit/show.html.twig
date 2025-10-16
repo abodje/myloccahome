@@ -1,0 +1,229 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Détail Action #{{ log.id }} - Audit Log{% endblock %}
+
+{% block page_title %}
+    <h5 class="mb-0">
+        <i class="bi bi-file-text me-2"></i>
+        Détail de l'Action #{{ log.id }}
+    </h5>
+{% endblock %}
+
+{% block page_actions %}
+    <a href="{{ path('app_admin_audit_index') }}" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-arrow-left"></i> Retour à l'historique
+    </a>
+{% endblock %}
+
+{% block body %}
+    <div class="row">
+        <div class="col-lg-8">
+            <!-- Informations principales -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="bi bi-info-circle me-2"></i>Informations
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <table class="table table-borderless">
+                        <tbody>
+                            <tr>
+                                <th style="width: 200px;">Action</th>
+                                <td>
+                                    <span class="badge bg-{{ log.actionBadgeClass }}">
+                                        <i class="{{ log.actionIcon }}"></i>
+                                        {{ log.actionLabel }}
+                                    </span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>Type d'entité</th>
+                                <td><strong>{{ log.entityTypeLabel }}</strong></td>
+                            </tr>
+                            <tr>
+                                <th>ID de l'entité</th>
+                                <td>
+                                    {% if log.entityId %}
+                                        <code>#{{ log.entityId }}</code>
+                                    {% else %}
+                                        <span class="text-muted">N/A</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>Description</th>
+                                <td>{{ log.description|default('Aucune description') }}</td>
+                            </tr>
+                            <tr>
+                                <th>Date/Heure</th>
+                                <td>
+                                    <i class="bi bi-calendar"></i> {{ log.createdAt|date('d/m/Y') }}
+                                    <i class="bi bi-clock ms-2"></i> {{ log.createdAt|date('H:i:s') }}
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Changements -->
+            {% if log.oldValues or log.newValues %}
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h6 class="mb-0">
+                            <i class="bi bi-arrow-left-right me-2"></i>Changements
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            {% if log.oldValues %}
+                                <div class="col-md-6">
+                                    <h6 class="text-muted">Anciennes Valeurs</h6>
+                                    <div class="bg-light p-3 rounded">
+                                        <pre class="mb-0">{{ log.oldValues|json_encode(constant('JSON_PRETTY_PRINT') b constant('JSON_UNESCAPED_UNICODE'))|raw }}</pre>
+                                    </div>
+                                </div>
+                            {% endif %}
+
+                            {% if log.newValues %}
+                                <div class="col-md-6">
+                                    <h6 class="text-primary">Nouvelles Valeurs</h6>
+                                    <div class="bg-light p-3 rounded">
+                                        <pre class="mb-0">{{ log.newValues|json_encode(constant('JSON_PRETTY_PRINT') b constant('JSON_UNESCAPED_UNICODE'))|raw }}</pre>
+                                    </div>
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Comparaison visuelle -->
+                        {% if log.oldValues and log.newValues %}
+                            <hr>
+                            <h6>Résumé des Changements</h6>
+                            <div class="table-responsive">
+                                <table class="table table-sm">
+                                    <thead>
+                                        <tr>
+                                            <th>Champ</th>
+                                            <th>Ancienne Valeur</th>
+                                            <th></th>
+                                            <th>Nouvelle Valeur</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for key, newValue in log.newValues %}
+                                            {% if log.oldValues[key] is defined and log.oldValues[key] != newValue %}
+                                                <tr>
+                                                    <td><strong>{{ key }}</strong></td>
+                                                    <td><code>{{ log.oldValues[key] }}</code></td>
+                                                    <td class="text-center">
+                                                        <i class="bi bi-arrow-right text-primary"></i>
+                                                    </td>
+                                                    <td><code class="text-primary">{{ newValue }}</code></td>
+                                                </tr>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <!-- Utilisateur -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="bi bi-person me-2"></i>Utilisateur
+                    </h6>
+                </div>
+                <div class="card-body">
+                    {% if log.user %}
+                        <div class="text-center mb-3">
+                            <div class="bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center"
+                                 style="width: 60px; height: 60px; font-size: 24px;">
+                                {{ log.user.firstName|first }}{{ log.user.lastName|first }}
+                            </div>
+                        </div>
+                        <h6 class="text-center">{{ log.user.firstName }} {{ log.user.lastName }}</h6>
+                        <p class="text-muted text-center mb-0">
+                            <i class="bi bi-envelope"></i> {{ log.user.email }}
+                        </p>
+                        {% if log.user.roles %}
+                            <div class="text-center mt-2">
+                                {% for role in log.user.roles %}
+                                    <span class="badge bg-secondary">{{ role }}</span>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    {% else %}
+                        <div class="text-center text-muted">
+                            <i class="bi bi-robot" style="font-size: 2rem;"></i>
+                            <p class="mt-2">Action Système</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Informations Techniques -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="bi bi-info-square me-2"></i>Informations Techniques
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <dl class="mb-0">
+                        <dt>Adresse IP</dt>
+                        <dd><code>{{ log.ipAddress|default('Non disponible') }}</code></dd>
+
+                        <dt>Navigateur</dt>
+                        <dd>
+                            <small class="text-muted">{{ log.userAgent|default('Non disponible')|slice(0, 50) }}</small>
+                        </dd>
+
+                        {% if log.organization %}
+                            <dt>Organisation</dt>
+                            <dd>{{ log.organization.name }}</dd>
+                        {% endif %}
+
+                        {% if log.company %}
+                            <dt>Société</dt>
+                            <dd>{{ log.company.name }}</dd>
+                        {% endif %}
+                    </dl>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            {% if log.entityId and log.entityType %}
+                <div class="card">
+                    <div class="card-header">
+                        <h6 class="mb-0">
+                            <i class="bi bi-gear me-2"></i>Actions
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <a href="{{ path('app_admin_audit_entity', {
+                            entityType: log.entityType,
+                            entityId: log.entityId
+                        }) }}" class="btn btn-outline-primary w-100 mb-2">
+                            <i class="bi bi-clock-history"></i> Historique complet de cette entité
+                        </a>
+
+                        <a href="{{ path('app_admin_audit_index', {
+                            entity_type: log.entityType
+                        }) }}" class="btn btn-outline-secondary w-100">
+                            <i class="bi bi-filter"></i> Tous les logs {{ log.entityTypeLabel }}
+                        </a>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+{% endblock %}
+

@@ -1,0 +1,235 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Paramètres Email - Administration{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>📧 Paramètres Email</h2>
+                <a href="{{ path('app_admin_settings_index') }}" class="btn btn-secondary">
+                    <i class="bi bi-arrow-left"></i> Retour
+                </a>
+            </div>
+
+            <div class="row">
+                <div class="col-md-8">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">Configuration SMTP</h5>
+                        </div>
+                        <div class="card-body">
+                            <form method="POST" action="{{ path('app_admin_email_settings') }}">
+                                <div class="mb-4">
+                                    <h6 class="border-bottom pb-2">Serveur SMTP</h6>
+
+                                    <div class="row">
+                                        <div class="col-md-8">
+                                            <div class="mb-3">
+                                                <label for="smtp_host" class="form-label">
+                                                    Hôte SMTP <span class="text-danger">*</span>
+                                                </label>
+                                                <input type="text" name="smtp_host" id="smtp_host"
+                                                       class="form-control"
+                                                       value="{{ settings.smtp_host }}"
+                                                       placeholder="smtp.example.com" required>
+                                                <div class="form-text">
+                                                    Adresse du serveur SMTP
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="mb-3">
+                                                <label for="smtp_port" class="form-label">
+                                                    Port <span class="text-danger">*</span>
+                                                </label>
+                                                <input type="number" name="smtp_port" id="smtp_port"
+                                                       class="form-control"
+                                                       value="{{ settings.smtp_port }}"
+                                                       placeholder="587" required>
+                                                <div class="form-text">
+                                                    Port SMTP
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label for="smtp_username" class="form-label">
+                                                    Nom d'utilisateur
+                                                </label>
+                                                <input type="text" name="smtp_username" id="smtp_username"
+                                                       class="form-control"
+                                                       value="{{ settings.smtp_username }}"
+                                                       placeholder="user@example.com">
+                                                <div class="form-text">
+                                                    Identifiant SMTP
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label for="smtp_password" class="form-label">
+                                                    Mot de passe
+                                                </label>
+                                                <input type="password" name="smtp_password" id="smtp_password"
+                                                       class="form-control"
+                                                       value="{{ settings.smtp_password }}"
+                                                       placeholder="••••••••">
+                                                <div class="form-text">
+                                                    Mot de passe SMTP
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label for="smtp_encryption" class="form-label">
+                                            Chiffrement
+                                        </label>
+                                        <select name="smtp_encryption" id="smtp_encryption" class="form-select">
+                                            <option value="tls" {{ settings.smtp_encryption == 'tls' ? 'selected' : '' }}>TLS (recommandé)</option>
+                                            <option value="ssl" {{ settings.smtp_encryption == 'ssl' ? 'selected' : '' }}>SSL</option>
+                                            <option value="" {{ settings.smtp_encryption == '' ? 'selected' : '' }}>Aucun</option>
+                                        </select>
+                                        <div class="form-text">
+                                            Méthode de chiffrement pour la connexion SMTP
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="mb-4">
+                                    <h6 class="border-bottom pb-2">Expéditeur par défaut</h6>
+
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label for="email_from" class="form-label">
+                                                    Adresse email <span class="text-danger">*</span>
+                                                </label>
+                                                <input type="email" name="email_from" id="email_from"
+                                                       class="form-control"
+                                                       value="{{ settings.email_from }}"
+                                                       placeholder="noreply@mylocca.com" required>
+                                                <div class="form-text">
+                                                    Adresse d'expédition des emails
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label for="email_from_name" class="form-label">
+                                                    Nom de l'expéditeur
+                                                </label>
+                                                <input type="text" name="email_from_name" id="email_from_name"
+                                                       class="form-control"
+                                                       value="{{ settings.email_from_name }}"
+                                                       placeholder="MYLOCCA">
+                                                <div class="form-text">
+                                                    Nom affiché comme expéditeur
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="mb-4">
+                                    <h6 class="border-bottom pb-2">Notifications</h6>
+
+                                    <div class="mb-3">
+                                        <div class="form-check form-switch">
+                                            <input type="checkbox" name="email_notifications"
+                                                   id="email_notifications" class="form-check-input"
+                                                   {{ settings.email_notifications ? 'checked' : '' }}>
+                                            <label for="email_notifications" class="form-check-label">
+                                                Activer les notifications par email
+                                            </label>
+                                        </div>
+                                        <div class="form-text">
+                                            Désactiver pour suspendre temporairement tous les emails automatiques
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="d-flex gap-2">
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="bi bi-check-circle"></i> Enregistrer
+                                    </button>
+                                    <a href="{{ path('app_admin_settings_index') }}" class="btn btn-secondary">
+                                        <i class="bi bi-x-circle"></i> Annuler
+                                    </a>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">💡 Configuration rapide</h5>
+                        </div>
+                        <div class="card-body">
+                            <h6>Fournisseurs populaires</h6>
+
+                            <div class="mb-3">
+                                <strong>Gmail</strong>
+                                <ul class="small mb-2">
+                                    <li>Hôte: smtp.gmail.com</li>
+                                    <li>Port: 587</li>
+                                    <li>Chiffrement: TLS</li>
+                                </ul>
+                            </div>
+
+                            <div class="mb-3">
+                                <strong>Office 365</strong>
+                                <ul class="small mb-2">
+                                    <li>Hôte: smtp.office365.com</li>
+                                    <li>Port: 587</li>
+                                    <li>Chiffrement: TLS</li>
+                                </ul>
+                            </div>
+
+                            <div class="mb-3">
+                                <strong>OVH</strong>
+                                <ul class="small mb-2">
+                                    <li>Hôte: ssl0.ovh.net</li>
+                                    <li>Port: 587</li>
+                                    <li>Chiffrement: TLS</li>
+                                </ul>
+                            </div>
+
+                            <hr>
+
+                            <h6>Conseils de sécurité</h6>
+                            <ul class="small">
+                                <li>Utilisez toujours le chiffrement TLS ou SSL</li>
+                                <li>Conservez vos identifiants en sécurité</li>
+                                <li>Utilisez une adresse email dédiée</li>
+                                <li>Testez la configuration avant de l'activer</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="card mt-3">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">🧪 Test de configuration</h5>
+                        </div>
+                        <div class="card-body">
+                            <p class="small">
+                                Testez votre configuration email en envoyant un message de test.
+                            </p>
+                            <a href="{{ path('app_admin_task_index') }}" class="btn btn-outline-primary btn-sm w-100">
+                                <i class="bi bi-send"></i> Tester la configuration
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

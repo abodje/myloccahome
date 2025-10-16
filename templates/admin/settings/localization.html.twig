@@ -1,0 +1,274 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Paramètres de localisation - Administration - MYLOCCA{% endblock %}
+
+{% block page_title %}
+    <h5 class="mb-0">
+        <i class="bi bi-globe me-2"></i>
+        Paramètres de localisation
+    </h5>
+{% endblock %}
+
+{% block page_actions %}
+    <a href="{{ path('app_admin_settings_index') }}" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-arrow-left"></i> Retour
+    </a>
+{% endblock %}
+
+{% block body %}
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="bi bi-gear me-2"></i>
+                        Configuration régionale
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        <!-- Formats de date et heure -->
+                        <h6 class="mb-3">Formats de date et heure</h6>
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label class="form-label">Format de date</label>
+                                    <select name="date_format" class="form-select">
+                                        <option value="d/m/Y" {{ settings.date_format == 'd/m/Y' ? 'selected' : '' }}>
+                                            {{ 'now'|date('d/m/Y') }} (Français)
+                                        </option>
+                                        <option value="Y-m-d" {{ settings.date_format == 'Y-m-d' ? 'selected' : '' }}>
+                                            {{ 'now'|date('Y-m-d') }} (ISO)
+                                        </option>
+                                        <option value="m/d/Y" {{ settings.date_format == 'm/d/Y' ? 'selected' : '' }}>
+                                            {{ 'now'|date('m/d/Y') }} (Américain)
+                                        </option>
+                                        <option value="d.m.Y" {{ settings.date_format == 'd.m.Y' ? 'selected' : '' }}>
+                                            {{ 'now'|date('d.m.Y') }} (Allemand)
+                                        </option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label class="form-label">Format d'heure</label>
+                                    <select name="time_format" class="form-select">
+                                        <option value="H:i" {{ settings.time_format == 'H:i' ? 'selected' : '' }}>
+                                            {{ 'now'|date('H:i') }} (24h)
+                                        </option>
+                                        <option value="H:i:s" {{ settings.time_format == 'H:i:s' ? 'selected' : '' }}>
+                                            {{ 'now'|date('H:i:s') }} (24h avec secondes)
+                                        </option>
+                                        <option value="g:i A" {{ settings.time_format == 'g:i A' ? 'selected' : '' }}>
+                                            {{ 'now'|date('g:i A') }} (12h AM/PM)
+                                        </option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label class="form-label">Fuseau horaire</label>
+                                    <select name="timezone" class="form-select">
+                                        <option value="Europe/Paris" {{ settings.timezone == 'Europe/Paris' ? 'selected' : '' }}>
+                                            Europe/Paris (CET)
+                                        </option>
+                                        <option value="Europe/London" {{ settings.timezone == 'Europe/London' ? 'selected' : '' }}>
+                                            Europe/London (GMT)
+                                        </option>
+                                        <option value="America/New_York" {{ settings.timezone == 'America/New_York' ? 'selected' : '' }}>
+                                            America/New_York (EST)
+                                        </option>
+                                        <option value="Asia/Tokyo" {{ settings.timezone == 'Asia/Tokyo' ? 'selected' : '' }}>
+                                            Asia/Tokyo (JST)
+                                        </option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Langue et locale -->
+                        <h6 class="mb-3 mt-4">Langue et locale</h6>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Locale</label>
+                                    <select name="locale" class="form-select">
+                                        <option value="fr_FR" {{ settings.locale == 'fr_FR' ? 'selected' : '' }}>
+                                            🇫🇷 Français (France)
+                                        </option>
+                                        <option value="en_US" {{ settings.locale == 'en_US' ? 'selected' : '' }}>
+                                            🇺🇸 English (United States)
+                                        </option>
+                                        <option value="en_GB" {{ settings.locale == 'en_GB' ? 'selected' : '' }}>
+                                            🇬🇧 English (United Kingdom)
+                                        </option>
+                                        <option value="de_DE" {{ settings.locale == 'de_DE' ? 'selected' : '' }}>
+                                            🇩🇪 Deutsch (Deutschland)
+                                        </option>
+                                        <option value="es_ES" {{ settings.locale == 'es_ES' ? 'selected' : '' }}>
+                                            🇪🇸 Español (España)
+                                        </option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Formats numériques -->
+                        <h6 class="mb-3 mt-4">Formats numériques</h6>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Séparateur décimal</label>
+                                    <select name="decimal_separator" class="form-select">
+                                        <option value="," {{ settings.decimal_separator == ',' ? 'selected' : '' }}>
+                                            Virgule (,) - Français
+                                        </option>
+                                        <option value="." {{ settings.decimal_separator == '.' ? 'selected' : '' }}>
+                                            Point (.) - Anglais
+                                        </option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Séparateur de milliers</label>
+                                    <select name="thousands_separator" class="form-select">
+                                        <option value=" " {{ settings.thousands_separator == ' ' ? 'selected' : '' }}>
+                                            Espace ( ) - Français
+                                        </option>
+                                        <option value="," {{ settings.thousands_separator == ',' ? 'selected' : '' }}>
+                                            Virgule (,) - Anglais
+                                        </option>
+                                        <option value="." {{ settings.thousands_separator == '.' ? 'selected' : '' }}>
+                                            Point (.) - Allemand
+                                        </option>
+                                        <option value="" {{ settings.thousands_separator == '' ? 'selected' : '' }}>
+                                            Aucun
+                                        </option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Aperçu -->
+                        <div class="card bg-light mt-4">
+                            <div class="card-body">
+                                <h6>Aperçu des formats</h6>
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <small class="text-muted">Date :</small>
+                                        <div id="datePreview">{{ 'now'|date(settings.date_format) }}</div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <small class="text-muted">Heure :</small>
+                                        <div id="timePreview">{{ 'now'|date(settings.time_format) }}</div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <small class="text-muted">Nombre :</small>
+                                        <div id="numberPreview">1{{ settings.thousands_separator }}234{{ settings.decimal_separator }}56</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-end gap-2 mt-4">
+                            <a href="{{ path('app_admin_settings_index') }}" class="btn btn-secondary">Annuler</a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-check-circle me-2"></i>
+                                Enregistrer
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Mise à jour de l'aperçu en temps réel
+            const dateFormatSelect = document.querySelector('select[name="date_format"]');
+            const timeFormatSelect = document.querySelector('select[name="time_format"]');
+            const decimalSelect = document.querySelector('select[name="decimal_separator"]');
+            const thousandsSelect = document.querySelector('select[name="thousands_separator"]');
+
+            function updatePreview() {
+                const now = new Date();
+                const datePreview = document.getElementById('datePreview');
+                const timePreview = document.getElementById('timePreview');
+                const numberPreview = document.getElementById('numberPreview');
+
+                if (datePreview && dateFormatSelect) {
+                    // Simulation de l'aperçu de date (simplifié)
+                    const format = dateFormatSelect.value;
+                    let dateStr = '';
+                    switch(format) {
+                        case 'd/m/Y':
+                            dateStr = now.getDate().toString().padStart(2, '0') + '/' +
+                                     (now.getMonth() + 1).toString().padStart(2, '0') + '/' +
+                                     now.getFullYear();
+                            break;
+                        case 'Y-m-d':
+                            dateStr = now.getFullYear() + '-' +
+                                     (now.getMonth() + 1).toString().padStart(2, '0') + '-' +
+                                     now.getDate().toString().padStart(2, '0');
+                            break;
+                        case 'm/d/Y':
+                            dateStr = (now.getMonth() + 1).toString().padStart(2, '0') + '/' +
+                                     now.getDate().toString().padStart(2, '0') + '/' +
+                                     now.getFullYear();
+                            break;
+                        case 'd.m.Y':
+                            dateStr = now.getDate().toString().padStart(2, '0') + '.' +
+                                     (now.getMonth() + 1).toString().padStart(2, '0') + '.' +
+                                     now.getFullYear();
+                            break;
+                    }
+                    datePreview.textContent = dateStr;
+                }
+
+                if (timePreview && timeFormatSelect) {
+                    const format = timeFormatSelect.value;
+                    let timeStr = '';
+                    switch(format) {
+                        case 'H:i':
+                            timeStr = now.getHours().toString().padStart(2, '0') + ':' +
+                                     now.getMinutes().toString().padStart(2, '0');
+                            break;
+                        case 'H:i:s':
+                            timeStr = now.getHours().toString().padStart(2, '0') + ':' +
+                                     now.getMinutes().toString().padStart(2, '0') + ':' +
+                                     now.getSeconds().toString().padStart(2, '0');
+                            break;
+                        case 'g:i A':
+                            const hours12 = now.getHours() % 12 || 12;
+                            const ampm = now.getHours() >= 12 ? 'PM' : 'AM';
+                            timeStr = hours12 + ':' + now.getMinutes().toString().padStart(2, '0') + ' ' + ampm;
+                            break;
+                    }
+                    timePreview.textContent = timeStr;
+                }
+
+                if (numberPreview && decimalSelect && thousandsSelect) {
+                    const decimal = decimalSelect.value;
+                    const thousands = thousandsSelect.value;
+                    numberPreview.textContent = '1' + thousands + '234' + decimal + '56';
+                }
+            }
+
+            // Écouter les changements
+            [dateFormatSelect, timeFormatSelect, decimalSelect, thousandsSelect].forEach(select => {
+                if (select) {
+                    select.addEventListener('change', updatePreview);
+                }
+            });
+
+            // Mise à jour initiale
+            updatePreview();
+        });
+    </script>
+{% endblock %}

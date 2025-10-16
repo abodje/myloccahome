@@ -1,0 +1,353 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Contrat #{{ lease.id }} - MYLOCCA{% endblock %}
+
+{% block page_title %}
+    <h5 class="mb-0">
+        <i class="bi bi-file-text me-2"></i>
+        Contrat #{{ ('0000' ~ lease.id)|slice(-4) }}
+    </h5>
+{% endblock %}
+
+{% block page_actions %}
+    <div class="d-flex gap-2">
+        <a href="{{ path('app_lease_index') }}" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-arrow-left"></i> Retour
+        </a>
+        {% if lease.status == 'Actif' %}
+            <button type="button" class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#terminateModal">
+                <i class="bi bi-x-circle"></i> Résilier
+            </button>
+            <a href="{{ path('app_lease_renew', {id: lease.id}) }}" class="btn btn-success btn-sm">
+                <i class="bi bi-arrow-repeat"></i> Renouveler
+            </a>
+        {% endif %}
+        <a href="{{ path('app_lease_edit', {id: lease.id}) }}" class="btn btn-primary btn-sm">
+            <i class="bi bi-pencil"></i> Modifier
+        </a>
+    </div>
+{% endblock %}
+
+{% block body %}
+    <div class="row">
+        <div class="col-lg-8">
+            <!-- Informations du contrat -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="bi bi-info-circle me-2"></i>
+                        Détails du contrat
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td class="text-muted">Période :</td>
+                                    <td>
+                                        <strong>{{ lease.startDate|date('d/m/Y') }}</strong>
+                                        {% if lease.endDate %}
+                                            au <strong>{{ lease.endDate|date('d/m/Y') }}</strong>
+                                        {% else %}
+                                            <span class="text-muted">(durée indéterminée)</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="text-muted">Statut :</td>
+                                    <td>
+                                        <span class="badge bg-{{ lease.status == 'Actif' ? 'success' : (lease.status == 'Terminé' ? 'secondary' : 'warning') }}">
+                                            {{ lease.status }}
+                                        </span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="text-muted">Durée :</td>
+                                    <td>
+                                        {% if lease.durationInMonths %}
+                                            {{ lease.durationInMonths }} mois
+                                        {% else %}
+                                            Indéterminée
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="text-muted">Créé le :</td>
+                                    <td>{{ lease.createdAt|date('d/m/Y H:i') }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td class="text-muted">Loyer mensuel :</td>
+                                    <td><strong class="text-success">{{ lease.monthlyRent|currency }}</strong></td>
+                                </tr>
+                                <tr>
+                                    <td class="text-muted">Charges :</td>
+                                    <td>{{ lease.charges ? lease.charges|currency : 'Incluses' }}</td>
+                                </tr>
+                                <tr>
+                                    <td class="text-muted">Dépôt de garantie :</td>
+                                    <td>{{ lease.deposit ? lease.deposit|currency : 'Aucun' }}</td>
+                                </tr>
+                                <tr>
+                                    <td class="text-muted">Jour d'échéance :</td>
+                                    <td>{{ lease.rentDueDay ?? 1 }} de chaque mois</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+
+                    {% if lease.terms %}
+                        <hr>
+                        <div>
+                            <h6>Conditions particulières :</h6>
+                            <p class="text-muted">{{ lease.terms }}</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Locataire et propriété -->
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h6 class="mb-0">
+                                <i class="bi bi-person me-2"></i>
+                                Locataire
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <h6>{{ lease.tenant.fullName }}</h6>
+                            <p class="text-muted mb-2">
+                                <i class="bi bi-envelope me-1"></i>{{ lease.tenant.email }}
+                                {% if lease.tenant.phone %}
+                                    <br><i class="bi bi-phone me-1"></i>{{ lease.tenant.phone }}
+                                {% endif %}
+                            </p>
+                            {% if lease.tenant.profession %}
+                                <p class="text-muted small">Profession : {{ lease.tenant.profession }}</p>
+                            {% endif %}
+                            {% if lease.tenant.monthlyIncome %}
+                                <p class="text-muted small">Revenus : {{ lease.tenant.monthlyIncome|currency }}/mois</p>
+                            {% endif %}
+                            <a href="{{ path('app_tenant_show', {id: lease.tenant.id}) }}" class="btn btn-outline-primary btn-sm">
+                                Voir le profil
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h6 class="mb-0">
+                                <i class="bi bi-house me-2"></i>
+                                Propriété
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <h6>{{ lease.property.fullAddress }}</h6>
+                            <p class="text-muted mb-2">
+                                {{ lease.property.propertyType }} - {{ lease.property.rooms }} pièces - {{ lease.property.surface }} m²
+                            </p>
+                            <p class="text-muted small">
+                                Statut : <span class="badge bg-{{ lease.property.status == 'Occupé' ? 'success' : 'primary' }}">{{ lease.property.status }}</span>
+                            </p>
+                            <a href="{{ path('app_property_show', {id: lease.property.id}) }}" class="btn btn-outline-primary btn-sm">
+                                Voir la propriété
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Historique des paiements -->
+            {% if payments|length > 0 %}
+                <div class="card">
+                    <div class="card-header">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h6 class="mb-0">
+                                <i class="bi bi-credit-card me-2"></i>
+                                Historique des paiements
+                            </h6>
+                            {% if lease.status == 'Actif' %}
+                                <form method="POST" action="{{ path('app_lease_generate_rents', {id: lease.id}) }}" class="d-inline">
+                                    <button type="submit" class="btn btn-outline-success btn-sm">
+                                        <i class="bi bi-plus-circle me-1"></i>
+                                        Générer les loyers
+                                    </button>
+                                </form>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="card-body p-0">
+                        {% for payment in payments|slice(0, 10) %}
+                            <div class="d-flex justify-content-between align-items-center p-3 border-bottom">
+                                <div>
+                                    <h6 class="mb-1">{{ payment.type }} - {{ payment.amount|currency }}</h6>
+                                    <small class="text-muted">
+                                        Échéance : {{ payment.dueDate|date('d/m/Y') }}
+                                        {% if payment.paidDate %}
+                                            - Payé le {{ payment.paidDate|date('d/m/Y') }}
+                                        {% endif %}
+                                    </small>
+                                </div>
+                                <div class="text-end">
+                                    <span class="badge bg-{{ payment.status == 'Payé' ? 'success' : (payment.isOverdue ? 'danger' : 'warning') }}">
+                                        {{ payment.status }}
+                                    </span>
+                                    <br><a href="{{ path('app_payment_show', {id: payment.id}) }}" class="btn btn-sm btn-outline-primary mt-1">
+                                        Voir
+                                    </a>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+
+        <div class="col-lg-4">
+            <!-- Résumé financier -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="bi bi-calculator me-2"></i>
+                        Résumé financier
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted">Loyer mensuel :</span>
+                        <strong class="text-success">{{ lease.monthlyRent|currency }}</strong>
+                    </div>
+                    {% if lease.charges %}
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="text-muted">Charges :</span>
+                            <strong>{{ lease.charges|currency }}</strong>
+                        </div>
+                    {% endif %}
+                    <hr>
+                    <div class="d-flex justify-content-between">
+                        <span class="text-muted">Total mensuel :</span>
+                        <strong class="text-primary">{{ lease.totalMonthlyAmount|currency }}</strong>
+                    </div>
+                    {% if lease.deposit %}
+                        <hr>
+                        <div class="d-flex justify-content-between">
+                            <span class="text-muted">Dépôt de garantie :</span>
+                            <strong>{{ lease.deposit|currency }}</strong>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="bi bi-gear me-2"></i>
+                        Actions
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <!-- Génération de contrat -->
+                        <div class="btn-group" role="group">
+                            <form method="POST" action="{{ path('app_lease_generate_contract_document', {id: lease.id}) }}" class="d-inline">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="bi bi-file-earmark-text me-2"></i>
+                                    Générer contrat PDF
+                                </button>
+                            </form>
+                            <a href="{{ path('app_lease_contract_pdf', {id: lease.id}) }}" class="btn btn-outline-primary" target="_blank">
+                                <i class="bi bi-download me-2"></i>
+                                Télécharger
+                            </a>
+                        </div>
+
+                        <hr>
+
+                        <a href="{{ path('app_payment_new') }}?lease={{ lease.id }}" class="btn btn-success">
+                            <i class="bi bi-credit-card-2-front me-2"></i>
+                            Nouveau paiement
+                        </a>
+
+                        <a href="{{ path('app_maintenance_request_new') }}?property={{ lease.property.id }}&tenant={{ lease.tenant.id }}" class="btn btn-warning">
+                            <i class="bi bi-tools me-2"></i>
+                            Demande de maintenance
+                        </a>
+
+                        <a href="{{ path('app_document_new') }}?lease={{ lease.id }}" class="btn btn-outline-info">
+                            <i class="bi bi-file-earmark me-2"></i>
+                            Ajouter un document
+                        </a>
+
+                        {% if lease.status == 'Actif' %}
+                            <form method="POST" action="{{ path('app_lease_generate_rents', {id: lease.id}) }}">
+                                <button type="submit" class="btn btn-outline-primary">
+                                    <i class="bi bi-calendar-plus me-2"></i>
+                                    Générer les loyers
+                                </button>
+                            </form>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Prochaine échéance -->
+            {% if lease.status == 'Actif' and lease.nextDueDate %}
+                <div class="card">
+                    <div class="card-header bg-info text-white">
+                        <h6 class="mb-0">
+                            <i class="bi bi-calendar-event me-2"></i>
+                            Prochaine échéance
+                        </h6>
+                    </div>
+                    <div class="card-body text-center">
+                        <h4 class="text-primary">{{ lease.nextDueDate|date('d/m/Y') }}</h4>
+                        <p class="text-muted mb-0">{{ lease.totalMonthlyAmount|currency }}</p>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+
+    <!-- Modal résiliation -->
+    <div class="modal fade" id="terminateModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Résilier le contrat</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form action="{{ path('app_lease_terminate', {id: lease.id}) }}" method="POST">
+                    <div class="modal-body">
+                        <div class="alert alert-warning">
+                            <i class="bi bi-exclamation-triangle me-2"></i>
+                            Cette action mettra fin au contrat et libérera la propriété.
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Date de fin du contrat</label>
+                            <input type="date" name="end_date" class="form-control" required>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                        <button type="submit" class="btn btn-warning">
+                            <input type="hidden" name="_token" value="{{ csrf_token('terminate' ~ lease.id) }}">
+                            Résilier le contrat
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+{% endblock %}

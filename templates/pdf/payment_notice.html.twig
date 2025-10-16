@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Avis d'Échéance</title>
+    <style>
+        body {
+            font-family: 'DejaVu Sans', Arial, sans-serif;
+            font-size: 12pt;
+            line-height: 1.6;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 3px solid #e67e22;
+            padding-bottom: 20px;
+        }
+        .header h1 {
+            color: #e67e22;
+            font-size: 24pt;
+            margin: 0;
+            font-weight: bold;
+        }
+        .header .subtitle {
+            color: #7f8c8d;
+            font-size: 10pt;
+            margin-top: 5px;
+        }
+        .company-info {
+            margin-bottom: 30px;
+            font-size: 10pt;
+        }
+        .company-info strong {
+            color: #2c3e50;
+        }
+        .section {
+            margin-bottom: 25px;
+        }
+        .section-title {
+            background-color: #fff3cd;
+            padding: 10px;
+            font-weight: bold;
+            color: #856404;
+            border-left: 4px solid #e67e22;
+            margin-bottom: 15px;
+        }
+        .info-grid {
+            display: table;
+            width: 100%;
+            margin-bottom: 15px;
+        }
+        .info-row {
+            display: table-row;
+        }
+        .info-label {
+            display: table-cell;
+            width: 40%;
+            padding: 8px;
+            font-weight: bold;
+            background-color: #f8f9fa;
+        }
+        .info-value {
+            display: table-cell;
+            width: 60%;
+            padding: 8px;
+            background-color: #ffffff;
+        }
+        .alert-box {
+            background-color: #fff3cd;
+            border: 2px solid #ffc107;
+            padding: 20px;
+            text-align: center;
+            margin: 20px 0;
+        }
+        .alert-box .icon {
+            font-size: 48pt;
+            color: #e67e22;
+            margin-bottom: 10px;
+        }
+        .due-amount-box {
+            background-color: #ffe5e5;
+            border: 3px solid #dc3545;
+            padding: 25px;
+            text-align: center;
+            margin: 30px 0;
+        }
+        .due-amount-box .label {
+            font-size: 14pt;
+            color: #721c24;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+        .due-amount-box .amount {
+            font-size: 32pt;
+            font-weight: bold;
+            color: #dc3545;
+        }
+        .due-amount-box .due-date {
+            font-size: 16pt;
+            color: #721c24;
+            margin-top: 10px;
+            font-weight: bold;
+        }
+        .payment-methods {
+            background-color: #e8f5e9;
+            border: 1px solid #4caf50;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        .payment-methods h3 {
+            color: #2e7d32;
+            font-size: 14pt;
+            margin-top: 0;
+        }
+        .payment-methods ul {
+            margin: 10px 0;
+            padding-left: 20px;
+        }
+        .footer {
+            margin-top: 50px;
+            text-align: center;
+            font-size: 9pt;
+            color: #7f8c8d;
+            border-top: 1px solid #bdc3c7;
+            padding-top: 15px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        table th, table td {
+            padding: 12px;
+            border: 1px solid #bdc3c7;
+        }
+        table th {
+            background-color: #fff3cd;
+            color: #856404;
+            font-weight: bold;
+        }
+        .important-notice {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            padding: 15px;
+            margin: 20px 0;
+            color: #721c24;
+        }
+        .important-notice strong {
+            color: #dc3545;
+        }
+    </style>
+</head>
+<body>
+    <!-- En-tête -->
+    <div class="header">
+        <h1>⚠️ AVIS D'ÉCHÉANCE</h1>
+        <div class="subtitle">Appel de loyer et charges locatives</div>
+    </div>
+
+    <!-- Informations de la société émettrice -->
+    <div class="company-info">
+        <strong>{{ settings.company_name }}</strong><br>
+        {% if settings.company_siret %}SIRET : {{ settings.company_siret }}<br>{% endif %}
+        {% if settings.company_address %}{{ settings.company_address }}<br>{% endif %}
+        {% if settings.company_city %}{{ settings.company_city }}<br>{% endif %}
+        {% if settings.company_phone %}Tél : {{ settings.company_phone }} | {% endif %}
+        {% if settings.company_email %}Email : {{ settings.company_email }}{% endif %}
+        {% if settings.company_website %}<br>Web : {{ settings.company_website }}{% endif %}
+    </div>
+
+    <!-- Date d'émission -->
+    <div style="text-align: right; margin-bottom: 20px;">
+        <strong>Date d'émission :</strong> {{ "now"|date('d/m/Y') }}
+    </div>
+
+    <!-- Alerte d'échéance -->
+    <div class="alert-box">
+        <div class="icon">⏰</div>
+        <div style="font-size: 14pt; font-weight: bold; color: #856404;">
+            ÉCHÉANCE DE PAIEMENT À VENIR
+        </div>
+    </div>
+
+    <!-- Informations du locataire -->
+    <div class="section">
+        <div class="section-title">DESTINATAIRE</div>
+        <div class="info-grid">
+            <div class="info-row">
+                <div class="info-label">Nom et Prénom</div>
+                <div class="info-value">{{ tenant.firstName }} {{ tenant.lastName }}</div>
+            </div>
+            <div class="info-row">
+                <div class="info-label">Adresse</div>
+                <div class="info-value">{{ tenant.address }}, {{ tenant.postalCode }} {{ tenant.city }}</div>
+            </div>
+            <div class="info-row">
+                <div class="info-label">Téléphone</div>
+                <div class="info-value">{{ tenant.phone }}</div>
+            </div>
+            <div class="info-row">
+                <div class="info-label">Email</div>
+                <div class="info-value">{{ tenant.email }}</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Informations du bien loué -->
+    <div class="section">
+        <div class="section-title">BIEN LOUÉ</div>
+        <div class="info-grid">
+            <div class="info-row">
+                <div class="info-label">Adresse du bien</div>
+                <div class="info-value">{{ property.address }}, {{ property.postalCode }} {{ property.city }}</div>
+            </div>
+            <div class="info-row">
+                <div class="info-label">Type de bien</div>
+                <div class="info-value">{{ property.propertyType }}</div>
+            </div>
+            <div class="info-row">
+                <div class="info-label">Surface</div>
+                <div class="info-value">{{ property.surface }} m²</div>
+            </div>
+            <div class="info-row">
+                <div class="info-label">Loyer mensuel</div>
+                <div class="info-value">{{ lease.monthlyRent|currency }}</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Détails de l'échéance -->
+    <div class="section">
+        <div class="section-title">DÉTAIL DE L'ÉCHÉANCE</div>
+        <table>
+            <thead>
+                <tr>
+                    <th>Désignation</th>
+                    <th>Période</th>
+                    <th style="width: 30%; text-align: right;">Montant</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>{{ payment.type }}</strong></td>
+                    <td>{{ payment.dueDate|date('F Y') }}</td>
+                    <td style="text-align: right; font-weight: bold;">{{ payment.amount|currency }}</td>
+                </tr>
+                {% if lease.charges > 0 %}
+                <tr>
+                    <td>Charges locatives</td>
+                    <td>{{ payment.dueDate|date('F Y') }}</td>
+                    <td style="text-align: right;">{{ lease.charges|currency }}</td>
+                </tr>
+                {% endif %}
+            </tbody>
+            <tfoot>
+                <tr>
+                    <th colspan="2">TOTAL À PAYER</th>
+                    <th style="text-align: right;">{{ payment.amount|currency }}</th>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+
+    <!-- Montant dû -->
+    <div class="due-amount-box">
+        <div class="label">MONTANT TOTAL DÛ</div>
+        <div class="amount">{{ payment.amount|currency }}</div>
+        <div class="due-date">À PAYER AVANT LE {{ payment.dueDate|date('d/m/Y') }}</div>
+    </div>
+
+    <!-- Méthodes de paiement -->
+    <div class="payment-methods">
+        <h3>💳 MOYENS DE PAIEMENT ACCEPTÉS</h3>
+        <ul>
+            <li><strong>Paiement en ligne :</strong> Via notre plateforme sécurisée (Mobile Money, Carte bancaire)</li>
+            <li><strong>Virement bancaire :</strong> Sur le compte indiqué dans votre contrat</li>
+            <li><strong>Espèces :</strong> Auprès de votre gestionnaire (sur rendez-vous)</li>
+            <li><strong>Chèque :</strong> À l'ordre de {{ settings.company_name }}</li>
+        </ul>
+    </div>
+
+    <!-- Avis important -->
+    <div class="important-notice">
+        <strong>⚠️ IMPORTANT :</strong><br>
+        Tout retard de paiement peut entraîner l'application de pénalités conformément à votre contrat de bail.
+        En cas de difficultés, veuillez contacter votre gestionnaire dans les plus brefs délais.
+    </div>
+
+    <!-- Informations complémentaires -->
+    <div style="margin-top: 30px; font-size: 10pt;">
+        <p><strong>Informations utiles :</strong></p>
+        <ul>
+            <li>Numéro de bail : <strong>#{{ lease.id }}</strong></li>
+            <li>Date de début de bail : <strong>{{ lease.startDate|date('d/m/Y') }}</strong></li>
+            <li>Période couverte : <strong>{{ payment.dueDate|date('F Y') }}</strong></li>
+        </ul>
+    </div>
+
+    <!-- Pied de page -->
+    <div class="footer">
+        <strong>{{ settings.company_name }}</strong>
+        {% if settings.company_siret %} - SIRET : {{ settings.company_siret }}{% endif %}<br>
+        {{ settings.company_address }}{% if settings.company_city %}, {{ settings.company_city }}{% endif %}<br>
+        {% if settings.company_phone %}Tél : {{ settings.company_phone }} | {% endif %}
+        {% if settings.company_email %}Email : {{ settings.company_email }}{% endif %}<br>
+        <small>Document généré le {{ "now"|date('d/m/Y à H:i') }} - Avis #{{ payment.id }} - Bail #{{ lease.id }}</small><br>
+        <strong style="color: #e74c3c;">Ce document n'est pas une quittance de loyer</strong>
+    </div>
+
+    <div style="margin-top: 20px; text-align: center; font-style: italic; color: #7f8c8d; font-size: 9pt;">
+        Document généré électroniquement - Pour toute question, contactez votre gestionnaire
+    </div>
+</body>
+</html>
+

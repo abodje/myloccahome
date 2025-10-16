@@ -1,0 +1,217 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Gestion des tâches automatisées - Administration{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>⚙️ Tâches automatisées</h2>
+                <div class="d-flex gap-2">
+                    <form method="POST" action="{{ path('app_admin_task_run_all') }}" class="d-inline">
+                        <button type="submit" class="btn btn-success">
+                            <i class="bi bi-play-circle"></i> Exécuter les tâches dues
+                        </button>
+                    </form>
+                    <form method="POST" action="{{ path('app_admin_task_initialize') }}" class="d-inline">
+                        <button type="submit" class="btn btn-info">
+                            <i class="bi bi-arrow-clockwise"></i> Initialiser
+                        </button>
+                    </form>
+                    <a href="{{ path('app_admin_task_new') }}" class="btn btn-primary">
+                        <i class="bi bi-plus-circle"></i> Nouvelle tâche
+                    </a>
+                </div>
+            </div>
+
+            <!-- Statistiques -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h3 class="text-primary">{{ stats.total }}</h3>
+                            <small class="text-muted">Total</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h3 class="text-success">{{ stats.active }}</h3>
+                            <small class="text-muted">Actives</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h3 class="text-warning">{{ stats.due }}</h3>
+                            <small class="text-muted">À exécuter</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h3 class="text-info">{{ stats.running }}</h3>
+                            <small class="text-muted">En cours</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Test d'email -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-envelope-check"></i> Test de configuration email</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ path('app_admin_task_test_email') }}" class="row g-3">
+                        <div class="col-md-8">
+                            <input type="email" name="test_email" class="form-control"
+                                   placeholder="votre@email.com" required>
+                        </div>
+                        <div class="col-md-4">
+                            <button type="submit" class="btn btn-outline-primary w-100">
+                                <i class="bi bi-send"></i> Envoyer un test
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Envoi manuel de quittances -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-file-earmark-text"></i> Envoi manuel de quittances</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ path('app_admin_task_send_receipts') }}" class="row g-3">
+                        <div class="col-md-8">
+                            <input type="month" name="month" class="form-control"
+                                   value="{{ 'now'|date('Y-m') }}" required>
+                        </div>
+                        <div class="col-md-4">
+                            <button type="submit" class="btn btn-outline-success w-100">
+                                <i class="bi bi-send"></i> Envoyer les quittances
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Liste des tâches -->
+            <div class="card">
+                <div class="card-header" style="background-color: var(--primary-color); color: white;">
+                    <h5 class="mb-0">Liste des tâches</h5>
+                </div>
+                <div class="card-body p-0">
+                    {% if tasks|length > 0 %}
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>Nom</th>
+                                        <th>Type</th>
+                                        <th>Fréquence</th>
+                                        <th>Prochaine exécution</th>
+                                        <th>Dernière exécution</th>
+                                        <th>Statut</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for task in tasks %}
+                                        <tr>
+                                            <td>
+                                                <strong>{{ task.name }}</strong>
+                                                {% if task.description %}
+                                                    <br><small class="text-muted">{{ task.description }}</small>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-info">{{ task.type }}</span>
+                                            </td>
+                                            <td>{{ task.frequency }}</td>
+                                            <td>
+                                                {% if task.nextRunAt %}
+                                                    {{ task.nextRunAt|date('d/m/Y H:i') }}
+                                                    {% if task.isDue %}
+                                                        <br><span class="badge bg-warning">À exécuter</span>
+                                                    {% endif %}
+                                                {% else %}
+                                                    <span class="text-muted">-</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if task.lastRunAt %}
+                                                    {{ task.lastRunAt|date('d/m/Y H:i') }}
+                                                {% else %}
+                                                    <span class="text-muted">Jamais</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-{{ task.status == 'ACTIVE' ? 'success' : (task.status == 'RUNNING' ? 'info' : 'secondary') }}">
+                                                    {{ task.status }}
+                                                </span>
+                                                <br>
+                                                <small>
+                                                    ✓ {{ task.successCount }} / ✗ {{ task.failureCount }}
+                                                </small>
+                                            </td>
+                                            <td>
+                                                <div class="btn-group btn-group-sm">
+                                                    <a href="{{ path('app_admin_task_show', {id: task.id}) }}"
+                                                       class="btn btn-outline-primary" title="Détails">
+                                                        <i class="bi bi-eye"></i>
+                                                    </a>
+                                                    <form method="POST" action="{{ path('app_admin_task_execute', {id: task.id}) }}" class="d-inline">
+                                                        <button type="submit" class="btn btn-outline-success" title="Exécuter">
+                                                            <i class="bi bi-play"></i>
+                                                        </button>
+                                                    </form>
+                                                    <form method="POST" action="{{ path('app_admin_task_toggle', {id: task.id}) }}" class="d-inline">
+                                                        <button type="submit"
+                                                                class="btn btn-outline-{{ task.isActive ? 'warning' : 'info' }}"
+                                                                title="{{ task.isActive ? 'Désactiver' : 'Activer' }}">
+                                                            <i class="bi bi-{{ task.isActive ? 'pause' : 'play' }}-circle"></i>
+                                                        </button>
+                                                    </form>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center p-5">
+                            <i class="bi bi-clock-history display-1 text-muted"></i>
+                            <h5 class="mt-3 text-muted">Aucune tâche configurée</h5>
+                            <p class="text-muted">Cliquez sur "Initialiser" pour créer les tâches par défaut.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Échecs récents -->
+            {% if recent_failures|length > 0 %}
+                <div class="card mt-4">
+                    <div class="card-header bg-danger text-white">
+                        <h5 class="mb-0"><i class="bi bi-exclamation-triangle"></i> Échecs récents</h5>
+                    </div>
+                    <div class="card-body">
+                        {% for task in recent_failures %}
+                            <div class="alert alert-danger">
+                                <strong>{{ task.name }}</strong> - {{ task.lastRunAt|date('d/m/Y H:i') }}<br>
+                                <small>{{ task.lastError }}</small>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
