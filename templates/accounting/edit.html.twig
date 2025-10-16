@@ -1,0 +1,171 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Modifier écriture comptable - MYLOCCA{% endblock %}
+
+{% block page_title %}
+    <h5 class="mb-0">
+        <i class="bi bi-calculator me-2"></i>
+        Modifier l'écriture comptable
+    </h5>
+{% endblock %}
+
+{% block page_actions %}
+    <a href="{{ path('app_accounting_show', {'id': entry.id}) }}" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-arrow-left me-2"></i>
+        Retour aux détails
+    </a>
+{% endblock %}
+
+{% block body %}
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow">
+                <div class="card-header" style="background-color: var(--primary-color); color: white;">
+                    <h6 class="mb-0">
+                        <i class="bi bi-pencil me-2"></i>
+                        Modifier l'écriture comptable #{{ entry.id }}
+                    </h6>
+                </div>
+                <div class="card-body">
+                    {{ form_start(form, {'attr': {'novalidate': 'novalidate'}}) }}
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            {{ form_row(form.entryDate, {
+                                'label': 'Date de l\'écriture',
+                                'attr': {'class': 'form-control'}
+                            }) }}
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            {{ form_row(form.type, {
+                                'label': 'Type',
+                                'attr': {'class': 'form-select'},
+                                'placeholder': 'Sélectionner un type'
+                            }) }}
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            {{ form_row(form.category, {
+                                'label': 'Catégorie',
+                                'attr': {'class': 'form-select'},
+                                'placeholder': 'Sélectionner une catégorie'
+                            }) }}
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            {{ form_row(form.amount, {
+                                'label': 'Montant',
+                                'attr': {'class': 'form-control', 'placeholder': '0.00'}
+                            }) }}
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        {{ form_row(form.description, {
+                            'label': 'Description',
+                            'attr': {'class': 'form-control', 'rows': 3}
+                        }) }}
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            {{ form_row(form.reference, {
+                                'label': 'Référence (optionnel)',
+                                'attr': {'class': 'form-control', 'placeholder': 'Ex: FACTURE-2024-001'},
+                                'required': false
+                            }) }}
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            {% if form.tenant is defined %}
+                                {{ form_row(form.tenant, {
+                                    'label': 'Locataire (optionnel)',
+                                    'attr': {'class': 'form-select'},
+                                    'required': false
+                                }) }}
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        {% if form.property is defined %}
+                            {{ form_row(form.property, {
+                                'label': 'Propriété (optionnel)',
+                                'attr': {'class': 'form-select'},
+                                'required': false
+                            }) }}
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        {% if form.notes is defined %}
+                            {{ form_row(form.notes, {
+                                'label': 'Notes internes (optionnel)',
+                                'attr': {'class': 'form-control', 'rows': 2},
+                                'required': false
+                            }) }}
+                        {% endif %}
+                    </div>
+
+                    {{ form_rest(form) }}
+
+                    <div class="alert alert-warning">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        <strong>Attention :</strong> La modification de cette écriture recalculera tous les soldes comptables.
+                    </div>
+
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+                        <a href="{{ path('app_accounting_show', {'id': entry.id}) }}" class="btn btn-outline-secondary">
+                            <i class="bi bi-x-circle me-2"></i>
+                            Annuler
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-circle me-2"></i>
+                            Enregistrer les modifications
+                        </button>
+                    </div>
+
+                    {{ form_end(form) }}
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        .card-header {
+            font-weight: 600;
+        }
+
+        .form-label {
+            font-weight: 500;
+            color: #495057;
+        }
+    </style>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script>
+        // Validation côté client
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.querySelector('form[name="accounting_entry"]');
+            if (form) {
+                form.addEventListener('submit', function(e) {
+                    const amountInput = form.querySelector('input[name*="[amount]"]');
+                    if (amountInput && parseFloat(amountInput.value) <= 0) {
+                        e.preventDefault();
+                        alert('Le montant doit être supérieur à 0');
+                        amountInput.focus();
+                    }
+                });
+            }
+        });
+    </script>
+{% endblock %}
+

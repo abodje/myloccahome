@@ -1,0 +1,179 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Détails écriture comptable - MYLOCCA{% endblock %}
+
+{% block page_title %}
+    <h5 class="mb-0">
+        <i class="bi bi-calculator me-2"></i>
+        Détails de l'écriture comptable
+    </h5>
+{% endblock %}
+
+{% block page_actions %}
+    <div class="d-flex gap-2">
+        <a href="{{ path('app_accounting_index') }}" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-arrow-left me-2"></i>
+            Retour à la liste
+        </a>
+        <a href="{{ path('app_accounting_edit', {'id': entry.id}) }}" class="btn btn-outline-primary btn-sm">
+            <i class="bi bi-pencil me-2"></i>
+            Modifier
+        </a>
+    </div>
+{% endblock %}
+
+{% block body %}
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow">
+                <div class="card-header" style="background-color: var(--primary-color); color: white;">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h6 class="mb-0">
+                            <i class="bi bi-file-text me-2"></i>
+                            Écriture comptable #{{ entry.id }}
+                        </h6>
+                        <span class="badge bg-{{ entry.type == 'CREDIT' ? 'success' : 'danger' }}">
+                            {{ entry.type }}
+                        </span>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <h6 class="text-muted mb-1">Date de l'écriture</h6>
+                            <p class="h5">{{ entry.entryDate|date('d/m/Y') }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-muted mb-1">Montant</h6>
+                            <p class="h5 text-{{ entry.amountColor }}">
+                                {{ entry.formattedAmount }}
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <h6 class="text-muted mb-1">Catégorie</h6>
+                            <p class="mb-0">
+                                <span class="badge bg-info">{{ entry.category }}</span>
+                            </p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-muted mb-1">Référence</h6>
+                            <p class="mb-0">{{ entry.reference ?? 'N/A' }}</p>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <h6 class="text-muted mb-1">Description</h6>
+                        <p class="mb-0">{{ entry.description }}</p>
+                    </div>
+
+                    {% if entry.property %}
+                    <div class="mb-4">
+                        <h6 class="text-muted mb-1">Propriété</h6>
+                        <p class="mb-0">
+                            <i class="bi bi-building me-2"></i>
+                            {{ entry.property.fullAddress ?? entry.property.address }}
+                        </p>
+                    </div>
+                    {% endif %}
+
+                    {% if entry.tenant %}
+                    <div class="mb-4">
+                        <h6 class="text-muted mb-1">Locataire</h6>
+                        <p class="mb-0">
+                            <i class="bi bi-person me-2"></i>
+                            {{ entry.tenant.firstName }} {{ entry.tenant.lastName }}
+                        </p>
+                    </div>
+                    {% endif %}
+
+                    {% if entry.lease %}
+                    <div class="mb-4">
+                        <h6 class="text-muted mb-1">Bail associé</h6>
+                        <p class="mb-0">
+                            <i class="bi bi-file-earmark-text me-2"></i>
+                            Bail #{{ entry.lease.id }}
+                        </p>
+                    </div>
+                    {% endif %}
+
+                    {% if entry.payment %}
+                    <div class="mb-4">
+                        <h6 class="text-muted mb-1">Paiement associé</h6>
+                        <p class="mb-0">
+                            <i class="bi bi-credit-card me-2"></i>
+                            Paiement #{{ entry.payment.id }}
+                        </p>
+                    </div>
+                    {% endif %}
+
+                    {% if entry.notes %}
+                    <div class="mb-4">
+                        <h6 class="text-muted mb-1">Notes internes</h6>
+                        <p class="mb-0 text-muted">{{ entry.notes }}</p>
+                    </div>
+                    {% endif %}
+
+                    {% if entry.runningBalance is not null %}
+                    <div class="mb-4">
+                        <h6 class="text-muted mb-1">Solde après cette écriture</h6>
+                        <p class="h5 {{ entry.runningBalance >= 0 ? 'text-success' : 'text-danger' }}">
+                            {{ entry.runningBalance|currency }}
+                        </p>
+                    </div>
+                    {% endif %}
+
+                    <hr>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="text-muted mb-1">Créé le</h6>
+                            <p class="mb-0">{{ entry.createdAt|date('d/m/Y à H:i') }}</p>
+                        </div>
+                        {% if entry.updatedAt %}
+                        <div class="col-md-6">
+                            <h6 class="text-muted mb-1">Modifié le</h6>
+                            <p class="mb-0">{{ entry.updatedAt|date('d/m/Y à H:i') }}</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="card-footer bg-light">
+                    <div class="d-flex justify-content-between">
+                        <form method="post" action="{{ path('app_accounting_delete', {'id': entry.id}) }}" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cette écriture comptable ?');">
+                            <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ entry.id) }}">
+                            <button type="submit" class="btn btn-outline-danger btn-sm">
+                                <i class="bi bi-trash me-2"></i>
+                                Supprimer
+                            </button>
+                        </form>
+                        <a href="{{ path('app_accounting_edit', {'id': entry.id}) }}" class="btn btn-primary btn-sm">
+                            <i class="bi bi-pencil me-2"></i>
+                            Modifier
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        .card-header {
+            font-weight: 600;
+        }
+        
+        .text-success {
+            color: #198754 !important;
+        }
+        
+        .text-danger {
+            color: #dc3545 !important;
+        }
+    </style>
+{% endblock %}
+
