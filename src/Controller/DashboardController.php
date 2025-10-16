@@ -180,6 +180,7 @@ class DashboardController extends AbstractController
                 'stats' => [
                     'properties' => ['total' => 0, 'occupied' => 0, 'available' => 0],
                     'tenants' => ['total' => 0, 'active' => 0],
+                    'leases' => ['active' => 0, 'expiring_soon' => 0],
                     'payments' => ['pending' => 0, 'overdue' => 0, 'monthly_income' => 0],
                     'maintenance' => ['pending' => 0, 'urgent' => 0, 'overdue' => 0],
                     'messages' => ['unread' => 0, 'total' => 0]

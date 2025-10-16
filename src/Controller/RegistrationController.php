@@ -119,9 +119,9 @@ class RegistrationController extends AbstractController
                 // Créer l'utilisateur administrateur
                 $user = new User();
                 $user->setEmail($userEmail);
-                $user->setFirstName($userFirstName ?? 'Admin');
-                $user->setLastName($userLastName ?? 'Admin');
-                $user->setRoles(['ROLE_ADMIN']);
+                $user->setFirstName($userFirstName ?? 'Manager');
+                $user->setLastName($userLastName ?? 'Manager');
+                $user->setRoles(['ROLE_MANAGER']);
                 $user->setOrganization($organization);
 
                 $hashedPassword = $passwordHasher->hashPassword($user, $userPassword);
