@@ -76,6 +76,7 @@
                                         {% if organization.taxNumber %}
                                             <br><small class="text-muted">{{ organization.taxNumber }}</small>
                                         {% endif %}
+                                        {# Fixed: Using taxNumber instead of registrationNumber #}
                                     </td>
                                     <td>
                                         {% if organization.email %}

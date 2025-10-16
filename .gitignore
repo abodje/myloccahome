@@ -9,6 +9,17 @@
 /public/bundles/
 /var/
 /vendor/
+.env.*
+.env.test.*
+.env.test.local
+.env.test.local.php
+.env.test.local.*
+.env.test.local.*.php
+.env.test.local.*.*
+.env.test.local.*.*.php
+.env.test.local.*.*.*
+.env.test.local.*.*.*.php
+.env.test.local.*.*.*.*
 ###< symfony/framework-bundle ###
 
 ###> phpunit/phpunit ###
