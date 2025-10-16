@@ -91,6 +91,9 @@ class Company
     #[ORM\Column(type: Types::BOOLEAN, options: ['default' => false])]
     private ?bool $isDemo = false;
 
+    #[ORM\Column(type: Types::BOOLEAN, options: ['default' => true])]
+    private ?bool $isActive = true;
+
     public function __construct()
     {
         $this->properties = new ArrayCollection();
@@ -455,6 +458,17 @@ class Company
             return $this->name . ' (' . $this->legalName . ')';
         }
         return $this->name;
+    }
+
+    public function isActive(): ?bool
+    {
+        return $this->isActive;
+    }
+
+    public function setIsActive(bool $isActive): static
+    {
+        $this->isActive = $isActive;
+        return $this;
     }
 
     public function getIsDemo(): ?bool
