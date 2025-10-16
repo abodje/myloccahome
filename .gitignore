@@ -30,4 +30,7 @@
 ###> symfony/asset-mapper ###
 /public/assets/
 assets/vendor/
+.htaccess
+/public/.htaccess
+/public/.htaccess-public_html
 ###< symfony/asset-mapper ###
