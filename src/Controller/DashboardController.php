@@ -185,6 +185,10 @@ class DashboardController extends AbstractController
                     'maintenance' => ['pending' => 0, 'urgent' => 0, 'overdue' => 0],
                     'messages' => ['unread' => 0, 'total' => 0]
                 ],
+                'recent_payments' => [],
+                'recent_maintenance' => [],
+                'urgent_requests' => [],
+                'overdue_payments' => [],
                 'user_role' => 'manager'
             ]);
         }
