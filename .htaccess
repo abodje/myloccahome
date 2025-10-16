@@ -1,3 +1,9 @@
-RewriteEngine on
-RewriteCond %{REQUEST_URI} !^public
-RewriteRule ^(.*)$ public/$1 [L]
+RewriteEngine On
+
+# Redirection 301 : si l'URL contient /public/, rediriger vers la racine
+RewriteCond %{THE_REQUEST} \s/public/ [NC]
+RewriteRule ^public/(.*)$ /$1 [R=301,L]
+
+# Redirection interne : tout rediriger vers le dossier public
+RewriteCond %{REQUEST_URI} !^/public/
+RewriteRule ^(.*)$ public/$1 [L,QSA]
