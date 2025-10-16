@@ -49,6 +49,9 @@ class Organization
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $email = null;
 
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $website = null;
+
     #[ORM\Column(length: 100, nullable: true)]
     private ?string $taxNumber = null; // SIRET, SIREN, etc.
 
@@ -234,6 +237,17 @@ class Organization
     public function setEmail(?string $email): static
     {
         $this->email = $email;
+        return $this;
+    }
+
+    public function getWebsite(): ?string
+    {
+        return $this->website;
+    }
+
+    public function setWebsite(?string $website): static
+    {
+        $this->website = $website;
         return $this;
     }
 

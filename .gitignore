@@ -20,6 +20,9 @@
 .env.test.local.*.*.*
 .env.test.local.*.*.*.php
 .env.test.local.*.*.*.*
+.env
+.env.local
+.env.dev
 ###< symfony/framework-bundle ###
 
 ###> phpunit/phpunit ###
