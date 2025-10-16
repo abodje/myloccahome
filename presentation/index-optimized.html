@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MYLOCCA - Solution Complète de Gestion Locative</title>
+    <meta name="description" content="MYLOCCA est une solution SaaS complète pour la gestion locative avec environnements de démo automatiques, multi-tenant et fonctionnalités avancées.">
+    <meta name="keywords" content="gestion locative, SaaS, multi-tenant, immobilier, location, paiements, CinetPay">
+    <meta name="author" content="MYLOCCA">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://mylocca.com/presentation/">
+    <meta property="og:title" content="MYLOCCA - Solution Complète de Gestion Locative">
+    <meta property="og:description" content="Solution SaaS multi-tenant avec environnements de démo automatiques pour la gestion locative.">
+    <meta property="og:image" content="https://mylocca.com/presentation/assets/og-image.jpg">
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://mylocca.com/presentation/">
+    <meta property="twitter:title" content="MYLOCCA - Solution Complète de Gestion Locative">
+    <meta property="twitter:description" content="Solution SaaS multi-tenant avec environnements de démo automatiques pour la gestion locative.">
+    <meta property="twitter:image" content="https://mylocca.com/presentation/assets/twitter-image.jpg">
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    <!-- AOS Animation -->
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link href="styles.css" rel="stylesheet">
+
+    <!-- Schema.org structured data -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "name": "MYLOCCA",
+        "description": "Solution SaaS complète pour la gestion locative avec environnements de démo automatiques",
+        "url": "https://mylocca.com",
+        "applicationCategory": "BusinessApplication",
+        "operatingSystem": "Web",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "EUR",
+            "priceValidUntil": "2025-12-31"
+        },
+        "author": {
+            "@type": "Organization",
+            "name": "MYLOCCA",
+            "url": "https://mylocca.com"
+        }
+    }
+    </script>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark navbar-custom fixed-top">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="#">
+                <i class="bi bi-building me-2"></i>MYLOCCA
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="#features" aria-label="Voir les fonctionnalités">Fonctionnalités</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#demo" aria-label="Voir la démo">Démo</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#pricing" aria-label="Voir les tarifs">Tarifs</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#contact" aria-label="Nous contacter">Contact</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="btn btn-primary-custom ms-2" href="#demo" aria-label="Essayer gratuitement">Essayer Gratuitement</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero-section" role="banner">
+        <div class="floating-elements" aria-hidden="true">
+            <div class="floating-element">
+                <i class="bi bi-house-door"></i>
+            </div>
+            <div class="floating-element">
+                <i class="bi bi-people"></i>
+            </div>
+            <div class="floating-element">
+                <i class="bi bi-graph-up"></i>
+            </div>
+        </div>
+        <div class="container hero-content">
+            <div class="row align-items-center">
+                <div class="col-lg-6" data-aos="fade-right">
+                    <h1 class="display-4 fw-bold mb-4">
+                        Solution Complète de <span class="text-warning">Gestion Locative</span>
+                    </h1>
+                    <p class="lead mb-4">
+                        MYLOCCA est une plateforme SaaS multi-tenant révolutionnaire qui automatise
+                        la gestion de vos biens immobiliers avec des environnements de démo instantanés.
+                    </p>
+                    <div class="d-flex gap-3 flex-wrap">
+                        <a href="#demo" class="btn-demo" aria-label="Voir la démo de MYLOCCA">
+                            <i class="bi bi-play-circle me-2" aria-hidden="true"></i>Voir la Démo
+                        </a>
+                        <a href="#features" class="btn btn-outline-light" aria-label="En savoir plus sur les fonctionnalités">
+                            <i class="bi bi-info-circle me-2" aria-hidden="true"></i>En Savoir Plus
+                        </a>
+                    </div>
+                </div>
+                <div class="col-lg-6" data-aos="fade-left">
+                    <div class="text-center">
+                        <i class="bi bi-building" style="font-size: 15rem; opacity: 0.3;" aria-hidden="true"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Stats Section -->
+    <section class="stats-section" aria-label="Statistiques MYLOCCA">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-3 col-6" data-aos="fade-up" data-aos-delay="100">
+                    <div class="stat-item">
+                        <span class="stat-number" aria-label="100 pourcent SaaS Multi-Tenant">100%</span>
+                        <div class="stat-label">SaaS Multi-Tenant</div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-6" data-aos="fade-up" data-aos-delay="200">
+                    <div class="stat-item">
+                        <span class="stat-number" aria-label="24 heures sur 24, 7 jours sur 7">24/7</span>
+                        <div class="stat-label">Disponibilité</div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-6" data-aos="fade-up" data-aos-delay="300">
+                    <div class="stat-item">
+                        <span class="stat-number" aria-label="Environnements de démo illimités">∞</span>
+                        <div class="stat-label">Environnements Démo</div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-6" data-aos="fade-up" data-aos-delay="400">
+                    <div class="stat-item">
+                        <span class="stat-number" aria-label="5 étoiles sécurité">5★</span>
+                        <div class="stat-label">Sécurité</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section id="features" class="py-5" aria-label="Fonctionnalités principales">
+        <div class="container">
+            <div class="row">
+                <div class="col-12">
+                    <h2 class="section-title" data-aos="fade-up">Fonctionnalités Principales</h2>
+                    <p class="section-subtitle" data-aos="fade-up" data-aos-delay="100">
+                        Découvrez toutes les fonctionnalités qui font de MYLOCCA la solution de référence
+                    </p>
+                </div>
+            </div>
+            <div class="row g-4">
+                <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="100">
+                    <div class="feature-card">
+                        <div class="feature-icon primary" aria-hidden="true">
+                            <i class="bi bi-building"></i>
+                        </div>
+                        <h4>Gestion Multi-Tenant</h4>
+                        <p>Architecture SaaS complète avec isolation des données par organisation et société. Chaque client a son environnement sécurisé.</p>
+                        <ul class="list-unstyled">
+                            <li><i class="bi bi-check-circle text-success me-2" aria-hidden="true"></i>Isolation complète des données</li>
+                            <li><i class="bi bi-check-circle text-success me-2" aria-hidden="true"></i>Gestion des organisations</li>
+                            <li><i class="bi bi-check-circle text-success me-2" aria-hidden="true"></i>Multi-sociétés par organisation</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="200">
+                    <div class="feature-card">
+                        <div class="feature-icon secondary" aria-hidden="true">
+                            <i class="bi bi-globe"></i>
+                        </div>
+                        <h4>Environnements de Démo</h4>
+                        <p>Création automatique d'environnements de démo avec sous-domaines uniques pour chaque nouvelle inscription.</p>
+                        <ul class="list-unstyled">
+                            <li><i class="bi bi-check-circle text-success me-2" aria-hidden="true"></i>Sous-domaines automatiques</li>
+                            <li><i class="bi bi-check-circle text-success me-2" aria-hidden="true"></i>Données de démo réalistes</li>
+                            <li><i class="bi bi-check-circle text-success me-2" aria-hidden="true"></i>Configuration Apache automatique</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="300">
+                    <div class="feature-card">
+                        <div class="feature-icon success" aria-hidden="true">
+                            <i class="bi bi-house-door"></i>
+                        </div>
+                        <h4>Gestion des Biens</h4>
+                        <p>Gestion complète de votre patrimoine immobilier avec inventaire détaillé et suivi des locations.</p>
+                        <ul class="list-unstyled">
+                            <li><i class="bi bi-check-circle text-success me-2" aria-hidden="true"></i>Inventaire complet</li>
+                            <li><i class="bi bi-check-circle text-success me-2" aria-hidden="true"></i>Photos et documents</li>
+                            <li><i class="bi bi-check-circle text-success me-2" aria-hidden="true"></i>Historique des locations</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="400">
+                    <div class="feature-card">
+                        <div class="feature-icon warning" aria-hidden="true">
+                            <i class="bi bi-people"></i>
+                        </div>
+                        <h4>Gestion des Locataires</h4>
+                        <p>Suivi complet de vos locataires avec historique des paiements et communication intégrée.</p>
+                        <ul class="list-unstyled">
+                            <li><i class="bi bi-check-circle text-success me-2" aria-hidden="true"></i>Profil locataire complet</li>
+                            <li><i class="bi bi-check-circle text-success me-2" aria-hidden="true"></i>Historique des paiements</li>
+                            <li><i class="bi bi-check-circle text-success me-2" aria-hidden="true"></i>Communication intégrée</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="500">
+                    <div class="feature-card">
+                        <div class="feature-icon accent" aria-hidden="true">
+                            <i class="bi bi-file-earmark-text"></i>
+                        </div>
+                        <h4>Gestion des Baux</h4>
+                        <p>Création et suivi des contrats de location avec génération automatique de documents.</p>
+                        <ul class="list-unstyled">
+                            <li><i class="bi bi-check-circle text-success me-2" aria-hidden="true"></i>Contrats personnalisables</li>
+                            <li><i class="bi bi-check-circle text-success me-2" aria-hidden="true"></i>Renouvellement automatique</li>
+                            <li><i class="bi bi-check-circle text-success me-2" aria-hidden="true"></i>Alertes d'expiration</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="600">
+                    <div class="feature-card">
+                        <div class="feature-icon primary" aria-hidden="true">
+                            <i class="bi bi-credit-card"></i>
+                        </div>
+                        <h4>Gestion des Paiements</h4>
+                        <p>Suivi des loyers et charges avec intégration CinetPay et génération automatique de quittances.</p>
+                        <ul class="list-unstyled">
+                            <li><i class="bi bi-check-circle text-success me-2" aria-hidden="true"></i>Paiements en ligne</li>
+                            <li><i class="bi bi-check-circle text-success me-2" aria-hidden="true"></i>Quittances automatiques</li>
+                            <li><i class="bi bi-check-circle text-success me-2" aria-hidden="true"></i>Relances automatiques</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Advanced Features -->
+    <section class="py-5 bg-light" aria-label="Fonctionnalités avancées">
+        <div class="container">
+            <div class="row">
+                <div class="col-12">
+                    <h2 class="section-title" data-aos="fade-up">Fonctionnalités Avancées</h2>
+                    <p class="section-subtitle" data-aos="fade-up" data-aos-delay="100">
+                        Des outils professionnels pour une gestion optimale
+                    </p>
+                </div>
+            </div>
+            <div class="row g-4">
+                <div class="col-lg-6" data-aos="fade-right">
+                    <div class="feature-card">
+                        <div class="feature-icon secondary" aria-hidden="true">
+                            <i class="bi bi-graph-up"></i>
+                        </div>
+                        <h4>Dashboard Analytique</h4>
+                        <p>Tableaux de bord interactifs avec graphiques en temps réel pour suivre vos performances.</p>
+                        <ul class="list-unstyled">
+                            <li><i class="bi bi-check-circle text-success me-2" aria-hidden="true"></i>Revenus mensuels</li>
+                            <li><i class="bi bi-check-circle text-success me-2" aria-hidden="true"></i>Taux d'occupation</li>
+                            <li><i class="bi bi-check-circle text-success me-2" aria-hidden="true"></i>Prévisions de trésorerie</li>
+                            <li><i class="bi bi-check-circle text-success me-2" aria-hidden="true"></i>KPIs personnalisés</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-lg-6" data-aos="fade-left">
+                    <div class="feature-card">
+                        <div class="feature-icon success" aria-hidden="true">
+                            <i class="bi bi-search"></i>
+                        </div>
+                        <h4>Recherche Globale Intelligente</h4>
+                        <p>Recherche multi-entités avec suggestions en temps réel et raccourci clavier (Ctrl+K).</p>
+                        <ul class="list-unstyled">
+                            <li><i class="bi bi-check-circle text-success me-2" aria-hidden="true"></i>Recherche dans tous les modules</li>
+                            <li><i class="bi bi-check-circle text-success me-2" aria-hidden="true"></i>Suggestions en temps réel</li>
+                            <li><i class="bi bi-check-circle text-success me-2" aria-hidden="true"></i>Filtrage par rôle et organisation</li>
+                            <li><i class="bi bi-check-circle text-success me-2" aria-hidden="true"></i>Raccourci clavier intuitif</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-lg-6" data-aos="fade-right">
+                    <div class="feature-card">
+                        <div class="feature-icon warning" aria-hidden="true">
+                            <i class="bi bi-calendar-event"></i>
+                        </div>
+                        <h4>Calendrier de Gestion</h4>
+                        <p>Calendrier interactif pour visualiser les échéances, paiements et événements importants.</p>
+                        <ul class="list-unstyled">
+                            <li><i class="bi bi-check-circle text-success me-2" aria-hidden="true"></i>Échéances de loyers</li>
+                            <li><i class="bi bi-check-circle text-success me-2" aria-hidden="true"></i>Expiration des baux</li>
+                            <li><i class="bi bi-check-circle text-success me-2" aria-hidden="true"></i>Maintenance programmée</li>
+                            <li><i class="bi bi-check-circle text-success me-2" aria-hidden="true"></i>Filtrage par type d'événement</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-lg-6" data-aos="fade-left">
+                    <div class="feature-card">
+                        <div class="feature-icon accent" aria-hidden="true">
+                            <i class="bi bi-download"></i>
+                        </div>
+                        <h4>Exports Complets</h4>
+                        <p>Génération automatique de rapports Excel, PDF et ZIP pour la comptabilité et les déclarations.</p>
+                        <ul class="list-unstyled">
+                            <li><i class="bi bi-check-circle text-success me-2" aria-hidden="true"></i>Rapports financiers</li>
+                            <li><i class="bi bi-check-circle text-success me-2" aria-hidden="true"></i>Listes de locataires</li>
+                            <li><i class="bi bi-check-circle text-success me-2" aria-hidden="true"></i>Inventaire des biens</li>
+                            <li><i class="bi bi-check-circle text-success me-2" aria-hidden="true"></i>Déclarations fiscales</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Tech Stack -->
+    <section class="tech-stack" aria-label="Technologies utilisées">
+        <div class="container">
+            <div class="row">
+                <div class="col-12">
+                    <h2 class="section-title" data-aos="fade-up">Technologies Utilisées</h2>
+                    <p class="section-subtitle" data-aos="fade-up" data-aos-delay="100">
+                        Une stack moderne et robuste pour des performances optimales
+                    </p>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-lg-2 col-md-4 col-6" data-aos="fade-up" data-aos-delay="100">
+                    <div class="tech-item">
+                        <div class="tech-icon" aria-hidden="true">
+                            <i class="bi bi-code-slash"></i>
+                        </div>
+                        <h6>Symfony 6</h6>
+                    </div>
+                </div>
+                <div class="col-lg-2 col-md-4 col-6" data-aos="fade-up" data-aos-delay="200">
+                    <div class="tech-item">
+                        <div class="tech-icon" aria-hidden="true">
+                            <i class="bi bi-database"></i>
+                        </div>
+                        <h6>MySQL</h6>
+                    </div>
+                </div>
+                <div class="col-lg-2 col-md-4 col-6" data-aos="fade-up" data-aos-delay="300">
+                    <div class="tech-item">
+                        <div class="tech-icon" aria-hidden="true">
+                            <i class="bi bi-bootstrap"></i>
+                        </div>
+                        <h6>Bootstrap 5</h6>
+                    </div>
+                </div>
+                <div class="col-lg-2 col-md-4 col-6" data-aos="fade-up" data-aos-delay="400">
+                    <div class="tech-item">
+                        <div class="tech-icon" aria-hidden="true">
+                            <i class="bi bi-file-earmark-pdf"></i>
+                        </div>
+                        <h6>TCPDF</h6>
+                    </div>
+                </div>
+                <div class="col-lg-2 col-md-4 col-6" data-aos="fade-up" data-aos-delay="500">
+                    <div class="tech-item">
+                        <div class="tech-icon" aria-hidden="true">
+                            <i class="bi bi-table"></i>
+                        </div>
+                        <h6>PhpSpreadsheet</h6>
+                    </div>
+                </div>
+                <div class="col-lg-2 col-md-4 col-6" data-aos="fade-up" data-aos-delay="600">
+                    <div class="tech-item">
+                        <div class="tech-icon" aria-hidden="true">
+                            <i class="bi bi-shield-check"></i>
+                        </div>
+                        <h6>Doctrine ORM</h6>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Demo Section -->
+    <section id="demo" class="demo-section" aria-label="Démo MYLOCCA">
+        <div class="container">
+            <div class="row">
+                <div class="col-12">
+                    <h2 class="section-title text-white" data-aos="fade-up">Essayez MYLOCCA Gratuitement</h2>
+                    <p class="section-subtitle text-white-50" data-aos="fade-up" data-aos-delay="100">
+                        Créez votre compte et obtenez instantanément un environnement de démo complet
+                    </p>
+                </div>
+            </div>
+            <div class="row justify-content-center">
+                <div class="col-lg-8" data-aos="fade-up" data-aos-delay="200">
+                    <div class="demo-card text-center">
+                        <h3 class="mb-4">🚀 Environnement de Démo Automatique</h3>
+                        <p class="mb-4">
+                            À chaque inscription, MYLOCCA génère automatiquement :
+                        </p>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <ul class="list-unstyled text-start">
+                                    <li><i class="bi bi-check-circle text-success me-2" aria-hidden="true"></i>Sous-domaine unique</li>
+                                    <li><i class="bi bi-check-circle text-success me-2" aria-hidden="true"></i>5 propriétés de démo</li>
+                                    <li><i class="bi bi-check-circle text-success me-2" aria-hidden="true"></i>5 locataires réalistes</li>
+                                    <li><i class="bi bi-check-circle text-success me-2" aria-hidden="true"></i>4 baux actifs</li>
+                                </ul>
+                            </div>
+                            <div class="col-md-6">
+                                <ul class="list-unstyled text-start">
+                                    <li><i class="bi bi-check-circle text-success me-2" aria-hidden="true"></i>12 paiements historiques</li>
+                                    <li><i class="bi bi-check-circle text-success me-2" aria-hidden="true"></i>Configuration Apache</li>
+                                    <li><i class="bi bi-check-circle text-success me-2" aria-hidden="true"></i>DNS local configuré</li>
+                                    <li><i class="bi bi-check-circle text-success me-2" aria-hidden="true"></i>Accès admin immédiat</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="mt-4">
+                            <a href="#contact" class="btn-demo me-3" aria-label="Commencer la démo">
+                                <i class="bi bi-play-circle me-2" aria-hidden="true"></i>Commencer la Démo
+                            </a>
+                            <a href="#features" class="btn btn-outline-light" aria-label="Voir les fonctionnalités">
+                                <i class="bi bi-info-circle me-2" aria-hidden="true"></i>Voir les Fonctionnalités
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Pricing Section -->
+    <section id="pricing" class="pricing-section" aria-label="Plans tarifaires">
+        <div class="container">
+            <div class="row">
+                <div class="col-12">
+                    <h2 class="section-title" data-aos="fade-up">Plans Tarifaires</h2>
+                    <p class="section-subtitle" data-aos="fade-up" data-aos-delay="100">
+                        Choisissez le plan qui correspond à vos besoins
+                    </p>
+                </div>
+            </div>
+            <div class="row justify-content-center">
+                <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="100">
+                    <div class="pricing-card">
+                        <h4 class="text-center mb-3">Freemium</h4>
+                        <div class="text-center mb-4">
+                            <span class="price">0€</span>
+                            <span class="price-period">/mois</span>
+                        </div>
+                        <ul class="list-unstyled">
+                            <li><i class="bi bi-check-circle text-success me-2" aria-hidden="true"></i>Jusqu'à 5 propriétés</li>
+                            <li><i class="bi bi-check-circle text-success me-2" aria-hidden="true"></i>Jusqu'à 10 locataires</li>
+                            <li><i class="bi bi-check-circle text-success me-2" aria-hidden="true"></i>1 utilisateur</li>
+                            <li><i class="bi bi-check-circle text-success me-2" aria-hidden="true"></i>Support email</li>
+                            <li><i class="bi bi-check-circle text-success me-2" aria-hidden="true"></i>Environnement de démo</li>
+                        </ul>
+                        <div class="text-center mt-4">
+                            <a href="#contact" class="btn btn-outline-primary" aria-label="Commencer avec le plan Freemium">Commencer</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="200">
+                    <div class="pricing-card featured">
+                        <h4 class="text-center mb-3">Professionnel</h4>
+                        <div class="text-center mb-4">
+                            <span class="price">29€</span>
+                            <span class="price-period">/mois</span>
+                        </div>
+                        <ul class="list-unstyled">
+                            <li><i class="bi bi-check-circle text-success me-2" aria-hidden="true"></i>Jusqu'à 50 propriétés</li>
+                            <li><i class="bi bi-check-circle text-success me-2" aria-hidden="true"></i>Jusqu'à 100 locataires</li>
+                            <li><i class="bi bi-check-circle text-success me-2" aria-hidden="true"></i>5 utilisateurs</li>
+                            <li><i class="bi bi-check-circle text-success me-2" aria-hidden="true"></i>Support prioritaire</li>
+                            <li><i class="bi bi-check-circle text-success me-2" aria-hidden="true"></i>Exports avancés</li>
+                            <li><i class="bi bi-check-circle text-success me-2" aria-hidden="true"></i>API complète</li>
+                        </ul>
+                        <div class="text-center mt-4">
+                            <a href="#contact" class="btn-demo" aria-label="Choisir le plan Professionnel">Choisir ce Plan</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="300">
+                    <div class="pricing-card">
+                        <h4 class="text-center mb-3">Entreprise</h4>
+                        <div class="text-center mb-4">
+                            <span class="price">99€</span>
+                            <span class="price-period">/mois</span>
+                        </div>
+                        <ul class="list-unstyled">
+                            <li><i class="bi bi-check-circle text-success me-2" aria-hidden="true"></i>Propriétés illimitées</li>
+                            <li><i class="bi bi-check-circle text-success me-2" aria-hidden="true"></i>Locataires illimités</li>
+                            <li><i class="bi bi-check-circle text-success me-2" aria-hidden="true"></i>Utilisateurs illimités</li>
+                            <li><i class="bi bi-check-circle text-success me-2" aria-hidden="true"></i>Support dédié</li>
+                            <li><i class="bi bi-check-circle text-success me-2" aria-hidden="true"></i>Intégrations personnalisées</li>
+                            <li><i class="bi bi-check-circle text-success me-2" aria-hidden="true"></i>Formation incluse</li>
+                        </ul>
+                        <div class="text-center mt-4">
+                            <a href="#contact" class="btn btn-outline-primary" aria-label="Nous contacter pour le plan Entreprise">Nous Contacter</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Contact Section -->
+    <section id="contact" class="py-5" aria-label="Contact">
+        <div class="container">
+            <div class="row">
+                <div class="col-12">
+                    <h2 class="section-title" data-aos="fade-up">Contactez-Nous</h2>
+                    <p class="section-subtitle" data-aos="fade-up" data-aos-delay="100">
+                        Prêt à révolutionner votre gestion locative ?
+                    </p>
+                </div>
+            </div>
+            <div class="row justify-content-center">
+                <div class="col-lg-8" data-aos="fade-up" data-aos-delay="200">
+                    <div class="text-center">
+                        <div class="row">
+                            <div class="col-md-4 mb-4">
+                                <div class="feature-card">
+                                    <div class="feature-icon primary" aria-hidden="true">
+                                        <i class="bi bi-envelope"></i>
+                                    </div>
+                                    <h5>Email</h5>
+                                    <p>contact@mylocca.com</p>
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-4">
+                                <div class="feature-card">
+                                    <div class="feature-icon secondary" aria-hidden="true">
+                                        <i class="bi bi-telephone"></i>
+                                    </div>
+                                    <h5>Téléphone</h5>
+                                    <p>+33 1 23 45 67 89</p>
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-4">
+                                <div class="feature-card">
+                                    <div class="feature-icon success" aria-hidden="true">
+                                        <i class="bi bi-geo-alt"></i>
+                                    </div>
+                                    <h5>Adresse</h5>
+                                    <p>Paris, France</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mt-4">
+                            <a href="#demo" class="btn-demo me-3" aria-label="Essayer gratuitement">
+                                <i class="bi bi-play-circle me-2" aria-hidden="true"></i>Essayer Gratuitement
+                            </a>
+                            <a href="mailto:contact@mylocca.com" class="btn btn-primary-custom" aria-label="Nous écrire par email">
+                                <i class="bi bi-envelope me-2" aria-hidden="true"></i>Nous Écrire
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer" role="contentinfo">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-6">
+                    <h5><i class="bi bi-building me-2" aria-hidden="true"></i>MYLOCCA</h5>
+                    <p class="mb-3">
+                        La solution SaaS complète pour la gestion locative avec environnements de démo automatiques.
+                    </p>
+                    <div class="d-flex gap-3">
+                        <a href="#" class="text-white" aria-label="Facebook"><i class="bi bi-facebook"></i></a>
+                        <a href="#" class="text-white" aria-label="Twitter"><i class="bi bi-twitter"></i></a>
+                        <a href="#" class="text-white" aria-label="LinkedIn"><i class="bi bi-linkedin"></i></a>
+                        <a href="#" class="text-white" aria-label="GitHub"><i class="bi bi-github"></i></a>
+                    </div>
+                </div>
+                <div class="col-lg-3">
+                    <h6>Produit</h6>
+                    <ul class="list-unstyled">
+                        <li><a href="#features" class="text-white-50">Fonctionnalités</a></li>
+                        <li><a href="#demo" class="text-white-50">Démo</a></li>
+                        <li><a href="#pricing" class="text-white-50">Tarifs</a></li>
+                        <li><a href="#" class="text-white-50">Documentation</a></li>
+                    </ul>
+                </div>
+                <div class="col-lg-3">
+                    <h6>Support</h6>
+                    <ul class="list-unstyled">
+                        <li><a href="#contact" class="text-white-50">Contact</a></li>
+                        <li><a href="#" class="text-white-50">FAQ</a></li>
+                        <li><a href="#" class="text-white-50">Support</a></li>
+                        <li><a href="#" class="text-white-50">Statut</a></li>
+                    </ul>
+                </div>
+            </div>
+            <hr class="my-4">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <p class="mb-0">&copy; 2024 MYLOCCA. Tous droits réservés.</p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <a href="#" class="text-white-50 me-3">Mentions légales</a>
+                    <a href="#" class="text-white-50">Politique de confidentialité</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- AOS Animation -->
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <!-- Custom JS -->
+    <script src="scripts.js"></script>
+</body>
+</html>

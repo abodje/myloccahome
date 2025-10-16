@@ -437,7 +437,11 @@ class OnlinePaymentController extends AbstractController
         }
     }
 
+<<<<<<< HEAD
     #[Route('/retour/{transactionId}', name: 'app_online_payment_return', methods: ['GET', 'POST'])]
+=======
+    #[Route('/retour/{transactionId}', name: 'app_online_payment_return', methods: ['GET'])]
+>>>>>>> 6e87c3851b8abe300389f1559fefe39834f199e8
     public function returnPage(
         string $transactionId,
         OnlinePaymentRepository $onlinePaymentRepo,

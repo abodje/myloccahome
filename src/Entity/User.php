@@ -44,6 +44,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(length: 10, nullable: true)]
     private ?string $postalCode = null;
 
+<<<<<<< HEAD
     #[ORM\Column(length: 100, nullable: true)]
     private ?string $country = null;
 
@@ -56,6 +57,8 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(type: Types::JSON, nullable: true)]
     private ?array $consents = null;
 
+=======
+>>>>>>> 6e87c3851b8abe300389f1559fefe39834f199e8
     #[ORM\Column(type: Types::DATE_MUTABLE, nullable: true)]
     private ?\DateTimeInterface $birthDate = null;
 
@@ -223,6 +226,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
+<<<<<<< HEAD
     public function getCountry(): ?string
     {
         return $this->country;
@@ -281,6 +285,8 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
+=======
+>>>>>>> 6e87c3851b8abe300389f1559fefe39834f199e8
     public function getBirthDate(): ?\DateTimeInterface
     {
         return $this->birthDate;

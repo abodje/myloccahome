@@ -83,7 +83,11 @@
                                 <h6 class="card-title">{{ user.fullName }}</h6>
                                 <p class="card-text mb-1">{{ user.address }}</p>
                                 <p class="card-text mb-1">{{ user.postalCode }} {{ user.city }}</p>
+<<<<<<< HEAD
                                 <p class="card-text">{{ user.country ?? 'France' }}</p>
+=======
+                                <p class="card-text">{{ user.country }}</p>
+>>>>>>> 6e87c3851b8abe300389f1559fefe39834f199e8
                                 <button type="button" class="btn btn-light btn-sm" onclick="toggleEditMode()">
                                     Modifier ces informations
                                 </button>
@@ -99,7 +103,11 @@
                                             <option>🇫🇷 FR</option>
                                         </select>
                                         <input type="tel" name="mobilePhone" class="form-control"
+<<<<<<< HEAD
                                                value="{{ user.phone }}" readonly id="mobilePhone">
+=======
+                                               value="{{ user.mobilePhone }}" readonly id="mobilePhone">
+>>>>>>> 6e87c3851b8abe300389f1559fefe39834f199e8
                                     </div>
                                 </div>
                             </div>
@@ -111,7 +119,11 @@
                                             <option>🇫🇷 FR</option>
                                         </select>
                                         <input type="tel" name="landlinePhone" class="form-control"
+<<<<<<< HEAD
                                                value="" readonly id="landlinePhone">
+=======
+                                               value="{{ user.landlinePhone }}" readonly id="landlinePhone">
+>>>>>>> 6e87c3851b8abe300389f1559fefe39834f199e8
                                     </div>
                                 </div>
                             </div>

@@ -40,6 +40,7 @@ class EmailCustomizationService
         $subject = $this->replaceVariables($template->getSubject(), $variables);
         $htmlContent = $this->replaceVariables($template->getHtmlContent(), $variables);
 
+<<<<<<< HEAD
         // Vérifier si les notifications email sont activées
         if (!$this->settingsService->get('email_notifications', true)) {
             return false; // Les notifications email sont désactivées
@@ -51,6 +52,11 @@ class EmailCustomizationService
 
         $email = (new Email())
             ->from($fromEmail, $fromName)
+=======
+        // Créer et envoyer l'email
+        $email = (new Email())
+            ->from($this->settingsService->get('email_from', 'noreply@mylocca.com'))
+>>>>>>> 6e87c3851b8abe300389f1559fefe39834f199e8
             ->to($toEmail)
             ->subject($subject)
             ->html($htmlContent);

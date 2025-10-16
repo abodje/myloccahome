@@ -88,9 +88,12 @@ class Company
     #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
     private ?\DateTimeInterface $updatedAt = null;
 
+<<<<<<< HEAD
     #[ORM\Column(type: Types::BOOLEAN, options: ['default' => false])]
     private ?bool $isDemo = false;
 
+=======
+>>>>>>> 6e87c3851b8abe300389f1559fefe39834f199e8
     public function __construct()
     {
         $this->properties = new ArrayCollection();
@@ -456,6 +459,7 @@ class Company
         }
         return $this->name;
     }
+<<<<<<< HEAD
 
     public function getIsDemo(): ?bool
     {
@@ -467,5 +471,7 @@ class Company
         $this->isDemo = $isDemo;
         return $this;
     }
+=======
+>>>>>>> 6e87c3851b8abe300389f1559fefe39834f199e8
 }
 

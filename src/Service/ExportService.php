@@ -14,7 +14,10 @@ use App\Repository\PropertyRepository;
 use App\Repository\LeaseRepository;
 use App\Repository\DocumentRepository;
 use App\Repository\MaintenanceRequestRepository;
+<<<<<<< HEAD
 use App\Service\CurrencyService;
+=======
+>>>>>>> 6e87c3851b8abe300389f1559fefe39834f199e8
 use Doctrine\ORM\EntityManagerInterface;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
@@ -32,19 +35,29 @@ class ExportService
     private EntityManagerInterface $entityManager;
     private Environment $twig;
     private Filesystem $filesystem;
+<<<<<<< HEAD
     private CurrencyService $currencyService;
+=======
+>>>>>>> 6e87c3851b8abe300389f1559fefe39834f199e8
     private string $exportDir;
 
     public function __construct(
         EntityManagerInterface $entityManager,
         Environment $twig,
+<<<<<<< HEAD
         Filesystem $filesystem,
         CurrencyService $currencyService
+=======
+        Filesystem $filesystem
+>>>>>>> 6e87c3851b8abe300389f1559fefe39834f199e8
     ) {
         $this->entityManager = $entityManager;
         $this->twig = $twig;
         $this->filesystem = $filesystem;
+<<<<<<< HEAD
         $this->currencyService = $currencyService;
+=======
+>>>>>>> 6e87c3851b8abe300389f1559fefe39834f199e8
         $this->exportDir = 'var/exports';
 
         // Créer le dossier d'export s'il n'existe pas
@@ -53,6 +66,7 @@ class ExportService
         }
     }
 
+<<<<<<< HEAD
     /**
      * Récupère la devise par défaut configurée
      */
@@ -62,6 +76,8 @@ class ExportService
         return $currency->getSymbol();
     }
 
+=======
+>>>>>>> 6e87c3851b8abe300389f1559fefe39834f199e8
     public function generateFinancialReport(int $year, int $month, string $format): string
     {
         $startDate = new \DateTime("{$year}-{$month}-01");
@@ -323,7 +339,11 @@ class ExportService
         $sheet->setCellValue('A3', 'Période:');
         $sheet->setCellValue('B3', $data['period']);
         $sheet->setCellValue('A4', 'Total des revenus:');
+<<<<<<< HEAD
         $sheet->setCellValue('B4', number_format($data['total_revenue'], 2) . ' ' . $this->getDefaultCurrency());
+=======
+        $sheet->setCellValue('B4', number_format($data['total_revenue'], 2) . ' €');
+>>>>>>> 6e87c3851b8abe300389f1559fefe39834f199e8
         $sheet->setCellValue('A5', 'Nombre de paiements:');
         $sheet->setCellValue('B5', $data['total_payments']);
 
@@ -341,7 +361,11 @@ class ExportService
             $sheet->setCellValue('A' . $row, $payment->getPaidDate() ? $payment->getPaidDate()->format('d/m/Y') : 'N/A');
             $sheet->setCellValue('B' . $row, $payment->getLease()?->getTenant()?->getFullName() ?? 'N/A');
             $sheet->setCellValue('C' . $row, $payment->getLease()?->getProperty()?->getAddress() ?? 'N/A');
+<<<<<<< HEAD
             $sheet->setCellValue('D' . $row, number_format($payment->getAmount(), 2) . ' ' . $this->getDefaultCurrency());
+=======
+            $sheet->setCellValue('D' . $row, number_format($payment->getAmount(), 2) . ' €');
+>>>>>>> 6e87c3851b8abe300389f1559fefe39834f199e8
             $sheet->setCellValue('E' . $row, $payment->getStatus());
             $sheet->setCellValue('F' . $row, $payment->getPaymentMethod() ?? 'N/A');
             $row++;
@@ -376,7 +400,11 @@ class ExportService
             $sheet->setCellValue('C' . $row, $payment->getDueDate()->format('d/m/Y'));
             $sheet->setCellValue('D' . $row, $payment->getLease()?->getTenant()?->getFullName() ?? 'N/A');
             $sheet->setCellValue('E' . $row, $payment->getLease()?->getProperty()?->getAddress() ?? 'N/A');
+<<<<<<< HEAD
             $sheet->setCellValue('F' . $row, number_format($payment->getAmount(), 2) . ' ' . $this->getDefaultCurrency());
+=======
+            $sheet->setCellValue('F' . $row, number_format($payment->getAmount(), 2) . ' €');
+>>>>>>> 6e87c3851b8abe300389f1559fefe39834f199e8
             $sheet->setCellValue('G' . $row, $payment->getStatus());
             $sheet->setCellValue('H' . $row, $payment->getPaymentMethod() ?? 'N/A');
             $row++;
@@ -397,7 +425,11 @@ class ExportService
         $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(16);
 
         $sheet->setCellValue('A3', 'Total des impayés:');
+<<<<<<< HEAD
         $sheet->setCellValue('B3', number_format($data['total_overdue'], 2) . ' ' . $this->getDefaultCurrency());
+=======
+        $sheet->setCellValue('B3', number_format($data['total_overdue'], 2) . ' €');
+>>>>>>> 6e87c3851b8abe300389f1559fefe39834f199e8
 
         $headers = ['Locataire', 'Propriété', 'Montant', 'Date Échéance', 'Jours de Retard', 'Statut', 'Actions'];
         $col = 'A';
@@ -412,7 +444,11 @@ class ExportService
 
             $sheet->setCellValue('A' . $row, $payment->getLease()?->getTenant()?->getFullName() ?? 'N/A');
             $sheet->setCellValue('B' . $row, $payment->getLease()?->getProperty()?->getAddress() ?? 'N/A');
+<<<<<<< HEAD
             $sheet->setCellValue('C' . $row, number_format($payment->getAmount(), 2) . ' ' . $this->getDefaultCurrency());
+=======
+            $sheet->setCellValue('C' . $row, number_format($payment->getAmount(), 2) . ' €');
+>>>>>>> 6e87c3851b8abe300389f1559fefe39834f199e8
             $sheet->setCellValue('D' . $row, $payment->getDueDate()->format('d/m/Y'));
             $sheet->setCellValue('E' . $row, $daysOverdue . ' jours');
             $sheet->setCellValue('F' . $row, $payment->getStatus());
@@ -478,7 +514,11 @@ class ExportService
             $sheet->setCellValue('A' . $row, $property->getAddress());
             $sheet->setCellValue('B' . $row, $property->getType() ?? 'N/A');
             $sheet->setCellValue('C' . $row, $property->getSurface() . ' m²');
+<<<<<<< HEAD
             $sheet->setCellValue('D' . $row, number_format($property->getRentAmount(), 2) . ' ' . $this->getDefaultCurrency());
+=======
+            $sheet->setCellValue('D' . $row, number_format($property->getRentAmount(), 2) . ' €');
+>>>>>>> 6e87c3851b8abe300389f1559fefe39834f199e8
             $sheet->setCellValue('E' . $row, $property->getLeases()->first()?->getStatus() ?? 'Libre');
             $row++;
         }
@@ -510,9 +550,15 @@ class ExportService
             $sheet->setCellValue('B' . $row, $lease->getProperty()?->getAddress() ?? 'N/A');
             $sheet->setCellValue('C' . $row, $lease->getStartDate()->format('d/m/Y'));
             $sheet->setCellValue('D' . $row, $lease->getEndDate()->format('d/m/Y'));
+<<<<<<< HEAD
             $sheet->setCellValue('E' . $row, number_format($lease->getMonthlyRent(), 2) . ' ' . $this->getDefaultCurrency());
             $sheet->setCellValue('F' . $row, $lease->getStatus());
             $sheet->setCellValue('G' . $row, number_format($lease->getSecurityDeposit(), 2) . ' ' . $this->getDefaultCurrency());
+=======
+            $sheet->setCellValue('E' . $row, number_format($lease->getMonthlyRent(), 2) . ' €');
+            $sheet->setCellValue('F' . $row, $lease->getStatus());
+            $sheet->setCellValue('G' . $row, number_format($lease->getSecurityDeposit(), 2) . ' €');
+>>>>>>> 6e87c3851b8abe300389f1559fefe39834f199e8
             $row++;
         }
 
@@ -533,9 +579,15 @@ class ExportService
         $sheet->setCellValue('A3', 'Année:');
         $sheet->setCellValue('B3', $data['year']);
         $sheet->setCellValue('A4', 'Revenus bruts:');
+<<<<<<< HEAD
         $sheet->setCellValue('B4', number_format($data['total_revenue'], 2) . ' ' . $this->getDefaultCurrency());
         $sheet->setCellValue('A5', 'Base imposable (70%):');
         $sheet->setCellValue('B5', number_format($data['tax_base'], 2) . ' ' . $this->getDefaultCurrency());
+=======
+        $sheet->setCellValue('B4', number_format($data['total_revenue'], 2) . ' €');
+        $sheet->setCellValue('A5', 'Base imposable (70%):');
+        $sheet->setCellValue('B5', number_format($data['tax_base'], 2) . ' €');
+>>>>>>> 6e87c3851b8abe300389f1559fefe39834f199e8
 
         $headers = ['Mois', 'Revenus', 'Nombre de paiements', 'Moyenne mensuelle'];
         $col = 'A';
@@ -559,9 +611,15 @@ class ExportService
         $row = 8;
         foreach ($monthlyData as $month => $data) {
             $sheet->setCellValue('A' . $row, $month);
+<<<<<<< HEAD
             $sheet->setCellValue('B' . $row, number_format($data['revenue'], 2) . ' ' . $this->getDefaultCurrency());
             $sheet->setCellValue('C' . $row, $data['count']);
             $sheet->setCellValue('D' . $row, number_format($data['revenue'] / $data['count'], 2) . ' ' . $this->getDefaultCurrency());
+=======
+            $sheet->setCellValue('B' . $row, number_format($data['revenue'], 2) . ' €');
+            $sheet->setCellValue('C' . $row, $data['count']);
+            $sheet->setCellValue('D' . $row, number_format($data['revenue'] / $data['count'], 2) . ' €');
+>>>>>>> 6e87c3851b8abe300389f1559fefe39834f199e8
             $row++;
         }
 
@@ -582,7 +640,11 @@ class ExportService
         $sheet->setCellValue('A3', 'Période:');
         $sheet->setCellValue('B3', $data['start_date'] . ' - ' . $data['end_date']);
         $sheet->setCellValue('A4', 'Total des revenus:');
+<<<<<<< HEAD
         $sheet->setCellValue('B4', number_format($data['total_revenue'], 2) . ' ' . $this->getDefaultCurrency());
+=======
+        $sheet->setCellValue('B4', number_format($data['total_revenue'], 2) . ' €');
+>>>>>>> 6e87c3851b8abe300389f1559fefe39834f199e8
 
         $headers = ['Date', 'Référence', 'Locataire', 'Propriété', 'Montant', 'Statut'];
         $col = 'A';
@@ -597,7 +659,11 @@ class ExportService
             $sheet->setCellValue('B' . $row, 'PAY-' . $payment->getId());
             $sheet->setCellValue('C' . $row, $payment->getLease()?->getTenant()?->getFullName() ?? 'N/A');
             $sheet->setCellValue('D' . $row, $payment->getLease()?->getProperty()?->getAddress() ?? 'N/A');
+<<<<<<< HEAD
             $sheet->setCellValue('E' . $row, number_format($payment->getAmount(), 2) . ' ' . $this->getDefaultCurrency());
+=======
+            $sheet->setCellValue('E' . $row, number_format($payment->getAmount(), 2) . ' €');
+>>>>>>> 6e87c3851b8abe300389f1559fefe39834f199e8
             $sheet->setCellValue('F' . $row, $payment->getStatus());
             $row++;
         }
@@ -760,7 +826,11 @@ class ExportService
         // Informations générales
         $pdf->SetFont('helvetica', 'B', 12);
         $pdf->Cell(0, 8, 'Période: ' . $data['period'], 0, 1);
+<<<<<<< HEAD
         $pdf->Cell(0, 8, 'Total des revenus: ' . number_format($data['total_revenue'], 2) . ' ' . $this->getDefaultCurrency(), 0, 1);
+=======
+        $pdf->Cell(0, 8, 'Total des revenus: ' . number_format($data['total_revenue'], 2) . ' €', 0, 1);
+>>>>>>> 6e87c3851b8abe300389f1559fefe39834f199e8
         $pdf->Cell(0, 8, 'Nombre de paiements: ' . $data['total_payments'], 0, 1);
         $pdf->Ln(10);
 
@@ -777,7 +847,11 @@ class ExportService
             $pdf->Cell(30, 8, $payment->getPaidDate() ? $payment->getPaidDate()->format('d/m/Y') : 'N/A', 1, 0, 'C');
             $pdf->Cell(50, 8, $payment->getLease()?->getTenant()?->getFullName() ?? 'N/A', 1, 0, 'L');
             $pdf->Cell(50, 8, $payment->getLease()?->getProperty()?->getAddress() ?? 'N/A', 1, 0, 'L');
+<<<<<<< HEAD
             $pdf->Cell(30, 8, number_format($payment->getAmount(), 2) . ' ' . $this->getDefaultCurrency(), 1, 0, 'R');
+=======
+            $pdf->Cell(30, 8, number_format($payment->getAmount(), 2) . ' €', 1, 0, 'R');
+>>>>>>> 6e87c3851b8abe300389f1559fefe39834f199e8
             $pdf->Cell(30, 8, $payment->getStatus(), 1, 1, 'C');
         }
 
@@ -829,7 +903,11 @@ class ExportService
             $pdf->Cell(25, 8, $payment->getDueDate()->format('d/m/Y'), 1, 0, 'C');
             $pdf->Cell(40, 8, substr($payment->getLease()?->getTenant()?->getFullName() ?? 'N/A', 0, 20), 1, 0, 'L');
             $pdf->Cell(40, 8, substr($payment->getLease()?->getProperty()?->getAddress() ?? 'N/A', 0, 20), 1, 0, 'L');
+<<<<<<< HEAD
             $pdf->Cell(25, 8, number_format($payment->getAmount(), 2) . ' ' . $this->getDefaultCurrency(), 1, 0, 'R');
+=======
+            $pdf->Cell(25, 8, number_format($payment->getAmount(), 2) . ' €', 1, 0, 'R');
+>>>>>>> 6e87c3851b8abe300389f1559fefe39834f199e8
             $pdf->Cell(20, 8, $payment->getStatus(), 1, 1, 'C');
         }
 
@@ -858,7 +936,11 @@ class ExportService
 
         // Total des impayés
         $pdf->SetFont('helvetica', 'B', 12);
+<<<<<<< HEAD
         $pdf->Cell(0, 8, 'Total des impayés: ' . number_format($data['total_overdue'], 2) . ' ' . $this->getDefaultCurrency(), 0, 1);
+=======
+        $pdf->Cell(0, 8, 'Total des impayés: ' . number_format($data['total_overdue'], 2) . ' €', 0, 1);
+>>>>>>> 6e87c3851b8abe300389f1559fefe39834f199e8
         $pdf->Ln(10);
 
         // Tableau
@@ -875,7 +957,11 @@ class ExportService
 
             $pdf->Cell(50, 8, $payment->getLease()?->getTenant()?->getFullName() ?? 'N/A', 1, 0, 'L');
             $pdf->Cell(60, 8, $payment->getLease()?->getProperty()?->getAddress() ?? 'N/A', 1, 0, 'L');
+<<<<<<< HEAD
             $pdf->Cell(30, 8, number_format($payment->getAmount(), 2) . ' ' . $this->getDefaultCurrency(), 1, 0, 'R');
+=======
+            $pdf->Cell(30, 8, number_format($payment->getAmount(), 2) . ' €', 1, 0, 'R');
+>>>>>>> 6e87c3851b8abe300389f1559fefe39834f199e8
             $pdf->Cell(25, 8, $payment->getDueDate()->format('d/m/Y'), 1, 0, 'C');
             $pdf->Cell(25, 8, $daysOverdue . ' jours', 1, 1, 'C');
         }
@@ -968,7 +1054,11 @@ class ExportService
             $pdf->Cell(80, 8, $property->getAddress(), 1, 0, 'L');
             $pdf->Cell(30, 8, $property->getType() ?? 'N/A', 1, 0, 'C');
             $pdf->Cell(25, 8, $property->getSurface() . ' m²', 1, 0, 'C');
+<<<<<<< HEAD
             $pdf->Cell(30, 8, number_format($property->getRentAmount(), 2) . ' ' . $this->getDefaultCurrency(), 1, 0, 'R');
+=======
+            $pdf->Cell(30, 8, number_format($property->getRentAmount(), 2) . ' €', 1, 0, 'R');
+>>>>>>> 6e87c3851b8abe300389f1559fefe39834f199e8
             $pdf->Cell(25, 8, $property->getLeases()->first()?->getStatus() ?? 'Libre', 1, 1, 'C');
         }
 
@@ -1016,7 +1106,11 @@ class ExportService
             $pdf->Cell(50, 8, substr($lease->getProperty()?->getAddress() ?? 'N/A', 0, 25), 1, 0, 'L');
             $pdf->Cell(25, 8, $lease->getStartDate()->format('d/m/Y'), 1, 0, 'C');
             $pdf->Cell(25, 8, $lease->getEndDate()->format('d/m/Y'), 1, 0, 'C');
+<<<<<<< HEAD
             $pdf->Cell(25, 8, number_format($lease->getMonthlyRent(), 2) . ' ' . $this->getDefaultCurrency(), 1, 0, 'R');
+=======
+            $pdf->Cell(25, 8, number_format($lease->getMonthlyRent(), 2) . ' €', 1, 0, 'R');
+>>>>>>> 6e87c3851b8abe300389f1559fefe39834f199e8
             $pdf->Cell(25, 8, $lease->getStatus(), 1, 1, 'C');
         }
 
@@ -1046,8 +1140,13 @@ class ExportService
         // Informations générales
         $pdf->SetFont('helvetica', 'B', 12);
         $pdf->Cell(0, 8, 'Année: ' . $data['year'], 0, 1);
+<<<<<<< HEAD
         $pdf->Cell(0, 8, 'Revenus bruts: ' . number_format($data['total_revenue'], 2) . ' ' . $this->getDefaultCurrency(), 0, 1);
         $pdf->Cell(0, 8, 'Base imposable (70%): ' . number_format($data['tax_base'], 2) . ' ' . $this->getDefaultCurrency(), 0, 1);
+=======
+        $pdf->Cell(0, 8, 'Revenus bruts: ' . number_format($data['total_revenue'], 2) . ' €', 0, 1);
+        $pdf->Cell(0, 8, 'Base imposable (70%): ' . number_format($data['tax_base'], 2) . ' €', 0, 1);
+>>>>>>> 6e87c3851b8abe300389f1559fefe39834f199e8
         $pdf->Ln(15);
 
         // Répartition mensuelle
@@ -1077,9 +1176,15 @@ class ExportService
 
         foreach ($monthlyData as $month => $monthData) {
             $pdf->Cell(40, 8, $month, 1, 0, 'C');
+<<<<<<< HEAD
             $pdf->Cell(40, 8, number_format($monthData['revenue'], 2) . ' ' . $this->getDefaultCurrency(), 1, 0, 'R');
             $pdf->Cell(40, 8, $monthData['count'], 1, 0, 'C');
             $pdf->Cell(40, 8, number_format($monthData['revenue'] / $monthData['count'], 2) . ' ' . $this->getDefaultCurrency(), 1, 1, 'R');
+=======
+            $pdf->Cell(40, 8, number_format($monthData['revenue'], 2) . ' €', 1, 0, 'R');
+            $pdf->Cell(40, 8, $monthData['count'], 1, 0, 'C');
+            $pdf->Cell(40, 8, number_format($monthData['revenue'] / $monthData['count'], 2) . ' €', 1, 1, 'R');
+>>>>>>> 6e87c3851b8abe300389f1559fefe39834f199e8
         }
 
         return $this->savePdfFile($pdf, 'declaration-fiscale');
@@ -1108,7 +1213,11 @@ class ExportService
         // Période
         $pdf->SetFont('helvetica', 'B', 10);
         $pdf->Cell(0, 6, 'Période: ' . $data['start_date'] . ' - ' . $data['end_date'], 0, 1, 'C');
+<<<<<<< HEAD
         $pdf->Cell(0, 6, 'Total des revenus: ' . number_format($data['total_revenue'], 2) . ' ' . $this->getDefaultCurrency(), 0, 1, 'C');
+=======
+        $pdf->Cell(0, 6, 'Total des revenus: ' . number_format($data['total_revenue'], 2) . ' €', 0, 1, 'C');
+>>>>>>> 6e87c3851b8abe300389f1559fefe39834f199e8
         $pdf->Ln(10);
 
         // Tableau
@@ -1126,7 +1235,11 @@ class ExportService
             $pdf->Cell(30, 8, 'PAY-' . $payment->getId(), 1, 0, 'C');
             $pdf->Cell(50, 8, substr($payment->getLease()?->getTenant()?->getFullName() ?? 'N/A', 0, 25), 1, 0, 'L');
             $pdf->Cell(50, 8, substr($payment->getLease()?->getProperty()?->getAddress() ?? 'N/A', 0, 25), 1, 0, 'L');
+<<<<<<< HEAD
             $pdf->Cell(25, 8, number_format($payment->getAmount(), 2) . ' ' . $this->getDefaultCurrency(), 1, 0, 'R');
+=======
+            $pdf->Cell(25, 8, number_format($payment->getAmount(), 2) . ' €', 1, 0, 'R');
+>>>>>>> 6e87c3851b8abe300389f1559fefe39834f199e8
             $pdf->Cell(20, 8, $payment->getStatus(), 1, 1, 'C');
         }
 

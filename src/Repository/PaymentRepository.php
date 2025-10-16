@@ -334,6 +334,7 @@ class PaymentRepository extends ServiceEntityRepository
         $result = $qb->getQuery()->getSingleScalarResult();
         return $result ? (float) $result : 0.0;
     }
+<<<<<<< HEAD
 
     /**
      * Trouve les paiements avec filtres par organisation
@@ -554,4 +555,6 @@ class PaymentRepository extends ServiceEntityRepository
             'overdue' => count($this->findOverdueByCompany($companyId)),
         ];
     }
+=======
+>>>>>>> 6e87c3851b8abe300389f1559fefe39834f199e8
 }

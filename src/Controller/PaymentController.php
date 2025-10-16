@@ -37,7 +37,11 @@ class PaymentController extends AbstractController
         $year = $request->query->get('year', date('Y'));
         $month = $request->query->get('month');
 
+<<<<<<< HEAD
         // Filtrer les paiements selon le rôle et l'organisation/société de l'utilisateur
+=======
+        // Filtrer les paiements selon le rôle de l'utilisateur
+>>>>>>> 6e87c3851b8abe300389f1559fefe39834f199e8
         if ($user && in_array('ROLE_TENANT', $user->getRoles())) {
             // Si l'utilisateur est un locataire, ne montrer que ses paiements
             $tenant = $user->getTenant();
@@ -47,6 +51,7 @@ class PaymentController extends AbstractController
                 $payments = [];
             }
         } elseif ($user && in_array('ROLE_MANAGER', $user->getRoles())) {
+<<<<<<< HEAD
             // Si l'utilisateur est un gestionnaire, filtrer par sa société
             if ($user->getCompany()) {
                 $payments = $paymentRepository->findByCompanyWithFilters($user->getCompany()->getId(), $status, $type, $year, $month);
@@ -72,6 +77,21 @@ class PaymentController extends AbstractController
         }
 
         // Statistiques filtrées selon le rôle et l'organisation/société
+=======
+            // Si l'utilisateur est un gestionnaire, montrer les paiements des locataires qu'il gère
+            $owner = $user->getOwner();
+            if ($owner) {
+                $payments = $paymentRepository->findByManagerWithFilters($owner->getId(), $status, $type, $year, $month);
+            } else {
+                $payments = $paymentRepository->findWithFilters($status, $type, $year, $month);
+            }
+        } else {
+            // Pour les admins, montrer tous les paiements
+            $payments = $paymentRepository->findWithFilters($status, $type, $year, $month);
+        }
+
+        // Statistiques filtrées selon le rôle
+>>>>>>> 6e87c3851b8abe300389f1559fefe39834f199e8
         $stats = $this->calculateFilteredStats($paymentRepository, $user);
 
         // Statistiques des acomptes filtrées
@@ -229,6 +249,7 @@ class PaymentController extends AbstractController
         EntityManagerInterface $entityManager,
         AdvancePaymentService $advanceService
     ): Response {
+<<<<<<< HEAD
         /** @var \App\Entity\User|null $user */
         $user = $this->getUser();
 
@@ -273,6 +294,9 @@ class PaymentController extends AbstractController
             return $this->redirectToRoute('app_payment_index');
         }
 
+=======
+        $activeLeases = $leaseRepository->findBy(['status' => 'Actif']);
+>>>>>>> 6e87c3851b8abe300389f1559fefe39834f199e8
         $generated = 0;
         $autoPaid = 0;
 
@@ -577,7 +601,11 @@ class PaymentController extends AbstractController
     }
 
     /**
+<<<<<<< HEAD
      * Calcule les statistiques filtrées selon le rôle et l'organisation/société de l'utilisateur
+=======
+     * Calcule les statistiques filtrées selon le rôle de l'utilisateur
+>>>>>>> 6e87c3851b8abe300389f1559fefe39834f199e8
      */
     private function calculateFilteredStats(PaymentRepository $paymentRepository, $user): array
     {
@@ -611,12 +639,19 @@ class PaymentController extends AbstractController
                 return $stats;
             }
         } elseif ($user && in_array('ROLE_MANAGER', $user->getRoles())) {
+<<<<<<< HEAD
             // Pour les gestionnaires, calculer les stats sur les paiements de leur société
             if ($user->getCompany()) {
                 return $paymentRepository->getStatisticsByCompany($user->getCompany()->getId());
             } elseif ($user->getOwner()) {
                 // Fallback: utiliser la méthode par propriétaire
                 $managerPayments = $paymentRepository->findByManagerWithFilters($user->getOwner()->getId());
+=======
+            // Pour les gestionnaires, calculer les stats sur les paiements qu'ils gèrent
+            $owner = $user->getOwner();
+            if ($owner) {
+                $managerPayments = $paymentRepository->findByManagerWithFilters($owner->getId());
+>>>>>>> 6e87c3851b8abe300389f1559fefe39834f199e8
 
                 $stats = [
                     'total_pending' => 0,
@@ -641,6 +676,7 @@ class PaymentController extends AbstractController
 
                 return $stats;
             }
+<<<<<<< HEAD
         } elseif ($user && in_array('ROLE_ADMIN', $user->getRoles())) {
             // Pour les admins, calculer les stats sur leur organisation
             if ($user->getOrganization()) {
@@ -662,6 +698,16 @@ class PaymentController extends AbstractController
             'total_paid' => 0,
             'total_overdue' => 0,
             'monthly_income' => 0
+=======
+        }
+
+        // Pour les admins, retourner les stats globales
+        return [
+            'total_pending' => $paymentRepository->count(['status' => 'En attente']),
+            'total_paid' => $paymentRepository->count(['status' => 'Payé']),
+            'total_overdue' => count($paymentRepository->findOverdue()),
+            'monthly_income' => $paymentRepository->getMonthlyIncome(),
+>>>>>>> 6e87c3851b8abe300389f1559fefe39834f199e8
         ];
     }
 
@@ -731,7 +777,11 @@ class PaymentController extends AbstractController
     }
 
     /**
+<<<<<<< HEAD
      * Calcule le solde actuel selon le rôle et l'organisation/société de l'utilisateur
+=======
+     * Calcule le solde actuel selon le rôle de l'utilisateur
+>>>>>>> 6e87c3851b8abe300389f1559fefe39834f199e8
      */
     private function calculateCurrentBalance(AccountingEntryRepository $accountingRepository, TenantRepository $tenantRepository, $user): float
     {
@@ -743,6 +793,7 @@ class PaymentController extends AbstractController
                 return $tenantStats['balance'] ?? 0.0;
             }
         } elseif ($user && in_array('ROLE_MANAGER', $user->getRoles())) {
+<<<<<<< HEAD
             // Pour les gestionnaires, calculer le solde des locataires de leur société
             if ($user->getCompany()) {
                 // Récupérer les locataires de la société
@@ -761,12 +812,22 @@ class PaymentController extends AbstractController
                 return $totalBalance;
             } elseif ($user->getOwner()) {
                 // Fallback: utiliser la méthode par propriétaire
+=======
+            // Pour les gestionnaires, calculer le solde de tous leurs locataires
+            $owner = $user->getOwner();
+            if ($owner) {
+                // Utiliser TenantRepository pour récupérer les locataires du gestionnaire
+>>>>>>> 6e87c3851b8abe300389f1559fefe39834f199e8
                 $managerTenants = $tenantRepository->createQueryBuilder('t')
                     ->join('t.leases', 'l')
                     ->join('l.property', 'p')
                     ->where('p.owner = :ownerId')
                     ->andWhere('l.status = :status')
+<<<<<<< HEAD
                     ->setParameter('ownerId', $user->getOwner()->getId())
+=======
+                    ->setParameter('ownerId', $owner->getId())
+>>>>>>> 6e87c3851b8abe300389f1559fefe39834f199e8
                     ->setParameter('status', 'Actif')
                     ->groupBy('t.id')
                     ->getQuery()
@@ -780,6 +841,7 @@ class PaymentController extends AbstractController
 
                 return $totalBalance;
             }
+<<<<<<< HEAD
         } elseif ($user && in_array('ROLE_ADMIN', $user->getRoles())) {
             // Pour les admins, calculer le solde de tous les locataires de leur organisation
             if ($user->getOrganization()) {
@@ -812,5 +874,19 @@ class PaymentController extends AbstractController
 
         // Retour par défaut
         return 0.0;
+=======
+        }
+
+        // Pour les admins, calculer le solde global de tous les locataires
+        $allTenants = $tenantRepository->findAll();
+
+        $totalBalance = 0;
+        foreach ($allTenants as $tenant) {
+            $tenantStats = $accountingRepository->getTenantStatistics($tenant->getId());
+            $totalBalance += $tenantStats['balance'] ?? 0.0;
+        }
+
+        return $totalBalance;
+>>>>>>> 6e87c3851b8abe300389f1559fefe39834f199e8
     }
 }

@@ -105,7 +105,6 @@ class Organization
 
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $subdomain = null;
-
     public function __construct()
     {
         $this->users = new ArrayCollection();

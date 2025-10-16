@@ -138,6 +138,7 @@ class RegistrationController extends AbstractController
 
                 $entityManager->flush();
 
+<<<<<<< HEAD
                 // Créer l'environnement de démo automatiquement (dans un try-catch séparé)
                 try {
                     $demoResult = $demoEnvironmentService->createDemoEnvironment($user);
@@ -153,6 +154,17 @@ class RegistrationController extends AbstractController
                     // Log l'erreur mais ne pas faire échouer l'inscription
                     error_log('Erreur création environnement démo: ' . $demoException->getMessage());
                     $this->addFlash('warning', '⚠️ Compte créé avec succès, mais erreur lors de la création de l\'environnement de démo. Vous pourrez le créer manuellement plus tard.');
+=======
+                // Créer l'environnement de démo automatiquement
+                $demoResult = $demoEnvironmentService->createDemoEnvironment($user);
+
+                if ($demoResult['success']) {
+                    $this->addFlash('success', '🎉 Votre compte et environnement de démo ont été créés avec succès !');
+                    $this->addFlash('info', "🌐 Votre environnement de démo : {$demoResult['demo_url']}");
+                    $this->addFlash('info', "📊 Données de démo créées : {$demoResult['demo_data']['properties']} propriétés, {$demoResult['demo_data']['tenants']} locataires, {$demoResult['demo_data']['leases']} baux, {$demoResult['demo_data']['payments']} paiements");
+                } else {
+                    $this->addFlash('warning', '⚠️ Compte créé mais erreur lors de la création de l\'environnement de démo : ' . $demoResult['error']);
+>>>>>>> 6e87c3851b8abe300389f1559fefe39834f199e8
                 }
 
                 // Si plan gratuit (Freemium), activer directement

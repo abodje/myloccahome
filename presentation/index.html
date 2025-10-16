@@ -1,0 +1,908 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LOKAPRO - Solution Complète de Gestion Locative</title>
+    <meta name="description" content="LOKAPRO est une solution SaaS complète pour la gestion locative avec environnements de démo automatiques, multi-tenant et fonctionnalités avancées.">
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    <!-- AOS Animation -->
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --accent-color: #e74c3c;
+            --success-color: #27ae60;
+            --warning-color: #f39c12;
+            --light-bg: #f8f9fa;
+            --dark-bg: #2c3e50;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+        }
+
+        .hero-section {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            color: white;
+            padding: 100px 0;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000"><polygon fill="rgba(255,255,255,0.05)" points="0,1000 1000,0 1000,1000"/></svg>');
+            background-size: cover;
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 2;
+        }
+
+        .feature-card {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            height: 100%;
+            border: none;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+        }
+
+        .feature-icon {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            margin: 0 auto 20px;
+            color: white;
+        }
+
+        .feature-icon.primary { background: var(--primary-color); }
+        .feature-icon.secondary { background: var(--secondary-color); }
+        .feature-icon.success { background: var(--success-color); }
+        .feature-icon.warning { background: var(--warning-color); }
+        .feature-icon.accent { background: var(--accent-color); }
+
+        .stats-section {
+            background: var(--light-bg);
+            padding: 80px 0;
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 20px;
+        }
+
+        .stat-number {
+            font-size: 3rem;
+            font-weight: bold;
+            color: var(--primary-color);
+            display: block;
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 1.1rem;
+            margin-top: 10px;
+        }
+
+        .demo-section {
+            background: var(--dark-bg);
+            color: white;
+            padding: 80px 0;
+        }
+
+        .demo-card {
+            background: rgba(255,255,255,0.1);
+            border-radius: 15px;
+            padding: 30px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .btn-demo {
+            background: var(--accent-color);
+            border: none;
+            padding: 15px 30px;
+            border-radius: 50px;
+            color: white;
+            font-weight: bold;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.3s ease;
+        }
+
+        .btn-demo:hover {
+            background: #c0392b;
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(231, 76, 60, 0.3);
+        }
+
+        .btn-primary-custom {
+            background: var(--secondary-color);
+            border: none;
+            padding: 15px 30px;
+            border-radius: 50px;
+            color: white;
+            font-weight: bold;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary-custom:hover {
+            background: #2980b9;
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(52, 152, 219, 0.3);
+        }
+
+        .section-title {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .section-subtitle {
+            font-size: 1.2rem;
+            color: #666;
+            text-align: center;
+            margin-bottom: 50px;
+        }
+
+        .navbar-custom {
+            background: rgba(44, 62, 80, 0.95);
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+
+        .navbar-custom.scrolled {
+            background: rgba(44, 62, 80, 1);
+            box-shadow: 0 2px 20px rgba(0,0,0,0.1);
+        }
+
+        .footer {
+            background: var(--primary-color);
+            color: white;
+            padding: 50px 0 20px;
+        }
+
+        .floating-elements {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            pointer-events: none;
+            overflow: hidden;
+        }
+
+        .floating-element {
+            position: absolute;
+            opacity: 0.1;
+            animation: float 6s ease-in-out infinite;
+        }
+
+        .floating-element:nth-child(1) { top: 20%; left: 10%; animation-delay: 0s; }
+        .floating-element:nth-child(2) { top: 60%; right: 10%; animation-delay: 2s; }
+        .floating-element:nth-child(3) { bottom: 20%; left: 20%; animation-delay: 4s; }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+        }
+
+        .tech-stack {
+            background: white;
+            padding: 80px 0;
+        }
+
+        .tech-item {
+            text-align: center;
+            padding: 20px;
+            transition: transform 0.3s ease;
+        }
+
+        .tech-item:hover {
+            transform: scale(1.05);
+        }
+
+        .tech-icon {
+            font-size: 3rem;
+            color: var(--secondary-color);
+            margin-bottom: 15px;
+        }
+
+        .pricing-section {
+            background: var(--light-bg);
+            padding: 80px 0;
+        }
+
+        .pricing-card {
+            background: white;
+            border-radius: 15px;
+            padding: 40px 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .pricing-card:hover {
+            transform: translateY(-10px);
+        }
+
+        .pricing-card.featured {
+            border: 3px solid var(--secondary-color);
+            transform: scale(1.05);
+        }
+
+        .pricing-card.featured::before {
+            content: 'POPULAIRE';
+            position: absolute;
+            top: 20px;
+            right: -30px;
+            background: var(--secondary-color);
+            color: white;
+            padding: 5px 40px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            transform: rotate(45deg);
+        }
+
+        .price {
+            font-size: 3rem;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+
+        .price-period {
+            color: #666;
+            font-size: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark navbar-custom fixed-top">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="#">
+                <i class="bi bi-building me-2"></i>LOKAPRO
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="#features">Fonctionnalités</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#demo">Démo</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#pricing">Tarifs</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#contact">Contact</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="btn btn-primary-custom ms-2" href="#demo">Essayer Gratuitement</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero-section">
+        <div class="floating-elements">
+            <div class="floating-element">
+                <i class="bi bi-house-door" style="font-size: 4rem;"></i>
+            </div>
+            <div class="floating-element">
+                <i class="bi bi-people" style="font-size: 3rem;"></i>
+            </div>
+            <div class="floating-element">
+                <i class="bi bi-graph-up" style="font-size: 3.5rem;"></i>
+            </div>
+        </div>
+        <div class="container hero-content">
+            <div class="row align-items-center">
+                <div class="col-lg-6" data-aos="fade-right">
+                    <h1 class="display-4 fw-bold mb-4">
+                        Solution Complète de <span class="text-warning">Gestion Locative</span>
+                    </h1>
+                    <p class="lead mb-4">
+                        LOKAPRO est une plateforme SaaS multi-tenant révolutionnaire qui automatise
+                        la gestion de vos biens immobiliers avec des environnements de démo instantanés.
+                    </p>
+                    <div class="d-flex gap-3">
+                        <a href="#demo" class="btn-demo">
+                            <i class="bi bi-play-circle me-2"></i>Voir la Démo
+                        </a>
+                        <a href="#features" class="btn btn-outline-light">
+                            <i class="bi bi-info-circle me-2"></i>En Savoir Plus
+                        </a>
+                    </div>
+                </div>
+                <div class="col-lg-6" data-aos="fade-left">
+                    <div class="text-center">
+                        <i class="bi bi-building" style="font-size: 15rem; opacity: 0.3;"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Stats Section -->
+    <section class="stats-section">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-3 col-6" data-aos="fade-up" data-aos-delay="100">
+                    <div class="stat-item">
+                        <span class="stat-number">100%</span>
+                        <div class="stat-label">SaaS Multi-Tenant</div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-6" data-aos="fade-up" data-aos-delay="200">
+                    <div class="stat-item">
+                        <span class="stat-number">24/7</span>
+                        <div class="stat-label">Disponibilité</div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-6" data-aos="fade-up" data-aos-delay="300">
+                    <div class="stat-item">
+                        <span class="stat-number">∞</span>
+                        <div class="stat-label">Environnements Démo</div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-6" data-aos="fade-up" data-aos-delay="400">
+                    <div class="stat-item">
+                        <span class="stat-number">5★</span>
+                        <div class="stat-label">Sécurité</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section id="features" class="py-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-12">
+                    <h2 class="section-title" data-aos="fade-up">Fonctionnalités Principales</h2>
+                    <p class="section-subtitle" data-aos="fade-up" data-aos-delay="100">
+                        Découvrez toutes les fonctionnalités qui font de LOKAPRO la solution de référence
+                    </p>
+                </div>
+            </div>
+            <div class="row g-4">
+                <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="100">
+                    <div class="feature-card">
+                        <div class="feature-icon primary">
+                            <i class="bi bi-building"></i>
+                        </div>
+                        <h4>Gestion Multi-Tenant</h4>
+                        <p>Architecture SaaS complète avec isolation des données par organisation et société. Chaque client a son environnement sécurisé.</p>
+                        <ul class="list-unstyled">
+                            <li><i class="bi bi-check-circle text-success me-2"></i>Isolation complète des données</li>
+                            <li><i class="bi bi-check-circle text-success me-2"></i>Gestion des organisations</li>
+                            <li><i class="bi bi-check-circle text-success me-2"></i>Multi-sociétés par organisation</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="200">
+                    <div class="feature-card">
+                        <div class="feature-icon secondary">
+                            <i class="bi bi-globe"></i>
+                        </div>
+                        <h4>Environnements de Démo</h4>
+                        <p>Création automatique d'environnements de démo avec sous-domaines uniques pour chaque nouvelle inscription.</p>
+                        <ul class="list-unstyled">
+                            <li><i class="bi bi-check-circle text-success me-2"></i>Sous-domaines automatiques</li>
+                            <li><i class="bi bi-check-circle text-success me-2"></i>Données de démo réalistes</li>
+                            <li><i class="bi bi-check-circle text-success me-2"></i>Configuration Apache automatique</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="300">
+                    <div class="feature-card">
+                        <div class="feature-icon success">
+                            <i class="bi bi-house-door"></i>
+                        </div>
+                        <h4>Gestion des Biens</h4>
+                        <p>Gestion complète de votre patrimoine immobilier avec inventaire détaillé et suivi des locations.</p>
+                        <ul class="list-unstyled">
+                            <li><i class="bi bi-check-circle text-success me-2"></i>Inventaire complet</li>
+                            <li><i class="bi bi-check-circle text-success me-2"></i>Photos et documents</li>
+                            <li><i class="bi bi-check-circle text-success me-2"></i>Historique des locations</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="400">
+                    <div class="feature-card">
+                        <div class="feature-icon warning">
+                            <i class="bi bi-people"></i>
+                        </div>
+                        <h4>Gestion des Locataires</h4>
+                        <p>Suivi complet de vos locataires avec historique des paiements et communication intégrée.</p>
+                        <ul class="list-unstyled">
+                            <li><i class="bi bi-check-circle text-success me-2"></i>Profil locataire complet</li>
+                            <li><i class="bi bi-check-circle text-success me-2"></i>Historique des paiements</li>
+                            <li><i class="bi bi-check-circle text-success me-2"></i>Communication intégrée</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="500">
+                    <div class="feature-card">
+                        <div class="feature-icon accent">
+                            <i class="bi bi-file-earmark-text"></i>
+                        </div>
+                        <h4>Gestion des Baux</h4>
+                        <p>Création et suivi des contrats de location avec génération automatique de documents.</p>
+                        <ul class="list-unstyled">
+                            <li><i class="bi bi-check-circle text-success me-2"></i>Contrats personnalisables</li>
+                            <li><i class="bi bi-check-circle text-success me-2"></i>Renouvellement automatique</li>
+                            <li><i class="bi bi-check-circle text-success me-2"></i>Alertes d'expiration</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="600">
+                    <div class="feature-card">
+                        <div class="feature-icon primary">
+                            <i class="bi bi-credit-card"></i>
+                        </div>
+                        <h4>Gestion des Paiements</h4>
+                        <p>Suivi des loyers et charges avec intégration CinetPay et génération automatique de quittances.</p>
+                        <ul class="list-unstyled">
+                            <li><i class="bi bi-check-circle text-success me-2"></i>Paiements en ligne</li>
+                            <li><i class="bi bi-check-circle text-success me-2"></i>Quittances automatiques</li>
+                            <li><i class="bi bi-check-circle text-success me-2"></i>Relances automatiques</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Advanced Features -->
+    <section class="py-5 bg-light">
+        <div class="container">
+            <div class="row">
+                <div class="col-12">
+                    <h2 class="section-title" data-aos="fade-up">Fonctionnalités Avancées</h2>
+                    <p class="section-subtitle" data-aos="fade-up" data-aos-delay="100">
+                        Des outils professionnels pour une gestion optimale
+                    </p>
+                </div>
+            </div>
+            <div class="row g-4">
+                <div class="col-lg-6" data-aos="fade-right">
+                    <div class="feature-card">
+                        <div class="feature-icon secondary">
+                            <i class="bi bi-graph-up"></i>
+                        </div>
+                        <h4>Dashboard Analytique</h4>
+                        <p>Tableaux de bord interactifs avec graphiques en temps réel pour suivre vos performances.</p>
+                        <ul class="list-unstyled">
+                            <li><i class="bi bi-check-circle text-success me-2"></i>Revenus mensuels</li>
+                            <li><i class="bi bi-check-circle text-success me-2"></i>Taux d'occupation</li>
+                            <li><i class="bi bi-check-circle text-success me-2"></i>Prévisions de trésorerie</li>
+                            <li><i class="bi bi-check-circle text-success me-2"></i>KPIs personnalisés</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-lg-6" data-aos="fade-left">
+                    <div class="feature-card">
+                        <div class="feature-icon success">
+                            <i class="bi bi-search"></i>
+                        </div>
+                        <h4>Recherche Globale Intelligente</h4>
+                        <p>Recherche multi-entités avec suggestions en temps réel et raccourci clavier (Ctrl+K).</p>
+                        <ul class="list-unstyled">
+                            <li><i class="bi bi-check-circle text-success me-2"></i>Recherche dans tous les modules</li>
+                            <li><i class="bi bi-check-circle text-success me-2"></i>Suggestions en temps réel</li>
+                            <li><i class="bi bi-check-circle text-success me-2"></i>Filtrage par rôle et organisation</li>
+                            <li><i class="bi bi-check-circle text-success me-2"></i>Raccourci clavier intuitif</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-lg-6" data-aos="fade-right">
+                    <div class="feature-card">
+                        <div class="feature-icon warning">
+                            <i class="bi bi-calendar-event"></i>
+                        </div>
+                        <h4>Calendrier de Gestion</h4>
+                        <p>Calendrier interactif pour visualiser les échéances, paiements et événements importants.</p>
+                        <ul class="list-unstyled">
+                            <li><i class="bi bi-check-circle text-success me-2"></i>Échéances de loyers</li>
+                            <li><i class="bi bi-check-circle text-success me-2"></i>Expiration des baux</li>
+                            <li><i class="bi bi-check-circle text-success me-2"></i>Maintenance programmée</li>
+                            <li><i class="bi bi-check-circle text-success me-2"></i>Filtrage par type d'événement</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-lg-6" data-aos="fade-left">
+                    <div class="feature-card">
+                        <div class="feature-icon accent">
+                            <i class="bi bi-download"></i>
+                        </div>
+                        <h4>Exports Complets</h4>
+                        <p>Génération automatique de rapports Excel, PDF et ZIP pour la comptabilité et les déclarations.</p>
+                        <ul class="list-unstyled">
+                            <li><i class="bi bi-check-circle text-success me-2"></i>Rapports financiers</li>
+                            <li><i class="bi bi-check-circle text-success me-2"></i>Listes de locataires</li>
+                            <li><i class="bi bi-check-circle text-success me-2"></i>Inventaire des biens</li>
+                            <li><i class="bi bi-check-circle text-success me-2"></i>Déclarations fiscales</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Tech Stack -->
+    <section class="tech-stack">
+        <div class="container">
+            <div class="row">
+                <div class="col-12">
+                    <h2 class="section-title" data-aos="fade-up">Technologies Utilisées</h2>
+                    <p class="section-subtitle" data-aos="fade-up" data-aos-delay="100">
+                        Une stack moderne et robuste pour des performances optimales
+                    </p>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-lg-2 col-md-4 col-6" data-aos="fade-up" data-aos-delay="100">
+                    <div class="tech-item">
+                        <div class="tech-icon">
+                            <i class="bi bi-code-slash"></i>
+                        </div>
+                        <h6>Symfony 6</h6>
+                    </div>
+                </div>
+                <div class="col-lg-2 col-md-4 col-6" data-aos="fade-up" data-aos-delay="200">
+                    <div class="tech-item">
+                        <div class="tech-icon">
+                            <i class="bi bi-database"></i>
+                        </div>
+                        <h6>MySQL</h6>
+                    </div>
+                </div>
+                <div class="col-lg-2 col-md-4 col-6" data-aos="fade-up" data-aos-delay="300">
+                    <div class="tech-item">
+                        <div class="tech-icon">
+                            <i class="bi bi-bootstrap"></i>
+                        </div>
+                        <h6>Bootstrap 5</h6>
+                    </div>
+                </div>
+                <div class="col-lg-2 col-md-4 col-6" data-aos="fade-up" data-aos-delay="400">
+                    <div class="tech-item">
+                        <div class="tech-icon">
+                            <i class="bi bi-file-earmark-pdf"></i>
+                        </div>
+                        <h6>TCPDF</h6>
+                    </div>
+                </div>
+                <div class="col-lg-2 col-md-4 col-6" data-aos="fade-up" data-aos-delay="500">
+                    <div class="tech-item">
+                        <div class="tech-icon">
+                            <i class="bi bi-table"></i>
+                        </div>
+                        <h6>PhpSpreadsheet</h6>
+                    </div>
+                </div>
+                <div class="col-lg-2 col-md-4 col-6" data-aos="fade-up" data-aos-delay="600">
+                    <div class="tech-item">
+                        <div class="tech-icon">
+                            <i class="bi bi-shield-check"></i>
+                        </div>
+                        <h6>Doctrine ORM</h6>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Demo Section -->
+    <section id="demo" class="demo-section">
+        <div class="container">
+            <div class="row">
+                <div class="col-12">
+                    <h2 class="section-title text-white" data-aos="fade-up">Essayez LOKAPRO Gratuitement</h2>
+                    <p class="section-subtitle text-white-50" data-aos="fade-up" data-aos-delay="100">
+                        Créez votre compte et obtenez instantanément un environnement de démo complet
+                    </p>
+                </div>
+            </div>
+            <div class="row justify-content-center">
+                <div class="col-lg-8" data-aos="fade-up" data-aos-delay="200">
+                    <div class="demo-card text-center">
+                        <h3 class="mb-4">🚀 Environnement de Démo Automatique</h3>
+                        <p class="mb-4">
+                            À chaque inscription, LOKAPRO génère automatiquement :
+                        </p>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <ul class="list-unstyled text-start">
+                                    <li><i class="bi bi-check-circle text-success me-2"></i>Sous-domaine unique</li>
+                                    <li><i class="bi bi-check-circle text-success me-2"></i>5 propriétés de démo</li>
+                                    <li><i class="bi bi-check-circle text-success me-2"></i>5 locataires réalistes</li>
+                                    <li><i class="bi bi-check-circle text-success me-2"></i>4 baux actifs</li>
+                                </ul>
+                            </div>
+                            <div class="col-md-6">
+                                <ul class="list-unstyled text-start">
+                                    <li><i class="bi bi-check-circle text-success me-2"></i>12 paiements historiques</li>
+                                    <li><i class="bi bi-check-circle text-success me-2"></i>Configuration Apache</li>
+                                    <li><i class="bi bi-check-circle text-success me-2"></i>DNS local configuré</li>
+                                    <li><i class="bi bi-check-circle text-success me-2"></i>Accès admin immédiat</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="mt-4">
+                            <a href="#contact" class="btn-demo me-3">
+                                <i class="bi bi-play-circle me-2"></i>Commencer la Démo
+                            </a>
+                            <a href="#features" class="btn btn-outline-light">
+                                <i class="bi bi-info-circle me-2"></i>Voir les Fonctionnalités
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Pricing Section -->
+    <section id="pricing" class="pricing-section">
+        <div class="container">
+            <div class="row">
+                <div class="col-12">
+                    <h2 class="section-title" data-aos="fade-up">Plans Tarifaires</h2>
+                    <p class="section-subtitle" data-aos="fade-up" data-aos-delay="100">
+                        Choisissez le plan qui correspond à vos besoins
+                    </p>
+                </div>
+            </div>
+            <div class="row justify-content-center">
+                <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="100">
+                    <div class="pricing-card">
+                        <h4 class="text-center mb-3">Freemium</h4>
+                        <div class="text-center mb-4">
+                            <span class="price">0€</span>
+                            <span class="price-period">/mois</span>
+                        </div>
+                        <ul class="list-unstyled">
+                            <li><i class="bi bi-check-circle text-success me-2"></i>Jusqu'à 5 propriétés</li>
+                            <li><i class="bi bi-check-circle text-success me-2"></i>Jusqu'à 10 locataires</li>
+                            <li><i class="bi bi-check-circle text-success me-2"></i>1 utilisateur</li>
+                            <li><i class="bi bi-check-circle text-success me-2"></i>Support email</li>
+                            <li><i class="bi bi-check-circle text-success me-2"></i>Environnement de démo</li>
+                        </ul>
+                        <div class="text-center mt-4">
+                            <a href="#contact" class="btn btn-outline-primary">Commencer</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="200">
+                    <div class="pricing-card featured">
+                        <h4 class="text-center mb-3">Professionnel</h4>
+                        <div class="text-center mb-4">
+                            <span class="price">29€</span>
+                            <span class="price-period">/mois</span>
+                        </div>
+                        <ul class="list-unstyled">
+                            <li><i class="bi bi-check-circle text-success me-2"></i>Jusqu'à 50 propriétés</li>
+                            <li><i class="bi bi-check-circle text-success me-2"></i>Jusqu'à 100 locataires</li>
+                            <li><i class="bi bi-check-circle text-success me-2"></i>5 utilisateurs</li>
+                            <li><i class="bi bi-check-circle text-success me-2"></i>Support prioritaire</li>
+                            <li><i class="bi bi-check-circle text-success me-2"></i>Exports avancés</li>
+                            <li><i class="bi bi-check-circle text-success me-2"></i>API complète</li>
+                        </ul>
+                        <div class="text-center mt-4">
+                            <a href="#contact" class="btn-demo">Choisir ce Plan</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="300">
+                    <div class="pricing-card">
+                        <h4 class="text-center mb-3">Entreprise</h4>
+                        <div class="text-center mb-4">
+                            <span class="price">99€</span>
+                            <span class="price-period">/mois</span>
+                        </div>
+                        <ul class="list-unstyled">
+                            <li><i class="bi bi-check-circle text-success me-2"></i>Propriétés illimitées</li>
+                            <li><i class="bi bi-check-circle text-success me-2"></i>Locataires illimités</li>
+                            <li><i class="bi bi-check-circle text-success me-2"></i>Utilisateurs illimités</li>
+                            <li><i class="bi bi-check-circle text-success me-2"></i>Support dédié</li>
+                            <li><i class="bi bi-check-circle text-success me-2"></i>Intégrations personnalisées</li>
+                            <li><i class="bi bi-check-circle text-success me-2"></i>Formation incluse</li>
+                        </ul>
+                        <div class="text-center mt-4">
+                            <a href="#contact" class="btn btn-outline-primary">Nous Contacter</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Contact Section -->
+    <section id="contact" class="py-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-12">
+                    <h2 class="section-title" data-aos="fade-up">Contactez-Nous</h2>
+                    <p class="section-subtitle" data-aos="fade-up" data-aos-delay="100">
+                        Prêt à révolutionner votre gestion locative ?
+                    </p>
+                </div>
+            </div>
+            <div class="row justify-content-center">
+                <div class="col-lg-8" data-aos="fade-up" data-aos-delay="200">
+                    <div class="text-center">
+                        <div class="row">
+                            <div class="col-md-4 mb-4">
+                                <div class="feature-card">
+                                    <div class="feature-icon primary">
+                                        <i class="bi bi-envelope"></i>
+                                    </div>
+                                    <h5>Email</h5>
+                                    <p>contact@LOKAPRO.com</p>
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-4">
+                                <div class="feature-card">
+                                    <div class="feature-icon secondary">
+                                        <i class="bi bi-telephone"></i>
+                                    </div>
+                                    <h5>Téléphone</h5>
+                                    <p>+33 1 23 45 67 89</p>
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-4">
+                                <div class="feature-card">
+                                    <div class="feature-icon success">
+                                        <i class="bi bi-geo-alt"></i>
+                                    </div>
+                                    <h5>Adresse</h5>
+                                    <p>Paris, France</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mt-4">
+                            <a href="#demo" class="btn-demo me-3">
+                                <i class="bi bi-play-circle me-2"></i>Essayer Gratuitement
+                            </a>
+                            <a href="mailto:contact@LOKAPRO.com" class="btn btn-primary-custom">
+                                <i class="bi bi-envelope me-2"></i>Nous Écrire
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-6">
+                    <h5><i class="bi bi-building me-2"></i>LOKAPRO</h5>
+                    <p class="mb-3">
+                        La solution SaaS complète pour la gestion locative avec environnements de démo automatiques.
+                    </p>
+                    <div class="d-flex gap-3">
+                        <a href="#" class="text-white"><i class="bi bi-facebook"></i></a>
+                        <a href="#" class="text-white"><i class="bi bi-twitter"></i></a>
+                        <a href="#" class="text-white"><i class="bi bi-linkedin"></i></a>
+                        <a href="#" class="text-white"><i class="bi bi-github"></i></a>
+                    </div>
+                </div>
+                <div class="col-lg-3">
+                    <h6>Produit</h6>
+                    <ul class="list-unstyled">
+                        <li><a href="#features" class="text-white-50">Fonctionnalités</a></li>
+                        <li><a href="#demo" class="text-white-50">Démo</a></li>
+                        <li><a href="#pricing" class="text-white-50">Tarifs</a></li>
+                        <li><a href="#" class="text-white-50">Documentation</a></li>
+                    </ul>
+                </div>
+                <div class="col-lg-3">
+                    <h6>Support</h6>
+                    <ul class="list-unstyled">
+                        <li><a href="#contact" class="text-white-50">Contact</a></li>
+                        <li><a href="#" class="text-white-50">FAQ</a></li>
+                        <li><a href="#" class="text-white-50">Support</a></li>
+                        <li><a href="#" class="text-white-50">Statut</a></li>
+                    </ul>
+                </div>
+            </div>
+            <hr class="my-4">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <p class="mb-0">&copy; 2024 LOKAPRO. Tous droits réservés.</p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <a href="#" class="text-white-50 me-3">Mentions légales</a>
+                    <a href="#" class="text-white-50">Politique de confidentialité</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- AOS Animation -->
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+
+    <script>
+        // Initialize AOS
+        AOS.init({
+            duration: 1000,
+            once: true,
+            offset: 100
+        });
+
+        // Navbar scroll effect
+        window.addEventListener('scroll', function() {
+            const navbar = document.querySelector('.navbar-custom');
+            if (window.scrollY > 50) {
+                navbar.classList.add('scrolled');
+            } else {
+                navbar.classList.remove('scrolled');
+            }
+        });
+
+        // Smooth scrolling for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+
+        // Add loading animation
+        window.addEventListener('load', function() {
+            document.body.classList.add('loaded');
+        });
+    </script>
+</body>
+</html>
