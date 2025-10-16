@@ -176,6 +176,7 @@ class DashboardController extends AbstractController
 
         if (!$owner) {
             // Si pas de propriétaire associé, dashboard vide
+            error_log('DashboardController: managerDashboard fallback case - no owner');
             return $this->render('dashboard/manager.html.twig', [
                 'stats' => [
                     'properties' => ['total' => 0, 'occupied' => 0, 'available' => 0],
@@ -232,6 +233,8 @@ class DashboardController extends AbstractController
         $recentMaintenanceRequests = $maintenanceRepo->findByManagerWithFilters($owner->getId());
         $urgentRequests = $maintenanceRepo->findUrgentPendingByManager($owner->getId());
         $overduePayments = $paymentRepo->findOverdueByManager($owner->getId());
+
+        error_log('DashboardController: managerDashboard normal case - owner exists, urgent_requests count: ' . count($urgentRequests));
 
         return $this->render('dashboard/manager.html.twig', [
             'stats' => $stats,

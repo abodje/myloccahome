@@ -168,6 +168,8 @@
     </div>
 
     <!-- Alertes urgentes -->
+    {% set urgent_requests = urgent_requests|default([]) %}
+    {% set overdue_payments = overdue_payments|default([]) %}
     {% if urgent_requests|length > 0 or overdue_payments|length > 0 %}
     <div class="row mb-4">
         <div class="col-12">
