@@ -61,19 +61,19 @@
             <div class="card mb-4">
                 <div class="card-body">
                     <div class="btn-group" role="group">
-                        <a href="{{ path('app_admin_users') }}"
+                        <a href="{{ path('app_admin_user_index') }}"
                            class="btn btn-{{ current_role is null ? 'primary' : 'outline-primary' }}">
                             Tous
                         </a>
-                        <a href="{{ path('app_admin_users', {role: 'ROLE_ADMIN'}) }}"
+                        <a href="{{ path('app_admin_user_index', {role: 'ROLE_ADMIN'}) }}"
                            class="btn btn-{{ current_role == 'ROLE_ADMIN' ? 'danger' : 'outline-danger' }}">
                             Administrateurs
                         </a>
-                        <a href="{{ path('app_admin_users', {role: 'ROLE_MANAGER'}) }}"
+                        <a href="{{ path('app_admin_user_index', {role: 'ROLE_MANAGER'}) }}"
                            class="btn btn-{{ current_role == 'ROLE_MANAGER' ? 'warning' : 'outline-warning' }}">
                             Gestionnaires
                         </a>
-                        <a href="{{ path('app_admin_users', {role: 'ROLE_TENANT'}) }}"
+                        <a href="{{ path('app_admin_user_index', {role: 'ROLE_TENANT'}) }}"
                            class="btn btn-{{ current_role == 'ROLE_TENANT' ? 'info' : 'outline-info' }}">
                             Locataires
                         </a>

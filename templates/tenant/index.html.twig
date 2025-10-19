@@ -27,7 +27,7 @@
         <div class="col-md-3">
             <div class="card text-center">
                 <div class="card-body">
-                    <h4 class="text-primary">{{ stats.total }}</h4>
+                    <h4 class="text-primary">{{ stats.total_tenants }}</h4>
                     <small class="text-muted">Total locataires</small>
                 </div>
             </div>
@@ -35,7 +35,7 @@
         <div class="col-md-3">
             <div class="card text-center">
                 <div class="card-body">
-                    <h4 class="text-success">{{ stats.with_active_lease }}</h4>
+                    <h4 class="text-success">{{ stats.with_active_contract }}</h4>
                     <small class="text-muted">Avec contrat actif</small>
                 </div>
             </div>
@@ -43,7 +43,7 @@
         <div class="col-md-3">
             <div class="card text-center">
                 <div class="card-body">
-                    <h4 class="text-warning">{{ stats.total - stats.with_active_lease }}</h4>
+                    <h4 class="text-warning">{{ stats.without_active_contract }}</h4>
                     <small class="text-muted">Sans contrat actif</small>
                 </div>
             </div>
@@ -51,7 +51,7 @@
         <div class="col-md-3">
             <div class="card text-center">
                 <div class="card-body">
-                    <h4 class="text-info">{{ stats.total > 0 ? (stats.with_active_lease / stats.total * 100)|number_format(1) : 0 }}%</h4>
+                    <h4 class="text-info">{{ stats.occupancy_rate }}%</h4>
                     <small class="text-muted">Taux d'occupation</small>
                 </div>
             </div>

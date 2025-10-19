@@ -20,7 +20,8 @@ class TaskManagerService
         private SettingsService $settingsService,
         private UserPasswordHasherInterface $passwordHasher,
         private ?AuditLogService $auditLogService = null,
-        private ?BackupService $backupService = null
+        private ?BackupService $backupService = null,
+        private ?DemoEnvironmentService $demoEnvironmentService = null
     ) {
     }
 
@@ -111,6 +112,14 @@ class TaskManagerService
 
                 case 'FIX_USER_ORGANIZATION':
                     $this->executeFixUserOrganizationTask($task);
+                    break;
+
+                case 'SYNC_ACCOUNTING_ENTRIES':
+                    $this->executeSyncAccountingEntriesTask($task);
+                    break;
+
+                case 'DEMO_CREATE':
+                    $this->executeDemoCreateTask($task);
                     break;
 
                 default:
@@ -374,6 +383,28 @@ class TaskManagerService
                 'parameters' => [
                     'auto_fix_tenants' => true, // Corriger automatiquement les locataires
                     'log_details' => true // Loguer les détails de la correction
+                ]
+            ],
+            [
+                'name' => 'Synchronisation des écritures comptables',
+                'type' => 'SYNC_ACCOUNTING_ENTRIES',
+                'description' => 'Synchronise les écritures comptables avec les documents de quittances et avis d\'échéances existants',
+                'frequency' => 'MANUAL', // Tâche manuelle uniquement
+                'parameters' => [
+                    'sync_receipts' => true, // Synchroniser les quittances
+                    'sync_notices' => true, // Synchroniser les avis d'échéance
+                    'log_details' => true // Loguer les détails de la synchronisation
+                ]
+            ],
+            [
+                'name' => 'Création d\'environnements de démo',
+                'type' => 'DEMO_CREATE',
+                'description' => 'Crée des environnements de démo pour les utilisateurs avec données de test',
+                'frequency' => 'MANUAL', // Tâche manuelle uniquement
+                'parameters' => [
+                    'default_days' => 14, // Durée par défaut en jours
+                    'auto_cleanup' => true, // Nettoyage automatique des démos expirées
+                    'log_details' => true // Loguer les détails de la création
                 ]
             ]
         ];
@@ -1060,5 +1091,270 @@ HTML;
         $this->logger->info('Tâche de correction des utilisateurs sans organisation créée');
 
         return $task;
+    }
+
+    /**
+     * Exécute la tâche de synchronisation des écritures comptables
+     */
+    private function executeSyncAccountingEntriesTask(Task $task): void
+    {
+        $parameters = $task->getParameters();
+        $syncReceipts = $parameters['sync_receipts'] ?? true;
+        $syncNotices = $parameters['sync_notices'] ?? true;
+        $logDetails = $parameters['log_details'] ?? true;
+
+        $this->logger->info('Début de la synchronisation des écritures comptables', [
+            'sync_receipts' => $syncReceipts,
+            'sync_notices' => $syncNotices,
+            'log_details' => $logDetails
+        ]);
+
+        $createdEntries = 0;
+        $updatedEntries = 0;
+
+        // Récupérer les documents de quittances
+        if ($syncReceipts) {
+            $receipts = $this->entityManager->getRepository(\App\Entity\Document::class)
+                ->findBy(['type' => 'Quittance de loyer']);
+
+            $this->logger->info(sprintf('Trouvé %d quittances à synchroniser', count($receipts)));
+
+            foreach ($receipts as $document) {
+                $payment = $document->getLease()?->getPayments()->first();
+                if (!$payment) {
+                    continue;
+                }
+
+                $existingEntry = $this->entityManager->getRepository(\App\Entity\AccountingEntry::class)
+                    ->findOneBy(['payment' => $payment]);
+
+                if ($existingEntry) {
+                    // Mettre à jour la référence
+                    if (!$existingEntry->getReference() || !str_contains($existingEntry->getReference(), 'QUITTANCE-')) {
+                        $existingEntry->setReference('QUITTANCE-' . $document->getId());
+                        $updatedEntries++;
+                        if ($logDetails) {
+                            $this->logger->info(sprintf('  ✓ Référence mise à jour pour quittance: %s', $document->getName()));
+                        }
+                    }
+                } else {
+                    // Créer une nouvelle écriture
+                    $entry = new \App\Entity\AccountingEntry();
+                    $entry->setEntryDate($payment->getPaidDate() ?? $payment->getDueDate());
+                    $entry->setDescription('Quittance de loyer - ' . $document->getName());
+                    $entry->setAmount($payment->getAmount());
+                    $entry->setType('CREDIT');
+                    $entry->setCategory('LOYER');
+                    $entry->setReference('QUITTANCE-' . $document->getId());
+                    $entry->setProperty($payment->getProperty());
+                    $entry->setOwner($payment->getProperty()?->getOwner());
+                    $entry->setPayment($payment);
+                    $entry->setNotes('Généré automatiquement lors de la synchronisation');
+
+                    $this->entityManager->persist($entry);
+                    $createdEntries++;
+                    if ($logDetails) {
+                        $this->logger->info(sprintf('  ✓ Écriture créée pour quittance: %s', $document->getName()));
+                    }
+                }
+            }
+        }
+
+        // Récupérer les documents d'avis d'échéance
+        if ($syncNotices) {
+            $notices = $this->entityManager->getRepository(\App\Entity\Document::class)
+                ->findBy(['type' => 'Avis d\'échéance']);
+
+            $this->logger->info(sprintf('Trouvé %d avis d\'échéance à synchroniser', count($notices)));
+
+            foreach ($notices as $document) {
+                $payment = $document->getLease()?->getPayments()->first();
+                if (!$payment) {
+                    continue;
+                }
+
+                $existingEntry = $this->entityManager->getRepository(\App\Entity\AccountingEntry::class)
+                    ->findOneBy(['payment' => $payment]);
+
+                if ($existingEntry) {
+                    // Mettre à jour la référence
+                    if (!$existingEntry->getReference() || !str_contains($existingEntry->getReference(), 'AVIS-')) {
+                        $existingEntry->setReference('AVIS-' . $document->getId());
+                        $updatedEntries++;
+                        if ($logDetails) {
+                            $this->logger->info(sprintf('  ✓ Référence mise à jour pour avis: %s', $document->getName()));
+                        }
+                    }
+                } else {
+                    // Créer une nouvelle écriture
+                    $entry = new \App\Entity\AccountingEntry();
+                    $entry->setEntryDate($payment->getDueDate());
+                    $entry->setDescription('Avis d\'échéance - ' . $document->getName());
+                    $entry->setAmount($payment->getAmount());
+                    $entry->setType('CREDIT');
+                    $entry->setCategory('LOYER_ATTENDU');
+                    $entry->setReference('AVIS-' . $document->getId());
+                    $entry->setProperty($payment->getProperty());
+                    $entry->setOwner($payment->getProperty()?->getOwner());
+                    $entry->setPayment($payment);
+                    $entry->setNotes('Généré automatiquement lors de la synchronisation');
+
+                    $this->entityManager->persist($entry);
+                    $createdEntries++;
+                    if ($logDetails) {
+                        $this->logger->info(sprintf('  ✓ Écriture créée pour avis: %s', $document->getName()));
+                    }
+                }
+            }
+        }
+
+        // Sauvegarder les modifications
+        $this->entityManager->flush();
+
+        $this->logger->info(sprintf('Synchronisation terminée: %d écritures créées, %d écritures mises à jour',
+            $createdEntries, $updatedEntries));
+
+        // Mettre à jour le résultat de la tâche
+        $task->setResult(sprintf('Synchronisation terminée: %d écritures créées, %d écritures mises à jour',
+            $createdEntries, $updatedEntries));
+    }
+
+    /**
+     * Exécute la tâche de création d'environnements de démo
+     */
+    private function executeDemoCreateTask(Task $task): void
+    {
+        $parameters = $task->getParameters();
+        $defaultDays = $parameters['default_days'] ?? 14;
+        $autoCleanup = $parameters['auto_cleanup'] ?? true;
+        $logDetails = $parameters['log_details'] ?? true;
+
+        $this->logger->info('Début de la création d\'environnements de démo', [
+            'default_days' => $defaultDays,
+            'auto_cleanup' => $autoCleanup,
+            'log_details' => $logDetails
+        ]);
+
+        try {
+            // Vérifier si le service DemoEnvironmentService est disponible
+            if (!$this->demoEnvironmentService) {
+                $this->logger->warning('DemoEnvironmentService non disponible - tâche de démo ignorée');
+                $task->setResult('DemoEnvironmentService non disponible - tâche ignorée');
+                return;
+            }
+
+            // Nettoyer les environnements expirés si activé
+            if ($autoCleanup) {
+                $this->logger->info('Nettoyage automatique des environnements expirés...');
+                try {
+                    $cleanupResult = $this->demoEnvironmentService->cleanupExpiredDemos();
+
+                    if ($logDetails) {
+                        $this->logger->info(sprintf('Nettoyage terminé: %d environnements supprimés', $cleanupResult['cleaned_count']));
+                    }
+                } catch (\Exception $e) {
+                    $this->logger->error('Erreur lors du nettoyage: ' . $e->getMessage());
+                }
+            }
+
+            // Récupérer les utilisateurs qui pourraient avoir besoin d'un environnement de démo
+            $users = $this->entityManager->getRepository(User::class)
+                ->createQueryBuilder('u')
+                ->where('u.roles LIKE :role')
+                ->setParameter('role', '%ROLE_ADMIN%')
+                ->getQuery()
+                ->getResult();
+
+            $this->logger->info(sprintf('Trouvé %d utilisateurs avec le rôle ADMIN', count($users)));
+
+            $createdDemos = 0;
+            $skippedDemos = 0;
+            $errors = 0;
+
+            foreach ($users as $user) {
+                try {
+                    // Vérifier si l'EntityManager est fermé et le rouvrir si nécessaire
+                    if (!$this->entityManager->isOpen()) {
+                        $this->entityManager = $this->entityManager->create(
+                            $this->entityManager->getConnection(),
+                            $this->entityManager->getConfiguration()
+                        );
+                    }
+
+                    // Vérifier d'abord dans la base de données si l'utilisateur a déjà une organisation démo
+                    $existingOrg = $this->entityManager->getRepository(\App\Entity\Organization::class)
+                        ->createQueryBuilder('o')
+                        ->where('o.isDemo = :demo')
+                        ->andWhere('o.name LIKE :userName')
+                        ->setParameter('demo', true)
+                        ->setParameter('userName', '%' . $user->getFullName() . '%')
+                        ->getQuery()
+                        ->getOneOrNullResult();
+
+                    if ($existingOrg) {
+                        $skippedDemos++;
+                        if ($logDetails) {
+                            $this->logger->info(sprintf('Utilisateur %s a déjà une organisation démo existante: %s',
+                                $user->getEmail(),
+                                $existingOrg->getName()
+                            ));
+                        }
+                        continue;
+                    }
+
+                    // Vérifier aussi via le service DemoEnvironmentService
+                    $existingDemo = $this->demoEnvironmentService->getUserActiveDemo($user);
+
+                    if ($existingDemo) {
+                        $skippedDemos++;
+                        if ($logDetails) {
+                            $this->logger->info(sprintf('Utilisateur %s a déjà un environnement de démo actif via le service', $user->getEmail()));
+                        }
+                        continue;
+                    }
+
+                    // Créer l'environnement de démo
+                    $demoResult = $this->demoEnvironmentService->createDemoEnvironmentWithUrl($user);
+
+                    if ($demoResult['success']) {
+                        $createdDemos++;
+
+                        if ($logDetails) {
+                            $this->logger->info(sprintf('✅ Environnement de démo créé pour %s: %s',
+                                $user->getEmail(),
+                                $demoResult['demo_url'] ?? 'URL non disponible'
+                            ));
+                        }
+                    } else {
+                        $errors++;
+                        $this->logger->error(sprintf('❌ Échec de création de démo pour %s: %s',
+                            $user->getEmail(),
+                            $demoResult['message'] ?? 'Erreur inconnue'
+                        ));
+                    }
+
+                } catch (\Exception $e) {
+                    $errors++;
+                    $this->logger->error(sprintf('❌ Erreur lors de la création de démo pour %s: %s',
+                        $user->getEmail(),
+                        $e->getMessage()
+                    ));
+                    // Continuer avec les autres utilisateurs même si une erreur se produit
+                    continue;
+                }
+            }
+
+            $this->logger->info(sprintf('Création d\'environnements de démo terminée: %d créés, %d ignorés, %d erreurs',
+                $createdDemos, $skippedDemos, $errors));
+
+            // Mettre à jour le résultat de la tâche
+            $task->setResult(sprintf('Création terminée: %d environnements créés, %d ignorés, %d erreurs. Nettoyage automatique: %s',
+                $createdDemos, $skippedDemos, $errors, $autoCleanup ? 'activé' : 'désactivé'));
+
+        } catch (\Exception $e) {
+            $this->logger->error(sprintf('❌ Erreur lors de la création d\'environnements de démo: %s', $e->getMessage()));
+            $task->setResult('Erreur: ' . $e->getMessage());
+            throw $e;
+        }
     }
 }

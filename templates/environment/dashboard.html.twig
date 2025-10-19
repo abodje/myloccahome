@@ -1,0 +1,212 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ environment.name }} - Dashboard{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <!-- En-tête de l'environnement -->
+    <div class="row bg-primary text-white py-3 mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h3 mb-0">
+                        <i class="bi bi-server me-2"></i>
+                        {{ environment.name }}
+                    </h1>
+                    <p class="mb-0 opacity-75">
+                        Environnement {{ environment.type|lower }} - Code: {{ environment.subdomain }}
+                    </p>
+                </div>
+                <div class="text-end">
+                    <span class="badge bg-success fs-6">
+                        <i class="bi bi-check-circle me-1"></i>
+                        Actif
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistiques de l'environnement -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h4 class="text-primary">{{ environment.organization.name }}</h4>
+                    <small class="text-muted">Organisation</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h4 class="text-success">{{ environment.type }}</h4>
+                    <small class="text-muted">Type</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h4 class="text-info">{{ environment.subdomain }}</h4>
+                    <small class="text-muted">Code</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h4 class="text-warning">
+                        {% if environment.version %}
+                            {{ environment.version }}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </h4>
+                    <small class="text-muted">Version</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Actions rapides -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Actions rapides</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="d-grid">
+                                <a href="{{ path('app_property_index') }}" class="btn btn-primary">
+                                    <i class="bi bi-building me-2"></i>
+                                    Mes biens
+                                </a>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="d-grid">
+                                <a href="{{ path('app_tenant_index') }}" class="btn btn-success">
+                                    <i class="bi bi-people me-2"></i>
+                                    Locataires
+                                </a>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="d-grid">
+                                <a href="{{ path('app_payment_index') }}" class="btn btn-warning">
+                                    <i class="bi bi-credit-card me-2"></i>
+                                    Paiements
+                                </a>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="d-grid">
+                                <a href="{{ path('app_accounting_index') }}" class="btn btn-info">
+                                    <i class="bi bi-calculator me-2"></i>
+                                    Comptabilité
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Informations de l'environnement -->
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Informations de l'environnement</h5>
+                </div>
+                <div class="card-body">
+                    <dl class="row">
+                        <dt class="col-sm-3">Nom :</dt>
+                        <dd class="col-sm-9">{{ environment.name }}</dd>
+
+                        <dt class="col-sm-3">Type :</dt>
+                        <dd class="col-sm-9">
+                            {% if environment.type == 'PRODUCTION' %}
+                                <span class="badge bg-danger">Production</span>
+                            {% elseif environment.type == 'STAGING' %}
+                                <span class="badge bg-warning">Staging</span>
+                            {% else %}
+                                <span class="badge bg-info">Développement</span>
+                            {% endif %}
+                        </dd>
+
+                        <dt class="col-sm-3">Code :</dt>
+                        <dd class="col-sm-9">
+                            <code>{{ environment.subdomain }}</code>
+                        </dd>
+
+                        <dt class="col-sm-3">URL :</dt>
+                        <dd class="col-sm-9">
+                            <a href="{{ path('app_environment_redirect', {'envCode': environment.subdomain}) }}" target="_blank" class="text-decoration-none">
+                                {{ app.request.schemeAndHttpHost }}/env/{{ environment.subdomain }}
+                                <i class="bi bi-box-arrow-up-right ms-1"></i>
+                            </a>
+                        </dd>
+
+                        <dt class="col-sm-3">Organisation :</dt>
+                        <dd class="col-sm-9">{{ environment.organization.name }}</dd>
+
+                        {% if environment.description %}
+                            <dt class="col-sm-3">Description :</dt>
+                            <dd class="col-sm-9">{{ environment.description }}</dd>
+                        {% endif %}
+                    </dl>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="card-title mb-0">
+                        <i class="bi bi-info-circle me-2"></i>
+                        Détails
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <dl class="row small">
+                        <dt class="col-sm-6">Créé le :</dt>
+                        <dd class="col-sm-6">{{ environment.createdAt|date('d/m/Y H:i') }}</dd>
+
+                        <dt class="col-sm-6">Modifié le :</dt>
+                        <dd class="col-sm-6">
+                            {% if environment.updatedAt %}
+                                {{ environment.updatedAt|date('d/m/Y H:i') }}
+                            {% else %}
+                                <span class="text-muted">Jamais</span>
+                            {% endif %}
+                        </dd>
+
+                        <dt class="col-sm-6">Dernier déploiement :</dt>
+                        <dd class="col-sm-6">
+                            {% if environment.lastDeployedAt %}
+                                {{ environment.lastDeployedAt|date('d/m/Y H:i') }}
+                            {% else %}
+                                <span class="text-muted">Jamais</span>
+                            {% endif %}
+                        </dd>
+
+                        <dt class="col-sm-6">SSL activé :</dt>
+                        <dd class="col-sm-6">
+                            {% if environment.sslEnabled %}
+                                <span class="badge bg-success">Oui</span>
+                            {% else %}
+                                <span class="badge bg-secondary">Non</span>
+                            {% endif %}
+                        </dd>
+                    </dl>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

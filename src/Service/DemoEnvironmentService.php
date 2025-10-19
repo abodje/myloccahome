@@ -86,12 +86,39 @@ class DemoEnvironmentService
      */
     public function createDemoEnvironment(User $user): array
     {
-        $subdomain = $this->generateSubdomain($user);
-        $demoUrl = "https://{$subdomain}.{$this->demoBaseUrl}";
+        // Vérifier si l'EntityManager est fermé et le rouvrir si nécessaire
+        if (!$this->entityManager->isOpen()) {
+            $this->entityManager = $this->entityManager->create(
+                $this->entityManager->getConnection(),
+                $this->entityManager->getConfiguration()
+            );
+        }
+
+        // Démarrer une transaction pour assurer la cohérence
+        $this->entityManager->beginTransaction();
 
         try {
-            // Utiliser un EntityManager frais pour éviter les problèmes de fermeture
-            $this->entityManager->clear();
+            // Vérifier d'abord si l'utilisateur a déjà une organisation démo
+            $existingOrg = $this->entityManager->getRepository(\App\Entity\Organization::class)
+                ->createQueryBuilder('o')
+                ->where('o.isDemo = :demo')
+                ->andWhere('o.name LIKE :userName')
+                ->setParameter('demo', true)
+                ->setParameter('userName', '%' . $user->getFullName() . '%')
+                ->getQuery()
+                ->getOneOrNullResult();
+
+            if ($existingOrg) {
+                $this->entityManager->rollback();
+                return [
+                    'success' => false,
+                    'error' => 'Vous avez déjà une organisation démo existante',
+                    'message' => 'Vous avez déjà une organisation démo. Supprimez-la d\'abord pour en créer une nouvelle.'
+                ];
+            }
+
+            $subdomain = $this->generateSubdomain($user);
+            $demoUrl = "https://{$subdomain}.{$this->demoBaseUrl}";
 
             // 1. Créer l'organisation de démo
             $organization = $this->createDemoOrganization($user, $subdomain);
@@ -108,6 +135,9 @@ class DemoEnvironmentService
             // 5. Configurer l'environnement
             $this->configureDemoEnvironment($subdomain, $demoUrl);
 
+            // Valider la transaction
+            $this->entityManager->commit();
+
             return [
                 'success' => true,
                 'subdomain' => $subdomain,
@@ -119,6 +149,11 @@ class DemoEnvironmentService
             ];
 
         } catch (\Exception $e) {
+            // Annuler la transaction en cas d'erreur
+            if ($this->entityManager->getConnection()->isTransactionActive()) {
+                $this->entityManager->rollback();
+            }
+
             // Log l'erreur complète
             error_log('Erreur DemoEnvironmentService: ' . $e->getMessage());
             error_log('Stack trace: ' . $e->getTraceAsString());
@@ -192,6 +227,14 @@ class DemoEnvironmentService
      */
     private function assignUserToOrganization(User $user, Organization $organization, Company $company): void
     {
+        // Récupérer l'utilisateur depuis la base de données pour éviter les conflits
+        $userId = $user->getId();
+        $user = $this->entityManager->getRepository(User::class)->find($userId);
+
+        if (!$user) {
+            throw new \Exception('Utilisateur introuvable lors de l\'assignation à l\'organisation');
+        }
+
         $user->setOrganization($organization);
         $user->setCompany($company);
         $user->setRoles(['ROLE_ADMIN']); // Admin de son environnement de démo
@@ -203,7 +246,7 @@ class DemoEnvironmentService
     /**
      * Crée des données de démo réalistes
      */
-    private function createDemoData(Organization $organization, Company $company): array
+    public function createDemoData(Organization $organization, Company $company): array
     {
         $demoData = [];
 
@@ -246,8 +289,11 @@ class DemoEnvironmentService
         for ($i = 0; $i < 5; $i++) {
             $property = new Property();
             $property->setAddress($addresses[$i]);
+            $property->setCity('Paris'); // Ajouter la ville
+            $property->setPostalCode('75001'); // Ajouter le code postal
             $property->setMonthlyRent($rents[$i]); // Utiliser setMonthlyRent au lieu de setRentAmount
             $property->setSurface($surfaces[$i]);
+            $property->setRooms(2 + $i); // Ajouter le nombre de pièces
             $property->setPropertyType('Appartement'); // Utiliser setPropertyType au lieu de setType
             $property->setDescription("Appartement de démo - {$surfaces[$i]}m²");
             $property->setOrganization($organization);
@@ -271,24 +317,31 @@ class DemoEnvironmentService
     {
         $tenants = [];
         $tenantData = [
-            ['Jean', 'Dupont', 'jean.dupont@demo.com', '0123456789'],
-            ['Marie', 'Martin', 'marie.martin@demo.com', '0123456788'],
-            ['Pierre', 'Durand', 'pierre.durand@demo.com', '0123456787'],
-            ['Sophie', 'Bernard', 'sophie.bernard@demo.com', '0123456786'],
-            ['Luc', 'Moreau', 'luc.moreau@demo.com', '0123456785']
+            ['Jean', 'Dupont', '0123456789'],
+            ['Marie', 'Martin', '0123456788'],
+            ['Pierre', 'Durand', '0123456787'],
+            ['Sophie', 'Bernard', '0123456786'],
+            ['Luc', 'Moreau', '0123456785']
         ];
 
-        foreach ($tenantData as $data) {
+        // Générer un suffixe unique basé sur l'organisation
+        $orgSuffix = substr(md5($organization->getId() . time()), 0, 6);
+
+        foreach ($tenantData as $index => $data) {
             $tenant = new Tenant();
             $tenant->setFirstName($data[0]);
             $tenant->setLastName($data[1]);
-            $tenant->setEmail($data[2]);
-            $tenant->setPhone($data[3]);
+
+            // Générer un email unique pour chaque tenant
+            $email = strtolower($data[0] . '.' . $data[1] . '.' . $orgSuffix . '@demo.com');
+            $tenant->setEmail($email);
+
+            $tenant->setPhone($data[2]);
             $tenant->setOrganization($organization);
             $tenant->setCompany($company);
             $tenant->setIsDemo(true);
             $tenant->setCreatedAt(new \DateTime());
-            $tenant->setStatus('Actif'); // Utiliser le statut correct
+            $tenant->setStatus('Actif');
 
             $this->entityManager->persist($tenant);
             $tenants[] = $tenant;
@@ -731,14 +784,22 @@ EOF;
 
         $environments = [];
         foreach ($organizations as $org) {
+            $subdomain = $org->getSubdomain();
+
+            // Générer une URL de démo seulement si le subdomain existe
+            $demoUrl = null;
+            if ($subdomain) {
+                $demoUrl = $this->generateDemoUrl($subdomain);
+            }
+
             $environments[] = [
                 'id' => $org->getId(),
-                'subdomain' => $org->getSubdomain(),
+                'subdomain' => $subdomain,
                 'name' => $org->getName(),
                 'email' => $org->getEmail(),
                 'created_at' => $org->getCreatedAt(),
                 'updated_at' => $org->getUpdatedAt(),
-                'demo_url' => "https://{$org->getSubdomain()}.{$this->demoBaseUrl}",
+                'demo_url' => $demoUrl,
                 'status' => $org->getStatus(),
                 'is_active' => $org->isActive(),
                 'trial_ends_at' => $org->getTrialEndsAt(),
@@ -927,5 +988,342 @@ EOF;
             'expiring_soon' => $expiringSoon,
             'cleanup_needed' => $expiredDemos > 0
         ];
+    }
+
+    /**
+     * Crée un environnement de démo avec URL paramétrique
+     */
+    public function createDemoEnvironmentWithUrl(User $user): array
+    {
+        // Vérifier si l'EntityManager est fermé et le rouvrir si nécessaire
+        if (!$this->entityManager->isOpen()) {
+            $this->entityManager = $this->entityManager->create(
+                $this->entityManager->getConnection(),
+                $this->entityManager->getConfiguration()
+            );
+        }
+
+        // Démarrer une transaction pour assurer la cohérence
+        $this->entityManager->beginTransaction();
+
+        try {
+            // Générer un code unique pour la démo
+            $demoCode = $this->generateDemoCode();
+
+            // Vérifier si l'utilisateur a déjà une démo active
+            $existingDemo = $this->getUserActiveDemo($user);
+            if ($existingDemo) {
+                $this->entityManager->rollback();
+                return [
+                    'success' => false,
+                    'message' => 'Vous avez déjà une démo active. Supprimez-la d\'abord pour en créer une nouvelle.',
+                    'demo_code' => null
+                ];
+            }
+
+            // Créer l'organisation de démo
+            $organization = $this->createDemoOrganization($user, $demoCode);
+
+            // Créer la société de démo
+            $company = $this->createDemoCompany($organization, $demoCode);
+
+            // Créer les données de démo
+            $this->createDemoData($organization, $company);
+
+            // Enregistrer les informations de la démo
+            $this->saveDemoInfo($demoCode, $user, $organization, $company);
+
+            // Générer l'URL de la démo
+            $demoUrl = $this->generateDemoUrl($demoCode);
+
+            // Valider la transaction
+            $this->entityManager->commit();
+
+            return [
+                'success' => true,
+                'message' => sprintf('Démo créée avec succès ! Votre URL de démo : %s', $demoUrl),
+                'demo_code' => $demoCode,
+                'demo_url' => $demoUrl,
+                'organization' => $organization,
+                'company' => $company
+            ];
+
+        } catch (\Exception $e) {
+            // Annuler la transaction en cas d'erreur
+            if ($this->entityManager->getConnection()->isTransactionActive()) {
+                $this->entityManager->rollback();
+            }
+
+            $this->logger->error('Erreur lors de la création de la démo avec URL', [
+                'user' => $user->getEmail(),
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return [
+                'success' => false,
+                'message' => 'Erreur lors de la création de la démo : ' . $e->getMessage(),
+                'demo_code' => null
+            ];
+        }
+    }
+
+    /**
+     * Génère un code unique pour la démo
+     */
+    private function generateDemoCode(): string
+    {
+        do {
+            $code = strtoupper(substr(md5(uniqid(rand(), true)), 0, 8));
+        } while ($this->demoCodeExists($code));
+
+        return $code;
+    }
+
+    /**
+     * Vérifie si un code de démo existe déjà
+     */
+    private function demoCodeExists(string $code): bool
+    {
+        $demoInfoFile = $this->demoDataDir . '/demo_' . $code . '.json';
+        return file_exists($demoInfoFile);
+    }
+
+    /**
+     * Récupère une démo par son code
+     */
+    public function getDemoByCode(string $demoCode): ?array
+    {
+        // D'abord, essayer de récupérer depuis le fichier JSON
+        $demoInfoFile = $this->demoDataDir . '/demo_' . $demoCode . '.json';
+
+        if (file_exists($demoInfoFile)) {
+            $demoData = json_decode(file_get_contents($demoInfoFile), true);
+
+            if ($demoData) {
+                // Récupérer l'organisation et l'utilisateur depuis la base de données
+                $organization = $this->entityManager->getRepository(Organization::class)->find($demoData['organization_id']);
+                $user = $this->entityManager->getRepository(User::class)->find($demoData['user_id']);
+
+                if ($organization && $user) {
+                    return array_merge($demoData, [
+                        'organization' => $organization,
+                        'user' => $user,
+                        'demo_code' => $demoCode
+                    ]);
+                }
+            }
+        }
+
+        // Si pas de fichier JSON ou données corrompues, essayer de récupérer directement depuis la DB
+        $organization = $this->entityManager->getRepository(Organization::class)
+            ->findOneBy(['subdomain' => $demoCode, 'isDemo' => true]);
+
+        if (!$organization) {
+            return null;
+        }
+
+        $user = $this->entityManager->getRepository(User::class)
+            ->findOneBy(['organization' => $organization]);
+
+        if (!$user) {
+            return null;
+        }
+
+        return [
+            'demo_code' => $demoCode,
+            'organization' => $organization,
+            'user' => $user,
+            'organization_id' => $organization->getId(),
+            'user_id' => $user->getId(),
+            'created_at' => $organization->getCreatedAt() ? $organization->getCreatedAt()->format('Y-m-d H:i:s') : null,
+            'expires_at' => $organization->getTrialEndsAt() ? $organization->getTrialEndsAt()->format('Y-m-d H:i:s') : null
+        ];
+    }
+
+    /**
+     * Vérifie si une démo est active
+     */
+    public function isDemoActive(array $demo): bool
+    {
+        if (!isset($demo['organization'])) {
+            return false;
+        }
+
+        $organization = $demo['organization'];
+
+        if (!$organization->getIsDemo()) {
+            return false;
+        }
+
+        $now = new \DateTime();
+        return $organization->getTrialEndsAt() && $organization->getTrialEndsAt() > $now;
+    }
+
+    /**
+     * Génère l'URL de la démo
+     */
+    private function generateDemoUrl(string $demoCode): string
+    {
+        $request = $this->requestStack->getCurrentRequest();
+        $scheme = $request ? $request->getScheme() : 'https';
+        $host = $request ? $request->getHost() : 'localhost';
+        $port = $request && $request->getPort() !== 80 && $request->getPort() !== 443 ? ':' . $request->getPort() : '';
+
+        return sprintf('%s://%s%s/demo/%s', $scheme, $host, $port, $demoCode);
+    }
+
+    /**
+     * Sauvegarde les informations de la démo
+     */
+    private function saveDemoInfo(string $demoCode, User $user, Organization $organization, Company $company): void
+    {
+        $demoInfo = [
+            'demo_code' => $demoCode,
+            'user_id' => $user->getId(),
+            'organization_id' => $organization->getId(),
+            'company_id' => $company->getId(),
+            'created_at' => (new \DateTime())->format('Y-m-d H:i:s'),
+            'expires_at' => $organization->getTrialEndsAt() ? $organization->getTrialEndsAt()->format('Y-m-d H:i:s') : null,
+            'demo_url' => $this->generateDemoUrl($demoCode)
+        ];
+
+        $demoInfoFile = $this->demoDataDir . '/demo_' . $demoCode . '.json';
+        file_put_contents($demoInfoFile, json_encode($demoInfo, JSON_PRETTY_PRINT));
+    }
+
+    /**
+     * Récupère les démos d'un utilisateur
+     */
+    public function getUserDemos(User $user): array
+    {
+        $demos = [];
+        $files = glob($this->demoDataDir . '/demo_*.json');
+
+        foreach ($files as $file) {
+            $demoData = json_decode(file_get_contents($file), true);
+
+            if ($demoData && $demoData['user_id'] === $user->getId()) {
+                $demo = $this->getDemoByCode($demoData['demo_code']);
+                if ($demo) {
+                    $demos[] = $demo;
+                }
+            }
+        }
+
+        return $demos;
+    }
+
+    /**
+     * Récupère la démo active d'un utilisateur
+     */
+    public function getUserActiveDemo(User $user): ?array
+    {
+        $demos = $this->getUserDemos($user);
+
+        foreach ($demos as $demo) {
+            if ($this->isDemoActive($demo)) {
+                return $demo;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Connecte l'utilisateur à l'environnement de démo
+     */
+    public function loginToDemoEnvironment(User $user, string $demoCode): void
+    {
+        // Cette méthode sera implémentée selon le système d'authentification
+        // Pour l'instant, on peut juste stocker le code de démo en session
+        $request = $this->requestStack->getCurrentRequest();
+        if ($request) {
+            $request->getSession()->set('demo_code', $demoCode);
+            $request->getSession()->set('demo_user_id', $user->getId());
+        }
+    }
+
+    /**
+     * Supprime une démo
+     */
+    public function deleteDemo(string $demoCode): array
+    {
+        try {
+            $demo = $this->getDemoByCode($demoCode);
+
+            if (!$demo) {
+                return [
+                    'success' => false,
+                    'message' => 'Démo introuvable'
+                ];
+            }
+
+            // Supprimer l'organisation et toutes les données associées
+            if (isset($demo['organization'])) {
+                $this->entityManager->remove($demo['organization']);
+                $this->entityManager->flush();
+            }
+
+            // Supprimer le fichier d'information de la démo
+            $demoInfoFile = $this->demoDataDir . '/demo_' . $demoCode . '.json';
+            if (file_exists($demoInfoFile)) {
+                unlink($demoInfoFile);
+            }
+
+            return [
+                'success' => true,
+                'message' => 'Démo supprimée avec succès'
+            ];
+
+        } catch (\Exception $e) {
+            return [
+                'success' => false,
+                'message' => 'Erreur lors de la suppression : ' . $e->getMessage()
+            ];
+        }
+    }
+
+    /**
+     * Prolonge une démo
+     */
+    public function extendDemo(string $demoCode, int $days = 7): array
+    {
+        try {
+            $demo = $this->getDemoByCode($demoCode);
+
+            if (!$demo) {
+                return [
+                    'success' => false,
+                    'message' => 'Démo introuvable'
+                ];
+            }
+
+            $organization = $demo['organization'];
+            $currentEndDate = $organization->getTrialEndsAt() ?: new \DateTime();
+            $newEndDate = (clone $currentEndDate)->add(new \DateInterval('P' . $days . 'D'));
+
+            $organization->setTrialEndsAt($newEndDate);
+            $this->entityManager->flush();
+
+            // Mettre à jour le fichier d'information
+            $demoInfoFile = $this->demoDataDir . '/demo_' . $demoCode . '.json';
+            if (file_exists($demoInfoFile)) {
+                $demoInfo = json_decode(file_get_contents($demoInfoFile), true);
+                $demoInfo['expires_at'] = $newEndDate->format('Y-m-d H:i:s');
+                file_put_contents($demoInfoFile, json_encode($demoInfo, JSON_PRETTY_PRINT));
+            }
+
+            return [
+                'success' => true,
+                'message' => sprintf('Démo prolongée de %d jours. Nouvelle date offerte : %s', $days, $newEndDate->format('d/m/Y'))
+            ];
+
+        } catch (\Exception $e) {
+            return [
+                'success' => false,
+                'message' => 'Erreur lors de la prolongation : ' . $e->getMessage()
+            ];
+        }
     }
 }

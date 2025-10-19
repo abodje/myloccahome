@@ -1,0 +1,243 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ environment.name }} - Administration{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-0">
+                <i class="bi bi-server me-2"></i>
+                {{ environment.name }}
+            </h1>
+            <p class="text-muted mb-0">{{ environment.organization.name }}</p>
+        </div>
+        <div class="btn-group">
+            <a href="{{ path('app_admin_environment_edit', {'id': environment.id}) }}" class="btn btn-outline-secondary">
+                <i class="bi bi-pencil me-2"></i>
+                Modifier
+            </a>
+            {% if environment.status == 'ACTIVE' %}
+                <form method="post" action="{{ path('app_admin_environment_deploy', {'id': environment.id}) }}" class="d-inline">
+                    <button type="submit" class="btn btn-outline-success"
+                            onclick="return confirm('Déployer une nouvelle version ?')">
+                        <i class="bi bi-arrow-clockwise me-2"></i>
+                        Déployer
+                    </button>
+                </form>
+            {% endif %}
+            <a href="{{ path('app_admin_environment_index') }}" class="btn btn-outline-primary">
+                <i class="bi bi-arrow-left me-2"></i>
+                Retour
+            </a>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8">
+            <!-- Informations générales -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Informations générales</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <dl class="row">
+                                <dt class="col-sm-4">Nom :</dt>
+                                <dd class="col-sm-8">{{ environment.name }}</dd>
+
+                                <dt class="col-sm-4">Type :</dt>
+                                <dd class="col-sm-8">
+                                    {% if environment.type == 'PRODUCTION' %}
+                                        <span class="badge bg-danger">Production</span>
+                                    {% elseif environment.type == 'STAGING' %}
+                                        <span class="badge bg-warning">Staging</span>
+                                    {% else %}
+                                        <span class="badge bg-info">Développement</span>
+                                    {% endif %}
+                                </dd>
+
+                                <dt class="col-sm-4">Statut :</dt>
+                                <dd class="col-sm-8">
+                                    {% if environment.status == 'ACTIVE' %}
+                                        <span class="badge bg-success">Actif</span>
+                                    {% elseif environment.status == 'INACTIVE' %}
+                                        <span class="badge bg-secondary">Inactif</span>
+                                    {% elseif environment.status == 'SUSPENDED' %}
+                                        <span class="badge bg-warning">Suspendu</span>
+                                    {% elseif environment.status == 'CREATING' %}
+                                        <span class="badge bg-info">Création</span>
+                                    {% elseif environment.status == 'DEPLOYING' %}
+                                        <span class="badge bg-primary">Déploiement</span>
+                                    {% else %}
+                                        <span class="badge bg-danger">Erreur</span>
+                                    {% endif %}
+                                </dd>
+                            </dl>
+                        </div>
+                        <div class="col-md-6">
+                            <dl class="row">
+                                <dt class="col-sm-4">URL :</dt>
+                                <dd class="col-sm-8">
+                                    <a href="{{ path('app_environment_redirect', {'envCode': environment.subdomain}) }}" target="_blank" class="text-decoration-none">
+                                        {{ app.request.schemeAndHttpHost }}/env/{{ environment.subdomain }}
+                                        <i class="bi bi-box-arrow-up-right ms-1"></i>
+                                    </a>
+                                    <br>
+                                    <small class="text-muted">Code d'environnement : {{ environment.subdomain }}</small>
+                                </dd>
+
+                                <dt class="col-sm-4">Sous-domaine :</dt>
+                                <dd class="col-sm-8">{{ environment.subdomain }}</dd>
+
+                                <dt class="col-sm-4">Version :</dt>
+                                <dd class="col-sm-8">
+                                    {% if environment.version %}
+                                        <span class="badge bg-light text-dark">{{ environment.version }}</span>
+                                    {% else %}
+                                        <span class="text-muted">Non définie</span>
+                                    {% endif %}
+                                </dd>
+                            </dl>
+                        </div>
+                    </div>
+
+                    {% if environment.description %}
+                        <hr>
+                        <h6>Description :</h6>
+                        <p>{{ environment.description }}</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Actions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="d-grid">
+                                <a href="{{ path('app_environment_redirect', {'envCode': environment.subdomain}) }}" target="_blank" class="btn btn-primary">
+                                    <i class="bi bi-box-arrow-up-right me-2"></i>
+                                    Ouvrir l'environnement
+                                </a>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="d-grid">
+                                <form method="post" action="{{ path('app_admin_environment_toggle_status', {'id': environment.id}) }}">
+                                    <button type="submit" class="btn btn-warning">
+                                        {% if environment.status == 'ACTIVE' %}
+                                            <i class="bi bi-pause-circle me-2"></i>
+                                            Suspendre
+                                        {% else %}
+                                            <i class="bi bi-play-circle me-2"></i>
+                                            Activer
+                                        {% endif %}
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="d-grid">
+                                <a href="{{ path('app_admin_environment_logs', {'id': environment.id}) }}" class="btn btn-info">
+                                    <i class="bi bi-file-text me-2"></i>
+                                    Voir les logs
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <!-- Statistiques -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6 class="card-title mb-0">
+                        <i class="bi bi-graph-up me-2"></i>
+                        Statistiques
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <dl class="row small">
+                        <dt class="col-sm-6">Créé le :</dt>
+                        <dd class="col-sm-6">{{ environment.createdAt|date('d/m/Y H:i') }}</dd>
+
+                        <dt class="col-sm-6">Modifié le :</dt>
+                        <dd class="col-sm-6">
+                            {% if environment.updatedAt %}
+                                {{ environment.updatedAt|date('d/m/Y H:i') }}
+                            {% else %}
+                                <span class="text-muted">Jamais</span>
+                            {% endif %}
+                        </dd>
+
+                        <dt class="col-sm-6">Dernier déploiement :</dt>
+                        <dd class="col-sm-6">
+                            {% if environment.lastDeployedAt %}
+                                {{ environment.lastDeployedAt|date('d/m/Y H:i') }}
+                            {% else %}
+                                <span class="text-muted">Jamais</span>
+                            {% endif %}
+                        </dd>
+
+                        <dt class="col-sm-6">SSL activé :</dt>
+                        <dd class="col-sm-6">
+                            {% if environment.sslEnabled %}
+                                <span class="badge bg-success">Oui</span>
+                            {% else %}
+                                <span class="badge bg-secondary">Non</span>
+                            {% endif %}
+                        </dd>
+                    </dl>
+                </div>
+            </div>
+
+            <!-- Configuration -->
+            {% if environment.configuration %}
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h6 class="card-title mb-0">
+                            <i class="bi bi-gear me-2"></i>
+                            Configuration
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        {% for key, value in environment.configuration %}
+                            <div class="mb-2">
+                                <strong>{{ key }}:</strong>
+                                <span class="text-muted">{{ value }}</span>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endif %}
+
+            <!-- Variables d'environnement -->
+            {% if environment.environmentVariables %}
+                <div class="card">
+                    <div class="card-header">
+                        <h6 class="card-title mb-0">
+                            <i class="bi bi-code-square me-2"></i>
+                            Variables d'environnement
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        {% for key, value in environment.environmentVariables %}
+                            <div class="mb-2">
+                                <strong>{{ key }}:</strong>
+                                <span class="text-muted">{{ value }}</span>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,150 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Modifier {{ environment.name }} - Administration{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0">
+            <i class="bi bi-pencil me-2"></i>
+            Modifier {{ environment.name }}
+        </h1>
+        <a href="{{ path('app_admin_environment_show', {'id': environment.id}) }}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-2"></i>
+            Retour
+        </a>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Modification de l'environnement</h5>
+                </div>
+                <div class="card-body">
+                    {{ form_start(form) }}
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form_label(form.name) }}
+                                {{ form_widget(form.name) }}
+                                {{ form_errors(form.name) }}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form_label(form.type) }}
+                                {{ form_widget(form.type) }}
+                                {{ form_errors(form.type) }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        {{ form_label(form.description) }}
+                        {{ form_widget(form.description) }}
+                        {{ form_errors(form.description) }}
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form_label(form.domain) }}
+                                {{ form_widget(form.domain) }}
+                                {{ form_errors(form.domain) }}
+                                {% if form.domain.vars.help %}
+                                    <div class="form-text">{{ form.domain.vars.help }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <div class="form-check">
+                                    {{ form_widget(form.sslEnabled) }}
+                                    {{ form_label(form.sslEnabled) }}
+                                </div>
+                                {{ form_errors(form.sslEnabled) }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-2">
+                        <a href="{{ path('app_admin_environment_show', {'id': environment.id}) }}" class="btn btn-secondary">
+                            Annuler
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-circle me-2"></i>
+                            Enregistrer les modifications
+                        </button>
+                    </div>
+
+                    {{ form_end(form) }}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="card-title mb-0">
+                        <i class="bi bi-info-circle me-2"></i>
+                        Informations actuelles
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <dl class="row small">
+                        <dt class="col-sm-6">Code :</dt>
+                        <dd class="col-sm-6">
+                            <code>{{ environment.subdomain }}</code>
+                            <small class="text-muted d-block">Non modifiable</small>
+                        </dd>
+
+                        <dt class="col-sm-6">Statut :</dt>
+                        <dd class="col-sm-6">
+                            {% if environment.status == 'ACTIVE' %}
+                                <span class="badge bg-success">Actif</span>
+                            {% elseif environment.status == 'INACTIVE' %}
+                                <span class="badge bg-secondary">Inactif</span>
+                            {% elseif environment.status == 'SUSPENDED' %}
+                                <span class="badge bg-warning">Suspendu</span>
+                            {% else %}
+                                <span class="badge bg-info">{{ environment.status }}</span>
+                            {% endif %}
+                        </dd>
+
+                        <dt class="col-sm-6">Organisation :</dt>
+                        <dd class="col-sm-6">{{ environment.organization.name }}</dd>
+
+                        <dt class="col-sm-6">Créé le :</dt>
+                        <dd class="col-sm-6">{{ environment.createdAt|date('d/m/Y H:i') }}</dd>
+
+                        <dt class="col-sm-6">URL actuelle :</dt>
+                        <dd class="col-sm-6">
+                            <a href="{{ path('app_environment_redirect', {'envCode': environment.subdomain}) }}" target="_blank" class="text-decoration-none">
+                                /env/{{ environment.subdomain }}
+                                <i class="bi bi-box-arrow-up-right ms-1"></i>
+                            </a>
+                        </dd>
+                    </dl>
+                </div>
+            </div>
+
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h6 class="card-title mb-0">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        Attention
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-warning">
+                        <i class="bi bi-info-circle me-2"></i>
+                        <strong>Note :</strong> La modification de certains paramètres peut nécessiter un redéploiement de l'environnement.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

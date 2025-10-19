@@ -5,7 +5,9 @@ namespace App\Service;
 use App\Entity\Payment;
 use App\Entity\Document;
 use App\Entity\Lease;
+use App\Entity\AccountingEntry;
 use App\Repository\DocumentRepository;
+use App\Repository\AccountingEntryRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Dompdf\Dompdf;
 use Dompdf\Options;
@@ -21,6 +23,7 @@ class RentReceiptService
         private Environment $twig,
         private EntityManagerInterface $entityManager,
         private DocumentRepository $documentRepository,
+        private AccountingEntryRepository $accountingRepository,
         private SettingsService $settingsService,
         private ParameterBagInterface $params
     ) {
@@ -130,6 +133,9 @@ class RentReceiptService
         $this->entityManager->persist($document);
         $this->entityManager->flush();
 
+        // Créer automatiquement une écriture comptable pour la quittance
+        $this->createAccountingEntryForReceipt($document, $payment);
+
         return $document;
     }
 
@@ -230,6 +236,9 @@ class RentReceiptService
 
         $this->entityManager->persist($document);
         $this->entityManager->flush();
+
+        // Créer automatiquement une écriture comptable pour l'avis d'échéance
+        $this->createAccountingEntryForNotice($document, $payment);
 
         return $document;
     }
@@ -346,6 +355,68 @@ class RentReceiptService
     private function getProjectDir(): string
     {
         return $this->params->get('kernel.project_dir');
+    }
+
+    /**
+     * Crée une écriture comptable pour une quittance générée
+     */
+    private function createAccountingEntryForReceipt(Document $document, Payment $payment): void
+    {
+        // Vérifier si une écriture comptable existe déjà pour ce paiement
+        $existingEntry = $this->accountingRepository->findOneBy(['payment' => $payment]);
+        if ($existingEntry) {
+            // Mettre à jour la référence pour inclure le document
+            $existingEntry->setReference('QUITTANCE-' . $document->getId());
+            $this->entityManager->flush();
+            return;
+        }
+
+        // Créer une nouvelle écriture comptable
+        $entry = new AccountingEntry();
+        $entry->setEntryDate($payment->getPaidDate() ?? $payment->getDueDate());
+        $entry->setDescription('Quittance de loyer - ' . $document->getName());
+        $entry->setAmount($payment->getAmount());
+        $entry->setType('CREDIT'); // Les quittances sont des crédits (revenus)
+        $entry->setCategory('LOYER');
+        $entry->setReference('QUITTANCE-' . $document->getId());
+        $entry->setProperty($payment->getProperty());
+        $entry->setOwner($payment->getProperty()?->getOwner());
+        $entry->setPayment($payment);
+        $entry->setNotes('Généré automatiquement lors de la création de la quittance');
+
+        $this->entityManager->persist($entry);
+        $this->entityManager->flush();
+    }
+
+    /**
+     * Crée une écriture comptable pour un avis d'échéance généré
+     */
+    private function createAccountingEntryForNotice(Document $document, Payment $payment): void
+    {
+        // Vérifier si une écriture comptable existe déjà pour ce paiement
+        $existingEntry = $this->accountingRepository->findOneBy(['payment' => $payment]);
+        if ($existingEntry) {
+            // Mettre à jour la référence pour inclure le document
+            $existingEntry->setReference('AVIS-' . $document->getId());
+            $this->entityManager->flush();
+            return;
+        }
+
+        // Créer une nouvelle écriture comptable pour l'avis d'échéance
+        $entry = new AccountingEntry();
+        $entry->setEntryDate($payment->getDueDate());
+        $entry->setDescription('Avis d\'échéance - ' . $document->getName());
+        $entry->setAmount($payment->getAmount());
+        $entry->setType('CREDIT'); // Les avis d'échéance sont des crédits (revenus attendus)
+        $entry->setCategory('LOYER_ATTENDU');
+        $entry->setReference('AVIS-' . $document->getId());
+        $entry->setProperty($payment->getProperty());
+        $entry->setOwner($payment->getProperty()?->getOwner());
+        $entry->setPayment($payment);
+        $entry->setNotes('Généré automatiquement lors de la création de l\'avis d\'échéance');
+
+        $this->entityManager->persist($entry);
+        $this->entityManager->flush();
     }
 }
 

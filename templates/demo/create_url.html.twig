@@ -1,0 +1,110 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Créer une démo - MYLOCCA{% endblock %}
+
+{% block page_title %}
+    <h5 class="mb-0">
+        <i class="bi bi-rocket me-2"></i>
+        Créer une démo
+    </h5>
+{% endblock %}
+
+{% block body %}
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h6 class="mb-0">
+                        <i class="bi bi-plus-circle me-2"></i>
+                        Nouvelle démo
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle me-2"></i>
+                        <strong>Nouveau système d'URLs :</strong> Votre démo sera accessible via une URL unique comme
+                        <code>{{ app.request.getHost() }}/demo/ABC12345</code>
+                    </div>
+
+                    <form method="post">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Durée de la démo</label>
+                                    <select class="form-select" name="duration">
+                                        <option value="7">7 jours</option>
+                                        <option value="14" selected>14 jours</option>
+                                        <option value="30">30 jours</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Type de données</label>
+                                    <select class="form-select" name="data_type">
+                                        <option value="full" selected>Données complètes</option>
+                                        <option value="basic">Données de base</option>
+                                        <option value="minimal">Données minimales</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Description (optionnel)</label>
+                            <textarea class="form-control" name="description" rows="3" placeholder="Décrivez l'objectif de cette démo..."></textarea>
+                        </div>
+
+                        <div class="alert alert-warning">
+                            <i class="bi bi-exclamation-triangle me-2"></i>
+                            <strong>Attention :</strong> Si vous avez déjà une démo active, vous devrez la supprimer avant d'en créer une nouvelle.
+                        </div>
+
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-rocket me-2"></i>
+                                Créer la démo
+                            </button>
+                            <a href="{{ path('demo_my_demos') }}" class="btn btn-outline-secondary">
+                                <i class="bi bi-list me-2"></i>
+                                Mes démos
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Informations sur le nouveau système -->
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="bi bi-lightbulb me-2"></i>
+                        Nouveau système d'URLs
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6><i class="bi bi-check-circle text-success me-2"></i>Avantages</h6>
+                            <ul class="list-unstyled">
+                                <li><i class="bi bi-arrow-right me-2"></i>Plus besoin de sous-domaines</li>
+                                <li><i class="bi bi-arrow-right me-2"></i>Compatible avec tous les hébergements</li>
+                                <li><i class="bi bi-arrow-right me-2"></i>URLs plus simples à partager</li>
+                                <li><i class="bi bi-arrow-right me-2"></i>Facile à mémoriser</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h6><i class="bi bi-info-circle text-primary me-2"></i>Comment ça marche</h6>
+                            <ul class="list-unstyled">
+                                <li><i class="bi bi-1-circle me-2"></i>Un code unique est généré</li>
+                                <li><i class="bi bi-2-circle me-2"></i>L'URL est créée automatiquement</li>
+                                <li><i class="bi bi-3-circle me-2"></i>Partagez l'URL avec vos clients</li>
+                                <li><i class="bi bi-4-circle me-2"></i>Ils accèdent directement à la démo</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

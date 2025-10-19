@@ -11,6 +11,7 @@ use App\Repository\ExpenseRepository;
 use App\Repository\AccountingEntryRepository;
 use App\Repository\ConversationRepository;
 use App\Service\DashboardAnalyticsService;
+use App\Service\DemoDataFilterService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
@@ -27,10 +28,24 @@ class DashboardController extends AbstractController
         ExpenseRepository $expenseRepo,
         AccountingEntryRepository $accountingRepo,
         ConversationRepository $conversationRepo,
-        DashboardAnalyticsService $analyticsService
+        DashboardAnalyticsService $analyticsService,
+        DemoDataFilterService $demoFilterService
     ): Response {
         /** @var \App\Entity\User|null $user */
         $user = $this->getUser();
+
+        // Vérifier si on est dans un environnement de démo
+        $isDemoEnvironment = $demoFilterService->isDemoEnvironment();
+        if ($isDemoEnvironment) {
+            error_log('DashboardController: Demo environment detected - Code: ' . $demoFilterService->getDemoCode());
+
+            // Si on est en démo, utiliser l'utilisateur de démo
+            $demoUser = $demoFilterService->getDemoUser();
+            if ($demoUser) {
+                $user = $demoUser;
+                error_log('DashboardController: Using demo user: ' . $user->getEmail());
+            }
+        }
 
         // Debug: Log user roles for troubleshooting
         if ($user) {
@@ -40,7 +55,7 @@ class DashboardController extends AbstractController
         // Adapter les données selon le rôle de l'utilisateur
         if ($user && in_array('ROLE_ADMIN', $user->getRoles())) {
             error_log('DashboardController: Using adminDashboard');
-            return $this->adminDashboard($user, $propertyRepo, $tenantRepo, $leaseRepo, $paymentRepo, $maintenanceRepo, $expenseRepo, $accountingRepo, $conversationRepo, $analyticsService);
+            return $this->adminDashboard($user, $propertyRepo, $tenantRepo, $leaseRepo, $paymentRepo, $maintenanceRepo, $expenseRepo, $accountingRepo, $conversationRepo, $analyticsService, $demoFilterService);
         } elseif ($user && in_array('ROLE_MANAGER', $user->getRoles())) {
             error_log('DashboardController: Using managerDashboard');
             return $this->managerDashboard($user, $propertyRepo, $tenantRepo, $leaseRepo, $paymentRepo, $maintenanceRepo, $expenseRepo, $accountingRepo, $conversationRepo);
@@ -67,12 +82,22 @@ class DashboardController extends AbstractController
         ExpenseRepository $expenseRepo,
         AccountingEntryRepository $accountingRepo,
         ConversationRepository $conversationRepo,
-        DashboardAnalyticsService $analyticsService
+        DashboardAnalyticsService $analyticsService,
+        DemoDataFilterService $demoFilterService
     ): Response {
 
-        // Filtrer selon l'organisation/société de l'utilisateur
+        // Filtrer selon l'organisation/société de l'utilisateur ou l'environnement de démo
         $organization = $user->getOrganization();
         $company = $user->getCompany();
+
+        // Si on est dans un environnement de démo, utiliser l'organisation de démo
+        if ($demoFilterService->isDemoEnvironment()) {
+            $demoOrganization = $demoFilterService->getDemoOrganization();
+            if ($demoOrganization) {
+                $organization = $demoOrganization;
+                error_log("DashboardController - Demo: Using demo organization: " . $organization->getName());
+            }
+        }
 
         error_log("DashboardController - Admin: organization=" . ($organization ? $organization->getName() : 'null') . ", company=" . ($company ? $company->getName() : 'null'));
 

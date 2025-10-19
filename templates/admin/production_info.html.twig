@@ -1,0 +1,202 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Informations de Production - Administration{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 Í-0">
+            <i class="bi bi-cloud me-2"></i>
+            Informations de Production
+        </h1>
+        <div class="badge bg-success fs-6">
+            <i class="bi bi-check-circle me-1"></i>
+            Production Active
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Configuration de Production</h5>
+                </div>
+                <div class="card-body">
+                    <dl class="row">
+                        <dt class="col-sm-3">Domaine :</dt>
+                        <dd class="col-sm-9">
+                            <strong>{{ config.domain }}</strong>
+                            <a href="{{ config.base_url }}" target="_blank" class="ms-2">
+                                <i class="bi bi-box-arrow-up-right"></i>
+                            </a>
+                        </dd>
+
+                        <dt class="col-sm-3">Environnement :</dt>
+                        <dd class="col-sm-9">
+                            {% if config.environment == 'prod' %}
+                                <span class="badge bg-success">Production</span>
+                            {% else %}
+                                <span class="badge bg-info">{{ config.environment }}</span>
+                            {% endif %}
+                        </dd>
+
+                        <dt class="col-sm-3">SSL :</dt>
+                        <dd class="col-sm-9">
+                            {% if config.ssl_enabled %}
+                                <span class="badge bg-success">Activé</span>
+                            {% else %}
+                                <span class="badge bg-warning">Désactivé</span>
+                            {% endif %}
+                        </dd>
+
+                        <dt class="col-sm-3">URL Base :</dt>
+                        <dd class="col-sm-9">
+                            <code>{{ config.base_url }}</code>
+                        </dd>
+
+                        <dt class="col-sm-3">API URL :</dt>
+                        <dd class="col-sm-9">
+                            <code>{{ config.api_url }}</code>
+                        </dd>
+                    </dl>
+                </div>
+            </div>
+
+            <!-- Environnements disponibles -->
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Accès aux Environnements</h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle me-2"></i>
+                        <strong>Format des URLs :</strong><br>
+                        • Environnements : <code>{{ config.base_url }}/env/{code}</code><br>
+                        • Démonstrations : <code>{{ config.base_url }}/demo/{code}</code>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="d-grid">
+                                <a href="{{ path('app_admin_environment_index') }}" class="btn btn-primary">
+                                    <i class="bi bi-server me-2"></i>
+                                    Gérer les Environnements
+                                </a>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="d-grid">
+                                <a href="{{ path('demo_list') }}" class="btn btn-warning">
+                                    <i class="bi bi-play-circle me-2"></i>
+                                    Gérer les Démonstrations
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="card-title mb-0">
+                        <i class="bi bi-gear me-2"></i>
+                        Actions Rapides
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{{ config.base_url }}" target="_blank" class="btn btn-outline-primary">
+                            <i class="bi bi-box-arrow-up-right me-2"></i>
+                            Ouvrir l'Application
+                        </a>
+
+                        <a href="{{ path('app_admin_domain_index') }}" class="btn btn-outline-secondary">
+                            <i class="bi bi-globe me-2"></i>
+                            Configuration Domaines
+                        </a>
+
+                        <a href="{{ path('app_admin_settings_index') }}" class="btn btn-outline-info">
+                            <i class="bi bi-sliders me-2"></i>
+                            Paramètres Système
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h6 class="card-title mb-0">
+                        <i class="bi bi-shield-check me-2"></i>
+                        Sécurité
+                    </h6>
+                </div>
+                <div class="card-body">
+                    {% if config.ssl_enabled %}
+                        <div class="alert alert-success">
+                            <i class="bi bi-check-circle me-2"></i>
+                            <strong>Production Sécurisée</strong><br>
+                            <small>SSL activé, environnement isolé</small>
+                        </div>
+                    {% else %}
+                        <div class="alert alert-warning">
+                            <i class="bi bi-exclamation-triangle me-2"></i>
+                            <strong>Attention</strong><br>
+                            <small>SSL non activé</small>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Debug Information -->
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h6 class="card-title mb-0">
+                        <i class="bi bi-bug me-2"></i>
+                        Informations de Détection
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <dl class="row small">
+                        <dt class="col-sm-4">Domaine détecté :</dt>
+                        <dd class="col-sm-8">{{ debug_info.detected_domain }}</dd>
+
+                        <dt class="col-sm-4">Domaine sauvegardé :</dt>
+                        <dd class="col-sm-8">{{ debug_info.saved_domain ?: 'Aucun' }}</dd>
+
+                        <dt class="col-sm-4">URL actuelle :</dt>
+                        <dd class="col-sm-8">{{ debug_info.current_url }}</dd>
+
+                        <dt class="col-sm-4">SSL activé :</dt>
+                        <dd class="col-sm-8">{{ debug_info.ssl_enabled ? 'Oui' : 'Non' }}</dd>
+
+                        <dt class="col-sm-4">Environnement :</dt>
+                        <dd class="col-sm-8">{{ debug_info.environment }}</dd>
+
+                        {% if debug_info.sources.http_host %}
+                            <dt class="col-sm-4">HTTP_HOST :</dt>
+                            <dd class="col-sm-8">{{ debug_info.sources.http_host }}</dd>
+                        {% endif %}
+
+                        {% if debug_info.sources.https %}
+                            <dt class="col-sm-4">HTTPS :</dt>
+                            <dd class="col-sm-8">{{ debug_info.sources.https }}</dd>
+                        {% endif %}
+
+                        {% if debug_info.sources.request_scheme %}
+                            <dt class="col-sm-4">REQUEST_SCHEME :</dt>
+                            <dd class="col-sm-8">{{ debug_info.sources.request_scheme }}</dd>
+                        {% endif %}
+
+                        {% if debug_info.sources.server_port %}
+                            <dt class="col-sm-4">SERVER_PORT :</dt>
+                            <dd class="col-sm-8">{{ debug_info.sources.server_port }}</dd>
+                        {% endif %}
+                    </dl>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

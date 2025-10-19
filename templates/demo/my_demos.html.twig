@@ -1,0 +1,250 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Mes démos - MYLOCCA{% endblock %}
+
+{% block page_title %}
+    <h5 class="mb-0">
+        <i class="bi bi-list-ul me-2"></i>
+        Mes démos
+    </h5>
+{% endblock %}
+
+{% block page_actions %}
+    <a href="{{ path('demo_create_url') }}" class="btn btn-primary">
+        <i class="bi bi-plus-circle me-2"></i>
+        Nouvelle démo
+    </a>
+{% endblock %}
+
+{% block body %}
+    <div class="row">
+        <div class="col-12">
+            {% if demos|length > 0 %}
+                <div class="card">
+                    <div class="card-header">
+                        <h6 class="mb-0">
+                            <i class="bi bi-rocket me-2"></i>
+                            Vos démos ({{ demos|length }})
+                        </h6>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Code</th>
+                                        <th>URL</th>
+                                        <th>Statut</th>
+                                        <th>Créée le</th>
+                                        <th>Expire le</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for demo in demos %}
+                                        <tr>
+                                            <td>
+                                                <code class="bg-light px-2 py-1 rounded">{{ demo.demo_code }}</code>
+                                            </td>
+                                            <td>
+                                                <a href="{{ demo.demo_url }}" target="_blank" class="text-decoration-none">
+                                                    <i class="bi bi-box-arrow-up-right me-1"></i>
+                                                    {{ demo.demo_url }}
+                                                </a>
+                                                <button type="button" class="btn btn-sm btn-outline-secondary ms-2"
+                                                        onclick="copyToClipboard('{{ demo.demo_url }}')" title="Copier l'URL">
+                                                    <i class="bi bi-clipboard"></i>
+                                                </button>
+                                            </td>
+                                            <td>
+                                                {% if demo.isActive %}
+                                                    <span class="badge bg-success">
+                                                        <i class="bi bi-check-circle me-1"></i>
+                                                        Active
+                                                    </span>
+                                                {% else %}
+                                                    <span class="badge bg-danger">
+                                                        <i class="bi bi-x-circle me-1"></i>
+                                                        Expirée
+                                                    </span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                <small class="text-muted">
+                                                    {{ demo.created_at|date('d/m/Y H:i') }}
+                                                </small>
+                                            </td>
+                                            <td>
+                                                <small class="text-muted">
+                                                    {% if demo.expires_at %}
+                                                        {{ demo.expires_at|date('d/m/Y H:i') }}
+                                                    {% else %}
+                                                        —
+                                                    {% endif %}
+                                                </small>
+                                            </td>
+                                            <td>
+                                                <div class="btn-group btn-group-sm" role="group">
+                                                    <a href="{{ demo.demo_url }}" target="_blank" class="btn btn-outline-primary" title="Ouvrir la démo">
+                                                        <i class="bi bi-box-arrow-up-right"></i>
+                                                    </a>
+                                                    <a href="{{ path('demo_info', {demoCode: demo.demo_code}) }}" class="btn btn-outline-info" title="Informations">
+                                                        <i class="bi bi-info-circle"></i>
+                                                    </a>
+                                                    {% if demo.isActive %}
+                                                        <button type="button" class="btn btn-outline-warning"
+                                                                onclick="extendDemo('{{ demo.demo_code }}')" title="Prolonger">
+                                                            <i class="bi bi-clock"></i>
+                                                        </button>
+                                                    {% endif %}
+                                                    <button type="button" class="btn btn-outline-danger"
+                                                            onclick="deleteDemo('{{ demo.demo_code }}')" title="Supprimer">
+                                                        <i class="bi bi-trash"></i>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            {% else %}
+                <div class="card">
+                    <div class="card-body text-center py-5">
+                        <i class="bi bi-rocket text-muted fs-1"></i>
+                        <h5 class="text-muted mt-3">Aucune démo créée</h5>
+                        <p class="text-muted">Créez votre première démo pour commencer à présenter MYLOCCA à vos clients.</p>
+                        <a href="{{ path('demo_create_url') }}" class="btn btn-primary">
+                            <i class="bi bi-plus-circle me-2"></i>
+                            Créer une démo
+                        </a>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Modal de prolongation -->
+    <div class="modal fade" id="extendModal" tabindex="-1" aria-labelledby="extendModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="extendModalLabel">
+                        <i class="bi bi-clock me-2"></i>
+                        Prolonger la démo
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form id="extendForm" method="post">
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="days" class="form-label">Nombre de jours à ajouter</label>
+                            <select class="form-select" id="days" name="days" required>
+                                <option value="7">7 jours</option>
+                                <option value="14" selected>14 jours</option>
+                                <option value="30">30 jours</option>
+                            </select>
+                        </div>
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle me-2"></i>
+                            La démo sera prolongée de <span id="selectedDays">14</span> jours à partir de la date d'expiration actuelle.
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-clock me-2"></i>
+                            Prolonger
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de suppression -->
+    <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="deleteModalLabel">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        Supprimer la démo
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Êtes-vous sûr de vouloir supprimer cette démo ?</p>
+                    <div class="alert alert-warning">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        <strong>Attention :</strong> Cette action est irréversible. Toutes les données de la démo seront supprimées définitivement.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <form id="deleteForm" method="post" style="display: inline;">
+                        <button type="submit" class="btn btn-danger">
+                            <i class="bi bi-trash me-2"></i>
+                            Supprimer
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script>
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(function() {
+                // Créer un toast de succès
+                const toast = document.createElement('div');
+                toast.className = 'toast align-items-center text-white bg-success border-0';
+                toast.setAttribute('role', 'alert');
+                toast.innerHTML = `
+                    <div class="d-flex">
+                        <div class="toast-body">
+                            <i class="bi bi-check-circle me-2"></i>
+                            URL copiée dans le presse-papiers !
+                        </div>
+                        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                    </div>
+                `;
+
+                document.body.appendChild(toast);
+                const bsToast = new bootstrap.Toast(toast);
+                bsToast.show();
+
+                // Supprimer le toast après qu'il soit caché
+                toast.addEventListener('hidden.bs.toast', function() {
+                    document.body.removeChild(toast);
+                });
+            });
+        }
+
+        function extendDemo(demoCode) {
+            const form = document.getElementById('extendForm');
+            form.action = `{{ path('demo_extend_url', {demoCode: 'DEMO_CODE'}) }}`.replace('DEMO_CODE', demoCode);
+
+            const modal = new bootstrap.Modal(document.getElementById('extendModal'));
+            modal.show();
+        }
+
+        function deleteDemo(demoCode) {
+            const form = document.getElementById('deleteForm');
+            form.action = `{{ path('demo_delete_url', {demoCode: 'DEMO_CODE'}) }}`.replace('DEMO_CODE', demoCode);
+
+            const modal = new bootstrap.Modal(document.getElementById('deleteModal'));
+            modal.show();
+        }
+
+        // Mettre à jour le nombre de jours sélectionnés
+        document.getElementById('days').addEventListener('change', function() {
+            document.getElementById('selectedDays').textContent = this.value;
+        });
+    </script>
+{% endblock %}

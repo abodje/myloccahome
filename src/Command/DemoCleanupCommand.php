@@ -10,9 +10,10 @@ use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
-/**
- * @AsCommand(name="app:demo:cleanup", description="Nettoie automatiquement les environnements de démo expirés")
- */
+#[AsCommand(
+    name: 'app:demo:cleanup',
+    description: 'Nettoie automatiquement les environnements de démo expirés'
+)]
 class DemoCleanupCommand extends Command
 {
     private DemoEnvironmentService $demoService;

@@ -1,0 +1,178 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Gestion des Environnements - Administration{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0">
+            <i class="bi bi-server me-2"></i>
+            Gestion des Environnements
+        </h1>
+        <a href="{{ path('app_admin_environment_new') }}" class="btn btn-primary">
+            <i class="bi bi-plus-circle me-2"></i>
+            Nouvel Environnement
+        </a>
+    </div>
+
+    <!-- Statistiques -->
+    <div class="row mb-4">
+        <div class="col-md-2">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h4 class="text-primary">{{ stats.total }}</h4>
+                    <small class="text-muted">Total</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h4 class="text-success">{{ stats.active }}</h4>
+                    <small class="text-muted">Actifs</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h4 class="text-warning">{{ stats.production }}</h4>
+                    <small class="text-muted">Production</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h4 class="text-info">{{ stats.staging }}</h4>
+                    <small class="text-muted">Staging</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h4 class="text-secondary">{{ stats.development }}</h4>
+                    <small class="text-muted">Développement</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h4 class="text-danger">{{ stats.inactive }}</h4>
+                    <small class="text-muted">Inactifs</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Liste des environnements -->
+    <div class="card">
+        <div class="card-header">
+            <h5 class="card-title mb-0">Environnements</h5>
+        </div>
+        <div class="card-body">
+            {% if environments|length > 0 %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Nom</th>
+                                <th>Type</th>
+                                <th>Organisation</th>
+                                <th>URL</th>
+                                <th>Statut</th>
+                                <th>Version</th>
+                                <th>Créé le</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for environment in environments %}
+                                <tr>
+                                    <td>
+                                        <strong>{{ environment.name }}</strong>
+                                        {% if environment.description %}
+                                            <br><small class="text-muted">{{ environment.description }}</small>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if environment.type == 'PRODUCTION' %}
+                                            <span class="badge bg-danger">Production</span>
+                                        {% elseif environment.type == 'STAGING' %}
+                                            <span class="badge bg-warning">Staging</span>
+                                        {% else %}
+                                            <span class="badge bg-info">Développement</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ environment.organization.name }}</td>
+                                    <td>
+                                        <a href="{{ environment.url }}" target="_blank" class="text-decoration-none">
+                                            {{ environment.url }}
+                                            <i class="bi bi-box-arrow-up-right ms-1"></i>
+                                        </a>
+                                    </td>
+                                    <td>
+                                        {% if environment.status == 'ACTIVE' %}
+                                            <span class="badge bg-success">Actif</span>
+                                        {% elseif environment.status == 'INACTIVE' %}
+                                            <span class="badge bg-secondary">Inactif</span>
+                                        {% elseif environment.status == 'SUSPENDED' %}
+                                            <span class="badge bg-warning">Suspendu</span>
+                                        {% elseif environment.status == 'CREATING' %}
+                                            <span class="badge bg-info">Création</span>
+                                        {% elseif environment.status == 'DEPLOYING' %}
+                                            <span class="badge bg-primary">Déploiement</span>
+                                        {% else %}
+                                            <span class="badge bg-danger">Erreur</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if environment.version %}
+                                            <span class="badge bg-light text-dark">{{ environment.version }}</span>
+                                        {% else %}
+                                            <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ environment.createdAt|date('d/m/Y H:i') }}</td>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <a href="{{ path('app_admin_environment_show', {'id': environment.id}) }}"
+                                               class="btn btn-sm btn-outline-primary">
+                                                <i class="bi bi-eye"></i>
+                                            </a>
+                                            <a href="{{ path('app_admin_environment_edit', {'id': environment.id}) }}"
+                                               class="btn btn-sm btn-outline-secondary">
+                                                <i class="bi bi-pencil"></i>
+                                            </a>
+                                            {% if environment.status == 'ACTIVE' %}
+                                                <form method="post" action="{{ path('app_admin_environment_deploy', {'id': environment.id}) }}" class="d-inline">
+                                                    <button type="submit" class="btn btn-sm btn-outline-success"
+                                                            onclick="return confirm('Déployer une nouvelle version ?')">
+                                                        <i class="bi bi-arrow-clockwise"></i>
+                                                    </button>
+                                                </form>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="text-center py-5">
+                    <i class="bi bi-server text-muted" style="font-size: 3rem;"></i>
+                    <h5 class="text-muted mt-3">Aucun environnement</h5>
+                    <p class="text-muted">Créez votre premier environnement de production.</p>
+                    <a href="{{ path('app_admin_environment_new') }}" class="btn btn-primary">
+                        <i class="bi bi-plus-circle me-2"></i>
+                        Créer un environnement
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

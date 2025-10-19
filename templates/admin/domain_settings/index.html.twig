@@ -1,0 +1,214 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Paramètres de Domaine - Administration{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0">
+            <i class="bi bi-globe me-2"></i>
+            Paramètres de Domaine
+        </h1>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Configuration du domaine de base</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post" action="{{ path('app_admin_domain_index') }}">
+                        <div class="mb-3">
+                            <label for="base_domain" class="form-label">Domaine de base</label>
+                            <input type="text"
+                                   class="form-control"
+                                   id="base_domain"
+                                   name="base_domain"
+                                   value="{{ current_base_domain }}"
+                                   placeholder="Ex: mylocca.com">
+                            <div class="form-text">
+                                Ce domaine sera utilisé pour générer les sous-domaines des environnements.
+                                Ex: client.mylocca.com
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="local_domain" class="form-label">Domaine local</label>
+                            <input type="text"
+                                   class="form-control"
+                                   id="local_domain"
+                                   name="local_domain"
+                                   value="{{ debug_info.local_domain }}"
+                                   placeholder="Ex: mylocca.local">
+                            <div class="form-text">
+                                Domaine utilisé pour le développement local (localhost, IP).
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <div class="alert alert-info">
+                                <i class="bi bi-info-circle me-2"></i>
+                                <strong>Domaine actuellement utilisé :</strong> {{ current_base_domain }}
+                            </div>
+                        </div>
+
+                        <!-- Informations de debug -->
+                        <div class="mb-3">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h6 class="card-title mb-0">
+                                        <i class="bi bi-bug me-2"></i>
+                                        Informations de détection
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    <dl class="row small">
+                                        <dt class="col-sm-4">Domaine détecté :</dt>
+                                        <dd class="col-sm-8">{{ debug_info.detected_domain }}</dd>
+
+                                        <dt class="col-sm-4">Domaine sauvegardé :</dt>
+                                        <dd class="col-sm-8">{{ debug_info.saved_domain ?: 'Aucun' }}</dd>
+
+                                        <dt class="col-sm-4">Domaine local :</dt>
+                                        <dd class="col-sm-8">{{ debug_info.local_domain }}</dd>
+
+                                        <dt class="col-sm-4">Projet :</dt>
+                                        <dd class="col-sm-8">{{ debug_info.project_dir }}</dd>
+
+                                        {% if debug_info.sources.http_host %}
+                                            <dt class="col-sm-4">HTTP_HOST :</dt>
+                                            <dd class="col-sm-8">{{ debug_info.sources.http_host }}</dd>
+                                        {% endif %}
+
+                                        {% if debug_info.sources.server_name %}
+                                            <dt class="col-sm-4">SERVER_NAME :</dt>
+                                            <dd class="col-sm-8">{{ debug_info.sources.server_name }}</dd>
+                                        {% endif %}
+
+                                        {% if debug_info.sources.request_host %}
+                                            <dt class="col-sm-4">Request Host :</dt>
+                                            <dd class="col-sm-8">{{ debug_info.sources.request_host }}</dd>
+                                        {% endif %}
+
+                                        {% if debug_info.sources.request_scheme %}
+                                            <dt class="col-sm-4">Schéma :</dt>
+                                            <dd class="col-sm-8">{{ debug_info.sources.request_scheme }}</dd>
+                                        {% endif %}
+                                    </dl>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex gap-2">
+                            <button type="button" class="btn btn-outline-primary" id="testDomainBtn">
+                                <i class="bi bi-check-circle me-2"></i>
+                                Tester le domaine
+                            </button>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-save me-2"></i>
+                                Enregistrer
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Résultat du test -->
+            <div id="testResult" class="mt-3"></div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="card-title mb-0">
+                        <i class="bi bi-info-circle me-2"></i>
+                        Informations
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <h6>Configuration automatique :</h6>
+                    <ul class="small">
+                        <li>Génération automatique des sous-domaines</li>
+                        <li>Configuration DNS (si configuré)</li>
+                        <li>Certificats SSL automatiques</li>
+                        <li>Configuration Apache/Nginx</li>
+                    </ul>
+
+                    <hr>
+
+                    <h6>Exemples de domaines :</h6>
+                    <ul class="small">
+                        <li><strong>Production :</strong> mylocca.com</li>
+                        <li><strong>Développement :</strong> mylocca.local</li>
+                        <li><strong>Test :</strong> test.mylocca.com</li>
+                    </ul>
+
+                    <hr>
+
+                    <div class="alert alert-warning">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        <strong>Attention :</strong> Assurez-vous que le domaine est correctement configuré dans votre DNS.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const testDomainBtn = document.getElementById('testDomainBtn');
+    const baseDomainInput = document.getElementById('base_domain');
+    const testResult = document.getElementById('testResult');
+
+    testDomainBtn.addEventListener('click', function() {
+        const domain = baseDomainInput.value.trim();
+
+        if (!domain) {
+            testResult.innerHTML = '<div class="alert alert-warning">Veuillez saisir un domaine</div>';
+            return;
+        }
+
+        testResult.innerHTML = '<div class="alert alert-info"><i class="bi bi-hourglass-split me-2"></i>Test en cours...</div>';
+
+        fetch('{{ path("app_admin_domain_test") }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: 'base_domain=' + encodeURIComponent(domain)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                testResult.innerHTML = `
+                    <div class="alert alert-success">
+                        <i class="bi bi-check-circle me-2"></i>
+                        <strong>Succès !</strong> ${data.message}
+                        <div class="mt-2">
+                            <small>Domaine testé : <strong>${data.domain}</strong></small>
+                        </div>
+                    </div>
+                `;
+            } else {
+                testResult.innerHTML = `
+                    <div class="alert alert-danger">
+                        <i class="bi bi-x-circle me-2"></i>
+                        <strong>Erreur !</strong> ${data.message}
+                    </div>
+                `;
+            }
+        })
+        .catch(error => {
+            testResult.innerHTML = `
+                <div class="alert alert-danger">
+                    <i class="bi bi-x-circle me-2"></i>
+                    <strong>Erreur !</strong> ${error.message}
+                </div>
+            `;
+        });
+    });
+});
+</script>
+{% endblock %}

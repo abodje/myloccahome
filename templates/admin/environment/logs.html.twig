@@ -1,0 +1,175 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Logs de {{ environment.name }} - Administration{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-0">
+                <i class="bi bi-file-text me-2"></i>
+                Logs de {{ environment.name }}
+            </h1>
+            <p class="text-muted mb-0">Code: {{ environment.subdomain }}</p>
+        </div>
+        <div class="btn-group">
+            <a href="{{ path('app_admin_environment_show', {'id': environment.id}) }}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left me-2"></i>
+                Retour
+            </a>
+            <button type="button" class="btn btn-outline-primary" onclick="refreshLogs()">
+                <i class="bi bi-arrow-clockwise me-2"></i>
+                Actualiser
+            </button>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Journal des déploiements</h5>
+                </div>
+                <div class="card-body">
+                    {% if environment.deploymentLog %}
+                        <div class="log-container">
+                            <pre class="log-content">{{ environment.deploymentLog }}</pre>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="bi bi-file-text text-muted" style="font-size: 3rem;"></i>
+                            <h5 class="text-muted mt-3">Aucun log disponible</h5>
+                            <p class="text-muted">Les logs de déploiement apparaîtront ici.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="card-title mb-0">
+                        <i class="bi bi-info-circle me-2"></i>
+                        Informations
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <dl class="row small">
+                        <dt class="col-sm-6">Dernier déploiement :</dt>
+                        <dd class="col-sm-6">
+                            {% if environment.lastDeployedAt %}
+                                {{ environment.lastDeployedAt|date('d/m/Y H:i') }}
+                            {% else %}
+                                <span class="text-muted">Jamais</span>
+                            {% endif %}
+                        </dd>
+
+                        <dt class="col-sm-6">Version actuelle :</dt>
+                        <dd class="col-sm-6">
+                            {% if environment.version %}
+                                <span class="badge bg-light text-dark">{{ environment.version }}</span>
+                            {% else %}
+                                <span class="text-muted">Non définie</span>
+                            {% endif %}
+                        </dd>
+
+                        <dt class="col-sm-6">Statut :</dt>
+                        <dd class="col-sm-6">
+                            {% if environment.status == 'ACTIVE' %}
+                                <span class="badge bg-success">Actif</span>
+                            {% elseif environment.status == 'INACTIVE' %}
+                                <span class="badge bg-secondary">Inactif</span>
+                            {% elseif environment.status == 'DEPLOYING' %}
+                                <span class="badge bg-primary">Déploiement</span>
+                            {% elseif environment.status == 'ERROR' %}
+                                <span class="badge bg-danger">Erreur</span>
+                            {% else %}
+                                <span class="badge bg-info">{{ environment.status }}</span>
+                            {% endif %}
+                        </dd>
+
+                        <dt class="col-sm-6">Type :</dt>
+                        <dd class="col-sm-6">
+                            {% if environment.type == 'PRODUCTION' %}
+                                <span class="badge bg-danger">Production</span>
+                            {% elseif environment.type == 'STAGING' %}
+                                <span class="badge bg-warning">Staging</span>
+                            {% else %}
+                                <span class="badge bg-info">Développement</span>
+                            {% endif %}
+                        </dd>
+                    </dl>
+                </div>
+            </div>
+
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h6 class="card-title mb-0">
+                        <i class="bi bi-gear me-2"></i>
+                        Actions
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{{ path('app_environment_redirect', {'envCode': environment.subdomain}) }}"
+                           class="btn btn-primary" target="_blank">
+                            <i class="bi bi-box-arrow-up-right me-2"></i>
+                            Ouvrir l'environnement
+                        </a>
+
+                        {% if environment.status == 'ACTIVE' %}
+                            <form method="post" action="{{ path('app_admin_environment_deploy', {'id': environment.id}) }}">
+                                <button type="submit" class="btn btn-success w-100"
+                                        onclick="return confirm('Déployer une nouvelle version ?')">
+                                    <i class="bi bi-arrow-clockwise me-2"></i>
+                                    Redéployer
+                                </button>
+                            </form>
+                        {% endif %}
+
+                        <a href="{{ path('app_admin_environment_show', {'id': environment.id}) }}"
+                           class="btn btn-outline-secondary">
+                            <i class="bi bi-eye me-2"></i>
+                            Voir les détails
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.log-container {
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 0.375rem;
+    padding: 1rem;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.log-content {
+    font-family: 'Courier New', monospace;
+    font-size: 0.875rem;
+    line-height: 1.4;
+    margin: 0;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+</style>
+
+<script>
+function refreshLogs() {
+    location.reload();
+}
+
+// Auto-refresh toutes les 30 secondes si l'environnement est en cours de déploiement
+{% if environment.status == 'DEPLOYING' %}
+setInterval(function() {
+    location.reload();
+}, 30000);
+{% endif %}
+</script>
+{% endblock %}

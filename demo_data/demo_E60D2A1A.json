@@ -1,0 +1,9 @@
+{
+    "demo_code": "E60D2A1A",
+    "organization_id": 42,
+    "user_id": 37,
+    "created_at": "2025-01-15 10:00:00",
+    "expires_at": "2025-01-29 10:00:00",
+    "subdomain": "E60D2A1A",
+    "demo_url": "https://127.0.0.1:8000/demo/E60D2A1A"
+}

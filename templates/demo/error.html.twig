@@ -1,0 +1,78 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Erreur démo - MYLOCCA{% endblock %}
+
+{% block body %}
+    <div class="container-fluid">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-body text-center py-5">
+                        <i class="bi bi-exclamation-triangle text-warning fs-1"></i>
+                        <h5 class="text-muted mt-3">Démo inaccessible</h5>
+                        <p class="text-muted">{{ error }}</p>
+
+                        <div class="mt-4">
+                            <h6>Code de la démo :</h6>
+                            <code class="bg-light px-3 py-2 rounded fs-5">{{ demoCode }}</code>
+                        </div>
+
+                        <div class="mt-4">
+                            <h6>Que faire maintenant ?</h6>
+                            <div class="row mt-3">
+                                <div class="col-md-4">
+                                    <div class="card">
+                                        <div class="card-body">
+                                            <i class="bi bi-arrow-clockwise text-primary fs-2"></i>
+                                            <h6 class="mt-2">Actualiser</h6>
+                                            <p class="text-muted small">Essayez de recharger la page</p>
+                                            <button onclick="location.reload()" class="btn btn-outline-primary btn-sm">
+                                                <i class="bi bi-arrow-clockwise"></i> Actualiser
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="card">
+                                        <div class="card-body">
+                                            <i class="bi bi-house text-success fs-2"></i>
+                                            <h6 class="mt-2">Accueil</h6>
+                                            <p class="text-muted small">Retourner à la page d'accueil</p>
+                                            <a href="{{ path('app_dashboard') }}" class="btn btn-outline-success btn-sm">
+                                                <i class="bi bi-house"></i> Accueil
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="card">
+                                        <div class="card-body">
+                                            <i class="bi bi-envelope text-info fs-2"></i>
+                                            <h6 class="mt-2">Contacter</h6>
+                                            <p class="text-muted small">Signaler le problème</p>
+                                            <a href="mailto:support@mylocca.com?subject=Problème démo {{ demoCode }}" class="btn btn-outline-info btn-sm">
+                                                <i class="bi bi-envelope"></i> Contacter
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mt-4">
+                            <h6>Informations techniques</h6>
+                            <div class="alert alert-light text-start">
+                                <small>
+                                    <strong>Code démo :</strong> {{ demoCode }}<br>
+                                    <strong>Date :</strong> {{ "now"|date('d/m/Y H:i:s') }}<br>
+                                    <strong>URL :</strong> {{ app.request.uri }}<br>
+                                    <strong>Erreur :</strong> {{ error }}
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

@@ -212,12 +212,21 @@ class MenuService
                 'roles' => ['ROLE_ADMIN'],
                 'order' => 104,
             ],
+            'admin_environments' => [
+                'label' => '🚀 Environnements',
+                'icon' => 'bi-server',
+                'route' => 'app_admin_environment_index',
+                'roles' => ['ROLE_ADMIN'],
+                'order' => 105,
+                'badge' => 'new',
+                'badge_type' => 'success',
+            ],
             'admin_settings' => [
                 'label' => 'Paramètres',
                 'icon' => 'bi-sliders',
                 'route' => 'app_admin_settings_index',
                 'roles' => ['ROLE_ADMIN'],
-                'order' => 105,
+                'order' => 106,
                 'submenu' => [
                     'settings_app' => [
                         'label' => 'Application',
@@ -254,6 +263,16 @@ class MenuService
                         'route' => 'app_admin_maintenance',
                         'roles' => ['ROLE_ADMIN'],
                     ],
+                    'settings_domain' => [
+                        'label' => '🌐 Domaines',
+                        'route' => 'app_admin_domain_index',
+                        'roles' => ['ROLE_ADMIN'],
+                    ],
+                    'settings_production' => [
+                        'label' => '🚀 Production',
+                        'route' => 'app_admin_production_info',
+                        'roles' => ['ROLE_ADMIN'],
+                    ],
                 ],
             ],
             'admin_reports' => [
@@ -261,21 +280,21 @@ class MenuService
                 'icon' => 'bi-graph-up',
                 'route' => 'app_admin_reports',
                 'roles' => ['ROLE_MANAGER', 'ROLE_ADMIN'],
-                'order' => 106,
+                'order' => 107,
             ],
             'admin_exports' => [
                 'label' => '📊 Exports',
                 'icon' => 'bi-download',
                 'route' => 'app_admin_export_index',
                 'roles' => ['ROLE_ADMIN'],
-                'order' => 107,
+                'order' => 108,
             ],
             'admin_demo_environments' => [
                 'label' => '🌐 Environnements Démo',
                 'icon' => 'bi-play-circle',
                 'route' => 'demo_list',
                 'roles' => ['ROLE_ADMIN'],
-                'order' => 108,
+                'order' => 109,
                 'submenu' => [
                     'demo_list' => [
                         'label' => 'Liste des démos',

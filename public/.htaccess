@@ -3,3 +3,22 @@
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteRule ^ index.php [L]
 </IfModule>
+
+
+# Configuration pour sous-domaines de démo - Hébergement partagé
+RewriteEngine On
+
+# Détection du sous-domaine de démo
+RewriteCond %{HTTP_HOST} ^([^.]+)\.demo\.mylocca.local$ [NC]
+RewriteRule ^(.*)$ - [E=DEMO_SUBDOMAIN:%1]
+
+# Redirection vers Symfony
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(.*)$ index.php [QSA,L]
+
+# Headers de sécurité
+Header always set X-Frame-Options "SAMEORIGIN"
+Header always set X-Content-Type-Options "nosniff"
+Header always set X-XSS-Protection "1; mode=block"
+Header always set X-Demo-Environment "true"

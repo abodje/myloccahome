@@ -98,6 +98,7 @@ class RegistrationController extends AbstractController
                 $organization->setStatus('TRIAL'); // Commence en période d'essai
                 $organization->setCreatedAt(new \DateTime());
                 $organization->setIsActive(true);
+                $organization->setIsDemo(true); // Marquer comme démo pour éviter la duplication
 
                 // Copier les fonctionnalités du plan vers l'organisation
                 $organization->setFeatures($plan->getFeatures());
@@ -146,21 +147,31 @@ class RegistrationController extends AbstractController
 
                 $entityManager->flush();
 
-                // Créer l'environnement de démo automatiquement (dans un try-catch séparé)
+                // Créer les données de démo dans l'organisation existante
                 try {
-                    $demoResult = $demoEnvironmentService->createDemoEnvironment($user);
+                    // Créer des données de démo directement dans l'organisation principale
+                    $demoData = $demoEnvironmentService->createDemoData($organization, $company);
 
-                    if ($demoResult['success']) {
-                        $this->addFlash('success', '🎉 Votre compte et environnement de démo ont été créés avec succès !');
-                        $this->addFlash('info', "🌐 Votre environnement de démo : {$demoResult['demo_url']}");
-                        $this->addFlash('info', "📊 Données de démo créées : {$demoResult['demo_data']['properties']} propriétés, {$demoResult['demo_data']['tenants']} locataires, {$demoResult['demo_data']['leases']} baux, {$demoResult['demo_data']['payments']} paiements");
-                    } else {
-                        $this->addFlash('warning', '⚠️ Compte créé mais erreur lors de la création de l\'environnement de démo : ' . $demoResult['error']);
-                    }
+                    $this->addFlash('success', '🎉 Votre compte et environnement de démo ont été créés avec succès !');
+                    $this->addFlash('info', "📊 Données de démo créées : {$demoData['properties']} propriétés, {$demoData['tenants']} locataires, {$demoData['leases']} baux, {$demoData['payments']} paiements");
                 } catch (\Exception $demoException) {
-                    // Log l'erreur mais ne pas faire échouer l'inscription
-                    error_log('Erreur création environnement démo: ' . $demoException->getMessage());
-                    $this->addFlash('warning', '⚠️ Compte créé avec succès, mais erreur lors de la création de l\'environnement de démo. Vous pourrez le créer manuellement plus tard.');
+                    // Log l'erreur complète pour le debug
+                    error_log('Erreur création données démo: ' . $demoException->getMessage());
+                    error_log('Stack trace démo: ' . $demoException->getTraceAsString());
+
+                    // Essayer une approche alternative : créer un environnement démo séparé
+                    try {
+                        $demoResult = $demoEnvironmentService->createDemoEnvironment($user);
+                        if ($demoResult['success']) {
+                            $this->addFlash('success', '🎉 Votre compte a été créé avec succès !');
+                            $this->addFlash('info', "📊 Environnement de démo créé : {$demoResult['message']}");
+                        } else {
+                            $this->addFlash('warning', '⚠️ Compte créé avec succès, mais erreur lors de la création des données de démo. Vous pourrez les créer manuellement plus tard.');
+                        }
+                    } catch (\Exception $demoEnvException) {
+                        error_log('Erreur création environnement démo: ' . $demoEnvException->getMessage());
+                        $this->addFlash('warning', '⚠️ Compte créé avec succès, mais erreur lors de la création des données de démo. Vous pourrez les créer manuellement plus tard.');
+                    }
                 }
 
                 // Si plan gratuit (Freemium), activer directement
