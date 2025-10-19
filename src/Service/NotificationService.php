@@ -4,7 +4,12 @@ namespace App\Service;
 
 use Symfony\Component\Notifier\TexterInterface;
 use Symfony\Component\Notifier\Message\SmsMessage;
+use Symfony\Component\Mailer\MailerInterface;
+use Symfony\Component\Mime\Email;
 use Psr\Log\LoggerInterface;
+use Doctrine\ORM\EntityManagerInterface;
+use App\Entity\Payment;
+use App\Entity\Document;
 
 /**
  * Service de notification pour l'envoi de SMS via Orange
@@ -14,7 +19,9 @@ class NotificationService
     public function __construct(
         private TexterInterface $texter,
         private SettingsService $settingsService,
-        private LoggerInterface $logger
+        private LoggerInterface $logger,
+        private MailerInterface $mailer,
+        private EntityManagerInterface $entityManager
     ) {
     }
 
@@ -150,5 +157,365 @@ class NotificationService
         }
 
         return '+' . $cleanPhone;
+    }
+
+    /**
+     * Envoie les quittances de loyer aux locataires
+     */
+    public function sendRentReceipts(?\DateTime $forMonth = null): array
+    {
+        if (!$forMonth) {
+            $forMonth = new \DateTime('first day of last month');
+        }
+
+        $startDate = new \DateTime($forMonth->format('Y-m-01 00:00:00'));
+        $endDate = new \DateTime($forMonth->format('Y-m-t 23:59:59'));
+
+        // Trouver tous les paiements payés pour le mois spécifié
+        $payments = $this->entityManager->getRepository(Payment::class)
+            ->createQueryBuilder('p')
+            ->join('p.lease', 'l')
+            ->join('l.tenant', 't')
+            ->where('p.status = :status')
+            ->andWhere('p.paidDate BETWEEN :startDate AND :endDate')
+            ->setParameter('status', 'Payé')
+            ->setParameter('startDate', $startDate)
+            ->setParameter('endDate', $endDate)
+            ->getQuery()
+            ->getResult();
+
+        $sent = 0;
+        $failed = 0;
+        $errors = [];
+
+        foreach ($payments as $payment) {
+            try {
+                $tenant = $payment->getLease()->getTenant();
+                if (!$tenant || !$tenant->getEmail()) {
+                    $errors[] = "Paiement #{$payment->getId()}: Locataire sans email valide";
+                    $failed++;
+                    continue;
+                }
+
+                // Chercher la quittance générée pour ce paiement
+                $receipt = $this->entityManager->getRepository(Document::class)
+                    ->findOneBy([
+                        'type' => 'Quittance de loyer',
+                        'payment' => $payment
+                    ]);
+
+                if (!$receipt) {
+                    $errors[] = "Paiement #{$payment->getId()}: Aucune quittance trouvée";
+                    $failed++;
+                    continue;
+                }
+
+                // Envoyer l'email avec la quittance en pièce jointe
+                $this->sendReceiptEmail($tenant->getEmail(), $tenant->getFirstName(), $receipt, $payment);
+                $sent++;
+
+            } catch (\Exception $e) {
+                $errors[] = "Paiement #{$payment->getId()}: " . $e->getMessage();
+                $failed++;
+                $this->logger->error('Erreur envoi quittance', [
+                    'payment_id' => $payment->getId(),
+                    'error' => $e->getMessage()
+                ]);
+            }
+        }
+
+        return [
+            'sent' => $sent,
+            'failed' => $failed,
+            'errors' => $errors
+        ];
+    }
+
+    /**
+     * Envoie un email de rappel de paiement
+     */
+    public function sendPaymentReminders(): array
+    {
+        // Trouver les paiements en retard
+        $overduePayments = $this->entityManager->getRepository(Payment::class)
+            ->createQueryBuilder('p')
+            ->join('p.lease', 'l')
+            ->join('l.tenant', 't')
+            ->where('p.status = :status')
+            ->andWhere('p.dueDate < :today')
+            ->setParameter('status', 'En attente')
+            ->setParameter('today', new \DateTime())
+            ->getQuery()
+            ->getResult();
+
+        $sent = 0;
+        $failed = 0;
+        $errors = [];
+
+        foreach ($overduePayments as $payment) {
+            try {
+                $tenant = $payment->getLease()->getTenant();
+                if (!$tenant || !$tenant->getEmail()) {
+                    continue;
+                }
+
+                $this->sendPaymentReminderEmail($tenant->getEmail(), $tenant->getFirstName(), $payment);
+                $sent++;
+
+            } catch (\Exception $e) {
+                $errors[] = "Paiement #{$payment->getId()}: " . $e->getMessage();
+                $failed++;
+            }
+        }
+
+        return [
+            'sent' => $sent,
+            'failed' => $failed,
+            'errors' => $errors
+        ];
+    }
+
+    /**
+     * Envoie des alertes d'expiration de contrat
+     */
+    public function sendLeaseExpirationAlerts(): array
+    {
+        // Trouver les contrats qui expirent bientôt
+        $expiringLeases = $this->entityManager->getRepository(\App\Entity\Lease::class)
+            ->createQueryBuilder('l')
+            ->join('l.tenant', 't')
+            ->where('l.endDate BETWEEN :startDate AND :endDate')
+            ->andWhere('l.status = :status')
+            ->setParameter('startDate', new \DateTime())
+            ->setParameter('endDate', (new \DateTime())->modify('+60 days'))
+            ->setParameter('status', 'Actif')
+            ->getQuery()
+            ->getResult();
+
+        $sent = 0;
+        $failed = 0;
+        $errors = [];
+
+        foreach ($expiringLeases as $lease) {
+            try {
+                $tenant = $lease->getTenant();
+                if (!$tenant || !$tenant->getEmail()) {
+                    continue;
+                }
+
+                $this->sendLeaseExpirationEmail($tenant->getEmail(), $tenant->getFirstName(), $lease);
+                $sent++;
+
+            } catch (\Exception $e) {
+                $errors[] = "Contrat #{$lease->getId()}: " . $e->getMessage();
+                $failed++;
+            }
+        }
+
+        return [
+            'sent' => $sent,
+            'failed' => $failed,
+            'errors' => $errors
+        ];
+    }
+
+    /**
+     * Génère les paiements de loyer pour le mois prochain
+     */
+    public function generateNextMonthRents(): array
+    {
+        $nextMonth = new \DateTime('first day of next month');
+        $generated = 0;
+        $skipped = 0;
+        $errors = [];
+
+        // Trouver tous les contrats actifs
+        $activeLeases = $this->entityManager->getRepository(\App\Entity\Lease::class)
+            ->findBy(['status' => 'Actif']);
+
+        foreach ($activeLeases as $lease) {
+            try {
+                // Calculer la date d'échéance pour le mois prochain
+                $dueDate = clone $nextMonth;
+                $dueDate->setDate(
+                    $nextMonth->format('Y'),
+                    $nextMonth->format('n'),
+                    $lease->getRentDueDay() ?? 1
+                );
+
+                // Vérifier que la date n'excède pas la fin du bail
+                if ($lease->getEndDate() && $dueDate > $lease->getEndDate()) {
+                    $skipped++;
+                    continue;
+                }
+
+                // Vérifier si le loyer existe déjà
+                $existingPayment = $this->entityManager->getRepository(\App\Entity\Payment::class)
+                    ->findOneBy([
+                        'lease' => $lease,
+                        'dueDate' => $dueDate,
+                        'type' => 'Loyer'
+                    ]);
+
+                if (!$existingPayment) {
+                    $payment = new \App\Entity\Payment();
+                    $payment->setLease($lease);
+                    $payment->setDueDate($dueDate);
+                    $payment->setAmount($lease->getMonthlyRent());
+                    $payment->setType('Loyer');
+                    $payment->setStatus('En attente');
+                    $payment->setOrganization($lease->getOrganization());
+                    $payment->setCompany($lease->getCompany());
+
+                    $this->entityManager->persist($payment);
+                    $generated++;
+                } else {
+                    $skipped++;
+                }
+
+            } catch (\Exception $e) {
+                $errors[] = "Contrat #{$lease->getId()}: " . $e->getMessage();
+                $skipped++;
+            }
+        }
+
+        // Sauvegarder tous les nouveaux paiements
+        if ($generated > 0) {
+            $this->entityManager->flush();
+        }
+
+        return [
+            'generated' => $generated,
+            'skipped' => $skipped,
+            'errors' => $errors
+        ];
+    }
+
+    /**
+     * Teste la configuration email
+     */
+    public function testEmailConfiguration(string $testEmail): bool
+    {
+        try {
+            $email = (new Email())
+                ->from('noreply@mylocca.com')
+                ->to($testEmail)
+                ->subject('Test de configuration email - MYLOCCA')
+                ->html('<p>Ceci est un email de test pour vérifier la configuration SMTP de MYLOCCA.</p>');
+
+            $this->mailer->send($email);
+            return true;
+        } catch (\Exception $e) {
+            $this->logger->error('Erreur test email', ['error' => $e->getMessage()]);
+            return false;
+        }
+    }
+
+    /**
+     * Envoie un email avec quittance en pièce jointe
+     */
+    private function sendReceiptEmail(string $emailAddress, string $tenantName, Document $receipt, Payment $payment): void
+    {
+        $email = (new Email())
+            ->from('noreply@mylocca.com')
+            ->to($emailAddress)
+            ->subject('Votre quittance de loyer - MYLOCCA')
+            ->html($this->getReceiptEmailTemplate($tenantName, $payment));
+
+        // Ajouter la quittance en pièce jointe si le fichier existe
+        $filePath = $this->getDocumentFilePath($receipt);
+        if ($filePath && file_exists($filePath)) {
+            $email->attachFromPath($filePath, 'quittance-' . $payment->getPaidDate()->format('Y-m') . '.pdf');
+        }
+
+        $this->mailer->send($email);
+    }
+
+    /**
+     * Envoie un email de rappel de paiement
+     */
+    private function sendPaymentReminderEmail(string $emailAddress, string $tenantName, Payment $payment): void
+    {
+        $email = (new Email())
+            ->from('noreply@mylocca.com')
+            ->to($emailAddress)
+            ->subject('Rappel de paiement - MYLOCCA')
+            ->html($this->getPaymentReminderEmailTemplate($tenantName, $payment));
+
+        $this->mailer->send($email);
+    }
+
+    /**
+     * Envoie un email d'alerte d'expiration de contrat
+     */
+    private function sendLeaseExpirationEmail(string $emailAddress, string $tenantName, \App\Entity\Lease $lease): void
+    {
+        $email = (new Email())
+            ->from('noreply@mylocca.com')
+            ->to($emailAddress)
+            ->subject('Alerte: Expiration de votre contrat - MYLOCCA')
+            ->html($this->getLeaseExpirationEmailTemplate($tenantName, $lease));
+
+        $this->mailer->send($email);
+    }
+
+    /**
+     * Template email pour quittance
+     */
+    private function getReceiptEmailTemplate(string $tenantName, Payment $payment): string
+    {
+        return "
+            <h2>Bonjour {$tenantName},</h2>
+            <p>Veuillez trouver ci-joint votre quittance de loyer pour le mois de " . $payment->getPaidDate()->format('F Y') . ".</p>
+            <p>Montant payé : " . number_format($payment->getAmount(), 0, ',', ' ') . " FCFA</p>
+            <p>Merci pour votre confiance.</p>
+            <p>L'équipe MYLOCCA</p>
+        ";
+    }
+
+    /**
+     * Template email pour rappel de paiement
+     */
+    private function getPaymentReminderEmailTemplate(string $tenantName, Payment $payment): string
+    {
+        $daysOverdue = $payment->getDueDate()->diff(new \DateTime())->days;
+
+        return "
+            <h2>Bonjour {$tenantName},</h2>
+            <p>Nous vous rappelons que votre loyer de " . number_format($payment->getAmount(), 0, ',', ' ') . " FCFA était attendu le " . $payment->getDueDate()->format('d/m/Y') . ".</p>
+            <p>Le paiement est en retard de {$daysOverdue} jour(s).</p>
+            <p>Merci de régulariser votre situation dans les plus brefs délais.</p>
+            <p>L'équipe MYLOCCA</p>
+        ";
+    }
+
+    /**
+     * Template email pour alerte d'expiration de contrat
+     */
+    private function getLeaseExpirationEmailTemplate(string $tenantName, \App\Entity\Lease $lease): string
+    {
+        $daysUntilExpiration = $lease->getEndDate()->diff(new \DateTime())->days;
+        $propertyAddress = $lease->getProperty() ? $lease->getProperty()->getAddress() : 'N/A';
+
+        return "
+            <h2>Bonjour {$tenantName},</h2>
+            <p>Nous vous informons que votre contrat de location pour <strong>{$propertyAddress}</strong> expire le " . $lease->getEndDate()->format('d/m/Y') . ".</p>
+            <p>Il reste {$daysUntilExpiration} jour(s) avant l'expiration de votre contrat.</p>
+            <p>Si vous souhaitez renouveler votre contrat ou si vous avez des questions, n'hésitez pas à nous contacter.</p>
+            <p>L'équipe MYLOCCA</p>
+        ";
+    }
+
+    /**
+     * Obtient le chemin du fichier de document
+     */
+    private function getDocumentFilePath(Document $document): ?string
+    {
+        if (!$document->getFileName()) {
+            return null;
+        }
+
+        $uploadDir = 'uploads/documents/';
+        return $uploadDir . $document->getFileName();
     }
 }
