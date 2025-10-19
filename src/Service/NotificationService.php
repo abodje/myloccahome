@@ -160,6 +160,14 @@ class NotificationService
     }
 
     /**
+     * Récupère l'adresse email de l'expéditeur depuis les paramètres
+     */
+    private function getFromEmail(): string
+    {
+        return $this->settingsService->get('email_from', 'noreply@mylocca.com');
+    }
+
+    /**
      * Envoie les quittances de loyer aux locataires
      */
     public function sendRentReceipts(?\DateTime $forMonth = null): array
@@ -398,7 +406,7 @@ class NotificationService
     {
         try {
             $email = (new Email())
-                ->from('noreply@mylocca.com')
+                ->from($this->getFromEmail())
                 ->to($testEmail)
                 ->subject('Test de configuration email - MYLOCCA')
                 ->html('<p>Ceci est un email de test pour vérifier la configuration SMTP de MYLOCCA.</p>');
@@ -417,7 +425,7 @@ class NotificationService
     private function sendReceiptEmail(string $emailAddress, string $tenantName, Document $receipt, Payment $payment): void
     {
         $email = (new Email())
-            ->from('noreply@mylocca.com')
+            ->from($this->getFromEmail())
             ->to($emailAddress)
             ->subject('Votre quittance de loyer - MYLOCCA')
             ->html($this->getReceiptEmailTemplate($tenantName, $payment));
@@ -437,7 +445,7 @@ class NotificationService
     private function sendPaymentReminderEmail(string $emailAddress, string $tenantName, Payment $payment): void
     {
         $email = (new Email())
-            ->from('noreply@mylocca.com')
+            ->from($this->getFromEmail())
             ->to($emailAddress)
             ->subject('Rappel de paiement - MYLOCCA')
             ->html($this->getPaymentReminderEmailTemplate($tenantName, $payment));
@@ -451,7 +459,7 @@ class NotificationService
     private function sendLeaseExpirationEmail(string $emailAddress, string $tenantName, \App\Entity\Lease $lease): void
     {
         $email = (new Email())
-            ->from('noreply@mylocca.com')
+            ->from($this->getFromEmail())
             ->to($emailAddress)
             ->subject('Alerte: Expiration de votre contrat - MYLOCCA')
             ->html($this->getLeaseExpirationEmailTemplate($tenantName, $lease));
