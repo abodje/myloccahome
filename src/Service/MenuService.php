@@ -52,6 +52,7 @@ class MenuService
                 'route' => 'app_property_index',
                 'roles' => ['ROLE_USER', 'ROLE_TENANT', 'ROLE_MANAGER', 'ROLE_ADMIN'],
                 'order' => 3,
+                'required_feature' => 'properties_management',
             ],
             'owners' => [
                 'label' => 'Propriétaires',
@@ -66,6 +67,7 @@ class MenuService
                 'route' => 'app_tenant_index',
                 'roles' => ['ROLE_MANAGER', 'ROLE_ADMIN'],
                 'order' => 4,
+                'required_feature' => 'tenants_management',
             ],
             'leases' => [
                 'label' => 'Baux',
@@ -73,6 +75,7 @@ class MenuService
                 'route' => 'app_lease_index',
                 'roles' => ['ROLE_MANAGER', 'ROLE_ADMIN'],
                 'order' => 5,
+                'required_feature' => 'lease_management',
             ],
             'payments' => [
                 'label' => 'Mes paiements',
@@ -80,6 +83,7 @@ class MenuService
                 'route' => 'app_payment_index',
                 'roles' => ['ROLE_USER', 'ROLE_TENANT', 'ROLE_MANAGER', 'ROLE_ADMIN'],
                 'order' => 6,
+                'required_feature' => 'payment_tracking',
             ],
             'advance_payments' => [
                 'label' => 'Acomptes',
@@ -220,6 +224,7 @@ class MenuService
                 'order' => 105,
                 'badge' => 'new',
                 'badge_type' => 'success',
+                'required_feature' => 'environment_management',
             ],
             'admin_settings' => [
                 'label' => 'Paramètres',
