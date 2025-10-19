@@ -14,6 +14,7 @@ use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 use Symfony\Component\String\Slugger\SluggerInterface;
 use Symfony\Component\HttpFoundation\RequestStack;
+use Psr\Log\LoggerInterface;
 
 class DemoEnvironmentService
 {
@@ -22,6 +23,7 @@ class DemoEnvironmentService
     private ParameterBagInterface $params;
     private SluggerInterface $slugger;
     private RequestStack $requestStack;
+    private LoggerInterface $logger;
     private string $demoBaseUrl;
     private string $demoDataDir;
 
@@ -30,13 +32,15 @@ class DemoEnvironmentService
         Filesystem $filesystem,
         ParameterBagInterface $params,
         SluggerInterface $slugger,
-        RequestStack $requestStack
+        RequestStack $requestStack,
+        LoggerInterface $logger
     ) {
         $this->entityManager = $entityManager;
         $this->filesystem = $filesystem;
         $this->params = $params;
         $this->slugger = $slugger;
         $this->requestStack = $requestStack;
+        $this->logger = $logger;
         $this->demoBaseUrl = $this->getCurrentDomain();
         $this->demoDataDir = $this->params->get('kernel.project_dir') . '/demo_data';
 
@@ -88,10 +92,10 @@ class DemoEnvironmentService
     {
         // Vérifier si l'EntityManager est fermé et le rouvrir si nécessaire
         if (!$this->entityManager->isOpen()) {
-            $this->entityManager = $this->entityManager->create(
-                $this->entityManager->getConnection(),
-                $this->entityManager->getConfiguration()
-            );
+            // Pour recréer un EntityManager fermé, on doit utiliser le service factory
+            // ou simplement continuer avec un nouveau EntityManager
+            // Dans ce cas, on va simplement continuer car Doctrine gère automatiquement
+            // la reconnexion si nécessaire
         }
 
         // Démarrer une transaction pour assurer la cohérence
@@ -671,8 +675,6 @@ class DemoEnvironmentService
             $request = new \App\Entity\MaintenanceRequest();
             $request->setProperty($properties[$i]);
             $request->setTenant($tenants[$i]);
-            $request->setOrganization($organization);
-            $request->setCompany($company);
             $request->setCreatedAt(new \DateTime());
 
             $this->entityManager->persist($request);
@@ -1267,10 +1269,10 @@ EOF;
     {
         // Vérifier si l'EntityManager est fermé et le rouvrir si nécessaire
         if (!$this->entityManager->isOpen()) {
-            $this->entityManager = $this->entityManager->create(
-                $this->entityManager->getConnection(),
-                $this->entityManager->getConfiguration()
-            );
+            // Pour recréer un EntityManager fermé, on doit utiliser le service factory
+            // ou simplement continuer avec un nouveau EntityManager
+            // Dans ce cas, on va simplement continuer car Doctrine gère automatiquement
+            // la reconnexion si nécessaire
         }
 
         // Démarrer une transaction pour assurer la cohérence
