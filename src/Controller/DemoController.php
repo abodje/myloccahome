@@ -52,7 +52,7 @@ class DemoController extends AbstractController
         ]);
     }
 
-    #[Route('/demo/{subdomain}', name: 'demo_access', methods: ['GET'])]
+    #[Route('/demo/{subdomain}', name: 'demo_access_subdomain', methods: ['GET'])]
     public function accessDemo(string $subdomain, Request $request): Response
     {
         // Détecter le sous-domaine depuis l'en-tête Host
