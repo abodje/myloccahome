@@ -49,6 +49,9 @@ class Subscription
     #[ORM\Column(type: Types::DATE_MUTABLE, nullable: true)]
     private ?\DateTimeInterface $cancelledAt = null; // Date d'annulation
 
+    #[ORM\Column(type: Types::DATE_MUTABLE, nullable: true)]
+    private ?\DateTimeInterface $trialEndDate = null; // Date de fin de période d'essai
+
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $cancellationReason = null;
 
@@ -196,6 +199,17 @@ class Subscription
         return $this;
     }
 
+    public function getTrialEndDate(): ?\DateTimeInterface
+    {
+        return $this->trialEndDate;
+    }
+
+    public function setTrialEndDate(?\DateTimeInterface $trialEndDate): static
+    {
+        $this->trialEndDate = $trialEndDate;
+        return $this;
+    }
+
     public function getCancellationReason(): ?string
     {
         return $this->cancellationReason;
@@ -284,13 +298,8 @@ class Subscription
         return $this;
     }
 
-    /**
-     * @return Collection<int, Subscription>
-     */
-    public function getSubscriptions(): Collection
-    {
-        return $this->subscriptions;
-    }
+    // Cette méthode a été supprimée car elle faisait référence à une propriété inexistante
+    // Les abonnements sont gérés via la relation avec Organization
 
     /**
      * Vérifie si l'abonnement est actif
@@ -349,12 +358,14 @@ class Subscription
         $this->startDate = new \DateTime();
         
         // Calculer la date de fin selon le cycle
-        if ($this->billingCycle === 'YEARLY') {
-            $this->endDate = (clone $this->startDate)->modify('+1 year');
-            $this->nextBillingDate = (clone $this->endDate);
+        if ($this->billingCycle === 'yearly') {
+            $startDate = new \DateTime($this->startDate->format('Y-m-d'));
+            $this->endDate = $startDate->modify('+1 year');
+            $this->nextBillingDate = clone $this->endDate;
         } else {
-            $this->endDate = (clone $this->startDate)->modify('+1 month');
-            $this->nextBillingDate = (clone $this->endDate);
+            $startDate = new \DateTime($this->startDate->format('Y-m-d'));
+            $this->endDate = $startDate->modify('+1 month');
+            $this->nextBillingDate = clone $this->endDate;
         }
 
         return $this;
@@ -365,13 +376,15 @@ class Subscription
      */
     public function renew(): static
     {
-        if ($this->billingCycle === 'YEARLY') {
-            $this->endDate = (clone $this->endDate)->modify('+1 year');
+        if ($this->billingCycle === 'yearly') {
+            $endDate = new \DateTime($this->endDate->format('Y-m-d'));
+            $this->endDate = $endDate->modify('+1 year');
         } else {
-            $this->endDate = (clone $this->endDate)->modify('+1 month');
+            $endDate = new \DateTime($this->endDate->format('Y-m-d'));
+            $this->endDate = $endDate->modify('+1 month');
         }
 
-        $this->nextBillingDate = (clone $this->endDate);
+        $this->nextBillingDate = clone $this->endDate;
         $this->status = 'ACTIVE';
         $this->updatedAt = new \DateTime();
 
