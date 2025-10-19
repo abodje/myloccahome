@@ -1,0 +1,339 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Détails de l'Abonnement - {{ subscription.organization.name }}{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3 mb-0">
+                    <i class="bi bi-file-text me-2"></i>
+                    Abonnement - {{ subscription.organization.name }}
+                </h1>
+                <div class="btn-group" role="group">
+                    <a href="{{ path('app_admin_subscription_edit', {'id': subscription.id}) }}" class="btn btn-primary">
+                        <i class="bi bi-pencil me-2"></i>
+                        Modifier
+                    </a>
+                    <a href="{{ path('app_admin_subscription_index') }}" class="btn btn-secondary">
+                        <i class="bi bi-arrow-left me-2"></i>
+                        Retour à la liste
+                    </a>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-lg-8">
+                    <!-- Informations générales -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">Informations Générales</h5>
+                        </div>
+                        <div class="card-body">
+                            <dl class="row">
+                                <dt class="col-sm-3">Organisation :</dt>
+                                <dd class="col-sm-9">
+                                    <strong>{{ subscription.organization.name }}</strong>
+                                    <br>
+                                    <small class="text-muted">{{ subscription.organization.slug }}</small>
+                                </dd>
+
+                                <dt class="col-sm-3">Plan :</dt>
+                                <dd class="col-sm-9">
+                                    <strong>{{ subscription.plan.name }}</strong>
+                                    <br>
+                                    <small class="text-muted">
+                                        {{ subscription.plan.monthlyPrice|number_format(0, ',', ' ') }} {{ subscription.plan.currency }}/mois
+                                        {% if subscription.billingCycle == 'yearly' %}
+                                            ({{ subscription.plan.yearlyPrice|number_format(0, ',', ' ') }} {{ subscription.plan.currency }}/an)
+                                        {% endif %}
+                                    </small>
+                                </dd>
+
+                                <dt class="col-sm-3">Statut :</dt>
+                                <dd class="col-sm-9">
+                                    {% set statusClass = {
+                                        'ACTIVE': 'success',
+                                        'CANCELLED': 'warning',
+                                        'EXPIRED': 'danger',
+                                        'PENDING': 'info'
+                                    } %}
+                                    <span class="badge bg-{{ statusClass[subscription.status] ?? 'secondary' }} fs-6">
+                                        {{ subscription.status }}
+                                    </span>
+                                </dd>
+
+                                <dt class="col-sm-3">Cycle de facturation :</dt>
+                                <dd class="col-sm-9">
+                                    <span class="badge bg-info">
+                                        {{ subscription.billingCycle == 'monthly' ? 'Mensuel' : 'Annuel' }}
+                                    </span>
+                                </dd>
+
+                                <dt class="col-sm-3">Date de début :</dt>
+                                <dd class="col-sm-9">{{ subscription.startDate|date('d/m/Y') }}</dd>
+
+                                <dt class="col-sm-3">Date de fin :</dt>
+                                <dd class="col-sm-9">
+                                    {% if subscription.endDate %}
+                                        {{ subscription.endDate|date('d/m/Y') }}
+                                    {% else %}
+                                        <em class="text-muted">Indéfinie</em>
+                                    {% endif %}
+                                </dd>
+
+                                {% if subscription.trialEndDate %}
+                                    <dt class="col-sm-3">Fin d'essai :</dt>
+                                    <dd class="col-sm-9">{{ subscription.trialEndDate|date('d/m/Y') }}</dd>
+                                {% endif %}
+
+                                {% if subscription.cancelledAt %}
+                                    <dt class="col-sm-3">Annulé le :</dt>
+                                    <dd class="col-sm-9">{{ subscription.cancelledAt|date('d/m/Y H:i') }}</dd>
+                                {% endif %}
+                            </dl>
+                        </div>
+                    </div>
+
+                    <!-- Informations de paiement -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">Informations de Paiement</h5>
+                        </div>
+                        <div class="card-body">
+                            <dl class="row">
+                                {% if subscription.amount %}
+                                    <dt class="col-sm-3">Montant :</dt>
+                                    <dd class="col-sm-9">
+                                        <strong>{{ subscription.amount|number_format(0, ',', ' ') }} {{ subscription.currency }}</strong>
+                                    </dd>
+                                {% endif %}
+
+                                {% if subscription.paymentMethod %}
+                                    <dt class="col-sm-3">Méthode de paiement :</dt>
+                                    <dd class="col-sm-9">{{ subscription.paymentMethod }}</dd>
+                                {% endif %}
+
+                                {% if subscription.paymentTransactionId %}
+                                    <dt class="col-sm-3">ID Transaction :</dt>
+                                    <dd class="col-sm-9">
+                                        <code>{{ subscription.paymentTransactionId }}</code>
+                                    </dd>
+                                {% endif %}
+
+                                {% if subscription.lastPaymentDate %}
+                                    <dt class="col-sm-3">Dernier paiement :</dt>
+                                    <dd class="col-sm-9">{{ subscription.lastPaymentDate|date('d/m/Y H:i') }}</dd>
+                                {% endif %}
+
+                                {% if subscription.nextBillingDate %}
+                                    <dt class="col-sm-3">Prochaine facturation :</dt>
+                                    <dd class="col-sm-9">{{ subscription.nextBillingDate|date('d/m/Y') }}</dd>
+                                {% endif %}
+
+                                <dt class="col-sm-3">Renouvellement automatique :</dt>
+                                <dd class="col-sm-9">
+                                    {% if subscription.autoRenew %}
+                                        <span class="badge bg-success">Activé</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">Désactivé</span>
+                                    {% endif %}
+                                </dd>
+                            </dl>
+                        </div>
+                    </div>
+
+                    <!-- Fonctionnalités du plan -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">Fonctionnalités du Plan</h5>
+                        </div>
+                        <div class="card-body">
+                            {% if subscription.plan.features and subscription.plan.features|length > 0 %}
+                                <div class="row">
+                                    {% for feature in subscription.plan.features %}
+                                        <div class="col-md-6 mb-2">
+                                            <div class="d-flex align-items-center">
+                                                <i class="bi bi-check-circle text-success me-2"></i>
+                                                <span>{{ feature|replace({'_': ' '})|title }}</span>
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                <p class="text-muted">Aucune fonctionnalité définie pour ce plan.</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-4">
+                    <!-- Actions rapides -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h6 class="card-title mb-0">
+                                <i class="bi bi-lightning me-2"></i>
+                                Actions Rapides
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="d-grid gap-2">
+                                {% if subscription.status != 'ACTIVE' %}
+                                    <form method="post" action="{{ path('app_admin_subscription_activate', {'id': subscription.id}) }}">
+                                        <button type="submit" class="btn btn-success w-100"
+                                                onclick="return confirm('Activer cet abonnement ?');">
+                                            <i class="bi bi-play-circle me-2"></i>
+                                            Activer l'Abonnement
+                                        </button>
+                                    </form>
+                                {% endif %}
+
+                                {% if subscription.status == 'ACTIVE' %}
+                                    <form method="post" action="{{ path('app_admin_subscription_cancel', {'id': subscription.id}) }}">
+                                        <button type="submit" class="btn btn-warning w-100"
+                                                onclick="return confirm('Annuler cet abonnement ?');">
+                                            <i class="bi bi-pause-circle me-2"></i>
+                                            Annuler l'Abonnement
+                                        </button>
+                                    </form>
+                                {% endif %}
+
+                                <a href="{{ path('app_admin_subscription_edit', {'id': subscription.id}) }}" class="btn btn-primary">
+                                    <i class="bi bi-pencil me-2"></i>
+                                    Modifier l'Abonnement
+                                </a>
+
+                                <hr>
+
+                                <form method="post" action="{{ path('app_admin_subscription_delete', {'id': subscription.id}) }}"
+                                      onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cet abonnement ? Cette action est irréversible.');">
+                                    <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ subscription.id) }}">
+                                    <button type="submit" class="btn btn-danger w-100">
+                                        <i class="bi bi-trash me-2"></i>
+                                        Supprimer l'Abonnement
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Statistiques -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h6 class="card-title mb-0">
+                                <i class="bi bi-graph-up me-2"></i>
+                                Statistiques
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="stat-item mb-3">
+                                <div class="d-flex justify-content-between">
+                                    <span>Durée :</span>
+                                    <strong class="text-primary">
+                                        {% if subscription.startDate and subscription.endDate %}
+                                            {% set duration = subscription.endDate.diff(subscription.startDate) %}
+                                            {{ duration.days }} jour{{ duration.days > 1 ? 's' : '' }}
+                                        {% else %}
+                                            En cours
+                                        {% endif %}
+                                    </strong>
+                                </div>
+                            </div>
+
+                            {% if subscription.endDate %}
+                                <div class="stat-item mb-3">
+                                    <div class="d-flex justify-content-between">
+                                        <span>Jours restants :</span>
+                                        <strong class="text-info">
+                                            {% set daysRemaining = subscription.endDate.diff(now).days %}
+                                            {% if daysRemaining > 0 %}
+                                                {{ daysRemaining }} jour{{ daysRemaining > 1 ? 's' : '' }}
+                                            {% else %}
+                                                <span class="text-danger">Expiré</span>
+                                            {% endif %}
+                                        </strong>
+                                    </div>
+                                </div>
+                            {% endif %}
+
+                            <div class="stat-item">
+                                <div class="d-flex justify-content-between">
+                                    <span>Créé le :</span>
+                                    <strong class="text-muted">{{ subscription.createdAt|date('d/m/Y H:i') }}</strong>
+                                </div>
+                            </div>
+
+                            {% if subscription.updatedAt %}
+                                <div class="stat-item">
+                                    <div class="d-flex justify-content-between">
+                                        <span>Modifié le :</span>
+                                        <strong class="text-muted">{{ subscription.updatedAt|date('d/m/Y H:i') }}</strong>
+                                    </div>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Informations de l'organisation -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h6 class="card-title mb-0">
+                                <i class="bi bi-building me-2"></i>
+                                Organisation
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <dl class="row small">
+                                <dt class="col-5">Nom :</dt>
+                                <dd class="col-7">{{ subscription.organization.name }}</dd>
+
+                                <dt class="col-5">Slug :</dt>
+                                <dd class="col-7"><code>{{ subscription.organization.slug }}</code></dd>
+
+                                <dt class="col-5">Statut :</dt>
+                                <dd class="col-7">
+                                    {% if subscription.organization.isActive %}
+                                        <span class="badge bg-success">Actif</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">Inactif</span>
+                                    {% endif %}
+                                </dd>
+
+                                <dt class="col-5">Abonnement actif :</dt>
+                                <dd class="col-7">
+                                    {% if subscription.organization.activeSubscription %}
+                                        <span class="badge bg-success">Oui</span>
+                                    {% else %}
+                                        <span class="badge bg-warning">Non</span>
+                                    {% endif %}
+                                </dd>
+                            </dl>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.stat-item {
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.stat-item:last-child {
+    border-bottom: none;
+}
+
+.card {
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+}
+
+.card-header {
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #e9ecef;
+}
+</style>
+{% endblock %}

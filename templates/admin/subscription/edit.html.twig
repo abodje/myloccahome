@@ -1,0 +1,293 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Modifier l'Abonnement - {{ subscription.organization.name }}{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3 mb-0">
+                    <i class="bi bi-pencil me-2"></i>
+                    Modifier l'Abonnement - {{ subscription.organization.name }}
+                </h1>
+                <div class="btn-group" role="group">
+                    <a href="{{ path('app_admin_subscription_show', {'id': subscription.id}) }}" class="btn btn-outline-primary">
+                        <i class="bi bi-eye me-2"></i>
+                        Voir les détails
+                    </a>
+                    <a href="{{ path('app_admin_subscription_index') }}" class="btn btn-secondary">
+                        <i class="bi bi-arrow-left me-2"></i>
+                        Retour à la liste
+                    </a>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-lg-8">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">Modifier les Informations de l'Abonnement</h5>
+                        </div>
+                        <div class="card-body">
+                            {{ form_start(form, {'attr': {'class': 'needs-validation', 'novalidate': true}}) }}
+
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    {{ form_label(form.organization) }}
+                                    {{ form_widget(form.organization) }}
+                                    {{ form_errors(form.organization) }}
+                                    <div class="form-text">
+                                        <i class="bi bi-info-circle me-1"></i>
+                                        Attention : Changer l'organisation peut affecter les données existantes
+                                    </div>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    {{ form_label(form.plan) }}
+                                    {{ form_widget(form.plan) }}
+                                    {{ form_errors(form.plan) }}
+                                    <div class="form-text">
+                                        <i class="bi bi-info-circle me-1"></i>
+                                        Changer le plan peut affecter les fonctionnalités disponibles
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    {{ form_label(form.status) }}
+                                    {{ form_widget(form.status) }}
+                                    {{ form_errors(form.status) }}
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    {{ form_label(form.billingCycle) }}
+                                    {{ form_widget(form.billingCycle) }}
+                                    {{ form_errors(form.billingCycle) }}
+                                </div>
+                            </div>
+
+                            <h6 class="mt-4 mb-3">
+                                <i class="bi bi-calendar me-2"></i>
+                                Dates
+                            </h6>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    {{ form_label(form.startDate) }}
+                                    {{ form_widget(form.startDate) }}
+                                    {{ form_errors(form.startDate) }}
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    {{ form_label(form.endDate) }}
+                                    {{ form_widget(form.endDate) }}
+                                    {{ form_errors(form.endDate) }}
+                                    <div class="form-text">Laisser vide pour un abonnement sans fin</div>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    {{ form_label(form.trialEndDate) }}
+                                    {{ form_widget(form.trialEndDate) }}
+                                    {{ form_errors(form.trialEndDate) }}
+                                    <div class="form-text">Optionnel : période d'essai</div>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    {{ form_label(form.cancelledAt) }}
+                                    {{ form_widget(form.cancelledAt) }}
+                                    {{ form_errors(form.cancelledAt) }}
+                                    <div class="form-text">Remplir si l'abonnement est annulé</div>
+                                </div>
+                            </div>
+
+                            <div class="d-flex justify-content-end gap-2 mt-4">
+                                <a href="{{ path('app_admin_subscription_show', {'id': subscription.id}) }}" class="btn btn-secondary">
+                                    Annuler
+                                </a>
+                                {{ form_widget(form.save) }}
+                            </div>
+
+                            {{ form_end(form) }}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <h6 class="card-title mb-0">
+                                <i class="bi bi-info-circle me-2"></i>
+                                Informations Actuelles
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <dl class="row small">
+                                <dt class="col-5">Organisation :</dt>
+                                <dd class="col-7">{{ subscription.organization.name }}</dd>
+
+                                <dt class="col-5">Plan :</dt>
+                                <dd class="col-7">{{ subscription.plan.name }}</dd>
+
+                                <dt class="col-5">Statut :</dt>
+                                <dd class="col-7">
+                                    {% set statusClass = {
+                                        'ACTIVE': 'success',
+                                        'CANCELLED': 'warning',
+                                        'EXPIRED': 'danger',
+                                        'PENDING': 'info'
+                                    } %}
+                                    <span class="badge bg-{{ statusClass[subscription.status] ?? 'secondary' }}">
+                                        {{ subscription.status }}
+                                    </span>
+                                </dd>
+
+                                <dt class="col-5">Cycle :</dt>
+                                <dd class="col-7">
+                                    {{ subscription.billingCycle == 'monthly' ? 'Mensuel' : 'Annuel' }}
+                                </dd>
+
+                                <dt class="col-5">Début :</dt>
+                                <dd class="col-7">{{ subscription.startDate|date('d/m/Y') }}</dd>
+
+                                <dt class="col-5">Fin :</dt>
+                                <dd class="col-7">
+                                    {% if subscription.endDate %}
+                                        {{ subscription.endDate|date('d/m/Y') }}
+                                    {% else %}
+                                        <em class="text-muted">Indéfinie</em>
+                                    {% endif %}
+                                </dd>
+                            </dl>
+                        </div>
+                    </div>
+
+                    <div class="card mt-4">
+                        <div class="card-header">
+                            <h6 class="card-title mb-0">
+                                <i class="bi bi-exclamation-triangle me-2"></i>
+                                Avertissements
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="alert alert-warning">
+                                <h6 class="alert-heading">
+                                    <i class="bi bi-exclamation-triangle me-2"></i>
+                                    Modifications Risquées
+                                </h6>
+                                <p class="mb-2">Les modifications suivantes peuvent affecter l'organisation :</p>
+                                <ul class="mb-0 small">
+                                    <li>Changement d'organisation</li>
+                                    <li>Modification du plan (fonctionnalités)</li>
+                                    <li>Changement de statut</li>
+                                    <li>Modification des dates</li>
+                                </ul>
+                            </div>
+
+                            <div class="alert alert-info">
+                                <h6 class="alert-heading">
+                                    <i class="bi bi-lightbulb me-2"></i>
+                                    Recommandations
+                                </h6>
+                                <ul class="mb-0 small">
+                                    <li>Testez les modifications sur un environnement de test</li>
+                                    <li>Informez l'organisation des changements</li>
+                                    <li>Créez un nouvel abonnement plutôt que de modifier l'existant</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card mt-4">
+                        <div class="card-header">
+                            <h6 class="card-title mb-0">
+                                <i class="bi bi-graph-up me-2"></i>
+                                Impact
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="stat-item mb-2">
+                                <div class="d-flex justify-content-between">
+                                    <span>Organisation :</span>
+                                    <strong class="text-primary">{{ subscription.organization.name }}</strong>
+                                </div>
+                            </div>
+                            <div class="stat-item mb-2">
+                                <div class="d-flex justify-content-between">
+                                    <span>Utilisateurs affectés :</span>
+                                    <strong class="text-info">{{ subscription.organization.users|length }}</strong>
+                                </div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="d-flex justify-content-between">
+                                    <span>Fonctionnalités du plan :</span>
+                                    <strong class="text-success">{{ subscription.plan.features|length }}</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Validation du formulaire
+(function() {
+    'use strict';
+    window.addEventListener('load', function() {
+        var forms = document.getElementsByClassName('needs-validation');
+        var validation = Array.prototype.filter.call(forms, function(form) {
+            form.addEventListener('submit', function(event) {
+                if (form.checkValidity() === false) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                }
+                form.classList.add('was-validated');
+            }, false);
+        });
+    }, false);
+})();
+
+// Avertissement avant modification
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('form');
+    const submitButton = form.querySelector('button[type="submit"]');
+
+    form.addEventListener('submit', function(e) {
+        const organizationChanged = '{{ subscription.organization.id }}' !== document.querySelector('select[name="subscription[organization]"]').value;
+        const planChanged = '{{ subscription.plan.id }}' !== document.querySelector('select[name="subscription[plan]"]').value;
+        const statusChanged = '{{ subscription.status }}' !== document.querySelector('select[name="subscription[status]"]').value;
+
+        if (organizationChanged || planChanged || statusChanged) {
+            if (!confirm('Vous modifiez des paramètres critiques (organisation, plan ou statut). Cela peut affecter les utilisateurs. Voulez-vous vraiment continuer ?')) {
+                e.preventDefault();
+                return false;
+            }
+        }
+    });
+});
+</script>
+
+<style>
+.stat-item {
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.stat-item:last-child {
+    border-bottom: none;
+}
+
+.alert {
+    border-left: 4px solid;
+}
+
+.alert-warning {
+    border-left-color: #ffc107;
+}
+
+.alert-info {
+    border-left-color: #0dcaf0;
+}
+</style>
+{% endblock %}

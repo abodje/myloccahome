@@ -1,0 +1,209 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Nouvel Abonnement{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3 mb-0">
+                    <i class="bi bi-plus-circle me-2"></i>
+                    Nouvel Abonnement
+                </h1>
+                <a href="{{ path('app_admin_subscription_index') }}" class="btn btn-secondary">
+                    <i class="bi bi-arrow-left me-2"></i>
+                    Retour à la liste
+                </a>
+            </div>
+
+            <div class="row">
+                <div class="col-lg-8">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">Informations de l'Abonnement</h5>
+                        </div>
+                        <div class="card-body">
+                            {{ form_start(form, {'attr': {'class': 'needs-validation', 'novalidate': true}}) }}
+
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    {{ form_label(form.organization) }}
+                                    {{ form_widget(form.organization) }}
+                                    {{ form_errors(form.organization) }}
+                                    <div class="form-text">Sélectionnez l'organisation pour cet abonnement</div>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    {{ form_label(form.plan) }}
+                                    {{ form_widget(form.plan) }}
+                                    {{ form_errors(form.plan) }}
+                                    <div class="form-text">Choisissez le plan d'abonnement</div>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    {{ form_label(form.status) }}
+                                    {{ form_widget(form.status) }}
+                                    {{ form_errors(form.status) }}
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    {{ form_label(form.billingCycle) }}
+                                    {{ form_widget(form.billingCycle) }}
+                                    {{ form_errors(form.billingCycle) }}
+                                </div>
+                            </div>
+
+                            <h6 class="mt-4 mb-3">
+                                <i class="bi bi-calendar me-2"></i>
+                                Dates
+                            </h6>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    {{ form_label(form.startDate) }}
+                                    {{ form_widget(form.startDate) }}
+                                    {{ form_errors(form.startDate) }}
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    {{ form_label(form.endDate) }}
+                                    {{ form_widget(form.endDate) }}
+                                    {{ form_errors(form.endDate) }}
+                                    <div class="form-text">Laisser vide pour un abonnement sans fin</div>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    {{ form_label(form.trialEndDate) }}
+                                    {{ form_widget(form.trialEndDate) }}
+                                    {{ form_errors(form.trialEndDate) }}
+                                    <div class="form-text">Optionnel : période d'essai</div>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    {{ form_label(form.cancelledAt) }}
+                                    {{ form_widget(form.cancelledAt) }}
+                                    {{ form_errors(form.cancelledAt) }}
+                                    <div class="form-text">Remplir si l'abonnement est annulé</div>
+                                </div>
+                            </div>
+
+                            <div class="d-flex justify-content-end gap-2 mt-4">
+                                <a href="{{ path('app_admin_subscription_index') }}" class="btn btn-secondary">
+                                    Annuler
+                                </a>
+                                {{ form_widget(form.save) }}
+                            </div>
+
+                            {{ form_end(form) }}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <h6 class="card-title mb-0">
+                                <i class="bi bi-info-circle me-2"></i>
+                                Informations
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <h6>Conseils pour créer un abonnement :</h6>
+                            <ul class="list-unstyled small">
+                                <li><i class="bi bi-check-circle text-success me-2"></i>Vérifiez que l'organisation n'a pas déjà un abonnement actif</li>
+                                <li><i class="bi bi-check-circle text-success me-2"></i>Le statut "ACTIVE" sera automatiquement défini si c'est le premier abonnement</li>
+                                <li><i class="bi bi-check-circle text-success me-2"></i>Les dates de fin sont calculées automatiquement selon le cycle</li>
+                                <li><i class="bi bi-check-circle text-success me-2"></i>La période d'essai est optionnelle</li>
+                            </ul>
+
+                            <hr>
+
+                            <h6>Statuts disponibles :</h6>
+                            <ul class="list-unstyled small">
+                                <li><span class="badge bg-success me-2">ACTIVE</span> Abonnement actif</li>
+                                <li><span class="badge bg-warning me-2">CANCELLED</span> Abonnement annulé</li>
+                                <li><span class="badge bg-danger me-2">EXPIRED</span> Abonnement expiré</li>
+                                <li><span class="badge bg-info me-2">PENDING</span> En attente d'activation</li>
+                            </ul>
+
+                            <hr>
+
+                            <h6>Cycles de facturation :</h6>
+                            <ul class="list-unstyled small">
+                                <li><i class="bi bi-calendar-month me-2"></i><strong>Mensuel :</strong> Facturation chaque mois</li>
+                                <li><i class="bi bi-calendar-year me-2"></i><strong>Annuel :</strong> Facturation chaque année</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="card mt-4">
+                        <div class="card-header">
+                            <h6 class="card-title mb-0">
+                                <i class="bi bi-exclamation-triangle me-2"></i>
+                                Avertissements
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="alert alert-warning">
+                                <h6 class="alert-heading">
+                                    <i class="bi bi-exclamation-triangle me-2"></i>
+                                    Attention
+                                </h6>
+                                <ul class="mb-0 small">
+                                    <li>Un seul abonnement actif par organisation</li>
+                                    <li>L'abonnement actif sera automatiquement défini</li>
+                                    <li>Vérifiez les dates avant de valider</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Validation du formulaire
+(function() {
+    'use strict';
+    window.addEventListener('load', function() {
+        var forms = document.getElementsByClassName('needs-validation');
+        var validation = Array.prototype.filter.call(forms, function(form) {
+            form.addEventListener('submit', function(event) {
+                if (form.checkValidity() === false) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                }
+                form.classList.add('was-validated');
+            }, false);
+        });
+    }, false);
+})();
+
+// Mise à jour automatique des dates
+document.addEventListener('DOMContentLoaded', function() {
+    const billingCycleSelect = document.querySelector('select[name="subscription[billingCycle]"]');
+    const startDateInput = document.querySelector('input[name="subscription[startDate]"]');
+    const endDateInput = document.querySelector('input[name="subscription[endDate]"]');
+
+    function updateEndDate() {
+        if (startDateInput.value && billingCycleSelect.value && !endDateInput.value) {
+            const startDate = new Date(startDateInput.value);
+            const endDate = new Date(startDate);
+
+            if (billingCycleSelect.value === 'yearly') {
+                endDate.setFullYear(endDate.getFullYear() + 1);
+            } else {
+                endDate.setMonth(endDate.getMonth() + 1);
+            }
+
+            endDateInput.value = endDate.toISOString().split('T')[0];
+        }
+    }
+
+    billingCycleSelect.addEventListener('change', updateEndDate);
+    startDateInput.addEventListener('change', updateEndDate);
+});
+</script>
+{% endblock %}
