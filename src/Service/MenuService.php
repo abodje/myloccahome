@@ -216,12 +216,26 @@ class MenuService
                 'roles' => ['ROLE_ADMIN'],
                 'order' => 104,
             ],
+            'admin_plans' => [
+                'label' => '💳 Plans d\'Abonnement',
+                'icon' => 'bi-credit-card',
+                'route' => 'app_admin_plan_index',
+                'roles' => ['ROLE_ADMIN'],
+                'order' => 105,
+            ],
+            'admin_subscriptions' => [
+                'label' => '📋 Abonnements',
+                'icon' => 'bi-file-text',
+                'route' => 'app_admin_subscription_index',
+                'roles' => ['ROLE_ADMIN'],
+                'order' => 106,
+            ],
             'admin_environments' => [
                 'label' => '🚀 Environnements',
                 'icon' => 'bi-server',
                 'route' => 'app_admin_environment_index',
                 'roles' => ['ROLE_ADMIN'],
-                'order' => 105,
+                'order' => 107,
                 'badge' => 'new',
                 'badge_type' => 'success',
                 'required_feature' => 'environment_management',
@@ -231,7 +245,7 @@ class MenuService
                 'icon' => 'bi-sliders',
                 'route' => 'app_admin_settings_index',
                 'roles' => ['ROLE_ADMIN'],
-                'order' => 106,
+                'order' => 108,
                 'submenu' => [
                     'settings_app' => [
                         'label' => 'Application',

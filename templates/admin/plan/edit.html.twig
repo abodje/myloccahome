@@ -1,0 +1,341 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Modifier le Plan - {{ plan.name }}{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3 mb-0">
+                    <i class="bi bi-pencil me-2"></i>
+                    Modifier le Plan - {{ plan.name }}
+                </h1>
+                <div class="btn-group" role="group">
+                    <a href="{{ path('app_admin_plan_show', {'id': plan.id}) }}" class="btn btn-outline-primary">
+                        <i class="bi bi-eye me-2"></i>
+                        Voir les détails
+                    </a>
+                    <a href="{{ path('app_admin_plan_index') }}" class="btn btn-secondary">
+                        <i class="bi bi-arrow-left me-2"></i>
+                        Retour à la liste
+                    </a>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-lg-8">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">Modifier les Informations du Plan</h5>
+                        </div>
+                        <div class="card-body">
+                            {{ form_start(form, {'attr': {'class': 'needs-validation', 'novalidate': true}}) }}
+
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    {{ form_label(form.name) }}
+                                    {{ form_widget(form.name) }}
+                                    {{ form_errors(form.name) }}
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    {{ form_label(form.slug) }}
+                                    {{ form_widget(form.slug) }}
+                                    {{ form_errors(form.slug) }}
+                                    <div class="form-text">
+                                        <i class="bi bi-info-circle me-1"></i>
+                                        Attention : Modifier le slug peut affecter les abonnements existants
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                {{ form_label(form.description) }}
+                                {{ form_widget(form.description) }}
+                                {{ form_errors(form.description) }}
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-4 mb-3">
+                                    {{ form_label(form.monthlyPrice) }}
+                                    <div class="input-group">
+                                        {{ form_widget(form.monthlyPrice) }}
+                                        <span class="input-group-text">{{ plan.currency }}</span>
+                                    </div>
+                                    {{ form_errors(form.monthlyPrice) }}
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    {{ form_label(form.yearlyPrice) }}
+                                    <div class="input-group">
+                                        {{ form_widget(form.yearlyPrice) }}
+                                        <span class="input-group-text">{{ plan.currency }}</span>
+                                    </div>
+                                    {{ form_errors(form.yearlyPrice) }}
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    {{ form_label(form.currency) }}
+                                    {{ form_widget(form.currency) }}
+                                    {{ form_errors(form.currency) }}
+                                    <div class="form-text">
+                                        <i class="bi bi-exclamation-triangle me-1"></i>
+                                        Changer la devise peut affecter les abonnements existants
+                                    </div>
+                                </div>
+                            </div>
+
+                            <h6 class="mt-4 mb-3">
+                                <i class="bi bi-sliders me-2"></i>
+                                Limites du Plan
+                            </h6>
+                            <div class="row">
+                                <div class="col-md-3 mb-3">
+                                    {{ form_label(form.maxProperties) }}
+                                    {{ form_widget(form.maxProperties) }}
+                                    {{ form_errors(form.maxProperties) }}
+                                    <div class="form-text">0 = illimité</div>
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    {{ form_label(form.maxTenants) }}
+                                    {{ form_widget(form.maxTenants) }}
+                                    {{ form_errors(form.maxTenants) }}
+                                    <div class="form-text">0 = illimité</div>
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    {{ form_label(form.maxUsers) }}
+                                    {{ form_widget(form.maxUsers) }}
+                                    {{ form_errors(form.maxUsers) }}
+                                    <div class="form-text">0 = illimité</div>
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    {{ form_label(form.maxDocuments) }}
+                                    {{ form_widget(form.maxDocuments) }}
+                                    {{ form_errors(form.maxDocuments) }}
+                                    <div class="form-text">0 = illimité</div>
+                                </div>
+                            </div>
+
+                            <h6 class="mt-4 mb-3">
+                                <i class="bi bi-gear me-2"></i>
+                                Fonctionnalités
+                            </h6>
+                            <div class="row">
+                                <div class="col-12">
+                                    <div class="alert alert-info">
+                                        <i class="bi bi-info-circle me-2"></i>
+                                        <strong>Attention :</strong> Modifier les fonctionnalités peut affecter les utilisateurs ayant des abonnements actifs avec ce plan.
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-check">
+                                        {{ form_widget(form.features) }}
+                                        {{ form_errors(form.features) }}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <h6 class="mt-4 mb-3">
+                                <i class="bi bi-options me-2"></i>
+                                Options
+                            </h6>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    {{ form_label(form.sortOrder) }}
+                                    {{ form_widget(form.sortOrder) }}
+                                    {{ form_errors(form.sortOrder) }}
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <div class="form-check">
+                                        {{ form_widget(form.isPopular) }}
+                                        {{ form_label(form.isPopular) }}
+                                        {{ form_errors(form.isPopular) }}
+                                    </div>
+                                    <div class="form-check">
+                                        {{ form_widget(form.isActive) }}
+                                        {{ form_label(form.isActive) }}
+                                        {{ form_errors(form.isActive) }}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="d-flex justify-content-end gap-2 mt-4">
+                                <a href="{{ path('app_admin_plan_show', {'id': plan.id}) }}" class="btn btn-secondary">
+                                    Annuler
+                                </a>
+                                {{ form_widget(form.save) }}
+                            </div>
+
+                            {{ form_end(form) }}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <h6 class="card-title mb-0">
+                                <i class="bi bi-info-circle me-2"></i>
+                                Informations Actuelles
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <dl class="row small">
+                                <dt class="col-5">Nom :</dt>
+                                <dd class="col-7">{{ plan.name }}</dd>
+
+                                <dt class="col-5">Slug :</dt>
+                                <dd class="col-7"><code>{{ plan.slug }}</code></dd>
+
+                                <dt class="col-5">Prix mensuel :</dt>
+                                <dd class="col-7">{{ plan.monthlyPrice|number_format(0, ',', ' ') }} {{ plan.currency }}</dd>
+
+                                <dt class="col-5">Prix annuel :</dt>
+                                <dd class="col-7">{{ plan.yearlyPrice|number_format(0, ',', ' ') }} {{ plan.currency }}</dd>
+
+                                <dt class="col-5">Ordre :</dt>
+                                <dd class="col-7">{{ plan.sortOrder }}</dd>
+
+                                <dt class="col-5">Statut :</dt>
+                                <dd class="col-7">
+                                    {% if plan.isActive %}
+                                        <span class="badge bg-success">Actif</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">Inactif</span>
+                                    {% endif %}
+                                </dd>
+
+                                <dt class="col-5">Populaire :</dt>
+                                <dd class="col-7">
+                                    {% if plan.isPopular %}
+                                        <span class="badge bg-primary">Oui</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">Non</span>
+                                    {% endif %}
+                                </dd>
+                            </dl>
+                        </div>
+                    </div>
+
+                    <div class="card mt-4">
+                        <div class="card-header">
+                            <h6 class="card-title mb-0">
+                                <i class="bi bi-exclamation-triangle me-2"></i>
+                                Avertissements
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="alert alert-warning">
+                                <h6 class="alert-heading">
+                                    <i class="bi bi-exclamation-triangle me-2"></i>
+                                    Modifications Risquées
+                                </h6>
+                                <p class="mb-2">Les modifications suivantes peuvent affecter les abonnements existants :</p>
+                                <ul class="mb-0 small">
+                                    <li>Changement de slug</li>
+                                    <li>Modification des fonctionnalités</li>
+                                    <li>Changement de devise</li>
+                                    <li>Modification des limites</li>
+                                </ul>
+                            </div>
+
+                            <div class="alert alert-info">
+                                <h6 class="alert-heading">
+                                    <i class="bi bi-lightbulb me-2"></i>
+                                    Recommandations
+                                </h6>
+                                <ul class="mb-0 small">
+                                    <li>Testez les modifications sur un plan de test</li>
+                                    <li>Informez les utilisateurs des changements</li>
+                                    <li>Créez un nouveau plan plutôt que de modifier un existant</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card mt-4">
+                        <div class="card-header">
+                            <h6 class="card-title mb-0">
+                                <i class="bi bi-graph-up me-2"></i>
+                                Impact
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="stat-item mb-2">
+                                <div class="d-flex justify-content-between">
+                                    <span>Abonnements actifs :</span>
+                                    <strong class="text-primary">{{ plan.subscriptions|filter(s => s.status == 'ACTIVE')|length }}</strong>
+                                </div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="d-flex justify-content-between">
+                                    <span>Total abonnements :</span>
+                                    <strong class="text-info">{{ plan.subscriptions|length }}</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Validation du formulaire
+(function() {
+    'use strict';
+    window.addEventListener('load', function() {
+        var forms = document.getElementsByClassName('needs-validation');
+        var validation = Array.prototype.filter.call(forms, function(form) {
+            form.addEventListener('submit', function(event) {
+                if (form.checkValidity() === false) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                }
+                form.classList.add('was-validated');
+            }, false);
+        });
+    }, false);
+})();
+
+// Avertissement avant modification
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('form');
+    const submitButton = form.querySelector('button[type="submit"]');
+
+    form.addEventListener('submit', function(e) {
+        const slugChanged = '{{ plan.slug }}' !== document.querySelector('input[name="plan[slug]"]').value;
+        const currencyChanged = '{{ plan.currency }}' !== document.querySelector('select[name="plan[currency]"]').value;
+
+        if (slugChanged || currencyChanged) {
+            if (!confirm('Vous modifiez des paramètres critiques (slug ou devise). Cela peut affecter les abonnements existants. Voulez-vous vraiment continuer ?')) {
+                e.preventDefault();
+                return false;
+            }
+        }
+    });
+});
+</script>
+
+<style>
+.stat-item {
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.stat-item:last-child {
+    border-bottom: none;
+}
+
+.alert {
+    border-left: 4px solid;
+}
+
+.alert-warning {
+    border-left-color: #ffc107;
+}
+
+.alert-info {
+    border-left-color: #0dcaf0;
+}
+</style>
+{% endblock %}

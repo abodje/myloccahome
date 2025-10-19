@@ -1,0 +1,303 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Détails du Plan - {{ plan.name }}{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3 mb-0">
+                    <i class="bi bi-credit-card me-2"></i>
+                    {{ plan.name }}
+                    {% if plan.isPopular %}
+                        <span class="badge bg-primary ms-2">Populaire</span>
+                    {% endif %}
+                </h1>
+                <div class="btn-group" role="group">
+                    <a href="{{ path('app_admin_plan_edit', {'id': plan.id}) }}" class="btn btn-primary">
+                        <i class="bi bi-pencil me-2"></i>
+                        Modifier
+                    </a>
+                    <a href="{{ path('app_admin_plan_index') }}" class="btn btn-secondary">
+                        <i class="bi bi-arrow-left me-2"></i>
+                        Retour à la liste
+                    </a>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-lg-8">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">Informations Générales</h5>
+                        </div>
+                        <div class="card-body">
+                            <dl class="row">
+                                <dt class="col-sm-3">Nom :</dt>
+                                <dd class="col-sm-9">{{ plan.name }}</dd>
+
+                                <dt class="col-sm-3">Slug :</dt>
+                                <dd class="col-sm-9">
+                                    <code>{{ plan.slug }}</code>
+                                </dd>
+
+                                <dt class="col-sm-3">Description :</dt>
+                                <dd class="col-sm-9">
+                                    {% if plan.description %}
+                                        {{ plan.description }}
+                                    {% else %}
+                                        <em class="text-muted">Aucune description</em>
+                                    {% endif %}
+                                </dd>
+
+                                <dt class="col-sm-3">Devise :</dt>
+                                <dd class="col-sm-9">{{ plan.currency }}</dd>
+
+                                <dt class="col-sm-3">Ordre d'affichage :</dt>
+                                <dd class="col-sm-9">{{ plan.sortOrder }}</dd>
+
+                                <dt class="col-sm-3">Statut :</dt>
+                                <dd class="col-sm-9">
+                                    {% if plan.isActive %}
+                                        <span class="badge bg-success">Actif</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">Inactif</span>
+                                    {% endif %}
+                                </dd>
+                            </dl>
+                        </div>
+                    </div>
+
+                    <div class="card mt-4">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">Tarification</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="pricing-card text-center p-4 bg-light rounded">
+                                        <h6 class="text-muted">Prix Mensuel</h6>
+                                        <h3 class="text-primary">{{ plan.monthlyPrice|number_format(0, ',', ' ') }} {{ plan.currency }}</h3>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="pricing-card text-center p-4 bg-light rounded">
+                                        <h6 class="text-muted">Prix Annuel</h6>
+                                        <h3 class="text-success">{{ plan.yearlyPrice|number_format(0, ',', ' ') }} {{ plan.currency }}</h3>
+                                        {% if plan.monthlyPrice > 0 and plan.yearlyPrice > 0 %}
+                                            {% set monthlyYearlyTotal = plan.monthlyPrice * 12 %}
+                                            {% set savings = monthlyYearlyTotal - plan.yearlyPrice %}
+                                            {% if savings > 0 %}
+                                                <small class="text-success">
+                                                    <i class="bi bi-check-circle me-1"></i>
+                                                    Économie de {{ savings|number_format(0, ',', ' ') }} {{ plan.currency }}
+                                                </small>
+                                            {% endif %}
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card mt-4">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">Limites du Plan</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="limit-item mb-3">
+                                        <div class="d-flex align-items-center">
+                                            <i class="bi bi-building text-primary me-3"></i>
+                                            <div>
+                                                <strong>Propriétés</strong>
+                                                <div class="text-muted">
+                                                    {% if plan.maxProperties %}
+                                                        Maximum {{ plan.maxProperties }} propriétés
+                                                    {% else %}
+                                                        <span class="text-success">Illimité</span>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="limit-item mb-3">
+                                        <div class="d-flex align-items-center">
+                                            <i class="bi bi-people text-success me-3"></i>
+                                            <div>
+                                                <strong>Locataires</strong>
+                                                <div class="text-muted">
+                                                    {% if plan.maxTenants %}
+                                                        Maximum {{ plan.maxTenants }} locataires
+                                                    {% else %}
+                                                        <span class="text-success">Illimité</span>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <div class="limit-item mb-3">
+                                        <div class="d-flex align-items-center">
+                                            <i class="bi bi-person text-info me-3"></i>
+                                            <div>
+                                                <strong>Utilisateurs</strong>
+                                                <div class="text-muted">
+                                                    {% if plan.maxUsers %}
+                                                        Maximum {{ plan.maxUsers }} utilisateurs
+                                                    {% else %}
+                                                        <span class="text-success">Illimité</span>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="limit-item mb-3">
+                                        <div class="d-flex align-items-center">
+                                            <i class="bi bi-file-text text-warning me-3"></i>
+                                            <div>
+                                                <strong>Documents</strong>
+                                                <div class="text-muted">
+                                                    {% if plan.maxDocuments %}
+                                                        Maximum {{ plan.maxDocuments }} documents
+                                                    {% else %}
+                                                        <span class="text-success">Illimité</span>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <h6 class="card-title mb-0">
+                                <i class="bi bi-gear me-2"></i>
+                                Fonctionnalités
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            {% if plan.features and plan.features|length > 0 %}
+                                {% for feature in plan.features %}
+                                    <div class="d-flex align-items-center mb-2">
+                                        <i class="bi bi-check-circle text-success me-2"></i>
+                                        <span>{{ feature|replace({'_': ' '})|title }}</span>
+                                    </div>
+                                {% endfor %}
+                            {% else %}
+                                <p class="text-muted">Aucune fonctionnalité définie</p>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="card mt-4">
+                        <div class="card-header">
+                            <h6 class="card-title mb-0">
+                                <i class="bi bi-graph-up me-2"></i>
+                                Statistiques
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="stat-item mb-3">
+                                <div class="d-flex justify-content-between">
+                                    <span>Abonnements actifs :</span>
+                                    <strong class="text-primary">{{ plan.subscriptions|filter(s => s.status == 'ACTIVE')|length }}</strong>
+                                </div>
+                            </div>
+                            <div class="stat-item mb-3">
+                                <div class="d-flex justify-content-between">
+                                    <span>Total abonnements :</span>
+                                    <strong class="text-info">{{ plan.subscriptions|length }}</strong>
+                                </div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="d-flex justify-content-between">
+                                    <span>Créé le :</span>
+                                    <strong class="text-muted">{{ plan.createdAt ? plan.createdAt|date('d/m/Y H:i') : 'N/A' }}</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card mt-4">
+                        <div class="card-header">
+                            <h6 class="card-title mb-0">
+                                <i class="bi bi-tools me-2"></i>
+                                Actions
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="d-grid gap-2">
+                                <a href="{{ path('app_admin_plan_edit', {'id': plan.id}) }}" class="btn btn-primary">
+                                    <i class="bi bi-pencil me-2"></i>
+                                    Modifier le Plan
+                                </a>
+
+                                <form method="post" action="{{ path('app_admin_plan_toggle_popular', {'id': plan.id}) }}">
+                                    <button type="submit" class="btn btn-{{ plan.isPopular ? 'warning' : 'success' }} w-100">
+                                        <i class="bi bi-star{{ plan.isPopular ? '-fill' : '' }} me-2"></i>
+                                        {{ plan.isPopular ? 'Retirer des Populaires' : 'Marquer comme Populaire' }}
+                                    </button>
+                                </form>
+
+                                <form method="post" action="{{ path('app_admin_plan_delete', {'id': plan.id}) }}"
+                                      onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer ce plan ? Cette action est irréversible.');">
+                                    <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ plan.id) }}">
+                                    <button type="submit" class="btn btn-danger w-100">
+                                        <i class="bi bi-trash me-2"></i>
+                                        Supprimer le Plan
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.pricing-card {
+    border: 2px solid #e9ecef;
+    transition: all 0.3s ease;
+}
+
+.pricing-card:hover {
+    border-color: var(--bs-primary);
+    transform: translateY(-2px);
+}
+
+.limit-item {
+    padding: 1rem;
+    border: 1px solid #e9ecef;
+    border-radius: 0.375rem;
+    transition: all 0.3s ease;
+}
+
+.limit-item:hover {
+    background-color: #f8f9fa;
+    border-color: var(--bs-primary);
+}
+
+.stat-item {
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.stat-item:last-child {
+    border-bottom: none;
+}
+</style>
+{% endblock %}
