@@ -131,5 +131,51 @@ class AdvancePaymentRepository extends ServiceEntityRepository
             ->getQuery()
             ->getResult();
     }
+
+
+    /**
+     * Trouve les acomptes d'un gestionnaire
+     */
+    public function findByManager(int $ownerId): array
+    {
+        return $this->createQueryBuilder('a')
+            ->join('a.lease', 'l')
+            ->join('l.property', 'p')
+            ->where('p.owner = :ownerId')
+            ->setParameter('ownerId', $ownerId)
+            ->orderBy('a.paidDate', 'DESC')
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
+     * Trouve les acomptes d'une société
+     */
+    public function findByCompany($company): array
+    {
+        return $this->createQueryBuilder('a')
+            ->join('a.lease', 'l')
+            ->join('l.property', 'p')
+            ->where('p.company = :company')
+            ->setParameter('company', $company)
+            ->orderBy('a.paidDate', 'DESC')
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
+     * Trouve les acomptes d'une organisation
+     */
+    public function findByOrganization($organization): array
+    {
+        return $this->createQueryBuilder('a')
+            ->join('a.lease', 'l')
+            ->join('l.property', 'p')
+            ->where('p.organization = :organization')
+            ->setParameter('organization', $organization)
+            ->orderBy('a.paidDate', 'DESC')
+            ->getQuery()
+            ->getResult();
+    }
 }
 

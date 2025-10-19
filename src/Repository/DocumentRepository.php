@@ -135,4 +135,46 @@ class DocumentRepository extends ServiceEntityRepository
             'expired' => count($this->findExpired())
         ];
     }
+
+    /**
+     * Trouve les documents d'un gestionnaire
+     */
+    public function findByManager(int $ownerId): array
+    {
+        return $this->createQueryBuilder('d')
+            ->join('d.property', 'p')
+            ->where('p.owner = :ownerId')
+            ->setParameter('ownerId', $ownerId)
+            ->orderBy('d.createdAt', 'DESC')
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
+     * Trouve les documents d'une société
+     */
+    public function findByCompany($company): array
+    {
+        return $this->createQueryBuilder('d')
+            ->join('d.property', 'p')
+            ->where('p.company = :company')
+            ->setParameter('company', $company)
+            ->orderBy('d.createdAt', 'DESC')
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
+     * Trouve les documents d'une organisation
+     */
+    public function findByOrganization($organization): array
+    {
+        return $this->createQueryBuilder('d')
+            ->join('d.property', 'p')
+            ->where('p.organization = :organization')
+            ->setParameter('organization', $organization)
+            ->orderBy('d.createdAt', 'DESC')
+            ->getQuery()
+            ->getResult();
+    }
 }

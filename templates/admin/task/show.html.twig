@@ -145,6 +145,29 @@
                         </div>
                     </div>
 
+                    <!-- Résultats de la tâche -->
+                    {% if task.result %}
+                        <div class="card mb-4">
+                            <div class="card-header bg-success text-white">
+                                <h5 class="card-title mb-0">
+                                    <i class="bi bi-check-circle"></i> Résultat de la dernière exécution
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="alert alert-success">
+                                    <h6><i class="bi bi-info-circle me-2"></i>Résultat :</h6>
+                                    <p class="mb-0">{{ task.result }}</p>
+                                </div>
+                                {% if task.lastRunAt %}
+                                    <small class="text-muted">
+                                        <i class="bi bi-clock me-1"></i>
+                                        Exécuté le {{ task.lastRunAt|date('d/m/Y à H:i:s') }}
+                                    </small>
+                                {% endif %}
+                            </div>
+                        </div>
+                    {% endif %}
+
                     <!-- Dernière erreur -->
                     {% if task.lastError %}
                         <div class="card mb-4">
@@ -154,15 +177,35 @@
                                 </h5>
                             </div>
                             <div class="card-body">
-                                <p class="mb-0 font-monospace">{{ task.lastError }}</p>
+                                <div class="alert alert-danger">
+                                    <h6><i class="bi bi-x-circle me-2"></i>Erreur :</h6>
+                                    <p class="mb-0 font-monospace">{{ task.lastError }}</p>
+                                </div>
                                 {% if task.lastRunAt %}
                                     <small class="text-muted">
-                                        Le {{ task.lastRunAt|date('d/m/Y à H:i') }}
+                                        <i class="bi bi-clock me-1"></i>
+                                        Le {{ task.lastRunAt|date('d/m/Y à H:i:s') }}
                                     </small>
                                 {% endif %}
                             </div>
                         </div>
                     {% endif %}
+
+                    <!-- Historique des résultats -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">
+                                <i class="bi bi-clock-history"></i> Historique des résultats
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="alert alert-info">
+                                <i class="bi bi-info-circle me-2"></i>
+                                <strong>Note :</strong> L'historique des résultats sera disponible dans une future version.
+                                Pour l'instant, seul le résultat de la dernière exécution est affiché ci-dessus.
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="col-md-4">
@@ -201,6 +244,10 @@
                                     {{ task.isActive ? 'Désactiver' : 'Activer' }}
                                 </button>
                             </form>
+
+                            <a href="{{ path('app_admin_task_results', {id: task.id}) }}" class="btn btn-info w-100 mb-2">
+                                <i class="bi bi-bar-chart"></i> Voir les résultats
+                            </a>
 
                             <a href="{{ path('app_admin_task_index') }}" class="btn btn-secondary w-100">
                                 <i class="bi bi-arrow-left"></i> Retour à la liste

@@ -1,0 +1,119 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Résultats de la tâche - {{ task.name }}{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>📊 Résultats de la tâche: {{ task.name }}</h2>
+                <div class="d-flex gap-2">
+                    <a href="{{ path('app_admin_task_show', {id: task.id}) }}" class="btn btn-secondary">
+                        <i class="bi bi-arrow-left"></i> Retour aux détails
+                    </a>
+                </div>
+            </div>
+
+            <!-- Résumé des résultats -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h3 class="text-primary">{{ task.runCount }}</h3>
+                            <p class="mb-0">Exécutions totales</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h3 class="text-success">{{ task.successCount }}</h3>
+                            <p class="mb-0">Succès</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h3 class="text-danger">{{ task.failureCount }}</h3>
+                            <p class="mb-0">Échecs</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h3 class="text-info">{{ task.successRate|round(1) }}%</h3>
+                            <p class="mb-0">Taux de réussite</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Résultat actuel -->
+            {% if task.result %}
+                <div class="card mb-4">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="card-title mb-0">
+                            <i class="bi bi-check-circle"></i> Résultat de la dernière exécution
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="alert alert-success">
+                            <h6><i class="bi bi-info-circle me-2"></i>Résultat :</h6>
+                            <pre class="mb-0">{{ task.result }}</pre>
+                        </div>
+                        {% if task.lastRunAt %}
+                            <small class="text-muted">
+                                <i class="bi bi-clock me-1"></i>
+                                Exécuté le {{ task.lastRunAt|date('d/m/Y à H:i:s') }}
+                            </small>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endif %}
+
+            <!-- Dernière erreur -->
+            {% if task.lastError %}
+                <div class="card mb-4">
+                    <div class="card-header bg-danger text-white">
+                        <h5 class="card-title mb-0">
+                            <i class="bi bi-exclamation-triangle"></i> Dernière erreur
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="alert alert-danger">
+                            <h6><i class="bi bi-x-circle me-2"></i>Erreur :</h6>
+                            <pre class="mb-0">{{ task.lastError }}</pre>
+                        </div>
+                        {% if task.lastRunAt %}
+                            <small class="text-muted">
+                                <i class="bi bi-clock me-1"></i>
+                                Le {{ task.lastRunAt|date('d/m/Y à H:i:s') }}
+                            </small>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endif %}
+
+            <!-- Historique des résultats (si disponible) -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-clock-history"></i> Historique des résultats
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle me-2"></i>
+                        <strong>Note :</strong> L'historique des résultats sera disponible dans une future version.
+                        Pour l'instant, seul le résultat de la dernière exécution est affiché ci-dessus.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

@@ -13,6 +13,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 use Symfony\Component\String\Slugger\SluggerInterface;
+use Symfony\Component\HttpFoundation\RequestStack;
 
 class DemoEnvironmentService
 {
@@ -20,6 +21,7 @@ class DemoEnvironmentService
     private Filesystem $filesystem;
     private ParameterBagInterface $params;
     private SluggerInterface $slugger;
+    private RequestStack $requestStack;
     private string $demoBaseUrl;
     private string $demoDataDir;
 
@@ -27,19 +29,56 @@ class DemoEnvironmentService
         EntityManagerInterface $entityManager,
         Filesystem $filesystem,
         ParameterBagInterface $params,
-        SluggerInterface $slugger
+        SluggerInterface $slugger,
+        RequestStack $requestStack
     ) {
         $this->entityManager = $entityManager;
         $this->filesystem = $filesystem;
         $this->params = $params;
         $this->slugger = $slugger;
-        $this->demoBaseUrl = $_ENV['DEMO_BASE_URL'] ?? 'demo.mylocca.local';
+        $this->requestStack = $requestStack;
+        $this->demoBaseUrl = $this->getCurrentDomain();
         $this->demoDataDir = $this->params->get('kernel.project_dir') . '/demo_data';
 
         // Créer le dossier de données de démo s'il n'existe pas
         if (!$this->filesystem->exists($this->demoDataDir)) {
             $this->filesystem->mkdir($this->demoDataDir);
         }
+    }
+
+    /**
+     * Obtient le domaine actuel de manière dynamique
+     */
+    private function getCurrentDomain(): string
+    {
+        // Essayer d'obtenir le domaine depuis la requête actuelle
+        $request = $this->requestStack->getCurrentRequest();
+
+        if ($request) {
+            $host = $request->getHost();
+
+            // Si on est sur un sous-domaine de démo (ex: abc.demo.mylocca.local),
+            // retourner le domaine de base (demo.mylocca.local)
+            if (preg_match('/^[^.]+\.(demo\..+)$/', $host, $matches)) {
+                return $matches[1];
+            }
+
+            // Si on est sur le domaine principal, retourner demo.{domain}
+            if (preg_match('/^(mylocca\..+)$/', $host, $matches)) {
+                return 'demo.' . $matches[1];
+            }
+
+            // Pour hébergement partagé : détecter le domaine de production
+            if (preg_match('/^([^.]+\.(com|fr|org|net|be|ch|eu|tech|io))$/', $host, $matches)) {
+                return 'demo.' . $matches[1];
+            }
+
+            // Sinon retourner demo.{host}
+            return 'demo.' . $host;
+        }
+
+        // Fallback sur la variable d'environnement ou valeur par défaut
+        return $_ENV['DEMO_BASE_URL'] ?? 'demo.mylocca.local';
     }
 
     /**
@@ -326,6 +365,36 @@ class DemoEnvironmentService
      */
     private function configureDemoEnvironment(string $subdomain, string $demoUrl): void
     {
+        // Détecter le type d'hébergement
+        if ($this->isSharedHosting()) {
+            $this->configureSharedHostingEnvironment($subdomain, $demoUrl);
+        } else {
+            $this->configureLocalEnvironment($subdomain, $demoUrl);
+        }
+    }
+
+    /**
+     * Détecte si on est en hébergement partagé
+     */
+    private function isSharedHosting(): bool
+    {
+        // Vérifier si on est sur un domaine de production (pas .local)
+        $request = $this->requestStack->getCurrentRequest();
+        if ($request) {
+            $host = $request->getHost();
+            // Si le domaine se termine par .com, .fr, .org, etc. (pas .local)
+            return preg_match('/\.(com|fr|org|net|be|ch|eu)$/', $host);
+        }
+
+        // Vérifier la variable d'environnement
+        return $_ENV['APP_ENV'] === 'prod' || !str_contains($_ENV['DEMO_BASE_URL'] ?? '', '.local');
+    }
+
+    /**
+     * Configure l'environnement de démo pour développement local
+     */
+    private function configureLocalEnvironment(string $subdomain, string $demoUrl): void
+    {
         // 1. Créer un fichier de configuration Apache
         $this->createApacheConfig($subdomain);
 
@@ -337,6 +406,84 @@ class DemoEnvironmentService
 
         // 4. Log de création
         $this->logDemoEnvironmentCreation($subdomain, $demoUrl);
+    }
+
+    /**
+     * Configure l'environnement de démo pour hébergement partagé (cPanel)
+     */
+    private function configureSharedHostingEnvironment(string $subdomain, string $demoUrl): void
+    {
+        // 1. Créer un fichier .htaccess pour la détection du sous-domaine
+        $this->createSharedHostingHtaccess($subdomain);
+
+        // 2. Créer un fichier de configuration pour l'environnement
+        $this->createSharedHostingConfig($subdomain, $demoUrl);
+
+        // 3. Log de création
+        $this->logDemoEnvironmentCreation($subdomain, $demoUrl);
+    }
+
+    /**
+     * Crée la configuration .htaccess pour hébergement partagé
+     */
+    private function createSharedHostingHtaccess(string $subdomain): void
+    {
+        $htaccessContent = <<<EOF
+# Configuration pour sous-domaines de démo - Hébergement partagé
+RewriteEngine On
+
+# Détection du sous-domaine de démo
+RewriteCond %{HTTP_HOST} ^([^.]+)\.demo\.{$this->getDomainFromBaseUrl()}$ [NC]
+RewriteRule ^(.*)$ - [E=DEMO_SUBDOMAIN:%1]
+
+# Redirection vers Symfony
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(.*)$ index.php [QSA,L]
+
+# Headers de sécurité
+Header always set X-Frame-Options "SAMEORIGIN"
+Header always set X-Content-Type-Options "nosniff"
+Header always set X-XSS-Protection "1; mode=block"
+Header always set X-Demo-Environment "true"
+EOF;
+
+        $htaccessFile = $this->params->get('kernel.project_dir') . '/public/.htaccess';
+
+        // Ajouter la configuration à la fin du fichier .htaccess existant
+        if (file_exists($htaccessFile)) {
+            $existingContent = file_get_contents($htaccessFile);
+            if (strpos($existingContent, '# Configuration pour sous-domaines de démo') === false) {
+                file_put_contents($htaccessFile, $existingContent . "\n\n" . $htaccessContent);
+            }
+        } else {
+            file_put_contents($htaccessFile, $htaccessContent);
+        }
+    }
+
+    /**
+     * Crée la configuration pour l'environnement de démo en hébergement partagé
+     */
+    private function createSharedHostingConfig(string $subdomain, string $demoUrl): void
+    {
+        $configContent = [
+            'subdomain' => $subdomain,
+            'demo_url' => $demoUrl,
+            'created_at' => (new \DateTime())->format('Y-m-d H:i:s'),
+            'environment' => 'shared_hosting',
+            'hosting_type' => 'cpanel'
+        ];
+
+        $configFile = $this->demoDataDir . "/{$subdomain}_config.json";
+        file_put_contents($configFile, json_encode($configContent, JSON_PRETTY_PRINT));
+    }
+
+    /**
+     * Extrait le domaine de base depuis demoBaseUrl
+     */
+    private function getDomainFromBaseUrl(): string
+    {
+        return str_replace('demo.', '', $this->demoBaseUrl);
     }
 
     /**
@@ -440,21 +587,44 @@ EOF;
     /**
      * Supprime un environnement de démo
      */
-    public function deleteDemoEnvironment(string $subdomain): bool
+    public function deleteDemoEnvironment(string $subdomain): array
     {
         try {
+            $organization = $this->entityManager->getRepository(Organization::class)
+                ->findOneBy(['subdomain' => $subdomain, 'isDemo' => true]);
+
+            if (!$organization) {
+                return [
+                    'success' => false,
+                    'error' => 'Démo non trouvée',
+                    'message' => 'L\'environnement de démo n\'existe pas'
+                ];
+            }
+
             // 1. Supprimer les données de la base
             $this->deleteDemoData($subdomain);
 
             // 2. Supprimer les fichiers de configuration
             $this->deleteConfigurationFiles($subdomain);
 
-            // 3. Log de suppression
+            // 3. Supprimer l'organisation
+            $this->entityManager->remove($organization);
+            $this->entityManager->flush();
+
+            // 4. Log de suppression
             $this->logDemoEnvironmentDeletion($subdomain);
 
-            return true;
+            return [
+                'success' => true,
+                'message' => 'Environnement de démo supprimé avec succès'
+            ];
         } catch (\Exception $e) {
-            return false;
+            error_log('Erreur suppression démo: ' . $e->getMessage());
+            return [
+                'success' => false,
+                'error' => $e->getMessage(),
+                'message' => 'Erreur lors de la suppression de la démo'
+            ];
         }
     }
 
@@ -557,19 +727,205 @@ EOF;
     public function listDemoEnvironments(): array
     {
         $organizations = $this->entityManager->getRepository(Organization::class)
-            ->findBy(['isDemo' => true]);
+            ->findBy(['isDemo' => true], ['createdAt' => 'DESC']);
 
         $environments = [];
         foreach ($organizations as $org) {
             $environments[] = [
+                'id' => $org->getId(),
                 'subdomain' => $org->getSubdomain(),
                 'name' => $org->getName(),
+                'email' => $org->getEmail(),
                 'created_at' => $org->getCreatedAt(),
+                'updated_at' => $org->getUpdatedAt(),
                 'demo_url' => "https://{$org->getSubdomain()}.{$this->demoBaseUrl}",
-                'status' => $org->getStatus()
+                'status' => $org->getStatus(),
+                'is_active' => $org->isActive(),
+                'trial_ends_at' => $org->getTrialEndsAt(),
+                'properties_count' => $org->getProperties()->count(),
+                'tenants_count' => $org->getTenants()->count(),
+                'companies_count' => $org->getCompanies()->count(),
+                'is_expired' => $this->isDemoExpired($org)
             ];
         }
 
         return $environments;
+    }
+
+    /**
+     * Vérifie si une démo est expirée
+     */
+    private function isDemoExpired(Organization $organization): bool
+    {
+        if (!$organization->getTrialEndsAt()) {
+            return false;
+        }
+
+        return $organization->getTrialEndsAt() < new \DateTime();
+    }
+
+
+    /**
+     * Nettoie les données d'une démo
+     */
+    private function cleanupDemoData(Organization $organization): void
+    {
+        // Supprimer les propriétés
+        foreach ($organization->getProperties() as $property) {
+            $this->entityManager->remove($property);
+        }
+
+        // Supprimer les locataires
+        foreach ($organization->getTenants() as $tenant) {
+            $this->entityManager->remove($tenant);
+        }
+
+        // Supprimer les baux
+        foreach ($organization->getLeases() as $lease) {
+            $this->entityManager->remove($lease);
+        }
+
+        // Supprimer les paiements
+        foreach ($organization->getPayments() as $payment) {
+            $this->entityManager->remove($payment);
+        }
+
+        // Supprimer les sociétés
+        foreach ($organization->getCompanies() as $company) {
+            $this->entityManager->remove($company);
+        }
+
+        // Supprimer les propriétaires
+        foreach ($organization->getOwners() as $owner) {
+            $this->entityManager->remove($owner);
+        }
+    }
+
+    /**
+     * Nettoie les fichiers de configuration d'une démo
+     */
+    private function cleanupDemoFiles(string $subdomain): void
+    {
+        $configFile = $this->demoDataDir . "/{$subdomain}_config.json";
+        if (file_exists($configFile)) {
+            unlink($configFile);
+        }
+    }
+
+    /**
+     * Prolonge une démo
+     */
+    public function extendDemoEnvironment(string $subdomain, int $days = 7): array
+    {
+        try {
+            $organization = $this->entityManager->getRepository(Organization::class)
+                ->findOneBy(['subdomain' => $subdomain, 'isDemo' => true]);
+
+            if (!$organization) {
+                return [
+                    'success' => false,
+                    'error' => 'Démo non trouvée',
+                    'message' => 'L\'environnement de démo n\'existe pas'
+                ];
+            }
+
+            $newTrialEnd = new \DateTime();
+            $newTrialEnd->add(new \DateInterval("P{$days}D"));
+            $organization->setTrialEndsAt($newTrialEnd);
+
+            $this->entityManager->flush();
+
+            return [
+                'success' => true,
+                'message' => "Démo prolongée de {$days} jours",
+                'new_trial_end' => $newTrialEnd->format('Y-m-d H:i:s')
+            ];
+
+        } catch (\Exception $e) {
+            error_log('Erreur prolongation démo: ' . $e->getMessage());
+            return [
+                'success' => false,
+                'error' => $e->getMessage(),
+                'message' => 'Erreur lors de la prolongation de la démo'
+            ];
+        }
+    }
+
+    /**
+     * Nettoie automatiquement les démos expirées
+     */
+    public function cleanupExpiredDemos(): array
+    {
+        $expiredOrgs = $this->entityManager->getRepository(Organization::class)
+            ->createQueryBuilder('o')
+            ->where('o.isDemo = :demo')
+            ->andWhere('o.trialEndsAt < :now')
+            ->setParameter('demo', true)
+            ->setParameter('now', new \DateTime())
+            ->getQuery()
+            ->getResult();
+
+        $cleaned = [];
+        foreach ($expiredOrgs as $org) {
+            $result = $this->deleteDemoEnvironment($org->getSubdomain());
+            if ($result['success']) {
+                $cleaned[] = $org->getSubdomain();
+            }
+        }
+
+        return [
+            'success' => true,
+            'cleaned_count' => count($cleaned),
+            'cleaned_demos' => $cleaned,
+            'message' => count($cleaned) . ' démo(s) expirée(s) nettoyée(s)'
+        ];
+    }
+
+    /**
+     * Obtient les statistiques des démos
+     */
+    public function getDemoStatistics(): array
+    {
+        $totalDemos = $this->entityManager->getRepository(Organization::class)
+            ->count(['isDemo' => true]);
+
+        $activeDemos = $this->entityManager->getRepository(Organization::class)
+            ->createQueryBuilder('o')
+            ->select('COUNT(o.id)')
+            ->where('o.isDemo = :demo')
+            ->andWhere('o.isActive = :active')
+            ->setParameter('demo', true)
+            ->setParameter('active', true)
+            ->getQuery()
+            ->getSingleScalarResult();
+
+        $expiredDemos = $this->entityManager->getRepository(Organization::class)
+            ->createQueryBuilder('o')
+            ->select('COUNT(o.id)')
+            ->where('o.isDemo = :demo')
+            ->andWhere('o.trialEndsAt < :now')
+            ->setParameter('demo', true)
+            ->setParameter('now', new \DateTime())
+            ->getQuery()
+            ->getSingleScalarResult();
+
+        $expiringSoon = $this->entityManager->getRepository(Organization::class)
+            ->createQueryBuilder('o')
+            ->select('COUNT(o.id)')
+            ->where('o.isDemo = :demo')
+            ->andWhere('o.trialEndsAt BETWEEN :now AND :soon')
+            ->setParameter('demo', true)
+            ->setParameter('now', new \DateTime())
+            ->setParameter('soon', (new \DateTime())->add(new \DateInterval('P7D')))
+            ->getQuery()
+            ->getSingleScalarResult();
+
+        return [
+            'total_demos' => $totalDemos,
+            'active_demos' => $activeDemos,
+            'expired_demos' => $expiredDemos,
+            'expiring_soon' => $expiringSoon,
+            'cleanup_needed' => $expiredDemos > 0
+        ];
     }
 }

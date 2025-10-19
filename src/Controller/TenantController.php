@@ -27,34 +27,50 @@ class TenantController extends AbstractController
         $search = $request->query->get('search');
         $status = $request->query->get('status'); // actif, inactif
 
-        // Filtrer par organization/company selon le rôle
-        $qb = $tenantRepository->createQueryBuilder('t');
+        // Filtrer les locataires selon le rôle de l'utilisateur
+        if ($user && in_array('ROLE_TENANT', $user->getRoles())) {
+            // Si l'utilisateur est un locataire, ne montrer que lui-même
+            $tenant = $user->getTenant();
+            if ($tenant) {
+                $tenants = [$tenant];
+            } else {
+                $tenants = [];
+            }
+        } elseif ($user && in_array('ROLE_MANAGER', $user->getRoles())) {
+            // Si l'utilisateur est un gestionnaire, montrer les locataires des propriétés qu'il gère
+            $owner = $user->getOwner();
+            if ($owner) {
+                $tenants = $tenantRepository->findByManager($owner->getId(), $search, $status);
+            } else {
+                $tenants = $tenantRepository->findBy([], ['lastName' => 'ASC', 'firstName' => 'ASC']);
+            }
+        } elseif ($user && (in_array('ROLE_ADMIN', $user->getRoles()) || in_array('ROLE_SUPER_ADMIN', $user->getRoles()))) {
+            // Pour les admins, filtrer selon l'organisation/société
+            $organization = $user->getOrganization();
+            $company = $user->getCompany();
 
-        // Filtrage multi-tenant
-        if ($user && method_exists($user, 'getOrganization') && $user->getOrganization()) {
-            // MANAGER: voir uniquement SA company
-            if (method_exists($user, 'getCompany') && $user->getCompany() && in_array('ROLE_MANAGER', $user->getRoles())) {
-                $qb->where('t.company = :company')
-                   ->setParameter('company', $user->getCompany());
+            error_log("TenantController - Admin: organization=" . ($organization ? $organization->getName() : 'null') . ", company=" . ($company ? $company->getName() : 'null'));
+
+            if ($company) {
+                // Admin avec société spécifique : filtrer par société
+                $tenants = $tenantRepository->findByCompany($company, $search, $status);
+                error_log("TenantController - Filtered by company: " . $company->getName());
+            } elseif ($organization) {
+                // Admin avec organisation : filtrer par organisation
+                $tenants = $tenantRepository->findByOrganization($organization, $search, $status);
+                error_log("TenantController - Filtered by organization: " . $organization->getName());
+            } else {
+                // Super Admin sans organisation/société : tous les locataires
+                $tenants = $tenantRepository->findBy([], ['lastName' => 'ASC', 'firstName' => 'ASC']);
+                error_log("TenantController - Super Admin: showing all tenants");
             }
-            // ADMIN: voir toute SON organization
-            else {
-                $qb->where('t.organization = :organization')
-                   ->setParameter('organization', $user->getOrganization());
-            }
+        } else {
+            // Pour les autres rôles, montrer tous les locataires
+            $tenants = $tenantRepository->findBy([], ['lastName' => 'ASC', 'firstName' => 'ASC']);
         }
 
-        // Filtres supplémentaires
-        if ($search) {
-            $qb->andWhere('t.firstName LIKE :search OR t.lastName LIKE :search OR t.email LIKE :search')
-               ->setParameter('search', '%' . $search . '%');
-        }
-
-        $qb->orderBy('t.lastName', 'ASC')
-           ->addOrderBy('t.firstName', 'ASC');
-
-        $tenants = $qb->getQuery()->getResult();
-        $stats = $tenantRepository->getStatistics();
+        // Statistiques filtrées selon le rôle
+        $stats = $this->calculateFilteredTenantStats($tenantRepository, $user);
 
         return $this->render('tenant/index.html.twig', [
             'tenants' => $tenants,
@@ -106,6 +122,14 @@ class TenantController extends AbstractController
                      ->setBirthDate($tenant->getBirthDate())
                      ->setRoles(['ROLE_TENANT'])
                      ->setActive(true);
+
+                // Définir l'organization et la company sur l'utilisateur
+                if ($tenant->getOrganization()) {
+                    $user->setOrganization($tenant->getOrganization());
+                }
+                if ($tenant->getCompany()) {
+                    $user->setCompany($tenant->getCompany());
+                }
 
                 // Générer un mot de passe aléatoire ou utiliser celui fourni
                 $password = $request->request->get('user_password') ?? bin2hex(random_bytes(8));
@@ -329,6 +353,14 @@ class TenantController extends AbstractController
              ->setRoles(['ROLE_TENANT'])
              ->setActive(true);
 
+        // Définir l'organization et la company sur l'utilisateur
+        if ($tenant->getOrganization()) {
+            $user->setOrganization($tenant->getOrganization());
+        }
+        if ($tenant->getCompany()) {
+            $user->setCompany($tenant->getCompany());
+        }
+
         // Générer un mot de passe aléatoire
         $password = bin2hex(random_bytes(8));
         $hashedPassword = $passwordHasher->hashPassword($user, $password);
@@ -409,5 +441,141 @@ class TenantController extends AbstractController
             'documents_by_type' => $documentsByType,
             'stats' => $stats,
         ]);
+    }
+
+    /**
+     * Calcule les statistiques filtrées selon le rôle de l'utilisateur
+     */
+    private function calculateFilteredTenantStats(TenantRepository $tenantRepository, $user): array
+    {
+        if ($user && in_array('ROLE_TENANT', $user->getRoles())) {
+            // Pour les locataires, calculer les stats sur eux-mêmes seulement
+            $tenant = $user->getTenant();
+            if ($tenant) {
+                $hasActiveLease = $tenantRepository->hasActiveLease($tenant->getId());
+
+                return [
+                    'total_tenants' => 1,
+                    'with_active_contract' => $hasActiveLease ? 1 : 0,
+                    'without_active_contract' => $hasActiveLease ? 0 : 1,
+                    'occupancy_rate' => $hasActiveLease ? 100.0 : 0.0
+                ];
+            }
+            return [
+                'total_tenants' => 0,
+                'with_active_contract' => 0,
+                'without_active_contract' => 0,
+                'occupancy_rate' => 0.0
+            ];
+        } elseif ($user && in_array('ROLE_MANAGER', $user->getRoles())) {
+            // Pour les gestionnaires, calculer les stats sur les locataires qu'ils gèrent
+            $owner = $user->getOwner();
+            if ($owner) {
+                $managerTenants = $tenantRepository->findByManager($owner->getId());
+
+                $stats = [
+                    'total_tenants' => count($managerTenants),
+                    'with_active_contract' => 0,
+                    'without_active_contract' => 0,
+                    'occupancy_rate' => 0.0
+                ];
+
+                foreach ($managerTenants as $tenant) {
+                    if ($tenantRepository->hasActiveLease($tenant->getId())) {
+                        $stats['with_active_contract']++;
+                    } else {
+                        $stats['without_active_contract']++;
+                    }
+                }
+
+                // Calculer le taux d'occupation
+                if ($stats['total_tenants'] > 0) {
+                    $stats['occupancy_rate'] = round(($stats['with_active_contract'] / $stats['total_tenants']) * 100, 2);
+                }
+
+                return $stats;
+            }
+        } elseif ($user && (in_array('ROLE_ADMIN', $user->getRoles()) || in_array('ROLE_SUPER_ADMIN', $user->getRoles()))) {
+            // Pour les admins, calculer les stats selon l'organisation/société
+            $organization = $user->getOrganization();
+            $company = $user->getCompany();
+
+            if ($company) {
+                // Admin avec société spécifique
+                $companyTenants = $tenantRepository->findByCompany($company);
+
+                $stats = [
+                    'total_tenants' => count($companyTenants),
+                    'with_active_contract' => 0,
+                    'without_active_contract' => 0,
+                    'occupancy_rate' => 0.0
+                ];
+
+                foreach ($companyTenants as $tenant) {
+                    if ($tenantRepository->hasActiveLease($tenant->getId())) {
+                        $stats['with_active_contract']++;
+                    } else {
+                        $stats['without_active_contract']++;
+                    }
+                }
+
+                // Calculer le taux d'occupation
+                if ($stats['total_tenants'] > 0) {
+                    $stats['occupancy_rate'] = round(($stats['with_active_contract'] / $stats['total_tenants']) * 100, 2);
+                }
+
+                return $stats;
+            } elseif ($organization) {
+                // Admin avec organisation
+                $orgTenants = $tenantRepository->findByOrganization($organization);
+
+                $stats = [
+                    'total_tenants' => count($orgTenants),
+                    'with_active_contract' => 0,
+                    'without_active_contract' => 0,
+                    'occupancy_rate' => 0.0
+                ];
+
+                foreach ($orgTenants as $tenant) {
+                    if ($tenantRepository->hasActiveLease($tenant->getId())) {
+                        $stats['with_active_contract']++;
+                    } else {
+                        $stats['without_active_contract']++;
+                    }
+                }
+
+                // Calculer le taux d'occupation
+                if ($stats['total_tenants'] > 0) {
+                    $stats['occupancy_rate'] = round(($stats['with_active_contract'] / $stats['total_tenants']) * 100, 2);
+                }
+
+                return $stats;
+            }
+        }
+
+        // Pour les super admins sans organisation/société, retourner les stats globales
+        $allTenants = $tenantRepository->findAll();
+
+        $stats = [
+            'total_tenants' => count($allTenants),
+            'with_active_contract' => 0,
+            'without_active_contract' => 0,
+            'occupancy_rate' => 0.0
+        ];
+
+        foreach ($allTenants as $tenant) {
+            if ($tenantRepository->hasActiveLease($tenant->getId())) {
+                $stats['with_active_contract']++;
+            } else {
+                $stats['without_active_contract']++;
+            }
+        }
+
+        // Calculer le taux d'occupation
+        if ($stats['total_tenants'] > 0) {
+            $stats['occupancy_rate'] = round(($stats['with_active_contract'] / $stats['total_tenants']) * 100, 2);
+        }
+
+        return $stats;
     }
 }

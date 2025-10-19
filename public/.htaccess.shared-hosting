@@ -1,0 +1,112 @@
+# Configuration .htaccess pour MYLOCCA - Hébergement partagé
+# Compatible avec Hosting.com cPanel
+
+# Activer le moteur de réécriture
+RewriteEngine On
+
+# =============================================================================
+# DÉTECTION DES SOUS-DOMAINES DE DÉMO
+# =============================================================================
+
+# Détecter les sous-domaines de démo (ex: abc.demo.votre-domaine.com)
+RewriteCond %{HTTP_HOST} ^([^.]+)\.demo\.(.+)$ [NC]
+RewriteRule ^(.*)$ - [E=DEMO_SUBDOMAIN:%1,E=DEMO_BOMAIN:%2]
+
+# Rediriger les sous-domaines de démo vers le contrôleur approprié
+RewriteCond %{HTTP_HOST} ^([^.]+)\.demo\.(.+)$ [NC]
+RewriteRule ^(.*)$ /demo/%1 [QSA,L]
+
+# =============================================================================
+# CONFIGURATION SYMFONY
+# =============================================================================
+
+# Redirection vers index.php pour toutes les requêtes non-fichiers
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(.*)$ index.php [QSA,L]
+
+# =============================================================================
+# SÉCURITÉ ET PERFORMANCE
+# =============================================================================
+
+# Empêcher l'accès aux fichiers sensibles
+<FilesMatch "\.(env|log|sql|md|txt)$">
+    Order Allow,Deny
+    Deny from all
+</FilesMatch>
+
+# Empêcher l'accès aux dossiers sensibles
+RedirectMatch 403 ^/(var|vendor|config|migrations)/
+
+# Headers de sécurité
+<IfModule mod_headers.c>
+    # Sécurité générale
+    Header always set X-Frame-Options "SAMEORIGIN"
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set X-XSS-Protection "1; mode=block"
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+
+    # Headers spécifiques aux démos
+    Header always set X-Demo-Environment "true"
+    Header always set X-Demo-Subdomain "%{DEMO_SUBDOMAIN}e"
+</IfModule>
+
+# Compression GZIP
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/plain
+    AddOutputFilterByType DEFLATE text/html
+    AddOutputFilterByType DEFLATE text/xml
+    AddOutputFilterByType DEFLATE text/css
+    AddOutputFilterByType DEFLATE application/xml
+    AddOutputFilterByType DEFLATE application/xhtml+xml
+    AddOutputFilterByType DEFLATE application/rss+xml
+    AddOutputFilterByType DEFLATE application/javascript
+    AddOutputFilterByType DEFLATE application/x-javascript
+</IfModule>
+
+# Cache des fichiers statiques
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresByType text/css "access plus 1 month"
+    ExpiresByType application/javascript "access plus 1 month"
+    ExpiresByType image/png "access plus 1 month"
+    ExpiresByType image/jpg "access plus 1 month"
+    ExpiresByType image/jpeg "access plus 1 month"
+    ExpiresByType image/gif "access plus 1 month"
+    ExpiresByType image/svg+xml "access plus 1 month"
+</IfModule>
+
+# =============================================================================
+# CONFIGURATION PHP (si modifiable)
+# =============================================================================
+
+<IfModule mod_php.c>
+    # Limites de ressources pour les démos
+    php_value memory_limit 256M
+    php_value max_execution_time 30
+    php_value upload_max_filesize 10M
+    php_value post_max_size 10M
+
+    # Configuration de session
+    php_value session.cookie_httponly 1
+    php_value session.cookie_secure 1
+    php_value session.use_strict_mode 1
+</IfModule>
+
+# =============================================================================
+# GESTION DES ERREURS
+# =============================================================================
+
+# Pages d'erreur personnalisées
+ErrorDocument 404 /index.php
+ErrorDocument 500 /index.php
+
+# =============================================================================
+# LOGS (si activés)
+# =============================================================================
+
+# Logs spécifiques aux démos
+<IfModule mod_log_config.c>
+    LogFormat "%h %l %u %t \"%r\" %>s %b \"%{Referer}i\" \"%{User-agent}i\" %{DEMO_SUBDOMAIN}e" demo_format
+    CustomLog logs/demo_access.log demo_format env=DEMO_SUBDOMAIN
+</IfModule>

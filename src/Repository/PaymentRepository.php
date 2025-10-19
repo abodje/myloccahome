@@ -334,4 +334,90 @@ class PaymentRepository extends ServiceEntityRepository
         $result = $qb->getQuery()->getSingleScalarResult();
         return $result ? (float) $result : 0.0;
     }
+
+    /**
+     * Trouve les paiements filtrés par société
+     */
+    public function findByCompanyWithFilters($company, ?string $status = null, ?string $type = null, ?int $year = null, ?int $month = null): array
+    {
+        $qb = $this->createQueryBuilder('p')
+            ->join('p.lease', 'l')
+            ->join('l.property', 'prop')
+            ->where('prop.company = :company')
+            ->setParameter('company', $company);
+
+        if ($status) {
+            $qb->andWhere('p.status = :status')
+               ->setParameter('status', $status);
+        }
+
+        if ($type) {
+            $qb->andWhere('p.type = :type')
+               ->setParameter('type', $type);
+        }
+
+        if ($year) {
+            $startDate = new \DateTime("{$year}-01-01");
+            $endDate = new \DateTime("{$year}-12-31");
+            $qb->andWhere('p.dueDate BETWEEN :startYear AND :endYear')
+               ->setParameter('startYear', $startDate)
+               ->setParameter('endYear', $endDate);
+        }
+
+        if ($month && $year) {
+            $startDate = new \DateTime("{$year}-{$month}-01");
+            $endDate = clone $startDate;
+            $endDate->modify('last day of this month');
+            $qb->andWhere('p.dueDate BETWEEN :startMonth AND :endMonth')
+               ->setParameter('startMonth', $startDate)
+               ->setParameter('endMonth', $endDate);
+        }
+
+        return $qb->orderBy('p.createdAt', 'DESC')
+                  ->getQuery()
+                  ->getResult();
+    }
+
+    /**
+     * Trouve les paiements filtrés par organisation
+     */
+    public function findByOrganizationWithFilters($organization, ?string $status = null, ?string $type = null, ?int $year = null, ?int $month = null): array
+    {
+        $qb = $this->createQueryBuilder('p')
+            ->join('p.lease', 'l')
+            ->join('l.property', 'prop')
+            ->where('prop.organization = :organization')
+            ->setParameter('organization', $organization);
+
+        if ($status) {
+            $qb->andWhere('p.status = :status')
+               ->setParameter('status', $status);
+        }
+
+        if ($type) {
+            $qb->andWhere('p.type = :type')
+               ->setParameter('type', $type);
+        }
+
+        if ($year) {
+            $startDate = new \DateTime("{$year}-01-01");
+            $endDate = new \DateTime("{$year}-12-31");
+            $qb->andWhere('p.dueDate BETWEEN :startYear AND :endYear')
+               ->setParameter('startYear', $startDate)
+               ->setParameter('endYear', $endDate);
+        }
+
+        if ($month && $year) {
+            $startDate = new \DateTime("{$year}-{$month}-01");
+            $endDate = clone $startDate;
+            $endDate->modify('last day of this month');
+            $qb->andWhere('p.dueDate BETWEEN :startMonth AND :endMonth')
+               ->setParameter('startMonth', $startDate)
+               ->setParameter('endMonth', $endDate);
+        }
+
+        return $qb->orderBy('p.createdAt', 'DESC')
+                  ->getQuery()
+                  ->getResult();
+    }
 }

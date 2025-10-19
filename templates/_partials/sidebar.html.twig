@@ -52,6 +52,14 @@
                             {% if pending_count > 0 %}
                                 <span class="badge bg-danger ms-auto">{{ pending_count }}</span>
                             {% endif %}
+                        {% elseif item.badge|default('') == 'new' %}
+                            <span class="badge bg-success ms-auto">Nouveau</span>
+                        {% elseif item.badge_type|default('') == 'success' %}
+                            <span class="badge bg-success ms-auto">{{ item.badge|default('') }}</span>
+                        {% elseif item.badge_type|default('') == 'danger' %}
+                            <span class="badge bg-danger ms-auto">{{ item.badge|default('') }}</span>
+                        {% elseif item.badge_type|default('') == 'warning' %}
+                            <span class="badge bg-warning ms-auto">{{ item.badge|default('') }}</span>
                         {% endif %}
                     </a>
                 {% endif %}

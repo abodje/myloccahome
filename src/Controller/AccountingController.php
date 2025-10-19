@@ -52,8 +52,31 @@ class AccountingController extends AbstractController
                 $entries = $accountingRepository->findWithFilters($type, $category, $year, $month);
                 $stats = $accountingRepository->getAccountingStatistics();
             }
+        } elseif ($user && (in_array('ROLE_ADMIN', $user->getRoles()) || in_array('ROLE_SUPER_ADMIN', $user->getRoles()))) {
+            // Pour les admins, filtrer selon l'organisation/société
+            $organization = $user->getOrganization();
+            $company = $user->getCompany();
+
+            error_log("AccountingController - Admin: organization=" . ($organization ? $organization->getName() : 'null') . ", company=" . ($company ? $company->getName() : 'null'));
+
+            if ($company) {
+                // Admin avec société spécifique : filtrer par société
+                $entries = $accountingRepository->findByCompanyWithFilters($company, $type, $category, $year, $month);
+                $stats = $accountingRepository->getCompanyStatistics($company);
+                error_log("AccountingController - Filtered by company: " . $company->getName());
+            } elseif ($organization) {
+                // Admin avec organisation : filtrer par organisation
+                $entries = $accountingRepository->findByOrganizationWithFilters($organization, $type, $category, $year, $month);
+                $stats = $accountingRepository->getOrganizationStatistics($organization);
+                error_log("AccountingController - Filtered by organization: " . $organization->getName());
+            } else {
+                // Super Admin sans organisation/société : toutes les écritures
+                $entries = $accountingRepository->findWithFilters($type, $category, $year, $month);
+                $stats = $accountingRepository->getAccountingStatistics();
+                error_log("AccountingController - Super Admin: showing all entries");
+            }
         } else {
-            // Pour les admins, montrer toutes les écritures
+            // Pour les autres rôles, montrer toutes les écritures
             $entries = $accountingRepository->findWithFilters($type, $category, $year, $month);
             $stats = $accountingRepository->getAccountingStatistics();
         }

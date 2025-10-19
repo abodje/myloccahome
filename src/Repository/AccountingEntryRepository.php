@@ -432,4 +432,149 @@ class AccountingEntryRepository extends ServiceEntityRepository
             'total_entries' => count($entries),
         ];
     }
+
+    /**
+     * Trouve les écritures comptables filtrées par société
+     */
+    public function findByCompanyWithFilters($company, ?string $type = null, ?string $category = null, ?int $year = null, ?int $month = null): array
+    {
+        $qb = $this->createQueryBuilder('ae')
+            ->join('ae.property', 'p')
+            ->where('p.company = :company')
+            ->setParameter('company', $company);
+
+        if ($type) {
+            $qb->andWhere('ae.type = :type')
+               ->setParameter('type', $type);
+        }
+
+        if ($category) {
+            $qb->andWhere('ae.category = :category')
+               ->setParameter('category', $category);
+        }
+
+        if ($year) {
+            $startDate = new \DateTime("{$year}-01-01");
+            $endDate = new \DateTime("{$year}-12-31");
+            $qb->andWhere('ae.entryDate BETWEEN :startYear AND :endYear')
+               ->setParameter('startYear', $startDate)
+               ->setParameter('endYear', $endDate);
+        }
+
+        if ($month && $year) {
+            $startDate = new \DateTime("{$year}-{$month}-01");
+            $endDate = clone $startDate;
+            $endDate->modify('last day of this month');
+            $qb->andWhere('ae.entryDate BETWEEN :startMonth AND :endMonth')
+               ->setParameter('startMonth', $startDate)
+               ->setParameter('endMonth', $endDate);
+        }
+
+        return $qb->orderBy('ae.entryDate', 'DESC')
+                  ->addOrderBy('ae.createdAt', 'DESC')
+                  ->getQuery()
+                  ->getResult();
+    }
+
+    /**
+     * Trouve les écritures comptables filtrées par organisation
+     */
+    public function findByOrganizationWithFilters($organization, ?string $type = null, ?string $category = null, ?int $year = null, ?int $month = null): array
+    {
+        $qb = $this->createQueryBuilder('ae')
+            ->join('ae.property', 'p')
+            ->where('p.organization = :organization')
+            ->setParameter('organization', $organization);
+
+        if ($type) {
+            $qb->andWhere('ae.type = :type')
+               ->setParameter('type', $type);
+        }
+
+        if ($category) {
+            $qb->andWhere('ae.category = :category')
+               ->setParameter('category', $category);
+        }
+
+        if ($year) {
+            $startDate = new \DateTime("{$year}-01-01");
+            $endDate = new \DateTime("{$year}-12-31");
+            $qb->andWhere('ae.entryDate BETWEEN :startYear AND :endYear')
+               ->setParameter('startYear', $startDate)
+               ->setParameter('endYear', $endDate);
+        }
+
+        if ($month && $year) {
+            $startDate = new \DateTime("{$year}-{$month}-01");
+            $endDate = clone $startDate;
+            $endDate->modify('last day of this month');
+            $qb->andWhere('ae.entryDate BETWEEN :startMonth AND :endMonth')
+               ->setParameter('startMonth', $startDate)
+               ->setParameter('endMonth', $endDate);
+        }
+
+        return $qb->orderBy('ae.entryDate', 'DESC')
+                  ->addOrderBy('ae.createdAt', 'DESC')
+                  ->getQuery()
+                  ->getResult();
+    }
+
+    /**
+     * Calcule les statistiques pour une société
+     */
+    public function getCompanyStatistics($company): array
+    {
+        $entries = $this->findByCompanyWithFilters($company);
+        return $this->calculateStatistics($entries);
+    }
+
+    /**
+     * Calcule les statistiques pour une organisation
+     */
+    public function getOrganizationStatistics($organization): array
+    {
+        $entries = $this->findByOrganizationWithFilters($organization);
+        return $this->calculateStatistics($entries);
+    }
+
+    /**
+     * Calcule les statistiques à partir d'une liste d'écritures
+     */
+    private function calculateStatistics(array $entries): array
+    {
+        $totalCredits = 0;
+        $totalDebits = 0;
+        $currentMonthCredits = 0;
+        $currentMonthDebits = 0;
+
+        $currentMonth = (int)date('m');
+        $currentYear = (int)date('Y');
+
+        foreach ($entries as $entry) {
+            $amount = (float)$entry->getAmount();
+            $entryMonth = (int)$entry->getEntryDate()->format('m');
+            $entryYear = (int)$entry->getEntryDate()->format('Y');
+
+            if ($entry->getType() === 'CREDIT') {
+                $totalCredits += $amount;
+                if ($entryMonth === $currentMonth && $entryYear === $currentYear) {
+                    $currentMonthCredits += $amount;
+                }
+            } else {
+                $totalDebits += $amount;
+                if ($entryMonth === $currentMonth && $entryYear === $currentYear) {
+                    $currentMonthDebits += $amount;
+                }
+            }
+        }
+
+        return [
+            'total_credits' => $totalCredits,
+            'total_debits' => $totalDebits,
+            'balance' => $totalCredits - $totalDebits,
+            'current_month_credits' => $currentMonthCredits,
+            'current_month_debits' => $currentMonthDebits,
+            'total_entries' => count($entries),
+        ];
+    }
 }

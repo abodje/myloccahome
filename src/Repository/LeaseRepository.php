@@ -139,4 +139,96 @@ class LeaseRepository extends ServiceEntityRepository
                   ->getQuery()
                   ->getResult();
     }
+
+    /**
+     * Trouve les baux d'un gestionnaire (via les propriétés qu'il gère)
+     */
+    public function findByManager(int $ownerId): array
+    {
+        return $this->createQueryBuilder('l')
+            ->join('l.property', 'p')
+            ->join('p.owner', 'o')
+            ->where('o.id = :ownerId')
+            ->setParameter('ownerId', $ownerId)
+            ->orderBy('l.startDate', 'DESC')
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
+     * Trouve les baux d'un gestionnaire avec un statut spécifique
+     */
+    public function findByManagerAndStatus(int $ownerId, string $status): array
+    {
+        return $this->createQueryBuilder('l')
+            ->join('l.property', 'p')
+            ->join('p.owner', 'o')
+            ->where('o.id = :ownerId')
+            ->andWhere('l.status = :status')
+            ->setParameter('ownerId', $ownerId)
+            ->setParameter('status', $status)
+            ->orderBy('l.startDate', 'DESC')
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
+     * Trouve les baux d'une société
+     */
+    public function findByCompany(int $companyId): array
+    {
+        return $this->createQueryBuilder('l')
+            ->join('l.property', 'p')
+            ->where('p.company = :companyId')
+            ->setParameter('companyId', $companyId)
+            ->orderBy('l.startDate', 'DESC')
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
+     * Trouve les baux d'une société avec un statut spécifique
+     */
+    public function findByCompanyAndStatus(int $companyId, string $status): array
+    {
+        return $this->createQueryBuilder('l')
+            ->join('l.property', 'p')
+            ->where('p.company = :companyId')
+            ->andWhere('l.status = :status')
+            ->setParameter('companyId', $companyId)
+            ->setParameter('status', $status)
+            ->orderBy('l.startDate', 'DESC')
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
+     * Trouve les baux d'une organisation
+     */
+    public function findByOrganization(int $organizationId): array
+    {
+        return $this->createQueryBuilder('l')
+            ->join('l.property', 'p')
+            ->where('p.organization = :organizationId')
+            ->setParameter('organizationId', $organizationId)
+            ->orderBy('l.startDate', 'DESC')
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
+     * Trouve les baux d'une organisation avec un statut spécifique
+     */
+    public function findByOrganizationAndStatus(int $organizationId, string $status): array
+    {
+        return $this->createQueryBuilder('l')
+            ->join('l.property', 'p')
+            ->where('p.organization = :organizationId')
+            ->andWhere('l.status = :status')
+            ->setParameter('organizationId', $organizationId)
+            ->setParameter('status', $status)
+            ->orderBy('l.startDate', 'DESC')
+            ->getQuery()
+            ->getResult();
+    }
 }

@@ -17,6 +17,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Notifier\Message\SmsMessage;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 
@@ -516,6 +517,7 @@ class OnlinePaymentController extends AbstractController
             }
 
             $result = $orangeSmsService->envoyerSms($tenant->getPhone(), $message);
+          
 
             if (isset($result['error'])) {
                 file_put_contents($logFile, date('Y-m-d H:i:s') . " - ❌ Erreur SMS: {$result['error']}\n", FILE_APPEND);

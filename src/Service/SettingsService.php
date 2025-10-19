@@ -94,6 +94,19 @@ class SettingsService
     }
 
     /**
+     * Récupère les paramètres Orange SMS
+     */
+    public function getOrangeSmsSettings(): array
+    {
+        return [
+            'orange_sms_client_id' => $this->get('orange_sms_client_id', ''),
+            'orange_sms_client_secret' => $this->get('orange_sms_client_secret', ''),
+            'orange_sms_sender_name' => $this->get('orange_sms_sender_name', 'MYLOCCA'),
+            'orange_sms_enabled' => $this->get('orange_sms_enabled', false),
+        ];
+    }
+
+    /**
      * Vérifie si une fonctionnalité est activée
      */
     public function isFeatureEnabled(string $feature): bool

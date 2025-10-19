@@ -109,11 +109,16 @@ class TaskManagerService
                     $this->executeTestEmailConfigTask($task);
                     break;
 
+                case 'FIX_USER_ORGANIZATION':
+                    $this->executeFixUserOrganizationTask($task);
+                    break;
+
                 default:
                     throw new \Exception("Type de tâche non reconnu: {$task->getType()}");
             }
 
-            $task->markAsCompleted();
+            // Marquer la tâche comme terminée avec le résultat
+            $task->markAsCompleted($task->getResult());
             $this->entityManager->flush();
         } catch (\Exception $e) {
             $task->markAsFailed($e->getMessage());
@@ -359,6 +364,16 @@ class TaskManagerService
                 'frequency' => 'MANUAL', // Tâche manuelle uniquement
                 'parameters' => [
                     'email' => 'admin@mylocca.com' // Email par défaut pour le test
+                ]
+            ],
+            [
+                'name' => 'Correction des utilisateurs sans organisation',
+                'type' => 'FIX_USER_ORGANIZATION',
+                'description' => 'Corrige automatiquement les utilisateurs qui n\'ont pas d\'organization_id ou company_id définis',
+                'frequency' => 'MANUAL', // Tâche manuelle uniquement
+                'parameters' => [
+                    'auto_fix_tenants' => true, // Corriger automatiquement les locataires
+                    'log_details' => true // Loguer les détails de la correction
                 ]
             ]
         ];
@@ -941,5 +956,109 @@ class TaskManagerService
 </body>
 </html>
 HTML;
+    }
+
+    /**
+     * Exécute la tâche de correction des utilisateurs sans organisation
+     */
+    private function executeFixUserOrganizationTask(Task $task): void
+    {
+        $parameters = $task->getParameters();
+        $autoFixTenants = $parameters['auto_fix_tenants'] ?? true;
+        $logDetails = $parameters['log_details'] ?? true;
+
+        $this->logger->info('Début de la correction des utilisateurs sans organisation', [
+            'auto_fix_tenants' => $autoFixTenants,
+            'log_details' => $logDetails
+        ]);
+
+        // Récupérer tous les utilisateurs sans organisation
+        $usersWithoutOrg = $this->entityManager->getRepository(User::class)
+            ->createQueryBuilder('u')
+            ->where('u.organization IS NULL')
+            ->getQuery()
+            ->getResult();
+
+        $this->logger->info(sprintf('Trouvé %d utilisateurs sans organisation', count($usersWithoutOrg)));
+
+        $fixed = 0;
+        $skipped = 0;
+
+        foreach ($usersWithoutOrg as $user) {
+            if ($logDetails) {
+                $this->logger->info(sprintf('Traitement de l\'utilisateur: %s (%s)', $user->getEmail(), implode(', ', $user->getRoles())));
+            }
+
+            // Essayer de récupérer l'organisation via le tenant
+            if (in_array('ROLE_TENANT', $user->getRoles()) && $autoFixTenants) {
+                $tenant = $user->getTenant();
+                if ($tenant && $tenant->getOrganization()) {
+                    $user->setOrganization($tenant->getOrganization());
+                    if ($tenant->getCompany()) {
+                        $user->setCompany($tenant->getCompany());
+                    }
+                    $fixed++;
+                    if ($logDetails) {
+                        $this->logger->info(sprintf('  ✓ Organisation définie via tenant: %s', $tenant->getOrganization()->getName()));
+                    }
+                } else {
+                    $skipped++;
+                    if ($logDetails) {
+                        $this->logger->warning('  ✗ Aucun tenant trouvé ou tenant sans organisation');
+                    }
+                }
+            } else {
+                $skipped++;
+                if ($logDetails) {
+                    $this->logger->warning('  ✗ Utilisateur non-locataire, impossible de déterminer l\'organisation automatiquement');
+                }
+            }
+        }
+
+        // Sauvegarder les modifications
+        if ($fixed > 0) {
+            $this->entityManager->flush();
+            $this->logger->info(sprintf('%d utilisateurs corrigés, %d ignorés', $fixed, $skipped));
+        } else {
+            $this->logger->info('Aucun utilisateur à corriger');
+        }
+
+        // Statistiques finales
+        $totalUsers = $this->entityManager->getRepository(User::class)->count([]);
+        $usersWithOrg = $this->entityManager->getRepository(User::class)
+            ->createQueryBuilder('u')
+            ->where('u.organization IS NOT NULL')
+            ->getQuery()
+            ->getSingleScalarResult();
+
+        $this->logger->info(sprintf('Statistiques finales - Total: %d, Avec organisation: %d, Sans organisation: %d',
+            $totalUsers, $usersWithOrg, $totalUsers - $usersWithOrg));
+
+        // Mettre à jour le résultat de la tâche
+        $task->setResult(sprintf('Correction terminée: %d utilisateurs corrigés, %d ignorés. Total: %d utilisateurs, %d avec organisation',
+            $fixed, $skipped, $totalUsers, $usersWithOrg));
+    }
+
+    /**
+     * Crée une tâche de correction des utilisateurs sans organisation
+     */
+    public function createFixUserOrganizationTask(): Task
+    {
+        $task = new Task();
+        $task->setName('Correction des utilisateurs sans organisation');
+        $task->setDescription('Corrige automatiquement les utilisateurs qui n\'ont pas d\'organization_id ou company_id définis');
+        $task->setType('FIX_USER_ORGANIZATION');
+        $task->setIsActive(true);
+        $task->setIsRecurring(false);
+        $task->setPriority('MEDIUM');
+        $task->setCreatedAt(new \DateTime());
+        $task->setNextRunAt(new \DateTime()); // Exécution immédiate
+
+        $this->entityManager->persist($task);
+        $this->entityManager->flush();
+
+        $this->logger->info('Tâche de correction des utilisateurs sans organisation créée');
+
+        return $task;
     }
 }

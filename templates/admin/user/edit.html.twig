@@ -1,0 +1,278 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Modifier l'utilisateur - Administration{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-8">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>✏️ Modifier {{ user.firstName }} {{ user.lastName }}</h2>
+                <div>
+                    <a href="{{ path('app_admin_user_show', {id: user.id}) }}" class="btn btn-info">
+                        <i class="bi bi-eye"></i> Voir
+                    </a>
+                    <a href="{{ path('app_admin_user_index') }}" class="btn btn-secondary">
+                        <i class="bi bi-arrow-left"></i> Retour à la liste
+                    </a>
+                </div>
+            </div>
+
+            <!-- Messages flash -->
+            {% for flash_message in app.flashes('success') %}
+                <div class="alert alert-success" role="alert">
+                    {{ flash_message }}
+                </div>
+            {% endfor %}
+            {% for flash_message in app.flashes('error') %}
+                <div class="alert alert-danger" role="alert">
+                    {{ flash_message }}
+                </div>
+            {% endfor %}
+
+            <!-- Formulaire -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Modifier les informations</h5>
+                </div>
+                <div class="card-body">
+                    {{ form_start(form) }}
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form_label(form.email) }}
+                                {{ form_widget(form.email, {'attr': {'class': 'form-control'}}) }}
+                                {{ form_errors(form.email) }}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form_label(form.password) }}
+                                {{ form_widget(form.password, {'attr': {'class': 'form-control'}}) }}
+                                {{ form_errors(form.password) }}
+                                <small class="form-text text-muted">Laissez vide pour ne pas changer le mot de passe.</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form_label(form.firstName) }}
+                                {{ form_widget(form.firstName, {'attr': {'class': 'form-control'}}) }}
+                                {{ form_errors(form.firstName) }}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form_label(form.lastName) }}
+                                {{ form_widget(form.lastName, {'attr': {'class': 'form-control'}}) }}
+                                {{ form_errors(form.lastName) }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form_label(form.phone) }}
+                                {{ form_widget(form.phone, {'attr': {'class': 'form-control'}}) }}
+                                {{ form_errors(form.phone) }}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form_label(form.mobilePhone) }}
+                                {{ form_widget(form.mobilePhone, {'attr': {'class': 'form-control'}}) }}
+                                {{ form_errors(form.mobilePhone) }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        {{ form_label(form.address) }}
+                        {{ form_widget(form.address, {'attr': {'class': 'form-control'}}) }}
+                        {{ form_errors(form.address) }}
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form_label(form.city) }}
+                                {{ form_widget(form.city, {'attr': {'class': 'form-control'}}) }}
+                                {{ form_errors(form.city) }}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form_label(form.postalCode) }}
+                                {{ form_widget(form.postalCode, {'attr': {'class': 'form-control'}}) }}
+                                {{ form_errors(form.postalCode) }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form_label(form.birthDate) }}
+                                {{ form_widget(form.birthDate, {'attr': {'class': 'form-control'}}) }}
+                                {{ form_errors(form.birthDate) }}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form_label(form.isActive) }}
+                                <div class="form-check">
+                                    {{ form_widget(form.isActive, {'attr': {'class': 'form-check-input'}}) }}
+                                    {{ form_label(form.isActive, null, {'label_attr': {'class': 'form-check-label'}}) }}
+                                </div>
+                                {{ form_errors(form.isActive) }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr>
+
+                    <div class="row">
+                        {% if form.organization is defined %}
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form_label(form.organization) }}
+                                {{ form_widget(form.organization, {'attr': {'class': 'form-control'}}) }}
+                                {{ form_errors(form.organization) }}
+                            </div>
+                        </div>
+                        {% endif %}
+                        {% if form.company is defined %}
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form_label(form.company) }}
+                                {{ form_widget(form.company, {'attr': {'class': 'form-control'}}) }}
+                                {{ form_errors(form.company) }}
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        {{ form_label(form.roles) }}
+                        <div class="row">
+                            {% for child in form.roles %}
+                                <div class="col-md-6">
+                                    <div class="form-check">
+                                        {{ form_widget(child, {'attr': {'class': 'form-check-input'}}) }}
+                                        {{ form_label(child, null, {'label_attr': {'class': 'form-check-label'}}) }}
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                        {{ form_errors(form.roles) }}
+                        <small class="form-text text-muted">Sélectionnez un ou plusieurs rôles pour l'utilisateur.</small>
+                    </div>
+
+                    <div class="d-flex justify-content-between">
+                        <a href="{{ path('app_admin_user_show', {id: user.id}) }}" class="btn btn-secondary">
+                            <i class="bi bi-arrow-left"></i> Annuler
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-save"></i> Sauvegarder les modifications
+                        </button>
+                    </div>
+
+                    {{ form_end(form) }}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <!-- Informations actuelles -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Informations actuelles</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-sm table-borderless">
+                        <tr>
+                            <td><strong>Email :</strong></td>
+                            <td>{{ user.email }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Rôles :</strong></td>
+                            <td>
+                                {% for role in user.roles %}
+                                    {% if role != 'ROLE_USER' %}
+                                        <span class="badge bg-info me-1">{{ role|replace({'ROLE_': ''}) }}</span>
+                                    {% endif %}
+                                {% endfor %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><strong>Organisation :</strong></td>
+                            <td>
+                                {% if user.organization %}
+                                    <span class="badge bg-primary">{{ user.organization.name }}</span>
+                                {% else %}
+                                    <span class="text-muted">Aucune</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><strong>Société :</strong></td>
+                            <td>
+                                {% if user.company %}
+                                    <span class="badge bg-secondary">{{ user.company.name }}</span>
+                                {% else %}
+                                    <span class="text-muted">Aucune</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><strong>Statut :</strong></td>
+                            <td>
+                                {% if user.isActive %}
+                                    <span class="badge bg-success">Actif</span>
+                                {% else %}
+                                    <span class="badge bg-danger">Inactif</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><strong>Créé le :</strong></td>
+                            <td>{{ user.createdAt|date('d/m/Y') }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Dernière connexion :</strong></td>
+                            <td>
+                                {% if user.lastLoginAt %}
+                                    {{ user.lastLoginAt|date('d/m/Y H:i') }}
+                                {% else %}
+                                    <span class="text-muted">Jamais</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Aide -->
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">💡 Aide</h5>
+                </div>
+                <div class="card-body">
+                    <h6>Rôles disponibles :</h6>
+                    <ul class="list-unstyled">
+                        <li><span class="badge bg-secondary me-1">USER</span> Utilisateur standard</li>
+                        <li><span class="badge bg-info me-1">TENANT</span> Locataire</li>
+                        <li><span class="badge bg-warning me-1">MANAGER</span> Gestionnaire</li>
+                        <li><span class="badge bg-primary me-1">ADMIN</span> Administrateur</li>
+                        <li><span class="badge bg-danger me-1">SUPER_ADMIN</span> Super administrateur</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

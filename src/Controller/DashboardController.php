@@ -40,7 +40,7 @@ class DashboardController extends AbstractController
         // Adapter les données selon le rôle de l'utilisateur
         if ($user && in_array('ROLE_ADMIN', $user->getRoles())) {
             error_log('DashboardController: Using adminDashboard');
-            return $this->adminDashboard($propertyRepo, $tenantRepo, $leaseRepo, $paymentRepo, $maintenanceRepo, $expenseRepo, $accountingRepo, $conversationRepo, $analyticsService);
+            return $this->adminDashboard($user, $propertyRepo, $tenantRepo, $leaseRepo, $paymentRepo, $maintenanceRepo, $expenseRepo, $accountingRepo, $conversationRepo, $analyticsService);
         } elseif ($user && in_array('ROLE_MANAGER', $user->getRoles())) {
             error_log('DashboardController: Using managerDashboard');
             return $this->managerDashboard($user, $propertyRepo, $tenantRepo, $leaseRepo, $paymentRepo, $maintenanceRepo, $expenseRepo, $accountingRepo, $conversationRepo);
@@ -58,6 +58,7 @@ class DashboardController extends AbstractController
      * Dashboard pour les administrateurs
      */
     private function adminDashboard(
+        $user,
         PropertyRepository $propertyRepo,
         TenantRepository $tenantRepo,
         LeaseRepository $leaseRepo,
@@ -69,36 +70,14 @@ class DashboardController extends AbstractController
         DashboardAnalyticsService $analyticsService
     ): Response {
 
-        // Statistiques globales
-        $stats = [
-            'properties' => [
-                'total' => $propertyRepo->count([]),
-                'occupied' => $propertyRepo->count(['status' => 'Occupé']),
-                'available' => $propertyRepo->count(['status' => 'Libre']),
-            ],
-            'tenants' => [
-                'total' => $tenantRepo->count([]),
-                'active' => count($tenantRepo->findWithActiveLeases()),
-            ],
-            'leases' => [
-                'active' => $leaseRepo->count(['status' => 'Actif']),
-                'expiring_soon' => count($leaseRepo->findExpiringSoon()),
-            ],
-            'payments' => [
-                'pending' => $paymentRepo->count(['status' => 'En attente']),
-                'overdue' => count($paymentRepo->findOverdue()),
-                'monthly_income' => $paymentRepo->getMonthlyIncome(),
-            ],
-            'maintenance' => [
-                'pending' => $maintenanceRepo->count(['status' => 'Nouvelle']),
-                'urgent' => count($maintenanceRepo->findUrgentPending()),
-                'overdue' => count($maintenanceRepo->findOverdue()),
-            ],
-            'messages' => [
-                'unread' => count($conversationRepo->findWithUnreadMessages($this->getUser())),
-                'total' => count($conversationRepo->findByUser($this->getUser())),
-            ]
-        ];
+        // Filtrer selon l'organisation/société de l'utilisateur
+        $organization = $user->getOrganization();
+        $company = $user->getCompany();
+
+        error_log("DashboardController - Admin: organization=" . ($organization ? $organization->getName() : 'null') . ", company=" . ($company ? $company->getName() : 'null'));
+
+        // Statistiques filtrées selon l'organisation/société
+        $stats = $this->getFilteredStats($user, $propertyRepo, $tenantRepo, $leaseRepo, $paymentRepo, $maintenanceRepo, $conversationRepo);
 
         // Revenus et dépenses du mois
         $currentMonth = new \DateTime('first day of this month');
@@ -467,5 +446,84 @@ class DashboardController extends AbstractController
             'property_stats' => $propertyStats,
             'maintenance_stats' => $maintenanceStats,
         ]);
+    }
+
+    /**
+     * Récupère les statistiques filtrées selon le rôle et l'organisation/société de l'utilisateur
+     */
+    private function getFilteredStats(
+        $user,
+        PropertyRepository $propertyRepo,
+        TenantRepository $tenantRepo,
+        LeaseRepository $leaseRepo,
+        PaymentRepository $paymentRepo,
+        MaintenanceRequestRepository $maintenanceRepo,
+        ConversationRepository $conversationRepo
+    ): array {
+        $organization = $user->getOrganization();
+        $company = $user->getCompany();
+
+        // Initialiser les statistiques
+        $stats = [
+            'properties' => ['total' => 0, 'occupied' => 0, 'available' => 0],
+            'tenants' => ['total' => 0, 'active' => 0],
+            'leases' => ['active' => 0, 'expiring_soon' => 0],
+            'payments' => ['pending' => 0, 'overdue' => 0, 'monthly_income' => 0],
+            'maintenance' => ['pending' => 0, 'urgent' => 0, 'overdue' => 0],
+            'messages' => ['unread' => 0, 'total' => 0]
+        ];
+
+        try {
+            // Filtrer les propriétés
+            if ($company) {
+                // Admin avec société spécifique
+                $stats['properties']['total'] = $propertyRepo->count(['company' => $company]);
+                $stats['properties']['occupied'] = $propertyRepo->count(['company' => $company, 'status' => 'Occupé']);
+                $stats['properties']['available'] = $propertyRepo->count(['company' => $company, 'status' => 'Libre']);
+
+                $stats['tenants']['total'] = $tenantRepo->count(['company' => $company]);
+                $stats['leases']['active'] = $leaseRepo->count(['status' => 'Actif']); // TODO: filtrer par company
+
+                error_log("DashboardController - Filtered by company: " . $company->getName());
+            } elseif ($organization) {
+                // Admin avec organisation
+                $stats['properties']['total'] = $propertyRepo->count(['organization' => $organization]);
+                $stats['properties']['occupied'] = $propertyRepo->count(['organization' => $organization, 'status' => 'Occupé']);
+                $stats['properties']['available'] = $propertyRepo->count(['organization' => $organization, 'status' => 'Libre']);
+
+                $stats['tenants']['total'] = $tenantRepo->count(['organization' => $organization]);
+                $stats['leases']['active'] = $leaseRepo->count(['status' => 'Actif']); // TODO: filtrer par organization
+
+                error_log("DashboardController - Filtered by organization: " . $organization->getName());
+            } else {
+                // Super Admin sans organisation/société : toutes les données
+                $stats['properties']['total'] = $propertyRepo->count([]);
+                $stats['properties']['occupied'] = $propertyRepo->count(['status' => 'Occupé']);
+                $stats['properties']['available'] = $propertyRepo->count(['status' => 'Libre']);
+
+                $stats['tenants']['total'] = $tenantRepo->count([]);
+                $stats['leases']['active'] = $leaseRepo->count(['status' => 'Actif']);
+
+                error_log("DashboardController - Super Admin: showing all data");
+            }
+
+            // Autres statistiques (pour l'instant non filtrées, à améliorer selon les besoins)
+            $stats['tenants']['active'] = count($tenantRepo->findWithActiveLeases());
+            $stats['leases']['expiring_soon'] = count($leaseRepo->findExpiringSoon());
+            $stats['payments']['pending'] = $paymentRepo->count(['status' => 'En attente']);
+            $stats['payments']['overdue'] = count($paymentRepo->findOverdue());
+            $stats['payments']['monthly_income'] = $paymentRepo->getMonthlyIncome();
+            $stats['maintenance']['pending'] = $maintenanceRepo->count(['status' => 'Nouvelle']);
+            $stats['maintenance']['urgent'] = count($maintenanceRepo->findUrgentPending());
+            $stats['maintenance']['overdue'] = count($maintenanceRepo->findOverdue());
+            $stats['messages']['unread'] = count($conversationRepo->findWithUnreadMessages($user));
+            $stats['messages']['total'] = count($conversationRepo->findByUser($user));
+
+        } catch (\Exception $e) {
+            error_log("DashboardController - Error getting filtered stats: " . $e->getMessage());
+            // En cas d'erreur, retourner des stats vides
+        }
+
+        return $stats;
     }
 }

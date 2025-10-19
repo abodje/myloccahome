@@ -1,6 +1,8 @@
 
 ###> symfony/framework-bundle ###
 /.env
+/docs/
+/docs
 /.cursor/
 /.env.local
 /.env.local.php

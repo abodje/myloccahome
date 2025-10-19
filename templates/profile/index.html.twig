@@ -98,7 +98,7 @@
                                             <option>🇫🇷 FR</option>
                                         </select>
                                         <input type="tel" name="mobilePhone" class="form-control"
-                                               value="{{ user.mobilePhone }}" readonly id="mobilePhone">
+                                               value="{{ user.phone ?? '' }}" readonly id="mobilePhone">
                                     </div>
                                 </div>
                             </div>
@@ -110,7 +110,7 @@
                                             <option>🇫🇷 FR</option>
                                         </select>
                                         <input type="tel" name="landlinePhone" class="form-control"
-                                               value="{{ user.landlinePhone }}" readonly id="landlinePhone">
+                                               value="" readonly id="landlinePhone">
                                     </div>
                                 </div>
                             </div>
@@ -127,11 +127,11 @@
                                 <div class="mb-3">
                                     <label class="form-label">Situation familiale</label>
                                     <select name="maritalStatus" class="form-select" disabled id="maritalStatus">
-                                        <option value="Célibataire" {{ user.maritalStatus == 'Célibataire' ? 'selected' : '' }}>Célibataire</option>
-                                        <option value="Marié(e)" {{ user.maritalStatus == 'Marié(e)' ? 'selected' : '' }}>Marié(e)</option>
-                                        <option value="Pacsé(e)" {{ user.maritalStatus == 'Pacsé(e)' ? 'selected' : '' }}>Pacsé(e)</option>
-                                        <option value="Divorcé(e)" {{ user.maritalStatus == 'Divorcé(e)' ? 'selected' : '' }}>Divorcé(e)</option>
-                                        <option value="Veuf(ve)" {{ user.maritalStatus == 'Veuf(ve)' ? 'selected' : '' }}>Veuf(ve)</option>
+                                        <option value="Célibataire">Célibataire</option>
+                                        <option value="Marié(e)">Marié(e)</option>
+                                        <option value="Pacsé(e)">Pacsé(e)</option>
+                                        <option value="Divorcé(e)">Divorcé(e)</option>
+                                        <option value="Veuf(ve)">Veuf(ve)</option>
                                     </select>
                                 </div>
                             </div>

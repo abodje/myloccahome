@@ -1,0 +1,254 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Détails de l'utilisateur - Administration{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>👤 {{ user.firstName }} {{ user.lastName }}</h2>
+                <div>
+                    <a href="{{ path('app_admin_user_edit', {id: user.id}) }}" class="btn btn-warning">
+                        <i class="bi bi-pencil"></i> Modifier
+                    </a>
+                    <a href="{{ path('app_admin_user_index') }}" class="btn btn-secondary">
+                        <i class="bi bi-arrow-left"></i> Retour à la liste
+                    </a>
+                </div>
+            </div>
+
+            <div class="row">
+                <!-- Informations personnelles -->
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">Informations personnelles</h5>
+                        </div>
+                        <div class="card-body">
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td><strong>Nom complet :</strong></td>
+                                    <td>{{ user.firstName }} {{ user.lastName }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Email :</strong></td>
+                                    <td>{{ user.email }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Téléphone :</strong></td>
+                                    <td>
+                                        {% if user.phone %}
+                                            {{ user.phone }}
+                                        {% else %}
+                                            <span class="text-muted">Non renseigné</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Téléphone mobile :</strong></td>
+                                    <td>
+                                        {% if user.mobilePhone %}
+                                            {{ user.mobilePhone }}
+                                        {% else %}
+                                            <span class="text-muted">Non renseigné</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Date de naissance :</strong></td>
+                                    <td>
+                                        {% if user.birthDate %}
+                                            {{ user.birthDate|date('d/m/Y') }}
+                                        {% else %}
+                                            <span class="text-muted">Non renseignée</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Adresse -->
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">Adresse</h5>
+                        </div>
+                        <div class="card-body">
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td><strong>Adresse :</strong></td>
+                                    <td>
+                                        {% if user.address %}
+                                            {{ user.address }}
+                                        {% else %}
+                                            <span class="text-muted">Non renseignée</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Ville :</strong></td>
+                                    <td>
+                                        {% if user.city %}
+                                            {{ user.city }}
+                                        {% else %}
+                                            <span class="text-muted">Non renseignée</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Code postal :</strong></td>
+                                    <td>
+                                        {% if user.postalCode %}
+                                            {{ user.postalCode }}
+                                        {% else %}
+                                            <span class="text-muted">Non renseigné</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row mt-4">
+                <!-- Informations du compte -->
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">Informations du compte</h5>
+                        </div>
+                        <div class="card-body">
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td><strong>Rôles :</strong></td>
+                                    <td>
+                                        {% for role in user.roles %}
+                                            {% if role != 'ROLE_USER' %}
+                                                <span class="badge bg-info me-1">{{ role|replace({'ROLE_': ''}) }}</span>
+                                            {% endif %}
+                                        {% endfor %}
+                                        {% if user.roles|length == 1 and 'ROLE_USER' in user.roles %}
+                                            <span class="badge bg-secondary">USER</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Statut :</strong></td>
+                                    <td>
+                                        {% if user.isActive %}
+                                            <span class="badge bg-success">Actif</span>
+                                        {% else %}
+                                            <span class="badge bg-danger">Inactif</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Organisation :</strong></td>
+                                    <td>
+                                        {% if user.organization %}
+                                            <span class="badge bg-primary">{{ user.organization.name }}</span>
+                                        {% else %}
+                                            <span class="text-muted">Aucune</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Société :</strong></td>
+                                    <td>
+                                        {% if user.company %}
+                                            <span class="badge bg-secondary">{{ user.company.name }}</span>
+                                        {% else %}
+                                            <span class="text-muted">Aucune</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Activité -->
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">Activité</h5>
+                        </div>
+                        <div class="card-body">
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td><strong>Compte créé le :</strong></td>
+                                    <td>{{ user.createdAt|date('d/m/Y à H:i') }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Dernière connexion :</strong></td>
+                                    <td>
+                                        {% if user.lastLoginAt %}
+                                            {{ user.lastLoginAt|date('d/m/Y à H:i') }}
+                                        {% else %}
+                                            <span class="text-muted">Jamais connecté</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Dernière mise à jour :</strong></td>
+                                    <td>{{ user.updatedAt|date('d/m/Y à H:i') }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Profils liés -->
+            {% if user.tenant or user.owner %}
+                <div class="row mt-4">
+                    <div class="col-md-12">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="card-title mb-0">Profils liés</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    {% if user.tenant %}
+                                        <div class="col-md-6">
+                                            <h6>Profil Locataire</h6>
+                                            <p><strong>ID :</strong> {{ user.tenant.id }}</p>
+                                            <p><strong>Email :</strong> {{ user.tenant.email }}</p>
+                                            <p><strong>Statut :</strong>
+                                                {% if user.tenant.isActive %}
+                                                    <span class="badge bg-success">Actif</span>
+                                                {% else %}
+                                                    <span class="badge bg-danger">Inactif</span>
+                                                {% endif %}
+                                            </p>
+                                        </div>
+                                    {% endif %}
+
+                                    {% if user.owner %}
+                                        <div class="col-md-6">
+                                            <h6>Profil Propriétaire</h6>
+                                            <p><strong>ID :</strong> {{ user.owner.id }}</p>
+                                            <p><strong>Email :</strong> {{ user.owner.email }}</p>
+                                            <p><strong>Statut :</strong>
+                                                {% if user.owner.isActive %}
+                                                    <span class="badge bg-success">Actif</span>
+                                                {% else %}
+                                                    <span class="badge bg-danger">Inactif</span>
+                                                {% endif %}
+                                            </p>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

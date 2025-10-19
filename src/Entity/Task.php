@@ -53,6 +53,9 @@ class Task
     #[ORM\Column(type: Types::TEXT, nullable: true)]
     private ?string $lastError = null;
 
+    #[ORM\Column(type: Types::TEXT, nullable: true)]
+    private ?string $result = null;
+
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
     private ?\DateTimeInterface $createdAt = null;
 
@@ -230,6 +233,17 @@ class Task
         return $this;
     }
 
+    public function getResult(): ?string
+    {
+        return $this->result;
+    }
+
+    public function setResult(?string $result): static
+    {
+        $this->result = $result;
+        return $this;
+    }
+
     public function getCreatedAt(): ?\DateTimeInterface
     {
         return $this->createdAt;
@@ -304,13 +318,14 @@ class Task
         $this->updatedAt = new \DateTime();
     }
 
-    public function markAsCompleted(): void
+    public function markAsCompleted(?string $result = null): void
     {
         $this->status = 'ACTIVE';
         $this->lastRunAt = new \DateTime();
         $this->runCount++;
         $this->successCount++;
         $this->lastError = null;
+        $this->result = $result;
         $this->calculateNextRun();
         $this->updatedAt = new \DateTime();
     }
@@ -322,6 +337,7 @@ class Task
         $this->runCount++;
         $this->failureCount++;
         $this->lastError = $error;
+        $this->result = null; // Effacer le résultat précédent en cas d'échec
         $this->calculateNextRun();
         $this->updatedAt = new \DateTime();
     }

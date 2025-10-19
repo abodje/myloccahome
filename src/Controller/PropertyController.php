@@ -8,6 +8,7 @@ use App\Repository\PropertyRepository;
 use App\Repository\InventoryRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
@@ -30,7 +31,46 @@ class PropertyController extends AbstractController
             $tenant = $user->getTenant();
             if ($tenant) {
                 $properties = $propertyRepository->findByTenantWithFilters($tenant->getId(), $search, $status, $type);
+
+                // Log pour débogage
+                error_log("PropertyController - Tenant: " . $tenant->getFullName() .
+                         ", Found " . count($properties) . " properties");
+
+                // Si aucun bien trouvé, essayer une approche alternative
+                if (empty($properties)) {
+                    error_log("PropertyController - No properties found with findByTenantWithFilters, trying alternative approach");
+
+                    // Essayer d'abord avec la nouvelle méthode sans filtre de statut
+                    $properties = $propertyRepository->findByTenantAllLeases($tenant->getId(), $search, $status, $type);
+
+                    error_log("PropertyController - findByTenantAllLeases found " . count($properties) . " properties");
+
+                    // Si toujours aucun bien trouvé, essayer l'approche directe
+                    if (empty($properties)) {
+                        error_log("PropertyController - Still no properties found, trying direct approach");
+
+                        // Approche directe : récupérer les baux du locataire puis les propriétés
+                        $tenantLeases = $propertyRepository->getEntityManager()
+                            ->getRepository(\App\Entity\Lease::class)
+                            ->findBy(['tenant' => $tenant]);
+
+                        $alternativeProperties = [];
+                        foreach ($tenantLeases as $lease) {
+                            if ($lease->getProperty()) {
+                                $alternativeProperties[] = $lease->getProperty();
+                            }
+                        }
+
+                        error_log("PropertyController - Direct approach found " . count($alternativeProperties) . " properties");
+
+                        // Utiliser l'approche directe si elle trouve des résultats
+                        if (!empty($alternativeProperties)) {
+                            $properties = $alternativeProperties;
+                        }
+                    }
+                }
             } else {
+                error_log("PropertyController - Tenant: No tenant profile found for user " . $user->getEmail());
                 $properties = [];
             }
         } elseif ($user && in_array('ROLE_MANAGER', $user->getRoles())) {
@@ -79,6 +119,95 @@ class PropertyController extends AbstractController
             'current_type' => $type,
             'is_tenant_view' => $isTenantView,
         ]);
+    }
+
+    /**
+     * Route de debug pour tester la récupération des biens des locataires
+     */
+    #[Route('/debug/tenant-properties', name: 'app_property_debug_tenant', methods: ['GET'])]
+    public function debugTenantProperties(PropertyRepository $propertyRepository): JsonResponse
+    {
+        /** @var \App\Entity\User|null $user */
+        $user = $this->getUser();
+
+        if (!$user) {
+            return new JsonResponse(['error' => 'User not authenticated']);
+        }
+
+        if (!in_array('ROLE_TENANT', $user->getRoles())) {
+            return new JsonResponse(['error' => 'User is not a tenant']);
+        }
+
+        $tenant = $user->getTenant();
+        if (!$tenant) {
+            return new JsonResponse(['error' => 'No tenant profile found for this user']);
+        }
+
+        // Tester différentes méthodes de récupération
+        $methods = [
+            'findByTenantWithFilters' => $propertyRepository->findByTenantWithFilters($tenant->getId()),
+            'findByTenantAllLeases' => $propertyRepository->findByTenantAllLeases($tenant->getId()),
+        ];
+
+        // Approche directe via les baux
+        $tenantLeases = $propertyRepository->getEntityManager()
+            ->getRepository(\App\Entity\Lease::class)
+            ->findBy(['tenant' => $tenant]);
+
+        $directProperties = [];
+        foreach ($tenantLeases as $lease) {
+            if ($lease->getProperty()) {
+                $directProperties[] = [
+                    'lease_id' => $lease->getId(),
+                    'lease_status' => $lease->getStatus(),
+                    'property_id' => $lease->getProperty()->getId(),
+                    'property_address' => $lease->getProperty()->getAddress(),
+                ];
+            }
+        }
+
+        $debugInfo = [
+            'user' => [
+                'id' => $user->getId(),
+                'email' => $user->getEmail(),
+                'roles' => $user->getRoles(),
+            ],
+            'tenant' => [
+                'id' => $tenant->getId(),
+                'fullName' => $tenant->getFullName(),
+                'phone' => $tenant->getPhone(),
+                'email' => $tenant->getEmail(),
+            ],
+            'methods_results' => [
+                'findByTenantWithFilters' => [
+                    'count' => count($methods['findByTenantWithFilters']),
+                    'properties' => array_map(function($p) {
+                        return [
+                            'id' => $p->getId(),
+                            'address' => $p->getAddress(),
+                            'status' => $p->getStatus(),
+                        ];
+                    }, $methods['findByTenantWithFilters'])
+                ],
+                'findByTenantAllLeases' => [
+                    'count' => count($methods['findByTenantAllLeases']),
+                    'properties' => array_map(function($p) {
+                        return [
+                            'id' => $p->getId(),
+                            'address' => $p->getAddress(),
+                            'status' => $p->getStatus(),
+                        ];
+                    }, $methods['findByTenantAllLeases'])
+                ],
+                'direct_via_leases' => [
+                    'leases_count' => count($tenantLeases),
+                    'properties_count' => count($directProperties),
+                    'details' => $directProperties,
+                ]
+            ]
+        ];
+
+        return new JsonResponse($debugInfo);
     }
 
     #[Route('/nouveau', name: 'app_property_new', methods: ['GET', 'POST'])]

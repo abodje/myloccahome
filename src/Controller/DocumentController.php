@@ -58,26 +58,41 @@ class DocumentController extends AbstractController
                     }
                 }
             }
-        } else {
-            // Pour les admins/managers, filtrer par organization/company
-            $qb = $documentRepository->createQueryBuilder('d');
-
-            if ($user && method_exists($user, 'getOrganization') && $user->getOrganization()) {
-                // MANAGER: voir documents de SA company
-                if (method_exists($user, 'getCompany') && $user->getCompany() && in_array('ROLE_MANAGER', $user->getRoles())) {
-                    $qb->where('d.company = :company')
-                       ->setParameter('company', $user->getCompany());
-                }
-                // ADMIN: voir documents de SON organization
-                else {
-                    $qb->where('d.organization = :organization')
-                       ->setParameter('organization', $user->getOrganization());
-                }
+        } elseif ($user && in_array('ROLE_MANAGER', $user->getRoles())) {
+            // Si l'utilisateur est un gestionnaire, montrer les documents des propriétés qu'il gère
+            $owner = $user->getOwner();
+            if ($owner) {
+                $allDocuments = $documentRepository->findByManager($owner->getId());
+            } else {
+                $allDocuments = $documentRepository->findBy([], ['createdAt' => 'DESC']);
             }
+        } elseif ($user && (in_array('ROLE_ADMIN', $user->getRoles()) || in_array('ROLE_SUPER_ADMIN', $user->getRoles()))) {
+            // Pour les admins, filtrer selon l'organisation/société
+            $organization = $user->getOrganization();
+            $company = $user->getCompany();
 
-            $allDocuments = $qb->orderBy('d.createdAt', 'DESC')->getQuery()->getResult();
+            error_log("DocumentController - Admin: organization=" . ($organization ? $organization->getName() : 'null') . ", company=" . ($company ? $company->getName() : 'null'));
 
-            // Organiser par type
+            if ($company) {
+                // Admin avec société spécifique : filtrer par société
+                $allDocuments = $documentRepository->findByCompany($company);
+                error_log("DocumentController - Filtered by company: " . $company->getName());
+            } elseif ($organization) {
+                // Admin avec organisation : filtrer par organisation
+                $allDocuments = $documentRepository->findByOrganization($organization);
+                error_log("DocumentController - Filtered by organization: " . $organization->getName());
+            } else {
+                // Super Admin sans organisation/société : tous les documents
+                $allDocuments = $documentRepository->findBy([], ['createdAt' => 'DESC']);
+                error_log("DocumentController - Super Admin: showing all documents");
+            }
+        } else {
+            // Pour les autres rôles, montrer tous les documents
+            $allDocuments = $documentRepository->findBy([], ['createdAt' => 'DESC']);
+        }
+
+        // Organiser par type pour tous les documents récupérés
+        if (isset($allDocuments)) {
             foreach ($allDocuments as $document) {
                 $type = $document->getType();
 
@@ -341,49 +356,6 @@ class DocumentController extends AbstractController
         ]);
     }
 
-    /**
-     * Calcule les statistiques filtrées selon le rôle de l'utilisateur
-     */
-    private function calculateFilteredStats(DocumentRepository $documentRepository, $user): array
-    {
-        if ($user && in_array('ROLE_TENANT', $user->getRoles())) {
-            // Pour les locataires, calculer les stats sur leurs documents seulement
-            $tenant = $user->getTenant();
-            if ($tenant) {
-                $tenantDocuments = $documentRepository->findByTenant($tenant->getId());
-
-                $stats = [
-                    'total' => count($tenantDocuments),
-                    'archived' => 0,
-                    'expiring_soon' => 0,
-                    'expired' => 0
-                ];
-
-                foreach ($tenantDocuments as $document) {
-                    if ($document->isArchived()) {
-                        $stats['archived']++;
-                    }
-
-                    $expirationDate = $document->getExpirationDate();
-                    if ($expirationDate) {
-                        $now = new \DateTime();
-                        $in30Days = new \DateTime('+30 days');
-
-                        if ($expirationDate <= $in30Days && $expirationDate > $now) {
-                            $stats['expiring_soon']++;
-                        } elseif ($expirationDate <= $now) {
-                            $stats['expired']++;
-                        }
-                    }
-                }
-
-                return $stats;
-            }
-        }
-
-        // Pour les admins/managers, retourner les stats globales
-        return $documentRepository->getStatistics();
-    }
 
     /**
      * Génère une quittance de loyer pour un paiement
@@ -482,5 +454,148 @@ class DocumentController extends AbstractController
         }
 
         return $this->redirectToRoute('app_document_index');
+    }
+
+    /**
+     * Calcule les statistiques filtrées selon le rôle de l'utilisateur
+     */
+    private function calculateFilteredStats(DocumentRepository $documentRepository, $user): array
+    {
+        if ($user && in_array('ROLE_TENANT', $user->getRoles())) {
+            // Pour les locataires, calculer les stats sur leurs documents seulement
+            $tenant = $user->getTenant();
+            if ($tenant) {
+                $tenantDocuments = $documentRepository->findByTenant($tenant->getId());
+
+                $stats = [
+                    'total' => count($tenantDocuments),
+                    'archived' => 0,
+                    'expiring_soon' => 0,
+                    'expired' => 0
+                ];
+
+                foreach ($tenantDocuments as $document) {
+                    if ($document->getIsArchived()) {
+                        $stats['archived']++;
+                    }
+                    // Vérifier les dates d'expiration si applicable
+                    if ($document->getExpirationDate()) {
+                        $now = new \DateTime();
+                        $expirationDate = $document->getExpirationDate();
+                        $daysUntilExpiration = $now->diff($expirationDate)->days;
+
+                        if ($expirationDate < $now) {
+                            $stats['expired']++;
+                        } elseif ($daysUntilExpiration <= 30) {
+                            $stats['expiring_soon']++;
+                        }
+                    }
+                }
+
+                return $stats;
+            }
+        } elseif ($user && in_array('ROLE_MANAGER', $user->getRoles())) {
+            // Pour les gestionnaires, calculer les stats sur les documents qu'ils gèrent
+            $owner = $user->getOwner();
+            if ($owner) {
+                $managerDocuments = $documentRepository->findByManager($owner->getId());
+
+                $stats = [
+                    'total' => count($managerDocuments),
+                    'archived' => 0,
+                    'expiring_soon' => 0,
+                    'expired' => 0
+                ];
+
+                foreach ($managerDocuments as $document) {
+                    if ($document->getIsArchived()) {
+                        $stats['archived']++;
+                    }
+                    // Vérifier les dates d'expiration si applicable
+                    if ($document->getExpirationDate()) {
+                        $now = new \DateTime();
+                        $expirationDate = $document->getExpirationDate();
+                        $daysUntilExpiration = $now->diff($expirationDate)->days;
+
+                        if ($expirationDate < $now) {
+                            $stats['expired']++;
+                        } elseif ($daysUntilExpiration <= 30) {
+                            $stats['expiring_soon']++;
+                        }
+                    }
+                }
+
+                return $stats;
+            }
+        } elseif ($user && (in_array('ROLE_ADMIN', $user->getRoles()) || in_array('ROLE_SUPER_ADMIN', $user->getRoles()))) {
+            // Pour les admins, calculer les stats selon l'organisation/société
+            $organization = $user->getOrganization();
+            $company = $user->getCompany();
+
+            if ($company) {
+                // Admin avec société spécifique
+                $companyDocuments = $documentRepository->findByCompany($company);
+
+                $stats = [
+                    'total' => count($companyDocuments),
+                    'archived' => 0,
+                    'expiring_soon' => 0,
+                    'expired' => 0
+                ];
+
+                foreach ($companyDocuments as $document) {
+                    if ($document->getIsArchived()) {
+                        $stats['archived']++;
+                    }
+                    // Vérifier les dates d'expiration si applicable
+                    if ($document->getExpirationDate()) {
+                        $now = new \DateTime();
+                        $expirationDate = $document->getExpirationDate();
+                        $daysUntilExpiration = $now->diff($expirationDate)->days;
+
+                        if ($expirationDate < $now) {
+                            $stats['expired']++;
+                        } elseif ($daysUntilExpiration <= 30) {
+                            $stats['expiring_soon']++;
+                        }
+                    }
+                }
+
+                return $stats;
+            } elseif ($organization) {
+                // Admin avec organisation
+                $orgDocuments = $documentRepository->findByOrganization($organization);
+
+                $stats = [
+                    'total' => count($orgDocuments),
+                    'archived' => 0,
+                    'expiring_soon' => 0,
+                    'expired' => 0
+                ];
+
+                foreach ($orgDocuments as $document) {
+                    if ($document->getIsArchived()) {
+                        $stats['archived']++;
+                    }
+                    // Vérifier les dates d'expiration si applicable
+                    if ($document->getExpirationDate()) {
+                        $now = new \DateTime();
+                        $expirationDate = $document->getExpirationDate();
+                        $daysUntilExpiration = $now->diff($expirationDate)->days;
+
+                        if ($expirationDate < $now) {
+                            $stats['expired']++;
+                        } elseif ($daysUntilExpiration <= 30) {
+                            $stats['expiring_soon']++;
+                        }
+                    }
+                }
+
+                return $stats;
+            }
+        }
+
+        // Pour les super admins sans organisation/société, retourner les stats globales
+        return $documentRepository->getStatistics();
     }
 }

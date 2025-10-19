@@ -87,6 +87,14 @@ class TaskController extends AbstractController
         return $this->redirectToRoute('app_admin_task_index');
     }
 
+    #[Route('/{id}/resultats', name: 'app_admin_task_results', methods: ['GET'])]
+    public function results(Task $task): Response
+    {
+        return $this->render('admin/task/results.html.twig', [
+            'task' => $task,
+        ]);
+    }
+
     #[Route('/executer-toutes', name: 'app_admin_task_run_all', methods: ['POST'])]
     public function runAll(TaskManagerService $taskManager): Response
     {

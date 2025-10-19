@@ -13,6 +13,7 @@ use App\Service\PdfService;
 use App\Service\ContractGenerationService;
 use App\Service\PaymentSettingsService;
 use App\Service\AdvancePaymentService;
+use App\Service\NotificationService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -54,8 +55,28 @@ class PaymentController extends AbstractController
             } else {
                 $payments = $paymentRepository->findWithFilters($status, $type, $year, $month);
             }
+        } elseif ($user && (in_array('ROLE_ADMIN', $user->getRoles()) || in_array('ROLE_SUPER_ADMIN', $user->getRoles()))) {
+            // Pour les admins, filtrer selon l'organisation/société
+            $organization = $user->getOrganization();
+            $company = $user->getCompany();
+            
+            error_log("PaymentController - Admin: organization=" . ($organization ? $organization->getName() : 'null') . ", company=" . ($company ? $company->getName() : 'null'));
+            
+            if ($company) {
+                // Admin avec société spécifique : filtrer par société
+                $payments = $paymentRepository->findByCompanyWithFilters($company, $status, $type, $year, $month);
+                error_log("PaymentController - Filtered by company: " . $company->getName());
+            } elseif ($organization) {
+                // Admin avec organisation : filtrer par organisation
+                $payments = $paymentRepository->findByOrganizationWithFilters($organization, $status, $type, $year, $month);
+                error_log("PaymentController - Filtered by organization: " . $organization->getName());
+            } else {
+                // Super Admin sans organisation/société : tous les paiements
+                $payments = $paymentRepository->findWithFilters($status, $type, $year, $month);
+                error_log("PaymentController - Super Admin: showing all payments");
+            }
         } else {
-            // Pour les admins, montrer tous les paiements
+            // Pour les autres rôles, montrer tous les paiements
             $payments = $paymentRepository->findWithFilters($status, $type, $year, $month);
         }
 
@@ -90,6 +111,19 @@ class PaymentController extends AbstractController
         if ($form->isSubmitted() && $form->isValid()) {
             $entityManager->persist($payment);
             $entityManager->flush();
+
+            // Exemple d'envoi de notification SMS après création du paiement
+            // Décommentez les lignes suivantes pour activer les notifications SMS
+            /*
+            $notificationService = $this->container->get(NotificationService::class);
+            if ($payment->getTenant() && $payment->getTenant()->getPhone()) {
+                $notificationService->sendPaymentConfirmation(
+                    $payment->getTenant()->getPhone(),
+                    $payment->getTenant()->getFirstName(),
+                    $payment->getAmount()
+                );
+            }
+            */
 
             $this->addFlash('success', 'Le paiement a été créé avec succès.');
 
@@ -584,9 +618,67 @@ class PaymentController extends AbstractController
 
                 return $stats;
             }
+        } elseif ($user && (in_array('ROLE_ADMIN', $user->getRoles()) || in_array('ROLE_SUPER_ADMIN', $user->getRoles()))) {
+            // Pour les admins, calculer les stats selon l'organisation/société
+            $organization = $user->getOrganization();
+            $company = $user->getCompany();
+            
+            if ($company) {
+                // Admin avec société spécifique
+                $companyPayments = $paymentRepository->findByCompanyWithFilters($company);
+                
+                $stats = [
+                    'total_pending' => 0,
+                    'total_paid' => 0,
+                    'total_overdue' => 0,
+                    'monthly_income' => 0
+                ];
+
+                foreach ($companyPayments as $payment) {
+                    if ($payment->getStatus() === 'En attente') {
+                        $stats['total_pending']++;
+                    } elseif ($payment->getStatus() === 'Payé') {
+                        $stats['total_paid']++;
+                        $stats['monthly_income'] += $payment->getAmount();
+                    }
+
+                    // Vérifier si le paiement est en retard
+                    if ($payment->getStatus() === 'En attente' && $payment->getDueDate() < new \DateTime()) {
+                        $stats['total_overdue']++;
+                    }
+                }
+
+                return $stats;
+            } elseif ($organization) {
+                // Admin avec organisation
+                $orgPayments = $paymentRepository->findByOrganizationWithFilters($organization);
+                
+                $stats = [
+                    'total_pending' => 0,
+                    'total_paid' => 0,
+                    'total_overdue' => 0,
+                    'monthly_income' => 0
+                ];
+
+                foreach ($orgPayments as $payment) {
+                    if ($payment->getStatus() === 'En attente') {
+                        $stats['total_pending']++;
+                    } elseif ($payment->getStatus() === 'Payé') {
+                        $stats['total_paid']++;
+                        $stats['monthly_income'] += $payment->getAmount();
+                    }
+
+                    // Vérifier si le paiement est en retard
+                    if ($payment->getStatus() === 'En attente' && $payment->getDueDate() < new \DateTime()) {
+                        $stats['total_overdue']++;
+                    }
+                }
+
+                return $stats;
+            }
         }
 
-        // Pour les admins, retourner les stats globales
+        // Pour les super admins sans organisation/société, retourner les stats globales
         return [
             'total_pending' => $paymentRepository->count(['status' => 'En attente']),
             'total_paid' => $paymentRepository->count(['status' => 'Payé']),

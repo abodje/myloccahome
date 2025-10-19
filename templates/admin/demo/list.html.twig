@@ -1,0 +1,300 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Gestion des environnements de démo{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <!-- En-tête -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h3 mb-0">
+                        <i class="fas fa-play-circle me-2"></i>
+                        Gestion des environnements de démo
+                    </h1>
+                    <p class="text-muted mb-0">Administration des démos et statistiques</p>
+                </div>
+                <div>
+                    <button type="button" class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#cleanupModal">
+                        <i class="fas fa-broom me-1"></i>
+                        Nettoyer les démos expirées
+                    </button>
+                    <a href="{{ path('demo_create') }}" class="btn btn-primary">
+                        <i class="fas fa-plus me-1"></i>
+                        Créer une démo
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistiques -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="mb-0">{{ stats.total_demos }}</h4>
+                            <small>Total démos</small>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-play-circle fa-2x opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="mb-0">{{ stats.active_demos }}</h4>
+                            <small>Démos actives</small>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-check-circle fa-2x opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="mb-0">{{ stats.expiring_soon }}</h4>
+                            <small>Expirent bientôt</small>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-clock fa-2x opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-danger text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="mb-0">{{ stats.expired_demos }}</h4>
+                            <small>Démos expirées</small>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-times-circle fa-2x opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Liste des démos -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-list me-2"></i>
+                        Environnements de démo ({{ demos|length }})
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if demos|length > 0 %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Sous-domaine</th>
+                                        <th>Nom</th>
+                                        <th>Email</th>
+                                        <th>Créée le</th>
+                                        <th>Expire le</th>
+                                        <th>Statut</th>
+                                        <th>Données</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for demo in demos %}
+                                        <tr class="{% if demo.is_expired %}table-danger{% elseif demo.trial_ends_at and demo.trial_ends_at|date('U') < 'now'|date('U') + 604800 %}table-warning{% endif %}">
+                                            <td>
+                                                <code>{{ demo.subdomain }}</code>
+                                            </td>
+                                            <td>
+                                                <strong>{{ demo.name }}</strong>
+                                            </td>
+                                            <td>{{ demo.email }}</td>
+                                            <td>
+                                                <small class="text-muted">
+                                                    {{ demo.created_at|date('d/m/Y H:i') }}
+                                                </small>
+                                            </td>
+                                            <td>
+                                                {% if demo.trial_ends_at %}
+                                                    <small class="{% if demo.is_expired %}text-danger{% elseif demo.trial_ends_at|date('U') < 'now'|date('U') + 604800 %}text-warning{% else %}text-success{% endif %}">
+                                                        {{ demo.trial_ends_at|date('d/m/Y H:i') }}
+                                                    </small>
+                                                {% else %}
+                                                    <small class="text-muted">Illimitée</small>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if demo.is_expired %}
+                                                    <span class="badge bg-danger">Expirée</span>
+                                                {% elseif demo.is_active %}
+                                                    <span class="badge bg-success">Active</span>
+                                                {% else %}
+                                                    <span class="badge bg-secondary">Inactive</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                <small class="text-muted">
+                                                    {{ demo.properties_count }}P / {{ demo.tenants_count }}L / {{ demo.companies_count }}C
+                                                </small>
+                                            </td>
+                                            <td>
+                                                <div class="btn-group btn-group-sm" role="group">
+                                                    <a href="{{ demo.demo_url }}" target="_blank" class="btn btn-outline-primary" title="Voir la démo">
+                                                        <i class="fas fa-external-link-alt"></i>
+                                                    </a>
+                                                    {% if not demo.is_expired %}
+                                                        <button type="button" class="btn btn-outline-warning"
+                                                                data-bs-toggle="modal"
+                                                                data-bs-target="#extendModal"
+                                                                data-subdomain="{{ demo.subdomain }}"
+                                                                title="Prolonger">
+                                                            <i class="fas fa-clock"></i>
+                                                        </button>
+                                                    {% endif %}
+                                                    <button type="button" class="btn btn-outline-danger"
+                                                            data-bs-toggle="modal"
+                                                            data-bs-target="#deleteModal"
+                                                            data-subdomain="{{ demo.subdomain }}"
+                                                            data-name="{{ demo.name }}"
+                                                            title="Supprimer">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-play-circle fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">Aucune démo créée</h5>
+                            <p class="text-muted">Commencez par créer votre première démo.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de suppression -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Supprimer la démo</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Êtes-vous sûr de vouloir supprimer la démo <strong id="demoName"></strong> ?</p>
+                <p class="text-danger"><small>Cette action est irréversible et supprimera toutes les données associées.</small></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                <form method="post" action="" id="deleteForm" style="display: inline;">
+                    <input type="hidden" name="_method" value="DELETE">
+                    <button type="submit" class="btn btn-danger">Supprimer</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de prolongation -->
+<div class="modal fade" id="extendModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Prolonger la démo</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" action="" id="extendForm">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="days" class="form-label">Nombre de jours à ajouter</label>
+                        <select class="form-select" id="days" name="days" required>
+                            <option value="7">7 jours</option>
+                            <option value="14">14 jours</option>
+                            <option value="30">30 jours</option>
+                            <option value="90">90 jours</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-warning">Prolonger</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de nettoyage -->
+<div class="modal fade" id="cleanupModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Nettoyer les démos expirées</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Cette action va supprimer définitivement toutes les démos expirées.</p>
+                <p class="text-danger"><small>Cette action est irréversible.</small></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                <form method="post" action="{{ path('demo_cleanup') }}" style="display: inline;">
+                    <button type="submit" class="btn btn-warning">Nettoyer</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Gestion des modals
+document.addEventListener('DOMContentLoaded', function() {
+    // Modal de suppression
+    const deleteModal = document.getElementById('deleteModal');
+    deleteModal.addEventListener('show.bs.modal', function (event) {
+        const button = event.relatedTarget;
+        const subdomain = button.getAttribute('data-subdomain');
+        const name = button.getAttribute('data-name');
+
+        document.getElementById('demoName').textContent = name;
+        document.getElementById('deleteForm').action = `/demo/${subdomain}/delete`;
+    });
+
+    // Modal de prolongation
+    const extendModal = document.getElementById('extendModal');
+    extendModal.addEventListener('show.bs.modal', function (event) {
+        const button = event.relatedTarget;
+        const subdomain = button.getAttribute('data-subdomain');
+
+        document.getElementById('extendForm').action = `/demo/${subdomain}/extend`;
+    });
+});
+</script>
+{% endblock %}

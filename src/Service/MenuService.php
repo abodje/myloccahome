@@ -10,11 +10,18 @@ use Symfony\Bundle\SecurityBundle\Security;
  */
 class MenuService
 {
+    private Security $security;
+    private SettingsService $settingsService;
+    private FeatureAccessService $featureAccessService;
+
     public function __construct(
-        private Security $security,
-        private SettingsService $settingsService,
-        private FeatureAccessService $featureAccessService
+        Security $security,
+        SettingsService $settingsService,
+        FeatureAccessService $featureAccessService
     ) {
+        $this->security = $security;
+        $this->settingsService = $settingsService;
+        $this->featureAccessService = $featureAccessService;
     }
 
     /**
@@ -112,6 +119,15 @@ class MenuService
                 'route' => 'app_calendar_index',
                 'roles' => ['ROLE_USER', 'ROLE_TENANT', 'ROLE_MANAGER', 'ROLE_ADMIN'],
                 'order' => 9.3,
+            ],
+            'demo_create_user' => [
+                'label' => '🚀 Créer une démo',
+                'icon' => 'bi-play-circle',
+                'route' => 'demo_create',
+                'roles' => ['ROLE_USER', 'ROLE_TENANT', 'ROLE_MANAGER', 'ROLE_ADMIN'],
+                'order' => 9.4,
+                'badge' => 'new',
+                'badge_type' => 'success',
             ],
             'subscription' => [
                 'label' => 'Mon Abonnement',
@@ -256,10 +272,51 @@ class MenuService
             ],
             'admin_demo_environments' => [
                 'label' => '🌐 Environnements Démo',
-                'icon' => 'bi-globe',
-                'route' => 'app_admin_demo_index',
-                'roles' => ['ROLE_SUPER_ADMIN'],
+                'icon' => 'bi-play-circle',
+                'route' => 'demo_list',
+                'roles' => ['ROLE_ADMIN'],
                 'order' => 108,
+                'submenu' => [
+                    'demo_list' => [
+                        'label' => 'Liste des démos',
+                        'route' => 'demo_list',
+                        'roles' => ['ROLE_ADMIN'],
+                        'icon' => 'bi-list-ul',
+                    ],
+                    'demo_create' => [
+                        'label' => 'Créer une démo',
+                        'route' => 'demo_create',
+                        'roles' => ['ROLE_ADMIN'],
+                        'icon' => 'bi-plus-circle',
+                    ],
+                    'demo_stats' => [
+                        'label' => 'Statistiques',
+                        'route' => 'demo_stats',
+                        'roles' => ['ROLE_ADMIN'],
+                        'icon' => 'bi-graph-up',
+                    ],
+                ],
+            ],
+            'admin_users' => [
+                'label' => '👥 Utilisateurs',
+                'icon' => 'bi-people',
+                'route' => 'app_admin_user_index',
+                'roles' => ['ROLE_ADMIN'],
+                'order' => 108,
+                'submenu' => [
+                    'users_list' => [
+                        'label' => 'Liste des utilisateurs',
+                        'route' => 'app_admin_user_index',
+                        'roles' => ['ROLE_ADMIN'],
+                        'icon' => 'bi-list',
+                    ],
+                    'users_new' => [
+                        'label' => 'Nouvel utilisateur',
+                        'route' => 'app_admin_user_new',
+                        'roles' => ['ROLE_ADMIN'],
+                        'icon' => 'bi-plus-circle',
+                    ],
+                ],
             ],
             'admin_ai' => [
                 'label' => '🤖 Intelligence Artificielle',

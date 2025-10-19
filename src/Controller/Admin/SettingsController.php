@@ -9,12 +9,15 @@ use App\Repository\CurrencyRepository;
 use App\Repository\SettingsRepository;
 use App\Service\CurrencyService;
 use App\Service\OrangeSmsService;
+use App\Service\OrangeSmsDsnService;
 use App\Service\SettingsService;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Notifier\TexterInterface;
+use Symfony\Component\Notifier\Message\SmsMessage;
 use Symfony\Component\Routing\Attribute\Route;
 
 #[Route('/admin/parametres')]
@@ -408,15 +411,16 @@ class SettingsController extends AbstractController
     }
 
     /**
-     * Tester la configuration Orange SMS
+     * Tester la configuration Orange SMS avec le système de notification Symfony
      */
     #[Route('/orange-sms/tester', name: 'app_admin_orange_sms_test', methods: ['POST'])]
-    public function testOrangeSms(Request $request, SettingsService $settingsService,LoggerInterface $logger): Response
+    public function testOrangeSms(Request $request, TexterInterface $texter, SettingsService $settingsService, LoggerInterface $logger): Response
     {
         try {
             $clientId = $settingsService->get('orange_sms_client_id');
             $clientSecret = $settingsService->get('orange_sms_client_secret');
             $testPhone = $request->request->get('test_phone', '');
+            $senderName = $settingsService->get('orange_sms_sender_name', 'MYLOCCA');
 
             if (empty($clientId) || empty($clientSecret)) {
                 return $this->json([
@@ -425,8 +429,6 @@ class SettingsController extends AbstractController
                 ]);
             }
 
-             $logger->info("Test client secret {$clientSecret}");
-            $logger->info("Test test phone $clientId {$clientId}");
             if (empty($testPhone)) {
                 return $this->json([
                     'success' => false,
@@ -434,28 +436,47 @@ class SettingsController extends AbstractController
                 ]);
             }
 
-            // Test d'envoi de SMS réel
+            // Nettoyer et formater le numéro de téléphone
+            $cleanPhone = preg_replace('/[^0-9]/', '', $testPhone);
+            if (substr($cleanPhone, 0, 1) === '0') {
+                $cleanPhone = '225' . substr($cleanPhone, 1);
+            }
+            if (substr($cleanPhone, 0, 3) !== '225') {
+                $cleanPhone = '225' . $cleanPhone;
+            }
+            $formattedPhone = '+' . $cleanPhone;
 
+            // Test d'envoi de SMS avec le système de notification Symfony
             try {
-                $osms = new OrangeSmsService($settingsService);
-                $osms->setVerifyPeerSSL(false);
+                $sms = new SmsMessage(
+                    // le numéro de téléphone pour envoyer le SMS
+                    $formattedPhone,
+                    // le message
+                    'Test SMS depuis MYLOCCA - Configuration réussie !',
+                    // le numéro d'envoi (optionnel, sera défini par le transport)
+                    ''
+                );
 
+                $logger->info('Tentative d\'envoi SMS', [
+                    'phone' => $formattedPhone,
+                    'message' => 'Test SMS depuis MYLOCCA - Configuration réussie !',
+                    'transport' => 'orange-sms'
+                ]);
 
-                $response = $osms->getTokenFromConsumerKey();
+                // Envoyer le SMS via le transport Orange SMS configuré
+                $sentMessage = $texter->send($sms, 'orange-sms');
 
-                if (empty($response['access_token'])) {
-                    throw new \Exception("Impossible d'obtenir le token d'accès Orange SMS");
+                // Vérifier si l'envoi a réussi
+                if (!$sentMessage) {
+                    throw new \Exception('L\'envoi du SMS a échoué - aucune réponse du service');
                 }
 
+                $messageId = $sentMessage->getMessageId() ?? 'unknown';
 
-                $result = $osms->envoyerSms($testPhone, 'Test SMS depuis MYLOCCA - Configuration reussie !','EAS CI');
-
-                if (isset($result['error'])) {
-                    return $this->json([
-                        'success' => false,
-                        'message' => 'Erreur lors de l\'envoi du SMS de test : ' . $result['error']
-                    ]);
-                }
+                $logger->info('SMS de test envoyé avec succès', [
+                    'phone' => $formattedPhone,
+                    'message_id' => $messageId
+                ]);
 
                 // SMS envoyé avec succès
                 return $this->json([
@@ -464,20 +485,92 @@ class SettingsController extends AbstractController
                     'config' => [
                         'client_id_length' => strlen($clientId),
                         'client_secret_length' => strlen($clientSecret),
-                        'sender_name' => $settingsService->get('orange_sms_sender_name', 'MYLOCCA'),
+                        'sender_name' => $senderName,
+                        'formatted_phone' => $formattedPhone,
+                        'message_id' => $messageId
                     ]
                 ]);
+
             } catch (\Exception $smsException) {
-                return $this->json([
-                    'success' => false,
-                    'message' => 'Exception lors de l\'envoi : ' . $smsException->getMessage()
+                $logger->error('Erreur lors de l\'envoi du SMS via Symfony Notifier', [
+                    'error' => $smsException->getMessage(),
+                    'phone' => $formattedPhone
                 ]);
+
+                // Fallback : essayer avec le service Orange SMS direct
+                try {
+                    $logger->info('Tentative de fallback avec OrangeSmsService direct');
+
+                    $osms = new OrangeSmsService($settingsService);
+                    $osms->setVerifyPeerSSL(false);
+
+                    $response = $osms->getTokenFromConsumerKey();
+
+                    if (empty($response['access_token'])) {
+                        throw new \Exception("Impossible d'obtenir le token d'accès Orange SMS");
+                    }
+
+                    $result = $osms->envoyerSms($testPhone, 'Test SMS depuis MYLOCCA - Configuration réussie !', $senderName);
+
+                    if (isset($result['error'])) {
+                        throw new \Exception('Erreur Orange SMS direct : ' . $result['error']);
+                    }
+
+                    // SMS envoyé avec succès via le service direct
+                    return $this->json([
+                        'success' => true,
+                        'message' => 'SMS de test envoyé avec succès via le service direct ! Vérifiez le numéro ' . $testPhone,
+                        'config' => [
+                            'client_id_length' => strlen($clientId),
+                            'client_secret_length' => strlen($clientSecret),
+                            'sender_name' => $senderName,
+                            'formatted_phone' => $formattedPhone,
+                            'method' => 'direct_service'
+                        ]
+                    ]);
+
+                } catch (\Exception $fallbackException) {
+                    $logger->error('Erreur également avec le service direct', [
+                        'error' => $fallbackException->getMessage()
+                    ]);
+
+                    return $this->json([
+                        'success' => false,
+                        'message' => 'Erreur lors de l\'envoi du SMS : ' . $smsException->getMessage() . ' (Fallback: ' . $fallbackException->getMessage() . ')'
+                    ]);
+                }
             }
 
         } catch (\Exception $e) {
+            $logger->error('Erreur générale lors du test Orange SMS', [
+                'error' => $e->getMessage()
+            ]);
+
             return $this->json([
                 'success' => false,
                 'message' => 'Erreur : ' . $e->getMessage()
+            ]);
+        }
+    }
+
+    /**
+     * Tester la génération dynamique de la DSN Orange SMS
+     */
+    #[Route('/orange-sms/dsn-test', name: 'app_admin_orange_sms_dsn_test', methods: ['GET'])]
+    public function testOrangeSmsDsn(OrangeSmsDsnService $orangeSmsDsnService): Response
+    {
+        try {
+            $debugInfo = $orangeSmsDsnService->getDebugInfo();
+
+            return $this->json([
+                'success' => true,
+                'message' => 'DSN générée avec succès',
+                'data' => $debugInfo
+            ]);
+        } catch (\Exception $e) {
+            return $this->json([
+                'success' => false,
+                'message' => 'Erreur lors de la génération de la DSN : ' . $e->getMessage()
             ]);
         }
     }

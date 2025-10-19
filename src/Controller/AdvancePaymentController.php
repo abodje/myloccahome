@@ -29,8 +29,53 @@ class AdvancePaymentController extends AbstractController
             return $this->redirectToRoute('app_payment_index');
         }
 
-        $advances = $advancePaymentRepository->findBy([], ['paidDate' => 'DESC']);
-        $stats = $advancePaymentRepository->getStatistics();
+        /** @var \App\Entity\User|null $user */
+        $user = $this->getUser();
+
+        // Filtrer les acomptes selon le rôle de l'utilisateur
+        if ($user && in_array('ROLE_TENANT', $user->getRoles())) {
+            // Si l'utilisateur est un locataire, ne montrer que ses acomptes
+            $tenant = $user->getTenant();
+            if ($tenant) {
+                $advances = $advancePaymentRepository->findByTenant($tenant->getId());
+            } else {
+                $advances = [];
+            }
+        } elseif ($user && in_array('ROLE_MANAGER', $user->getRoles())) {
+            // Si l'utilisateur est un gestionnaire, montrer les acomptes des locataires qu'il gère
+            $owner = $user->getOwner();
+            if ($owner) {
+                $advances = $advancePaymentRepository->findByManager($owner->getId());
+            } else {
+                $advances = $advancePaymentRepository->findBy([], ['paidDate' => 'DESC']);
+            }
+        } elseif ($user && (in_array('ROLE_ADMIN', $user->getRoles()) || in_array('ROLE_SUPER_ADMIN', $user->getRoles()))) {
+            // Pour les admins, filtrer selon l'organisation/société
+            $organization = $user->getOrganization();
+            $company = $user->getCompany();
+
+            error_log("AdvancePaymentController - Admin: organization=" . ($organization ? $organization->getName() : 'null') . ", company=" . ($company ? $company->getName() : 'null'));
+
+            if ($company) {
+                // Admin avec société spécifique : filtrer par société
+                $advances = $advancePaymentRepository->findByCompany($company);
+                error_log("AdvancePaymentController - Filtered by company: " . $company->getName());
+            } elseif ($organization) {
+                // Admin avec organisation : filtrer par organisation
+                $advances = $advancePaymentRepository->findByOrganization($organization);
+                error_log("AdvancePaymentController - Filtered by organization: " . $organization->getName());
+            } else {
+                // Super Admin sans organisation/société : tous les acomptes
+                $advances = $advancePaymentRepository->findBy([], ['paidDate' => 'DESC']);
+                error_log("AdvancePaymentController - Super Admin: showing all advances");
+            }
+        } else {
+            // Pour les autres rôles, montrer tous les acomptes
+            $advances = $advancePaymentRepository->findBy([], ['paidDate' => 'DESC']);
+        }
+
+        // Statistiques filtrées selon le rôle
+        $stats = $this->calculateFilteredAdvanceStats($advancePaymentRepository, $user);
 
         return $this->render('advance_payment/index.html.twig', [
             'advances' => $advances,
@@ -265,6 +310,101 @@ class AdvancePaymentController extends AbstractController
             'available' => $available,
             'partially_used' => $partiallyUsed,
         ]);
+    }
+
+    /**
+     * Calcule les statistiques des acomptes filtrées selon le rôle de l'utilisateur
+     */
+    private function calculateFilteredAdvanceStats(AdvancePaymentRepository $advancePaymentRepository, $user): array
+    {
+        if ($user && in_array('ROLE_TENANT', $user->getRoles())) {
+            // Pour les locataires, calculer les stats sur leurs acomptes seulement
+            $tenant = $user->getTenant();
+            if ($tenant) {
+                $tenantAdvances = $advancePaymentRepository->findByTenant($tenant->getId());
+
+                $stats = [
+                    'total_amount' => 0,
+                    'available_amount' => 0,
+                    'used_amount' => 0,
+                    'count' => count($tenantAdvances)
+                ];
+
+                foreach ($tenantAdvances as $advance) {
+                    $stats['total_amount'] += $advance->getAmount();
+                    $stats['available_amount'] += $advance->getRemainingAmount();
+                    $stats['used_amount'] += ($advance->getAmount() - $advance->getRemainingAmount());
+                }
+
+                return $stats;
+            }
+        } elseif ($user && in_array('ROLE_MANAGER', $user->getRoles())) {
+            // Pour les gestionnaires, calculer les stats sur les acomptes qu'ils gèrent
+            $owner = $user->getOwner();
+            if ($owner) {
+                $managerAdvances = $advancePaymentRepository->findByManager($owner->getId());
+
+                $stats = [
+                    'total_amount' => 0,
+                    'available_amount' => 0,
+                    'used_amount' => 0,
+                    'count' => count($managerAdvances)
+                ];
+
+                foreach ($managerAdvances as $advance) {
+                    $stats['total_amount'] += $advance->getAmount();
+                    $stats['available_amount'] += $advance->getRemainingAmount();
+                    $stats['used_amount'] += ($advance->getAmount() - $advance->getRemainingAmount());
+                }
+
+                return $stats;
+            }
+        } elseif ($user && (in_array('ROLE_ADMIN', $user->getRoles()) || in_array('ROLE_SUPER_ADMIN', $user->getRoles()))) {
+            // Pour les admins, calculer les stats selon l'organisation/société
+            $organization = $user->getOrganization();
+            $company = $user->getCompany();
+
+            if ($company) {
+                // Admin avec société spécifique
+                $companyAdvances = $advancePaymentRepository->findByCompany($company);
+
+                $stats = [
+                    'total_amount' => 0,
+                    'available_amount' => 0,
+                    'used_amount' => 0,
+                    'count' => count($companyAdvances)
+                ];
+
+                foreach ($companyAdvances as $advance) {
+                    $stats['total_amount'] += $advance->getAmount();
+                    $stats['available_amount'] += $advance->getRemainingAmount();
+                    $stats['used_amount'] += ($advance->getAmount() - $advance->getRemainingAmount());
+                }
+
+                return $stats;
+            } elseif ($organization) {
+                // Admin avec organisation
+                $orgAdvances = $advancePaymentRepository->findByOrganization($organization);
+
+                $stats = [
+                    'total_amount' => 0,
+                    'available_amount' => 0,
+                    'used_amount' => 0,
+                    'count' => count($orgAdvances)
+                ];
+
+                foreach ($orgAdvances as $advance) {
+                    $stats['total_amount'] += $advance->getAmount();
+                    $stats['available_amount'] += $advance->getRemainingAmount();
+                    $stats['used_amount'] += ($advance->getAmount() - $advance->getRemainingAmount());
+                }
+
+                return $stats;
+            }
+        }
+
+        // Pour les super admins sans organisation/société, retourner les stats globales
+        return $advancePaymentRepository->getStatistics();
     }
 }
 

@@ -1,0 +1,170 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Créer un environnement de démo{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <!-- En-tête -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h3 mb-0">
+                        <i class="fas fa-play-circle me-2"></i>
+                        Créer un environnement de démo
+                    </h1>
+                    <p class="text-muted mb-0">Générez un environnement de démonstration personnalisé</p>
+                </div>
+                <div>
+                    <a href="{{ path('demo_list') }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left me-1"></i>
+                        Retour à la liste
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Informations sur votre démo
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <!-- Informations utilisateur -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <h6 class="text-muted">Utilisateur</h6>
+                            <p class="mb-0">
+                                <strong>{{ user.firstName }} {{ user.lastName }}</strong><br>
+                                <small class="text-muted">{{ user.email }}</small>
+                            </p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-muted">Rôle</h6>
+                            <p class="mb-0">
+                                {% for role in user.roles %}
+                                    <span class="badge bg-primary me-1">{{ role }}</span>
+                                {% endfor %}
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Formulaire de création -->
+                    <form method="post">
+                        <div class="mb-4">
+                            <h6 class="text-muted mb-3">Configuration de la démo</h6>
+
+                            <div class="alert alert-info">
+                                <i class="fas fa-lightbulb me-2"></i>
+                                <strong>À propos de votre démo :</strong>
+                                <ul class="mb-0 mt-2">
+                                    <li>Un sous-domaine unique sera généré automatiquement</li>
+                                    <li>Des données d'exemple seront créées (propriétés, locataires, paiements)</li>
+                                    <li>La démo sera accessible pendant 7 jours par défaut</li>
+                                    <li>Vous pourrez prolonger la durée depuis l'interface d'administration</li>
+                                </ul>
+                            </div>
+
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" id="confirmTerms" required>
+                                <label class="form-check-label" for="confirmTerms">
+                                    Je confirme avoir lu et accepté les conditions d'utilisation des environnements de démo
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a href="{{ path('demo_list') }}" class="btn btn-outline-secondary me-md-2">
+                                <i class="fas fa-times me-1"></i>
+                                Annuler
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-play-circle me-1"></i>
+                                Créer ma démo
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Informations supplémentaires -->
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-question-circle me-2"></i>
+                        Questions fréquentes
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="accordion" id="faqAccordion">
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="faq1">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse1">
+                                    Combien de temps dure une démo ?
+                                </button>
+                            </h2>
+                            <div id="collapse1" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                <div class="accordion-body">
+                                    Par défaut, une démo dure 7 jours. Vous pouvez la prolonger depuis l'interface d'administration si nécessaire.
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="faq2">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse2">
+                                    Que contient une démo ?
+                                </button>
+                            </h2>
+                            <div id="collapse2" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                <div class="accordion-body">
+                                    Une démo contient des données d'exemple : propriétés, locataires, baux, paiements et documents. Ces données sont générées automatiquement pour vous permettre de tester toutes les fonctionnalités.
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="faq3">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse3">
+                                    Comment accéder à ma démo ?
+                                </button>
+                            </h2>
+                            <div id="collapse3" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                <div class="accordion-body">
+                                    Une fois créée, vous recevrez une URL unique de type <code>https://votre-sous-domaine.demo.votre-domaine.com</code>. Cette URL sera disponible dans la liste des démos.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.accordion-button:not(.collapsed) {
+    background-color: var(--bs-primary);
+    color: white;
+}
+
+.accordion-button:focus {
+    box-shadow: 0 0 0 0.25rem rgba(var(--bs-primary-rgb), 0.25);
+}
+
+.card {
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    border: 1px solid rgba(0, 0, 0, 0.125);
+}
+
+.card-header {
+    background-color: rgba(var(--bs-primary-rgb), 0.1);
+    border-bottom: 1px solid rgba(var(--bs-primary-rgb), 0.2);
+}
+</style>
+{% endblock %}

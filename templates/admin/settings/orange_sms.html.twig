@@ -92,10 +92,10 @@
                                 <i class="bi bi-key me-1"></i>
                                 Client ID <span class="text-danger">*</span>
                             </label>
-                            <input type="text" 
-                                   class="form-control" 
-                                   id="orange_sms_client_id" 
-                                   name="orange_sms_client_id" 
+                            <input type="text"
+                                   class="form-control"
+                                   id="orange_sms_client_id"
+                                   name="orange_sms_client_id"
                                    value="{{ settings.orange_sms_client_id }}"
                                    placeholder="Votre Client ID Orange"
                                    required>
@@ -110,10 +110,10 @@
                                 <i class="bi bi-shield-lock me-1"></i>
                                 Client Secret <span class="text-danger">*</span>
                             </label>
-                            <input type="text" 
-                                   class="form-control" 
-                                   id="orange_sms_client_secret" 
-                                   name="orange_sms_client_secret" 
+                            <input type="text"
+                                   class="form-control"
+                                   id="orange_sms_client_secret"
+                                   name="orange_sms_client_secret"
                                    value="{{ settings.orange_sms_client_secret }}"
                                    placeholder="Votre Client Secret Orange"
                                    required>
@@ -128,10 +128,10 @@
                                 <i class="bi bi-person-badge me-1"></i>
                                 Nom de l'expéditeur
                             </label>
-                            <input type="text" 
-                                   class="form-control" 
-                                   id="orange_sms_sender_name" 
-                                   name="orange_sms_sender_name" 
+                            <input type="text"
+                                   class="form-control"
+                                   id="orange_sms_sender_name"
+                                   name="orange_sms_sender_name"
                                    value="{{ settings.orange_sms_sender_name }}"
                                    placeholder="MYLOCCA"
                                    maxlength="11">
@@ -146,10 +146,16 @@
                                 <i class="bi bi-save me-2"></i>
                                 Enregistrer la configuration
                             </button>
-                            <button type="button" class="btn btn-success" id="btnTestSms">
-                                <i class="bi bi-envelope-check me-2"></i>
-                                Tester la configuration
-                            </button>
+                            <div>
+                                <button type="button" class="btn btn-info me-2" id="btnTestDsn">
+                                    <i class="bi bi-gear me-2"></i>
+                                    Tester la DSN
+                                </button>
+                                <button type="button" class="btn btn-success" id="btnTestSms">
+                                    <i class="bi bi-envelope-check me-2"></i>
+                                    Tester l'envoi SMS
+                                </button>
+                            </div>
                         </div>
                     </form>
                 </div>
@@ -172,9 +178,9 @@
                         <label for="test_phone" class="form-label">Numéro de téléphone test</label>
                         <div class="input-group">
                             <span class="input-group-text">+225</span>
-                            <input type="text" 
-                                   class="form-control" 
-                                   id="test_phone" 
+                            <input type="text"
+                                   class="form-control"
+                                   id="test_phone"
                                    placeholder="0700000000"
                                    pattern="[0-9]{10}">
                         </div>
@@ -197,7 +203,7 @@
 function testSmsConfig() {
     const testPhone = document.getElementById('test_phone').value;
     const resultDiv = document.getElementById('testResult');
-    
+
     if (!testPhone) {
         resultDiv.innerHTML = '<div class="alert alert-warning">Veuillez entrer un numéro de téléphone</div>';
         return;
@@ -246,6 +252,60 @@ function testSmsConfig() {
         `;
     });
 }
+
+function testDsnConfig() {
+    const resultDiv = document.getElementById('testResult');
+
+    resultDiv.innerHTML = '<div class="alert alert-info"><i class="bi bi-hourglass-split me-2"></i>Test de la DSN en cours...</div>';
+
+    fetch('{{ path('app_admin_orange_sms_dsn_test') }}', {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            resultDiv.innerHTML = `
+                <div class="alert alert-success">
+                    <i class="bi bi-check-circle me-2"></i>
+                    <strong>Succès !</strong> ${data.message}
+                    <div class="mt-2">
+                        <small>
+                            <strong>Configuration:</strong> ${data.data.is_configured ? 'Oui' : 'Non'}<br>
+                            <strong>Client ID:</strong> ${data.data.client_id ? data.data.client_id.length + ' caractères' : 'Non défini'}<br>
+                            <strong>Client Secret:</strong> ${data.data.client_secret ? data.data.client_secret.length + ' caractères' : 'Non défini'}<br>
+                            <strong>Sender Name:</strong> ${data.data.sender_name}<br>
+                            <strong>DSN générée:</strong><br>
+                            <code class="d-block mt-1 p-2 bg-light border rounded">${data.data.dsn || 'Aucune DSN (configuration incomplète)'}</code>
+                        </small>
+                    </div>
+                </div>
+            `;
+        } else {
+            resultDiv.innerHTML = `
+                <div class="alert alert-danger">
+                    <i class="bi bi-x-circle me-2"></i>
+                    <strong>Erreur !</strong> ${data.message}
+                </div>
+            `;
+        }
+    })
+    .catch(error => {
+        resultDiv.innerHTML = `
+            <div class="alert alert-danger">
+                <i class="bi bi-x-circle me-2"></i>
+                <strong>Erreur !</strong> ${error.message}
+            </div>
+        `;
+    });
+}
+
+// Ajouter les event listeners
+document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('btnTestDsn').addEventListener('click', testDsnConfig);
+});
 </script>
 {% endblock %}
 

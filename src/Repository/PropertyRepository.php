@@ -212,6 +212,36 @@ class PropertyRepository extends ServiceEntityRepository
     }
 
     /**
+     * Trouve les propriétés louées par un locataire (sans filtre de statut de bail)
+     */
+    public function findByTenantAllLeases(int $tenantId, ?string $search = null, ?string $status = null, ?string $type = null): array
+    {
+        $qb = $this->createQueryBuilder('p')
+            ->join('p.leases', 'l')
+            ->where('l.tenant = :tenantId')
+            ->setParameter('tenantId', $tenantId);
+
+        if ($search) {
+            $qb->andWhere('p.address LIKE :search OR p.city LIKE :search')
+               ->setParameter('search', '%' . $search . '%');
+        }
+
+        if ($status) {
+            $qb->andWhere('p.status = :status')
+               ->setParameter('status', $status);
+        }
+
+        if ($type) {
+            $qb->andWhere('p.propertyType = :type')
+               ->setParameter('type', $type);
+        }
+
+        return $qb->orderBy('p.createdAt', 'DESC')
+                   ->getQuery()
+                   ->getResult();
+    }
+
+    /**
      * Trouve les propriétés d'un propriétaire avec filtres
      */
     public function findByOwnerWithFilters(int $ownerId, ?string $search = null, ?string $status = null, ?string $type = null): array

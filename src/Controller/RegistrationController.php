@@ -130,6 +130,7 @@ class RegistrationController extends AbstractController
                 $user->setLastName($userLastName ?? 'Admin');
                 $user->setRoles(['ROLE_ADMIN']);
                 $user->setOrganization($organization);
+                $user->setCompany($company); // Définir la société par défaut
 
                 $hashedPassword = $passwordHasher->hashPassword($user, $userPassword);
                 $user->setPassword($hashedPassword);

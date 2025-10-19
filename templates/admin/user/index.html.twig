@@ -1,0 +1,183 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Gestion des utilisateurs - Administration{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>👥 Gestion des utilisateurs</h2>
+                <a href="{{ path('app_admin_user_new') }}" class="btn btn-primary">
+                    <i class="bi bi-plus-circle"></i> Nouvel utilisateur
+                </a>
+            </div>
+
+            <!-- Messages flash -->
+            {% for flash_message in app.flashes('success') %}
+                <div class="alert alert-success" role="alert">
+                    {{ flash_message }}
+                </div>
+            {% endfor %}
+            {% for flash_message in app.flashes('error') %}
+                <div class="alert alert-danger" role="alert">
+                    {{ flash_message }}
+                </div>
+            {% endfor %}
+
+            <!-- Liste des utilisateurs -->
+            <div class="card">
+                <div class="card-header" style="background-color: var(--primary-color); color: white;">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Liste des utilisateurs</h5>
+                        <div class="text-end">
+                            <small class="text-light">
+                                <span class="badge bg-danger me-1"><i class="bi bi-crown-fill"></i> Super Admin</span>
+                                <span class="badge bg-primary me-1"><i class="bi bi-gear-fill"></i> Admin</span>
+                                <span class="badge bg-warning text-dark me-1"><i class="bi bi-person-badge-fill"></i> Gestionnaire</span>
+                                <span class="badge bg-info me-1"><i class="bi bi-house-fill"></i> Locataire</span>
+                            </small>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    {% if users|length > 0 %}
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>Nom complet</th>
+                                        <th>Email</th>
+                                        <th>Téléphone</th>
+                                        <th>Rôle principal</th>
+                                        <th>Organisation</th>
+                                        <th>Société</th>
+                                        <th>Statut</th>
+                                        <th>Dernière connexion</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for user in users %}
+                                        <tr>
+                                            <td>
+                                                <strong>{{ user.firstName }} {{ user.lastName }}</strong>
+                                            </td>
+                                            <td>{{ user.email }}</td>
+                                            <td>
+                                                {% if user.mobilePhone %}
+                                                    {{ user.mobilePhone }}
+                                                {% elseif user.phone %}
+                                                    {{ user.phone }}
+                                                {% else %}
+                                                    <span class="text-muted">-</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% set primaryRole = null %}
+
+                                                {# Déterminer le rôle principal par ordre de priorité #}
+                                                {% for role in user.roles %}
+                                                    {% if role == 'ROLE_SUPER_ADMIN' %}
+                                                        {% set primaryRole = 'SUPER_ADMIN' %}
+                                                    {% elseif role == 'ROLE_ADMIN' and primaryRole != 'SUPER_ADMIN' %}
+                                                        {% set primaryRole = 'ADMIN' %}
+                                                    {% elseif role == 'ROLE_MANAGER' and primaryRole not in ['SUPER_ADMIN', 'ADMIN'] %}
+                                                        {% set primaryRole = 'MANAGER' %}
+                                                    {% elseif role == 'ROLE_TENANT' and primaryRole not in ['SUPER_ADMIN', 'ADMIN', 'MANAGER'] %}
+                                                        {% set primaryRole = 'TENANT' %}
+                                                    {% endif %}
+                                                {% endfor %}
+
+                                                {# Afficher le rôle principal avec icône et couleur #}
+                                                {% if primaryRole == 'SUPER_ADMIN' %}
+                                                    <span class="badge bg-danger">
+                                                        <i class="bi bi-crown-fill"></i> Super Admin
+                                                    </span>
+                                                {% elseif primaryRole == 'ADMIN' %}
+                                                    <span class="badge bg-primary">
+                                                        <i class="bi bi-gear-fill"></i> Admin
+                                                    </span>
+                                                {% elseif primaryRole == 'MANAGER' %}
+                                                    <span class="badge bg-warning text-dark">
+                                                        <i class="bi bi-person-badge-fill"></i> Gestionnaire
+                                                    </span>
+                                                {% elseif primaryRole == 'TENANT' %}
+                                                    <span class="badge bg-info">
+                                                        <i class="bi bi-house-fill"></i> Locataire
+                                                    </span>
+                                                {% else %}
+                                                    <span class="badge bg-secondary">
+                                                        <i class="bi bi-person-fill"></i> Utilisateur
+                                                    </span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if user.organization %}
+                                                    <span class="badge bg-primary">{{ user.organization.name }}</span>
+                                                {% else %}
+                                                    <span class="text-muted">Aucune</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if user.company %}
+                                                    <span class="badge bg-secondary">{{ user.company.name }}</span>
+                                                {% else %}
+                                                    <span class="text-muted">Aucune</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if user.isActive %}
+                                                    <span class="badge bg-success">Actif</span>
+                                                {% else %}
+                                                    <span class="badge bg-danger">Inactif</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if user.lastLoginAt %}
+                                                    {{ user.lastLoginAt|date('d/m/Y H:i') }}
+                                                {% else %}
+                                                    <span class="text-muted">Jamais</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                <div class="btn-group btn-group-sm">
+                                                    <a href="{{ path('app_admin_user_show', {id: user.id}) }}"
+                                                       class="btn btn-outline-primary" title="Voir">
+                                                        <i class="bi bi-eye"></i>
+                                                    </a>
+                                                    <a href="{{ path('app_admin_user_edit', {id: user.id}) }}"
+                                                       class="btn btn-outline-warning" title="Modifier">
+                                                        <i class="bi bi-pencil"></i>
+                                                    </a>
+                                                    <form method="POST" action="{{ path('app_admin_user_delete', {id: user.id}) }}"
+                                                          class="d-inline"
+                                                          onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cet utilisateur ?');">
+                                                        <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ user.id) }}">
+                                                        <button type="submit" class="btn btn-outline-danger" title="Supprimer">
+                                                            <i class="bi bi-trash"></i>
+                                                        </button>
+                                                    </form>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center p-4">
+                            <i class="bi bi-person-x text-muted" style="font-size: 3rem;"></i>
+                            <h5 class="text-muted mt-3">Aucun utilisateur trouvé</h5>
+                            <p class="text-muted">Commencez par créer votre premier utilisateur.</p>
+                            <a href="{{ path('app_admin_user_new') }}" class="btn btn-primary">
+                                <i class="bi bi-plus-circle"></i> Créer un utilisateur
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

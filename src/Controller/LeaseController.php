@@ -21,13 +21,74 @@ class LeaseController extends AbstractController
     #[Route('/', name: 'app_lease_index', methods: ['GET'])]
     public function index(LeaseRepository $leaseRepository, Request $request): Response
     {
+        /** @var \App\Entity\User $user */
+        $user = $this->getUser();
         $status = $request->query->get('status');
         $search = $request->query->get('search');
 
-        if ($status) {
-            $leases = $leaseRepository->findByStatus($status);
+        // Filtrer les contrats selon le rôle de l'utilisateur connecté
+        if ($user && in_array('ROLE_TENANT', $user->getRoles())) {
+            // LOCATAIRE : Voir uniquement ses propres contrats
+            $tenant = $user->getTenant();
+            if ($tenant) {
+                if ($status) {
+                    $leases = $leaseRepository->findBy(['tenant' => $tenant, 'status' => $status], ['startDate' => 'DESC']);
+                } else {
+                    $leases = $leaseRepository->findBy(['tenant' => $tenant], ['startDate' => 'DESC']);
+                }
+                error_log("LeaseController - Tenant: " . $tenant->getFullName() . ", Found " . count($leases) . " leases");
+            } else {
+                $leases = [];
+                error_log("LeaseController - Tenant: No tenant profile found for user " . $user->getEmail());
+            }
+        } elseif ($user && in_array('ROLE_MANAGER', $user->getRoles())) {
+            // MANAGER : Voir les contrats de sa société
+            $owner = $user->getOwner();
+            if ($owner) {
+                if ($status) {
+                    $leases = $leaseRepository->findByManagerAndStatus($owner->getId(), $status);
+                } else {
+                    $leases = $leaseRepository->findByManager($owner->getId());
+                }
+                error_log("LeaseController - Manager: " . $owner->getFullName() . ", Found " . count($leases) . " leases");
+            } else {
+                $leases = [];
+                error_log("LeaseController - Manager: No owner profile found for user " . $user->getEmail());
+            }
+        } elseif ($user && (in_array('ROLE_ADMIN', $user->getRoles()) || in_array('ROLE_SUPER_ADMIN', $user->getRoles()))) {
+            // ADMIN/SUPER_ADMIN : Filtrer par organization/company
+            $organization = $user->getOrganization();
+            $company = $user->getCompany();
+
+            if ($company) {
+                // Admin avec company spécifique : voir UNIQUEMENT les contrats de sa company
+                error_log("LeaseController - Admin with company: " . $company->getName());
+                if ($status) {
+                    $leases = $leaseRepository->findByCompanyAndStatus($company->getId(), $status);
+                } else {
+                    $leases = $leaseRepository->findByCompany($company->getId());
+                }
+            } elseif ($organization) {
+                // Admin sans company : voir TOUS les contrats de son organization
+                error_log("LeaseController - Admin with organization: " . $organization->getName());
+                if ($status) {
+                    $leases = $leaseRepository->findByOrganizationAndStatus($organization->getId(), $status);
+                } else {
+                    $leases = $leaseRepository->findByOrganization($organization->getId());
+                }
+            } else {
+                // SUPER_ADMIN sans organization/company : voir TOUT
+                error_log("LeaseController - Super Admin without organization/company, showing all leases");
+                if ($status) {
+                    $leases = $leaseRepository->findByStatus($status);
+                } else {
+                    $leases = $leaseRepository->findBy([], ['startDate' => 'DESC']);
+                }
+            }
         } else {
-            $leases = $leaseRepository->findBy([], ['startDate' => 'DESC']);
+            // Utilisateur sans rôle spécifique : aucun accès
+            $leases = [];
+            error_log("LeaseController - User without specific role, no access");
         }
 
         $stats = $leaseRepository->getStatistics();

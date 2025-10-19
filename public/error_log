@@ -153,3 +153,110 @@ Stack trace: #0 /home/lokaprot/mylokka/vendor/doctrine/orm/src/EntityManager.php
 [15-Oct-2025 20:55:45 UTC] EntityManager fermé - impossible de continuer la génération
 [16-Oct-2025 17:18:53 UTC] DashboardController: User roles: ["ROLE_SUPER_ADMIN","ROLE_USER"]
 [16-Oct-2025 17:18:53 UTC] DashboardController: Using defaultDashboard
+[16-Oct-2025 18:23:33 UTC] DashboardController: User roles: ["ROLE_SUPER_ADMIN","ROLE_USER"]
+[16-Oct-2025 18:23:33 UTC] DashboardController: Using defaultDashboard
+[16-Oct-2025 18:25:15 UTC] DashboardController: User roles: ["ROLE_SUPER_ADMIN","ROLE_USER"]
+[16-Oct-2025 18:25:15 UTC] DashboardController: Using defaultDashboard
+[16-Oct-2025 18:25:26 UTC] DashboardController: User roles: ["ROLE_SUPER_ADMIN","ROLE_USER"]
+[16-Oct-2025 18:25:26 UTC] DashboardController: Using defaultDashboard
+[16-Oct-2025 18:25:39 UTC] DashboardController: User roles: ["ROLE_SUPER_ADMIN","ROLE_USER"]
+[16-Oct-2025 18:25:39 UTC] DashboardController: Using defaultDashboard
+[16-Oct-2025 18:32:15 UTC] DashboardController: User roles: ["ROLE_SUPER_ADMIN","ROLE_USER"]
+[16-Oct-2025 18:32:15 UTC] DashboardController: Using defaultDashboard
+[16-Oct-2025 18:34:17 UTC] DashboardController: User roles: ["ROLE_SUPER_ADMIN","ROLE_USER"]
+[16-Oct-2025 18:34:17 UTC] DashboardController: Using defaultDashboard
+[16-Oct-2025 18:35:09 UTC] Erreur DemoEnvironmentService: An exception occurred while executing a query: SQLSTATE[23000]: Integrity constraint violation: 1048 Column 'password' cannot be null
+[16-Oct-2025 18:35:09 UTC] Stack trace: #0 /home/lokaprot/mylokka/vendor/doctrine/dbal/src/Connection.php(1976): Doctrine\DBAL\Driver\API\MySQL\ExceptionConverter->convert()
+#1 /home/lokaprot/mylokka/vendor/doctrine/dbal/src/Connection.php(1918): Doctrine\DBAL\Connection->handleDriverException()
+#2 /home/lokaprot/mylokka/vendor/doctrine/dbal/src/Statement.php(194): Doctrine\DBAL\Connection->convertExceptionDuringQuery()
+#3 /home/lokaprot/mylokka/vendor/doctrine/dbal/src/Statement.php(249): Doctrine\DBAL\Statement->execute()
+#4 /home/lokaprot/mylokka/vendor/doctrine/orm/src/Persisters/Entity/BasicEntityPersister.php(255): Doctrine\DBAL\Statement->executeStatement()
+#5 /home/lokaprot/mylokka/vendor/doctrine/orm/src/UnitOfWork.php(1059): Doctrine\ORM\Persisters\Entity\BasicEntityPersister->executeInserts()
+#6 /home/lokaprot/mylokka/vendor/doctrine/orm/src/UnitOfWork.php(402): Doctrine\ORM\UnitOfWork->executeInserts()
+#7 /home/lokaprot/mylokka/vendor/doctrine/orm/src/EntityManager.php(268): Doctrine\ORM\UnitOfWork->commit()
+#8 /home/lokaprot/mylokka/src/Service/DemoEnvironmentService.php(161): Doctrine\ORM\EntityManager->flush()
+#9 /home/lokaprot/mylokka/src/Service/DemoEnvironmentService.php(64): App\Service\DemoEnvironmentService->assignUserToOrganization()
+#10 /home/lokaprot/mylokka/src/Controller/Admin/DemoEnvironmentController.php(49): App\Service\DemoEnvironmentService->createDemoEnvironment()
+#11 /home/lokaprot/mylokka/vendor/symfony/http-kernel/HttpKernel.php(183): App\Controller\Admin\DemoEnvironmentController->create()
+#12 /home/lokaprot/mylokka/vendor/symfony/http-kernel/HttpKernel.php(76): Symfony\Component\HttpKernel\HttpKernel->handleRaw()
+#13 /home/lokaprot/mylokka/vendor/symfony/http-kernel/Kernel.php(182): Symfony\Component\HttpKernel\HttpKernel->handle()
+#14 /home/lokaprot/mylokka/vendor/symfony/runtime/Runner/Symfony/HttpKernelRunner.php(35): Symfony\Component\HttpKernel\Kernel->handle()
+#15 /home/lokaprot/mylokka/vendor/autoload_runtime.php(29): Symfony\Component\Runtime\Runner\Symfony\HttpKernelRunner->run()
+#16 /home/lokaprot/mylokka/public/index.php(5): require_once('/home/lokaprot/...')
+#17 {main}
+[16-Oct-2025 18:39:39 UTC] DashboardController: User roles: ["ROLE_SUPER_ADMIN","ROLE_USER"]
+[16-Oct-2025 18:39:39 UTC] DashboardController: Using defaultDashboard
+[16-Oct-2025 18:53:37 UTC] DashboardController: User roles: ["ROLE_SUPER_ADMIN","ROLE_USER"]
+[16-Oct-2025 18:53:37 UTC] DashboardController: Using defaultDashboard
+[16-Oct-2025 19:01:40 UTC] DashboardController: User roles: ["ROLE_SUPER_ADMIN","ROLE_USER"]
+[16-Oct-2025 19:01:40 UTC] DashboardController: Using defaultDashboard
+[16-Oct-2025 19:01:44 UTC] DashboardController: User roles: ["ROLE_SUPER_ADMIN","ROLE_USER"]
+[16-Oct-2025 19:01:44 UTC] DashboardController: Using defaultDashboard
+[16-Oct-2025 19:02:23 UTC] DashboardController: User roles: ["ROLE_SUPER_ADMIN","ROLE_USER"]
+[16-Oct-2025 19:02:23 UTC] DashboardController: Using defaultDashboard
+[16-Oct-2025 19:02:25 UTC] DashboardController: User roles: ["ROLE_SUPER_ADMIN","ROLE_USER"]
+[16-Oct-2025 19:02:25 UTC] DashboardController: Using defaultDashboard
+[16-Oct-2025 19:02:32 UTC] DashboardController: User roles: ["ROLE_SUPER_ADMIN","ROLE_USER"]
+[16-Oct-2025 19:02:32 UTC] DashboardController: Using defaultDashboard
+[16-Oct-2025 22:41:24 UTC] DashboardController: User roles: ["ROLE_MANAGER","ROLE_USER"]
+[16-Oct-2025 22:41:24 UTC] DashboardController: Using managerDashboard
+[16-Oct-2025 22:41:25 UTC] DashboardController: User roles: ["ROLE_MANAGER","ROLE_USER"]
+[16-Oct-2025 22:41:25 UTC] DashboardController: Using managerDashboard
+[16-Oct-2025 22:45:51 UTC] PHP Warning:  require_once(/home/lokaprot/myloccahome/vendor/autoload_runtime.php): Failed to open stream: No such file or directory in /home/lokaprot/myloccahome/public/index.php on line 5
+[16-Oct-2025 22:45:51 UTC] PHP Fatal error:  Uncaught Error: Failed opening required '/home/lokaprot/myloccahome/vendor/autoload_runtime.php' (include_path='.:/opt/alt/php83/usr/share/pear:/opt/alt/php83/usr/share/php:/usr/share/pear:/usr/share/php') in /home/lokaprot/myloccahome/public/index.php:5
+Stack trace:
+#0 {main}
+  thrown in /home/lokaprot/myloccahome/public/index.php on line 5
+[16-Oct-2025 22:47:59 UTC] DashboardController: User roles: ["ROLE_MANAGER","ROLE_USER"]
+[16-Oct-2025 22:47:59 UTC] DashboardController: Using managerDashboard
+[16-Oct-2025 22:47:59 UTC] DashboardController: managerDashboard fallback case - no owner
+[16-Oct-2025 22:51:39 UTC] DashboardController: User roles: ["ROLE_MANAGER","ROLE_USER"]
+[16-Oct-2025 22:51:39 UTC] DashboardController: Using managerDashboard
+[16-Oct-2025 22:51:39 UTC] DashboardController: managerDashboard fallback case - no owner
+[16-Oct-2025 23:10:36 UTC] DashboardController: User roles: ["ROLE_SUPER_ADMIN","ROLE_USER"]
+[16-Oct-2025 23:10:36 UTC] DashboardController: Using defaultDashboard
+[16-Oct-2025 23:16:41 UTC] DashboardController: User roles: ["ROLE_MANAGER","ROLE_USER"]
+[16-Oct-2025 23:16:41 UTC] DashboardController: Using managerDashboard
+[16-Oct-2025 23:16:41 UTC] DashboardController: managerDashboard fallback case - no owner
+[16-Oct-2025 23:20:18 UTC] DashboardController: User roles: ["ROLE_MANAGER","ROLE_USER"]
+[16-Oct-2025 23:20:18 UTC] DashboardController: Using managerDashboard
+[16-Oct-2025 23:20:18 UTC] DashboardController: managerDashboard fallback case - no owner
+[16-Oct-2025 23:20:26 UTC] DashboardController: User roles: ["ROLE_MANAGER","ROLE_USER"]
+[16-Oct-2025 23:20:26 UTC] DashboardController: Using managerDashboard
+[16-Oct-2025 23:20:26 UTC] DashboardController: managerDashboard fallback case - no owner
+[16-Oct-2025 23:21:19 UTC] DashboardController: User roles: ["ROLE_MANAGER","ROLE_USER"]
+[16-Oct-2025 23:21:19 UTC] DashboardController: Using managerDashboard
+[16-Oct-2025 23:21:19 UTC] DashboardController: managerDashboard fallback case - no owner
+[16-Oct-2025 23:31:40 UTC] DashboardController: User roles: ["ROLE_MANAGER","ROLE_USER"]
+[16-Oct-2025 23:31:40 UTC] DashboardController: Using managerDashboard
+[16-Oct-2025 23:31:40 UTC] DashboardController: managerDashboard fallback case - no owner
+[16-Oct-2025 23:32:21 UTC] DashboardController: User roles: ["ROLE_SUPER_ADMIN","ROLE_USER"]
+[16-Oct-2025 23:32:21 UTC] DashboardController: Using defaultDashboard
+[16-Oct-2025 23:35:54 UTC] Erreur DemoEnvironmentService: An exception occurred while executing a query: SQLSTATE[23000]: Integrity constraint violation: 1048 Column 'password' cannot be null
+[16-Oct-2025 23:35:54 UTC] Stack trace: #0 /home/lokaprot/myloccahome/vendor/doctrine/dbal/src/Connection.php(1976): Doctrine\DBAL\Driver\API\MySQL\ExceptionConverter->convert()
+#1 /home/lokaprot/myloccahome/vendor/doctrine/dbal/src/Connection.php(1918): Doctrine\DBAL\Connection->handleDriverException()
+#2 /home/lokaprot/myloccahome/vendor/doctrine/dbal/src/Statement.php(194): Doctrine\DBAL\Connection->convertExceptionDuringQuery()
+#3 /home/lokaprot/myloccahome/vendor/doctrine/dbal/src/Statement.php(249): Doctrine\DBAL\Statement->execute()
+#4 /home/lokaprot/myloccahome/vendor/doctrine/orm/src/Persisters/Entity/BasicEntityPersister.php(255): Doctrine\DBAL\Statement->executeStatement()
+#5 /home/lokaprot/myloccahome/vendor/doctrine/orm/src/UnitOfWork.php(1059): Doctrine\ORM\Persisters\Entity\BasicEntityPersister->executeInserts()
+#6 /home/lokaprot/myloccahome/vendor/doctrine/orm/src/UnitOfWork.php(402): Doctrine\ORM\UnitOfWork->executeInserts()
+#7 /home/lokaprot/myloccahome/vendor/doctrine/orm/src/EntityManager.php(268): Doctrine\ORM\UnitOfWork->commit()
+#8 /home/lokaprot/myloccahome/src/Service/DemoEnvironmentService.php(161): Doctrine\ORM\EntityManager->flush()
+#9 /home/lokaprot/myloccahome/src/Service/DemoEnvironmentService.php(64): App\Service\DemoEnvironmentService->assignUserToOrganization()
+#10 /home/lokaprot/myloccahome/src/Controller/Admin/DemoEnvironmentController.php(86): App\Service\DemoEnvironmentService->createDemoEnvironment()
+#11 /home/lokaprot/myloccahome/vendor/symfony/http-kernel/HttpKernel.php(183): App\Controller\Admin\DemoEnvironmentController->refresh()
+#12 /home/lokaprot/myloccahome/vendor/symfony/http-kernel/HttpKernel.php(76): Symfony\Component\HttpKernel\HttpKernel->handleRaw()
+#13 /home/lokaprot/myloccahome/vendor/symfony/http-kernel/Kernel.php(182): Symfony\Component\HttpKernel\HttpKernel->handle()
+#14 /home/lokaprot/myloccahome/vendor/symfony/runtime/Runner/Symfony/HttpKernelRunner.php(35): Symfony\Component\HttpKernel\Kernel->handle()
+#15 /home/lokaprot/myloccahome/vendor/autoload_runtime.php(29): Symfony\Component\Runtime\Runner\Symfony\HttpKernelRunner->run()
+#16 /home/lokaprot/myloccahome/public/index.php(5): require_once('/home/lokaprot/...')
+#17 {main}
+[17-Oct-2025 11:17:48 UTC] DashboardController: User roles: ["ROLE_SUPER_ADMIN","ROLE_USER"]
+[17-Oct-2025 11:17:48 UTC] DashboardController: Using defaultDashboard
+[17-Oct-2025 11:18:18 UTC] DashboardController: User roles: ["ROLE_SUPER_ADMIN","ROLE_USER"]
+[17-Oct-2025 11:18:18 UTC] DashboardController: Using defaultDashboard
+[18-Oct-2025 16:55:57 UTC] DashboardController: User roles: ["ROLE_MANAGER","ROLE_USER"]
+[18-Oct-2025 16:55:57 UTC] DashboardController: Using managerDashboard
+[18-Oct-2025 16:55:57 UTC] DashboardController: managerDashboard fallback case - no owner
+[18-Oct-2025 17:16:37 UTC] DashboardController: User roles: ["ROLE_SUPER_ADMIN","ROLE_USER"]
+[18-Oct-2025 17:16:37 UTC] DashboardController: Using defaultDashboard

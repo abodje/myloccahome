@@ -1,0 +1,141 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Test de recherche globale{% endblock %}
+
+{% block body %}
+<div class="container mt-4">
+    <h1>Test de recherche globale</h1>
+
+    <div class="row">
+        <div class="col-md-6">
+            <h3>Informations utilisateur</h3>
+            {% if user_info %}
+                <div class="card">
+                    <div class="card-body">
+                        <p><strong>Email:</strong> {{ user_info.email }}</p>
+                        <p><strong>Rôles:</strong> {{ user_info.roles|join(', ') }}</p>
+                        <p><strong>Organisation:</strong> {{ user_info.organization ?? 'Aucune' }}</p>
+                        <p><strong>Société:</strong> {{ user_info.company ?? 'Aucune' }}</p>
+                        <p><strong>Locataire:</strong> {{ user_info.tenant ?? 'Aucun' }}</p>
+                    </div>
+                </div>
+            {% else %}
+                <div class="alert alert-warning">Aucun utilisateur connecté</div>
+            {% endif %}
+        </div>
+
+        <div class="col-md-6">
+            <h3>Statistiques</h3>
+            <div class="card">
+                <div class="card-body">
+                    <p><strong>Total propriétés en base:</strong> {{ all_properties|length }}</p>
+                    <p><strong>Résultats de recherche:</strong></p>
+                    {% for query, search_results in results %}
+                        <h5>Query "{{ query }}":</h5>
+                        <ul>
+                            {% for type, results in search_results %}
+                                <li>{{ type }}: {{ results|length }}</li>
+                            {% endfor %}
+                        </ul>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <div class="col-md-12">
+            <h3>Toutes les propriétés en base</h3>
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Adresse</th>
+                            <th>Ville</th>
+                            <th>Organisation</th>
+                            <th>Société</th>
+                            <th>Propriétaire</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for property in all_properties %}
+                            <tr>
+                                <td>{{ property.id }}</td>
+                                <td>{{ property.address }}</td>
+                                <td>{{ property.city }}</td>
+                                <td>{{ property.organization ? property.organization.name : 'Aucune' }}</td>
+                                <td>{{ property.company ? property.company.name : 'Aucune' }}</td>
+                                <td>{{ property.owner ? property.owner.fullName : 'Aucun' }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <div class="col-md-12">
+            <h3>Résultats de recherche détaillés</h3>
+            {% for query, search_results in results %}
+                <h4>Query "{{ query }}"</h4>
+                {% for type, results in search_results %}
+                    <h5>{{ type|title }} ({{ results|length }} résultats)</h5>
+                    {% if results|length > 0 %}
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        {% if type == 'properties' %}
+                                            <th>ID</th>
+                                            <th>Adresse</th>
+                                            <th>Ville</th>
+                                        {% elseif type == 'tenants' %}
+                                            <th>ID</th>
+                                            <th>Nom</th>
+                                            <th>Email</th>
+                                        {% else %}
+                                            <th>ID</th>
+                                            <th>Détails</th>
+                                        {% endif %}
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for result in results %}
+                                        <tr>
+                                            <td>{{ result.id }}</td>
+                                            {% if type == 'properties' %}
+                                                <td>{{ result.address }}</td>
+                                                <td>{{ result.city }}</td>
+                                            {% elseif type == 'tenants' %}
+                                                <td>{{ result.fullName }}</td>
+                                                <td>{{ result.email }}</td>
+                                            {% else %}
+                                                <td>{{ result|json_encode }}</td>
+                                            {% endif %}
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="alert alert-info">Aucun résultat trouvé</div>
+                    {% endif %}
+                {% endfor %}
+                <hr>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <div class="col-md-12">
+            <h3>Logs de debug</h3>
+            <div class="alert alert-info">
+                <p>Vérifiez les logs dans <code>var/log/dev.log</code> pour voir les détails de la recherche.</p>
+                <p>Les logs commencent par "GlobalSearch -"</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
