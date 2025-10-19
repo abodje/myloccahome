@@ -266,6 +266,14 @@ class DemoEnvironmentService
         $payments = $this->createDemoPayments($leases, $organization, $company);
         $demoData['payments'] = count($payments);
 
+        // 5. Créer des documents de démo
+        $documents = $this->createDemoDocuments($payments, $organization, $company);
+        $demoData['documents'] = count($documents);
+
+        // 6. Créer des demandes de maintenance de démo
+        $maintenanceRequests = $this->createDemoMaintenanceRequests($properties, $tenants, $organization, $company);
+        $demoData['maintenance_requests'] = count($maintenanceRequests);
+
         return $demoData;
     }
 
@@ -275,27 +283,105 @@ class DemoEnvironmentService
     private function createDemoProperties(Organization $organization, Company $company): array
     {
         $properties = [];
-        $addresses = [
-            '123 Rue de la Paix, Paris 75001',
-            '456 Avenue des Champs, Paris 75008',
-            '789 Boulevard Saint-Germain, Paris 75006',
-            '321 Rue de Rivoli, Paris 75001',
-            '654 Place de la République, Paris 75011'
+        $propertyData = [
+            [
+                'address' => 'Cocody, Riviera 2, Abidjan',
+                'city' => 'Abidjan',
+                'postalCode' => '00225',
+                'rent' => 450000,
+                'surface' => 85,
+                'rooms' => 3,
+                'type' => 'Villa',
+                'description' => 'Belle villa 3 chambres avec jardin et parking dans le quartier résidentiel de Riviera 2',
+                'floor' => 0,
+                'buildingType' => 'Villa individuelle',
+                'heating' => 'Climatisation',
+                'parking' => true,
+                'elevator' => false,
+                'balcony' => false,
+                'terrace' => true
+            ],
+            [
+                'address' => 'Marcory, Zone 4, Abidjan',
+                'city' => 'Abidjan',
+                'postalCode' => '00225',
+                'rent' => 280000,
+                'surface' => 65,
+                'rooms' => 2,
+                'type' => 'Appartement',
+                'description' => 'Appartement moderne 2 chambres avec balcon dans la zone commerciale de Marcory',
+                'floor' => 3,
+                'buildingType' => 'Immeuble moderne',
+                'heating' => 'Ventilateur',
+                'parking' => true,
+                'elevator' => true,
+                'balcony' => true,
+                'terrace' => false
+            ],
+            [
+                'address' => 'Plateau, Centre-ville, Abidjan',
+                'city' => 'Abidjan',
+                'postalCode' => '00225',
+                'rent' => 350000,
+                'surface' => 45,
+                'rooms' => 1,
+                'type' => 'Studio',
+                'description' => 'Studio entièrement meublé au cœur du Plateau, proche des bureaux et commerces',
+                'floor' => 8,
+                'buildingType' => 'Immeuble de bureau',
+                'heating' => 'Climatisation',
+                'parking' => false,
+                'elevator' => true,
+                'balcony' => false,
+                'terrace' => false
+            ],
+            [
+                'address' => 'Yopougon, Sicogi, Abidjan',
+                'city' => 'Abidjan',
+                'postalCode' => '00225',
+                'rent' => 320000,
+                'surface' => 75,
+                'rooms' => 3,
+                'type' => 'Appartement',
+                'description' => 'Spacieux appartement 3 chambres avec terrasse dans le quartier populaire de Sicogi',
+                'floor' => 2,
+                'buildingType' => 'Immeuble collectif',
+                'heating' => 'Ventilateur',
+                'parking' => true,
+                'elevator' => false,
+                'balcony' => true,
+                'terrace' => true
+            ],
+            [
+                'address' => 'Koumassi, Remblais, Abidjan',
+                'city' => 'Abidjan',
+                'postalCode' => '00225',
+                'rent' => 220000,
+                'surface' => 55,
+                'rooms' => 2,
+                'type' => 'Appartement',
+                'description' => 'Appartement 2 chambres avec cour intérieure dans le quartier de Koumassi',
+                'floor' => 1,
+                'buildingType' => 'Immeuble traditionnel',
+                'heating' => 'Ventilateur',
+                'parking' => false,
+                'elevator' => false,
+                'balcony' => false,
+                'terrace' => false
+            ]
         ];
 
-        $rents = [1200, 1500, 1800, 2000, 2200];
-        $surfaces = [45, 60, 75, 90, 110];
-
-        for ($i = 0; $i < 5; $i++) {
+        foreach ($propertyData as $data) {
             $property = new Property();
-            $property->setAddress($addresses[$i]);
-            $property->setCity('Paris'); // Ajouter la ville
-            $property->setPostalCode('75001'); // Ajouter le code postal
-            $property->setMonthlyRent($rents[$i]); // Utiliser setMonthlyRent au lieu de setRentAmount
-            $property->setSurface($surfaces[$i]);
-            $property->setRooms(2 + $i); // Ajouter le nombre de pièces
-            $property->setPropertyType('Appartement'); // Utiliser setPropertyType au lieu de setType
-            $property->setDescription("Appartement de démo - {$surfaces[$i]}m²");
+            $property->setAddress($data['address']);
+            $property->setCity($data['city']);
+            $property->setPostalCode($data['postalCode']);
+            $property->setMonthlyRent($data['rent']);
+            $property->setSurface($data['surface']);
+            $property->setRooms($data['rooms']);
+            $property->setPropertyType($data['type']);
+            $property->setDescription($data['description']);
+            $property->setFloor($data['floor']);
             $property->setOrganization($organization);
             $property->setCompany($company);
             $property->setIsDemo(true);
@@ -317,28 +403,93 @@ class DemoEnvironmentService
     {
         $tenants = [];
         $tenantData = [
-            ['Jean', 'Dupont', '0123456789'],
-            ['Marie', 'Martin', '0123456788'],
-            ['Pierre', 'Durand', '0123456787'],
-            ['Sophie', 'Bernard', '0123456786'],
-            ['Luc', 'Moreau', '0123456785']
+            [
+                'firstName' => 'Kouamé',
+                'lastName' => 'Traoré',
+                'phone' => '0701234567',
+                'email' => 'kouame.traore',
+                'birthDate' => '1985-03-15',
+                'profession' => 'Ingénieur informatique',
+                'address' => 'Cocody, Riviera 2, Abidjan',
+                'city' => 'Abidjan',
+                'postalCode' => '00225',
+                'emergencyContact' => 'Aminata Traoré - 0701234568',
+                'income' => 1800000,
+                'employer' => 'Orange Côte d\'Ivoire'
+            ],
+            [
+                'firstName' => 'Fatou',
+                'lastName' => 'Kouassi',
+                'phone' => '0701234568',
+                'email' => 'fatou.kouassi',
+                'birthDate' => '1990-07-22',
+                'profession' => 'Architecte',
+                'address' => 'Marcory, Zone 4, Abidjan',
+                'city' => 'Abidjan',
+                'postalCode' => '00225',
+                'emergencyContact' => 'Moussa Kouassi - 0701234569',
+                'income' => 2200000,
+                'employer' => 'Cabinet d\'Architecture Abidjan'
+            ],
+            [
+                'firstName' => 'Drissa',
+                'lastName' => 'Koné',
+                'phone' => '0701234569',
+                'email' => 'drissa.kone',
+                'birthDate' => '1988-11-08',
+                'profession' => 'Médecin',
+                'address' => 'Plateau, Centre-ville, Abidjan',
+                'city' => 'Abidjan',
+                'postalCode' => '00225',
+                'emergencyContact' => 'Mariam Koné - 0701234570',
+                'income' => 2800000,
+                'employer' => 'CHU de Cocody'
+            ],
+            [
+                'firstName' => 'Aïcha',
+                'lastName' => 'Diabaté',
+                'phone' => '0701234570',
+                'email' => 'aicha.diabate',
+                'birthDate' => '1992-05-14',
+                'profession' => 'Avocate',
+                'address' => 'Yopougon, Sicogi, Abidjan',
+                'city' => 'Abidjan',
+                'postalCode' => '00225',
+                'emergencyContact' => 'Sékou Diabaté - 0701234571',
+                'income' => 2500000,
+                'employer' => 'Cabinet Diabaté & Associés'
+            ],
+            [
+                'firstName' => 'Mohamed',
+                'lastName' => 'Sangaré',
+                'phone' => '0701234571',
+                'email' => 'mohamed.sangare',
+                'birthDate' => '1987-09-30',
+                'profession' => 'Chef de projet',
+                'address' => 'Koumassi, Remblais, Abidjan',
+                'city' => 'Abidjan',
+                'postalCode' => '00225',
+                'emergencyContact' => 'Rokia Sangaré - 0701234572',
+                'income' => 2000000,
+                'employer' => 'MTN Côte d\'Ivoire'
+            ]
         ];
 
         // Générer un suffixe unique basé sur l'organisation
         $orgSuffix = substr(md5($organization->getId() . time()), 0, 6);
 
-        foreach ($tenantData as $index => $data) {
+        foreach ($tenantData as $data) {
             $tenant = new Tenant();
-            $tenant->setFirstName($data[0]);
-            $tenant->setLastName($data[1]);
-
+            $tenant->setFirstName($data['firstName']);
+            $tenant->setLastName($data['lastName']);
+            $tenant->setPhone($data['phone']);
             // Générer un email unique pour chaque tenant
-            $email = strtolower($data[0] . '.' . $data[1] . '.' . $orgSuffix . '@demo.com');
+            $email = strtolower($data['email'] . '.' . $orgSuffix . '@demo.com');
             $tenant->setEmail($email);
 
-            $tenant->setPhone($data[2]);
             $tenant->setOrganization($organization);
             $tenant->setCompany($company);
+
             $tenant->setIsDemo(true);
             $tenant->setCreatedAt(new \DateTime());
             $tenant->setStatus('Actif');
@@ -357,20 +508,71 @@ class DemoEnvironmentService
     private function createDemoLeases(array $properties, array $tenants, Organization $organization, Company $company): array
     {
         $leases = [];
+        $leaseData = [
+            [
+                'startDate' => '-6 months',
+                'endDate' => '+6 months',
+                'securityDeposit' => 900000,
+                'agencyFees' => 450000,
+                'guarantor' => 'Aminata Traoré',
+                'guarantorPhone' => '0701234568',
+                'contractType' => 'Bail meublé',
+                'noticePeriod' => 3,
+                'renewalConditions' => 'Tacite reconduction'
+            ],
+            [
+                'startDate' => '-4 months',
+                'endDate' => '+8 months',
+                'securityDeposit' => 560000,
+                'agencyFees' => 280000,
+                'guarantor' => 'Moussa Kouassi',
+                'guarantorPhone' => '0701234569',
+                'contractType' => 'Bail vide',
+                'noticePeriod' => 3,
+                'renewalConditions' => 'Tacite reconduction'
+            ],
+            [
+                'startDate' => '-2 months',
+                'endDate' => '+10 months',
+                'securityDeposit' => 700000,
+                'agencyFees' => 350000,
+                'guarantor' => 'Mariam Koné',
+                'guarantorPhone' => '0701234570',
+                'contractType' => 'Bail meublé',
+                'noticePeriod' => 3,
+                'renewalConditions' => 'Tacite reconduction'
+            ],
+            [
+                'startDate' => '-1 month',
+                'endDate' => '+11 months',
+                'securityDeposit' => 640000,
+                'agencyFees' => 320000,
+                'guarantor' => 'Sékou Diabaté',
+                'guarantorPhone' => '0701234571',
+                'contractType' => 'Bail vide',
+                'noticePeriod' => 3,
+                'renewalConditions' => 'Tacite reconduction'
+            ]
+        ];
 
         for ($i = 0; $i < min(4, count($properties)); $i++) {
             $lease = new Lease();
             $lease->setProperty($properties[$i]);
             $lease->setTenant($tenants[$i]);
-            $lease->setMonthlyRent($properties[$i]->getMonthlyRent()); // Utiliser getMonthlyRent
-            $lease->setSecurityDeposit($properties[$i]->getMonthlyRent() * 2);
-            $lease->setStartDate(new \DateTime());
-            $lease->setEndDate((new \DateTime())->modify('+12 months'));
-            $lease->setStatus('Actif'); // Utiliser le statut correct
+            $lease->setMonthlyRent($properties[$i]->getMonthlyRent());
+            $lease->setSecurityDeposit($leaseData[$i]['securityDeposit']);
+            $lease->setCharges('25000'); // Charges mensuelles de 25 000 FCFA
+            $lease->setDeposit($leaseData[$i]['securityDeposit']); // Dépôt de garantie
+            $lease->setTerms('Bail de démo avec conditions standards. Paiement mensuel par virement ou mobile money.');
+            $lease->setRentDueDay(5); // Loyer dû le 5 de chaque mois
+            $lease->setStartDate((new \DateTime())->modify($leaseData[$i]['startDate']));
+            $lease->setEndDate((new \DateTime())->modify($leaseData[$i]['endDate']));
+            $lease->setStatus('Actif');
             $lease->setOrganization($organization);
             $lease->setCompany($company);
             $lease->setIsDemo(true);
             $lease->setCreatedAt(new \DateTime());
+            $lease->setUpdatedAt(new \DateTime());
 
             $this->entityManager->persist($lease);
             $leases[] = $lease;
@@ -386,19 +588,32 @@ class DemoEnvironmentService
     private function createDemoPayments(array $leases, Organization $organization, Company $company): array
     {
         $payments = [];
+        $paymentTypes = ['Loyer', 'Charges', 'Caution', 'Acompte'];
+        $paymentMethods = ['Orange Money', 'MTN Money', 'Virement bancaire', 'Espèces', 'Chèque'];
+        $paymentStatuses = ['Payé', 'En attente', 'En retard'];
 
-        foreach ($leases as $lease) {
-            // Créer 3 paiements de démo (mois précédents)
-            for ($i = 1; $i <= 3; $i++) {
+        foreach ($leases as $leaseIndex => $lease) {
+            // Créer 4 paiements de démo (mois précédents + 1 futur)
+            for ($i = 1; $i <= 4; $i++) {
                 $payment = new Payment();
                 $payment->setLease($lease);
-                $payment->setAmount($lease->getMonthlyRent());
+                $payment->setAmount($lease->getMonthlyRent() + ($i === 2 ? 25000 : 0)); // Charges pour le 2ème paiement
                 $payment->setDueDate((new \DateTime())->modify("-{$i} months")->modify('+1 day'));
-                $payment->setPaidDate((new \DateTime())->modify("-{$i} months")->modify('+2 days'));
-                $payment->setStatus('Payé'); // Utiliser le statut correct
-                $payment->setType('Loyer');
-                $payment->setPaymentMethod('Virement');
-                $payment->setReference('DEMO-' . str_pad($i, 3, '0', STR_PAD_LEFT));
+
+                // Définir la date de paiement selon le statut
+                $status = $paymentStatuses[($i + $leaseIndex) % count($paymentStatuses)];
+                if ($status === 'Payé') {
+                    $payment->setPaidDate((new \DateTime())->modify("-{$i} months")->modify('+2 days'));
+                } elseif ($status === 'En attente') {
+                    $payment->setPaidDate(null);
+                } else {
+                    $payment->setPaidDate(null); // En retard
+                }
+
+                $payment->setStatus($status);
+                $payment->setType($paymentTypes[($i + $leaseIndex) % count($paymentTypes)]);
+                $payment->setPaymentMethod($paymentMethods[($i + $leaseIndex) % count($paymentMethods)]);
+                $payment->setReference('DEMO-' . ($leaseIndex + 1) . '-' . str_pad($i, 3, '0', STR_PAD_LEFT));
                 $payment->setOrganization($organization);
                 $payment->setCompany($company);
                 $payment->setIsDemo(true);
@@ -411,6 +626,61 @@ class DemoEnvironmentService
 
         $this->entityManager->flush();
         return $payments;
+    }
+
+    /**
+     * Crée des documents de démo
+     */
+    private function createDemoDocuments(array $payments, Organization $organization, Company $company): array
+    {
+        $documents = [];
+        $documentTypes = ['Quittance de loyer', 'Contrat de bail', 'État des lieux', 'Avis d\'échéance', 'Reçu de caution'];
+
+        foreach ($payments as $paymentIndex => $payment) {
+            if ($payment->getStatus() === 'Payé') {
+                $document = new \App\Entity\Document();
+                $document->setType($documentTypes[$paymentIndex % count($documentTypes)]);
+                $document->setFileName('demo_' . $document->getType() . '_' . $payment->getId() . '.pdf');
+                $document->setFileSize(rand(50000, 500000)); // Taille aléatoire entre 50KB et 500KB
+                $document->setTenant($payment->getLease()->getTenant());
+                $document->setProperty($payment->getLease()->getProperty());
+                $document->setOrganization($organization);
+                $document->setCompany($company);
+                $document->setCreatedAt(new \DateTime());
+
+                $this->entityManager->persist($document);
+                $documents[] = $document;
+            }
+        }
+
+        $this->entityManager->flush();
+        return $documents;
+    }
+
+    /**
+     * Crée des demandes de maintenance de démo
+     */
+    private function createDemoMaintenanceRequests(array $properties, array $tenants, Organization $organization, Company $company): array
+    {
+        $requests = [];
+        $requestTypes = ['Plomberie', 'Électricité', 'Climatisation', 'Sécurité', 'Entretien général', 'Réparation toit', 'Réparation portail'];
+        $priorities = ['Faible', 'Moyenne', 'Élevée', 'Urgente'];
+        $statuses = ['Nouvelle', 'En cours', 'Terminée', 'Annulée'];
+
+        for ($i = 0; $i < 3; $i++) {
+            $request = new \App\Entity\MaintenanceRequest();
+            $request->setProperty($properties[$i]);
+            $request->setTenant($tenants[$i]);
+            $request->setOrganization($organization);
+            $request->setCompany($company);
+            $request->setCreatedAt(new \DateTime());
+
+            $this->entityManager->persist($request);
+            $requests[] = $request;
+        }
+
+        $this->entityManager->flush();
+        return $requests;
     }
 
     /**

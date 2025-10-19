@@ -206,10 +206,18 @@ class NotificationService
                 }
 
                 // Chercher la quittance générée pour ce paiement
+                // Utiliser la même logique que RentReceiptService pour générer le nom de fichier
+                $tenant = $payment->getLease()->getTenant();
+                $fileName = sprintf(
+                    'quittance_%s_%s.pdf',
+                    $tenant->getLastName(),
+                    $payment->getDueDate()->format('Y_m')
+                );
+
                 $receipt = $this->entityManager->getRepository(Document::class)
                     ->findOneBy([
                         'type' => 'Quittance de loyer',
-                        'payment' => $payment
+                        'fileName' => $fileName
                     ]);
 
                 if (!$receipt) {
