@@ -651,4 +651,70 @@ class NotificationService
 
         return $config;
     }
+
+    /**
+     * Envoie un email de bienvenue à un nouveau locataire
+     */
+    public function sendWelcomeEmail(string $emailAddress, string $tenantName, \App\Entity\Property $property, ?\App\Entity\Lease $lease = null): bool
+    {
+        try {
+            $email = (new Email())
+                ->from($this->getFromEmail())
+                ->to($emailAddress)
+                ->subject('Bienvenue chez ' . $this->getFromName())
+                ->html($this->getWelcomeEmailTemplate($tenantName, $property, $lease));
+
+            // Utiliser le mailer SMTP personnalisé
+            $customMailer = $this->smtpConfigurationService->createCustomMailer();
+            $customMailer->send($email);
+
+            $this->logger->info('Email de bienvenue envoyé avec succès', ['to' => $emailAddress]);
+            return true;
+        } catch (\Exception $e) {
+            $this->logger->error('Erreur envoi email de bienvenue', ['error' => $e->getMessage(), 'to' => $emailAddress]);
+            return false;
+        }
+    }
+
+    /**
+     * Template email de bienvenue
+     */
+    private function getWelcomeEmailTemplate(string $tenantName, \App\Entity\Property $property, ?\App\Entity\Lease $lease): string
+    {
+        // Récupérer le template personnalisé
+        $customTemplate = $this->settingsService->get('email_template_welcome');
+
+        if ($customTemplate) {
+            // Remplacer les variables dans le template
+            $data = [
+                'locataire_nom' => $tenantName,
+                'locataire_prenom' => explode(' ', $tenantName)[0] ?? $tenantName,
+                'propriete_adresse' => $property->getFullAddress(),
+                'contrat_debut' => $lease ? $lease->getStartDate()->format($this->settingsService->get('email_date_format', 'd/m/Y')) : '',
+                'contrat_fin' => $lease ? $lease->getEndDate()->format($this->settingsService->get('email_date_format', 'd/m/Y')) : '',
+                'date_aujourdhui' => date($this->settingsService->get('email_date_format', 'd/m/Y')),
+                'societe_nom' => $this->getFromName(),
+                'societe_contact' => $this->getFromEmail(),
+                'email_signature' => $this->settingsService->get('email_signature', 'MYLOCCA - Votre partenaire immobilier'),
+            ];
+
+            $template = $customTemplate;
+            foreach ($data as $key => $value) {
+                $template = str_replace('{{ ' . $key . ' }}', $value, $template);
+            }
+
+            return $template;
+        }
+
+        // Template par défaut si aucun template personnalisé
+        return "
+            <h2>Bienvenue chez " . $this->getFromName() . "</h2>
+            <p>Bonjour " . explode(' ', $tenantName)[0] . " " . $tenantName . ",</p>
+            <p>Nous sommes ravis de vous accueillir dans votre nouveau logement !</p>
+            <p><strong>Propriété :</strong> " . $property->getFullAddress() . "</p>
+            <p>Votre compte client a été créé avec succès. Vous pouvez maintenant accéder à votre espace personnel.</p>
+            <p>Cordialement,</p>
+            <p>" . $this->getFromName() . "</p>
+        ";
+    }
 }
