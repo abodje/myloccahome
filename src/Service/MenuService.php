@@ -230,6 +230,13 @@ class MenuService
                 'roles' => ['ROLE_ADMIN'],
                 'order' => 106,
             ],
+            'admin_accounting_config' => [
+                'label' => '⚙️ Config. Comptable',
+                'icon' => 'bi-gear',
+                'route' => 'app_admin_accounting_config_index',
+                'roles' => ['ROLE_ADMIN'],
+                'order' => 107,
+            ],
             'admin_environments' => [
                 'label' => '🚀 Environnements',
                 'icon' => 'bi-server',

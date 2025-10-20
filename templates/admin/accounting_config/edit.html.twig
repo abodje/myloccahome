@@ -1,0 +1,251 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Modifier Configuration Comptable - {{ configuration.operationType }}{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3 mb-0">
+                    <i class="bi bi-pencil me-2"></i>
+                    Modifier Configuration Comptable - {{ configuration.operationType }}
+                </h1>
+                <div class="btn-group" role="group">
+                    <a href="{{ path('app_admin_accounting_config_show', {'id': configuration.id}) }}" class="btn btn-outline-primary">
+                        <i class="bi bi-eye me-2"></i>
+                        Voir les détails
+                    </a>
+                    <a href="{{ path('app_admin_accounting_config_index') }}" class="btn btn-secondary">
+                        <i class="bi bi-arrow-left me-2"></i>
+                        Retour à la liste
+                    </a>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-lg-8">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">Modifier les Informations de la Configuration</h5>
+                        </div>
+                        <div class="card-body">
+                            {{ form_start(form, {'attr': {'class': 'needs-validation', 'novalidate': true}}) }}
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    {{ form_label(form.operationType) }}
+                                    {{ form_widget(form.operationType) }}
+                                    {{ form_errors(form.operationType) }}
+                                    {{ form_help(form.operationType) }}
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    {{ form_label(form.category) }}
+                                    {{ form_widget(form.category) }}
+                                    {{ form_errors(form.category) }}
+                                    {{ form_help(form.category) }}
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    {{ form_label(form.accountNumber) }}
+                                    {{ form_widget(form.accountNumber) }}
+                                    {{ form_errors(form.accountNumber) }}
+                                    {{ form_help(form.accountNumber) }}
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    {{ form_label(form.entryType) }}
+                                    {{ form_widget(form.entryType) }}
+                                    {{ form_errors(form.entryType) }}
+                                    {{ form_help(form.entryType) }}
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                {{ form_label(form.accountLabel) }}
+                                {{ form_widget(form.accountLabel) }}
+                                {{ form_errors(form.accountLabel) }}
+                                {{ form_help(form.accountLabel) }}
+                            </div>
+
+                            <div class="mb-3">
+                                {{ form_label(form.description) }}
+                                {{ form_widget(form.description) }}
+                                {{ form_errors(form.description) }}
+                                {{ form_help(form.description) }}
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    {{ form_label(form.reference) }}
+                                    {{ form_widget(form.reference) }}
+                                    {{ form_errors(form.reference) }}
+                                    {{ form_help(form.reference) }}
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    {{ form_label(form.isActive) }}
+                                    <div class="form-check">
+                                        {{ form_widget(form.isActive) }}
+                                    </div>
+                                    {{ form_errors(form.isActive) }}
+                                    {{ form_help(form.isActive) }}
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                {{ form_label(form.notes) }}
+                                {{ form_widget(form.notes) }}
+                                {{ form_errors(form.notes) }}
+                                {{ form_help(form.notes) }}
+                            </div>
+
+                            <div class="d-flex justify-content-end gap-2">
+                                <a href="{{ path('app_admin_accounting_config_show', {'id': configuration.id}) }}" class="btn btn-secondary">
+                                    Annuler
+                                </a>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="bi bi-check-circle me-2"></i>
+                                    Mettre à jour la Configuration
+                                </button>
+                            </div>
+
+                            {{ form_end(form) }}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <h6 class="card-title mb-0">
+                                <i class="bi bi-info-circle me-2"></i>
+                                Informations Actuelles
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <dl class="row small">
+                                <dt class="col-5">Type :</dt>
+                                <dd class="col-7">{{ configuration.operationType }}</dd>
+
+                                <dt class="col-5">Catégorie :</dt>
+                                <dd class="col-7">{{ configuration.category }}</dd>
+
+                                <dt class="col-5">Compte :</dt>
+                                <dd class="col-7"><code>{{ configuration.accountNumber }}</code></dd>
+
+                                <dt class="col-5">Libellé :</dt>
+                                <dd class="col-7">{{ configuration.accountLabel }}</dd>
+
+                                <dt class="col-5">Sens :</dt>
+                                <dd class="col-7">
+                                    {% if configuration.entryType == 'CREDIT' %}
+                                        <span class="badge bg-success">CRÉDIT</span>
+                                    {% else %}
+                                        <span class="badge bg-danger">DÉBIT</span>
+                                    {% endif %}
+                                </dd>
+
+                                <dt class="col-5">Statut :</dt>
+                                <dd class="col-7">
+                                    {% if configuration.isActive %}
+                                        <span class="badge bg-success">Actif</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">Inactif</span>
+                                    {% endif %}
+                                </dd>
+
+                                <dt class="col-5">Créé le :</dt>
+                                <dd class="col-7">{{ configuration.createdAt|date('d/m/Y H:i') }}</dd>
+
+                                {% if configuration.updatedAt %}
+                                    <dt class="col-5">Modifié le :</dt>
+                                    <dd class="col-7">{{ configuration.updatedAt|date('d/m/Y H:i') }}</dd>
+                                {% endif %}
+                            </dl>
+                        </div>
+                    </div>
+
+                    <div class="card mt-4">
+                        <div class="card-header">
+                            <h6 class="card-title mb-0">
+                                <i class="bi bi-exclamation-triangle me-2"></i>
+                                Avertissements
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="alert alert-warning">
+                                <h6 class="alert-heading">
+                                    <i class="bi bi-exclamation-triangle me-2"></i>
+                                    Attention
+                                </h6>
+                                <ul class="mb-0 small">
+                                    <li>Modifier le type d'opération peut affecter les écritures existantes</li>
+                                    <li>Changer le sens de l'écriture peut impacter la comptabilité</li>
+                                    <li>Désactiver une configuration empêchera la création d'écritures</li>
+                                    <li>Les modifications prennent effet immédiatement</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card mt-4">
+                        <div class="card-header">
+                            <h6 class="card-title mb-0">
+                                <i class="bi bi-lightbulb me-2"></i>
+                                Recommandations
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <ul class="list-unstyled small">
+                                <li><i class="bi bi-check-circle text-success me-2"></i>Vérifiez les numéros de compte avant modification</li>
+                                <li><i class="bi bi-check-circle text-success me-2"></i>Testez les configurations sur un environnement de test</li>
+                                <li><i class="bi bi-check-circle text-success me-2"></i>Documentez les changements dans les notes</li>
+                                <li><i class="bi bi-check-circle text-success me-2"></i>Sauvegardez avant des modifications importantes</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Validation du formulaire
+(function(solution) {
+    'use strict';
+    window.addEventListener('load', function() {
+        var forms = document.getElementsByClassName('needs-validation');
+        var validation = Array.prototype.filter.call(forms, function(form) {
+            form.addEventListener('submit', function(event) {
+                if (form.checkValidity() === false) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                }
+                form.classList.add('was-validated');
+            }, false);
+        });
+    }, false);
+})();
+
+// Avertissement avant modification
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('form');
+    const operationTypeSelect = form.querySelector('select[name="accounting_configuration[operationType]"]');
+    const entryTypeSelect = form.querySelector('select[name="accounting_configuration[entryType]"]');
+    
+    form.addEventListener('submit', function(e) {
+        const operationTypeChanged = '{{ configuration.operationType }}' !== operationTypeSelect.value;
+        const entryTypeChanged = '{{ configuration.entryType }}' !== entryTypeSelect.value;
+        
+        if (operationTypeChanged || entryTypeChanged) {
+            if (!confirm('Vous modifiez des paramètres critiques. Cela peut affecter les écritures existantes. Voulez-vous vraiment continuer ?')) {
+                e.preventDefault();
+                return false;
+            }
+        }
+    });
+});
+</script>
+{% endblock %}

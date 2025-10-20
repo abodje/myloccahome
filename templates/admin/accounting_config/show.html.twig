@@ -1,0 +1,224 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Configuration Comptable - {{ configuration.operationType }}{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3 mb-0">
+                    <i class="bi bi-gear me-2"></i>
+                    Configuration Comptable - {{ configuration.operationType }}
+                </h1>
+                <div class="btn-group" role="group">
+                    <a href="{{ path('app_admin_accounting_config_edit', {'id': configuration.id}) }}" class="btn btn-primary">
+                        <i class="bi bi-pencil me-2"></i>
+                        Modifier
+                    </a>
+                    <a href="{{ path('app_admin_accounting_config_index') }}" class="btn btn-secondary">
+                        <i class="bi bi-arrow-left me-2"></i>
+                        Retour à la liste
+                    </a>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-lg-8">
+                    <!-- Informations générales -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">Informations Générales</h5>
+                        </div>
+                        <div class="card-body">
+                            <dl class="row">
+                                <dt class="col-sm-3">Type d'opération :</dt>
+                                <dd class="col-sm-9">
+                                    <strong>{{ configuration.operationType }}</strong>
+                                    <span class="badge bg-primary ms-2">{{ configuration.category }}</span>
+                                </dd>
+
+                                <dt class="col-sm-3">Numéro de compte :</dt>
+                                <dd class="col-sm-9">
+                                    <code class="fs-5">{{ configuration.accountNumber }}</code>
+                                </dd>
+
+                                <dt class="col-sm-3">Libellé du compte :</dt>
+                                <dd class="col-sm-9">{{ configuration.accountLabel }}</dd>
+
+                                <dt class="col-sm-3">Sens de l'écriture :</dt>
+                                <dd class="col-sm-9">
+                                    {% if configuration.entryType == 'CREDIT' %}
+                                        <span class="badge bg-success fs-6">CRÉDIT</span>
+                                    {% else %}
+                                        <span class="badge bg-danger fs-6">DÉBIT</span>
+                                    {% endif %}
+                                </dd>
+
+                                <dt class="col-sm-3">Description :</dt>
+                                <dd class="col-sm-9">{{ configuration.description }}</dd>
+
+                                <dt class="col-sm-3">Préfixe de référence :</dt>
+                                <dd class="col-sm-9">
+                                    {% if configuration.reference %}
+                                        <code>{{ configuration.reference }}</code>
+                                    {% else %}
+                                        <em class="text-muted">Aucun préfixe défini</em>
+                                    {% endif %}
+                                </dd>
+
+                                <dt class="col-sm-3">Statut :</dt>
+                                <dd class="col-sm-9">
+                                    {% if configuration.isActive %}
+                                        <span class="badge bg-success">Actif</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">Inactif</span>
+                                    {% endif %}
+                                </dd>
+                            </dl>
+                        </div>
+                    </div>
+
+                    <!-- Notes -->
+                    {% if configuration.notes %}
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <h5 class="card-title mb-0">Notes</h5>
+                            </div>
+                            <div class="card-body">
+                                <p class="mb-0">{{ configuration.notes|nl2br }}</p>
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class="col-lg-4">
+                    <!-- Actions rapides -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h6 class="card-title mb-0">
+                                <i class="bi bi-lightning me-2"></i>
+                                Actions Rapides
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="d-grid gap-2">
+                                {% if configuration.isActive %}
+                                    <form method="post" action="{{ path('app_admin_accounting_config_toggle_status', {'id': configuration.id}) }}">
+                                        <input type="hidden" name="_token" value="{{ csrf_token('toggle' ~ configuration.id) }}">
+                                        <button type="submit" class="btn btn-warning w-100" 
+                                                onclick="return confirm('Désactiver cette configuration ?');">
+                                            <i class="bi bi-pause-circle me-2"></i>
+                                            Désactiver la Configuration
+                                        </button>
+                                    </form>
+                                {% else %}
+                                    <form method="post" action="{{ path('app_admin_accounting_config_toggle_status', {'id': configuration.id}) }}">
+                                        <input type="hidden" name="_token" value="{{ csrf_token('toggle' ~ configuration.id) }}">
+                                        <button type="submit" class="btn btn-success w-100" 
+                                                onclick="return confirm('Activer cette configuration ?');">
+                                            <i class="bi bi-play-circle me-2"></i>
+                                            Activer la Configuration
+                                        </button>
+                                    </form>
+                                {% endif %}
+
+                                <a href="{{ path('app_admin_accounting_config_edit', {'id': configuration.id}) }}" class="btn btn-primary">
+                                    <i class="bi bi-pencil me-2"></i>
+                                    Modifier la Configuration
+                                </a>
+
+                                <hr>
+
+                                <form method="post" action="{{ path('app_admin_accounting_config_delete', {'id': configuration.id}) }}" 
+                                      onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cette configuration ? Cette action est irréversible.');">
+                                    <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ configuration.id) }}">
+                                    <button type="submit" class="btn btn-danger w-100">
+                                        <i class="bi bi-trash me-2"></i>
+                                        Supprimer la Configuration
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Informations système -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h6 class="card-title mb-0">
+                                <i class="bi bi-info-circle me-2"></i>
+                                Informations Système
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <dl class="row small">
+                                <dt class="col-5">ID :</dt>
+                                <dd class="col-7">{{ configuration.id }}</dd>
+
+                                <dt class="col-5">Créé le :</dt>
+                                <dd class="col-7">{{ configuration.createdAt|date('d/m/Y H:i') }}</dd>
+
+                                {% if configuration.updatedAt %}
+                                    <dt class="col-5">Modifié le :</dt>
+                                    <dd class="col-7">{{ configuration.updatedAt|date('d/m/Y H:i') }}</dd>
+                                {% endif %}
+                            </dl>
+                        </div>
+                    </div>
+
+                    <!-- Aide -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h6 class="card-title mb-0">
+                                <i class="bi bi-question-circle me-2"></i>
+                                Aide
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <h6>Utilisation :</h6>
+                            <p class="small mb-2">
+                                Cette configuration sera utilisée automatiquement lors de la génération d'écritures comptables pour le type d'opération <code>{{ configuration.operationType }}</code>.
+                            </p>
+
+                            <h6>Sens des écritures :</h6>
+                            <ul class="list-unstyled small">
+                                <li><strong>CRÉDIT</strong> : Revenus, produits, créances</li>
+                                <li><strong>DÉBIT</strong> : Charges, dépenses, dettes</li>
+                            </ul>
+
+                            <h6>Exemple d'utilisation :</h6>
+                            <p class="small mb-0">
+                                Lors de la génération d'un loyer, une écriture comptable sera créée avec :
+                                <br>• Compte : <code>{{ configuration.accountNumber }}</code>
+                                <br>• Sens : <code>{{ configuration.entryType }}</code>
+                                <br>• Référence : <code>{{ configuration.reference }}[ID]</code>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.card {
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+}
+
+.card-header {
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.badge {
+    font-size: 0.875em;
+}
+
+code {
+    background-color: #f8f9fa;
+    padding: 0.125rem 0.25rem;
+    border-radius: 0.25rem;
+}
+</style>
+{% endblock %}

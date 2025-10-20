@@ -126,6 +126,34 @@ class TaskManagerService
                     $this->executeUpdatePropertyStatusTask($task);
                     break;
 
+                case 'CREATE_ACCOUNTING_CONFIGURATIONS':
+                    $this->executeCreateAccountingConfigurationsTask($task);
+                    break;
+
+                case 'TEST_ACCOUNTING_CONFIG':
+                    $this->executeTestAccountingConfigTask($task);
+                    break;
+
+                case 'CHECK_ACCOUNTING_ENTRIES':
+                    $this->executeCheckAccountingEntriesTask($task);
+                    break;
+
+                case 'TEST_RENT_GENERATION_WITH_CONFIG':
+                    $this->executeTestRentGenerationWithConfigTask($task);
+                    break;
+
+                case 'DEMO_ACCOUNTING_SYSTEM':
+                    $this->executeDemoAccountingSystemTask($task);
+                    break;
+
+                case 'FIX_ACCOUNTING_TABLE':
+                    $this->executeFixAccountingTableTask($task);
+                    break;
+
+                case 'SETUP_ACCOUNTING_SYSTEM':
+                    $this->executeSetupAccountingSystemTask($task);
+                    break;
+
                 default:
                     throw new \Exception("Type de tâche non reconnu: {$task->getType()}");
             }
@@ -419,6 +447,71 @@ class TaskManagerService
                 'parameters' => [
                     'hour' => 1, // 1h du matin
                     'log_details' => true // Loguer les détails de la mise à jour
+                ]
+            ],
+            [
+                'name' => 'Création des configurations comptables',
+                'type' => 'CREATE_ACCOUNTING_CONFIGURATIONS',
+                'description' => 'Crée les configurations comptables par défaut pour les différents types d\'opérations',
+                'frequency' => 'MANUAL', // Tâche manuelle uniquement
+                'parameters' => [
+                    'log_details' => true // Loguer les détails de la création
+                ]
+            ],
+            [
+                'name' => 'Test de configuration comptable',
+                'type' => 'TEST_ACCOUNTING_CONFIG',
+                'description' => 'Teste le système de configuration comptable et vérifie les configurations existantes',
+                'frequency' => 'MANUAL', // Tâche manuelle uniquement
+                'parameters' => [
+                    'log_details' => true // Loguer les détails du test
+                ]
+            ],
+            [
+                'name' => 'Vérification des écritures comptables',
+                'type' => 'CHECK_ACCOUNTING_ENTRIES',
+                'description' => 'Vérifie les écritures comptables créées et leur conformité avec les configurations',
+                'frequency' => 'WEEKLY', // Exécution hebdomadaire
+                'parameters' => [
+                    'day_of_week' => 'MONDAY', // Lundi
+                    'hour' => 8, // 8h du matin
+                    'log_details' => true // Loguer les détails de la vérification
+                ]
+            ],
+            [
+                'name' => 'Test de génération de loyers avec configuration',
+                'type' => 'TEST_RENT_GENERATION_WITH_CONFIG',
+                'description' => 'Teste la génération de loyers avec l\'application de la configuration comptable',
+                'frequency' => 'MANUAL', // Tâche manuelle uniquement
+                'parameters' => [
+                    'log_details' => true // Loguer les détails du test
+                ]
+            ],
+            [
+                'name' => 'Démonstration du système comptable',
+                'type' => 'DEMO_ACCOUNTING_SYSTEM',
+                'description' => 'Démonstration complète du système comptable avec configuration',
+                'frequency' => 'MANUAL', // Tâche manuelle uniquement
+                'parameters' => [
+                    'log_details' => true // Loguer les détails de la démonstration
+                ]
+            ],
+            [
+                'name' => 'Correction de la table comptable',
+                'type' => 'FIX_ACCOUNTING_TABLE',
+                'description' => 'Corrige la table accounting_configuration en cas de problème de structure',
+                'frequency' => 'MANUAL', // Tâche manuelle uniquement
+                'parameters' => [
+                    'log_details' => true // Loguer les détails de la correction
+                ]
+            ],
+            [
+                'name' => 'Configuration du système comptable',
+                'type' => 'SETUP_ACCOUNTING_SYSTEM',
+                'description' => 'Configure le système comptable complet (migration + configurations)',
+                'frequency' => 'MANUAL', // Tâche manuelle uniquement
+                'parameters' => [
+                    'log_details' => true // Loguer les détails de la configuration
                 ]
             ]
         ];
@@ -1457,5 +1550,319 @@ HTML;
         }
 
         return false;
+    }
+
+    /**
+     * Exécute la tâche de création des configurations comptables
+     */
+    public function executeCreateAccountingConfigurationsTask(Task $task, bool $logDetails = false): string
+    {
+        try {
+            $parameters = $task->getParameters() ?? [];
+            $logDetails = $parameters['log_details'] ?? false;
+
+            $this->logger->info('⚙️ Début de la création des configurations comptables');
+
+            // Récupérer le service de configuration comptable
+            $configService = new \App\Service\AccountingConfigService(
+                $this->entityManager->getRepository(\App\Entity\AccountingConfiguration::class),
+                $this->entityManager
+            );
+
+            // Créer les configurations par défaut
+            $configService->createDefaultConfigurations();
+
+            // Récupérer les configurations créées
+            $configurations = $configService->getAllActiveConfigurations();
+
+            $result = sprintf(
+                'Configurations comptables créées avec succès: %d configurations disponibles.',
+                count($configurations)
+            );
+
+            if ($logDetails) {
+                $this->logger->info('📋 Configurations comptables créées:');
+                foreach ($configurations as $config) {
+                    $this->logger->info(sprintf(
+                        '   • %s: %s (%s) - %s',
+                        $config->getOperationType(),
+                        $config->getAccountNumber(),
+                        $config->getAccountLabel(),
+                        $config->getEntryType()
+                    ));
+                }
+            }
+
+            $this->logger->info(sprintf('✅ %s', $result));
+
+            return $result;
+
+        } catch (\Exception $e) {
+            $errorMsg = sprintf('Erreur lors de la création des configurations comptables: %s', $e->getMessage());
+            $this->logger->error(sprintf('❌ %s', $errorMsg));
+            throw new \Exception($errorMsg);
+        }
+    }
+
+    /**
+     * Exécute la tâche de test de configuration comptable
+     */
+    public function executeTestAccountingConfigTask(Task $task, bool $logDetails = false): string
+    {
+        try {
+            $parameters = $task->getParameters() ?? [];
+            $logDetails = $parameters['log_details'] ?? false;
+
+            $this->logger->info('🧪 Début du test de configuration comptable');
+
+            // Récupérer le service de configuration comptable
+            $configService = new \App\Service\AccountingConfigService(
+                $this->entityManager->getRepository(\App\Entity\AccountingConfiguration::class),
+                $this->entityManager
+            );
+
+            $configurations = $configService->getAllActiveConfigurations();
+            $validConfigs = 0;
+            $invalidConfigs = 0;
+
+            foreach ($configurations as $config) {
+                $errors = $configService->validateConfiguration($config);
+                if (empty($errors)) {
+                    $validConfigs++;
+                } else {
+                    $invalidConfigs++;
+                    if ($logDetails) {
+                        $this->logger->error(sprintf('Configuration invalide %s: %s',
+                            $config->getOperationType(), implode(', ', $errors)));
+                    }
+                }
+            }
+
+            $result = sprintf(
+                'Test terminé: %d configurations valides, %d invalides sur %d total.',
+                $validConfigs, $invalidConfigs, count($configurations)
+            );
+
+            $this->logger->info(sprintf('✅ %s', $result));
+
+            return $result;
+
+        } catch (\Exception $e) {
+            $errorMsg = sprintf('Erreur lors du test de configuration comptable: %s', $e->getMessage());
+            $this->logger->error(sprintf('❌ %s', $errorMsg));
+            throw new \Exception($errorMsg);
+        }
+    }
+
+    /**
+     * Exécute la tâche de vérification des écritures comptables
+     */
+    public function executeCheckAccountingEntriesTask(Task $task, bool $logDetails = false): string
+    {
+        try {
+            $parameters = $task->getParameters() ?? [];
+            $logDetails = $parameters['log_details'] ?? false;
+
+            $this->logger->info('📊 Début de la vérification des écritures comptables');
+
+            $totalEntries = $this->entityManager->getRepository(\App\Entity\AccountingEntry::class)
+                ->count([]);
+
+            $loyerEntries = $this->entityManager->getRepository(\App\Entity\AccountingEntry::class)
+                ->count(['category' => 'LOYER']);
+
+            $result = sprintf(
+                'Vérification terminée: %d écritures comptables total, %d écritures LOYER.',
+                $totalEntries, $loyerEntries
+            );
+
+            if ($logDetails) {
+                $this->logger->info(sprintf('Total écritures comptables: %d', $totalEntries));
+                $this->logger->info(sprintf('Écritures LOYER: %d', $loyerEntries));
+            }
+
+            $this->logger->info(sprintf('✅ %s', $result));
+
+            return $result;
+
+        } catch (\Exception $e) {
+            $errorMsg = sprintf('Erreur lors de la vérification des écritures comptables: %s', $e->getMessage());
+            $this->logger->error(sprintf('❌ %s', $errorMsg));
+            throw new \Exception($errorMsg);
+        }
+    }
+
+    /**
+     * Exécute la tâche de test de génération de loyers avec configuration
+     */
+    public function executeTestRentGenerationWithConfigTask(Task $task, bool $logDetails = false): string
+    {
+        try {
+            $parameters = $task->getParameters() ?? [];
+            $logDetails = $parameters['log_details'] ?? false;
+
+            $this->logger->info('🏠 Début du test de génération de loyers avec configuration');
+
+            // Récupérer le service de configuration comptable
+            $configService = new \App\Service\AccountingConfigService(
+                $this->entityManager->getRepository(\App\Entity\AccountingConfiguration::class),
+                $this->entityManager
+            );
+
+            $loyerConfig = $configService->getConfigurationForOperation('LOYER_ATTENDU');
+
+            if (!$loyerConfig) {
+                throw new \Exception('Configuration LOYER_ATTENDU non trouvée');
+            }
+
+            $result = sprintf(
+                'Test terminé: Configuration LOYER_ATTENDU trouvée (%s - %s).',
+                $loyerConfig->getAccountNumber(), $loyerConfig->getEntryType()
+            );
+
+            if ($logDetails) {
+                $this->logger->info(sprintf('Configuration trouvée: %s (%s)',
+                    $loyerConfig->getAccountNumber(), $loyerConfig->getAccountLabel()));
+            }
+
+            $this->logger->info(sprintf('✅ %s', $result));
+
+            return $result;
+
+        } catch (\Exception $e) {
+            $errorMsg = sprintf('Erreur lors du test de génération de loyers: %s', $e->getMessage());
+            $this->logger->error(sprintf('❌ %s', $errorMsg));
+            throw new \Exception($errorMsg);
+        }
+    }
+
+    /**
+     * Exécute la tâche de démonstration du système comptable
+     */
+    public function executeDemoAccountingSystemTask(Task $task, bool $logDetails = false): string
+    {
+        try {
+            $parameters = $task->getParameters() ?? [];
+            $logDetails = $parameters['log_details'] ?? false;
+
+            $this->logger->info('🎯 Début de la démonstration du système comptable');
+
+            // Récupérer le service de configuration comptable
+            $configService = new \App\Service\AccountingConfigService(
+                $this->entityManager->getRepository(\App\Entity\AccountingConfiguration::class),
+                $this->entityManager
+            );
+
+            $configurations = $configService->getAllActiveConfigurations();
+            $loyerConfig = $configService->getConfigurationForOperation('LOYER_ATTENDU');
+
+            $result = sprintf(
+                'Démonstration terminée: %d configurations disponibles, système comptable opérationnel.',
+                count($configurations)
+            );
+
+            if ($logDetails) {
+                $this->logger->info(sprintf('Configurations disponibles: %d', count($configurations)));
+                if ($loyerConfig) {
+                    $this->logger->info(sprintf('Configuration LOYER_ATTENDU: %s (%s)',
+                        $loyerConfig->getAccountNumber(), $loyerConfig->getEntryType()));
+                }
+            }
+
+            $this->logger->info(sprintf('✅ %s', $result));
+
+            return $result;
+
+        } catch (\Exception $e) {
+            $errorMsg = sprintf('Erreur lors de la démonstration du système comptable: %s', $e->getMessage());
+            $this->logger->error(sprintf('❌ %s', $errorMsg));
+            throw new \Exception($errorMsg);
+        }
+    }
+
+    /**
+     * Exécute la tâche de correction de la table comptable
+     */
+    public function executeFixAccountingTableTask(Task $task, bool $logDetails = false): string
+    {
+        try {
+            $parameters = $task->getParameters() ?? [];
+            $logDetails = $parameters['log_details'] ?? false;
+
+            $this->logger->info('🔧 Début de la correction de la table comptable');
+
+            // Vérifier si la table existe et est correcte
+            $connection = $this->entityManager->getConnection();
+            $tableExists = $connection->createSchemaManager()->tablesExist(['accounting_configuration']);
+
+            if (!$tableExists) {
+                // Créer la table
+                $connection->executeStatement('
+                    CREATE TABLE accounting_configuration (
+                        id INT AUTO_INCREMENT NOT NULL,
+                        operation_type VARCHAR(100) NOT NULL,
+                        account_number VARCHAR(20) NOT NULL,
+                        account_label VARCHAR(255) NOT NULL,
+                        entry_type VARCHAR(10) NOT NULL,
+                        description VARCHAR(255) NOT NULL,
+                        reference VARCHAR(255) DEFAULT NULL,
+                        category VARCHAR(100) NOT NULL,
+                        is_active TINYINT(1) DEFAULT 1,
+                        notes LONGTEXT DEFAULT NULL,
+                        created_at DATETIME NOT NULL,
+                        updated_at DATETIME DEFAULT NULL,
+                        UNIQUE INDEX UNIQ_ACCOUNTING_CONFIG_OPERATION_TYPE (operation_type),
+                        PRIMARY KEY(id)
+                    ) DEFAULT CHARACTER SET utf8mb4 COLLATE `utf8mb4_unicode_ci` ENGINE = InnoDB
+                ');
+
+                $result = 'Table accounting_configuration créée avec succès.';
+            } else {
+                $result = 'Table accounting_configuration existe déjà et est correcte.';
+            }
+
+            if ($logDetails) {
+                $this->logger->info($result);
+            }
+
+            $this->logger->info(sprintf('✅ %s', $result));
+
+            return $result;
+
+        } catch (\Exception $e) {
+            $errorMsg = sprintf('Erreur lors de la correction de la table comptable: %s', $e->getMessage());
+            $this->logger->error(sprintf('❌ %s', $errorMsg));
+            throw new \Exception($errorMsg);
+        }
+    }
+
+    /**
+     * Exécute la tâche de configuration du système comptable
+     */
+    public function executeSetupAccountingSystemTask(Task $task, bool $logDetails = false): string
+    {
+        try {
+            $parameters = $task->getParameters() ?? [];
+            $logDetails = $parameters['log_details'] ?? false;
+
+            $this->logger->info('🚀 Début de la configuration du système comptable');
+
+            // D'abord corriger la table
+            $this->executeFixAccountingTableTask($task, $logDetails);
+
+            // Puis créer les configurations
+            $this->executeCreateAccountingConfigurationsTask($task, $logDetails);
+
+            $result = 'Système comptable configuré avec succès (table + configurations).';
+
+            $this->logger->info(sprintf('✅ %s', $result));
+
+            return $result;
+
+        } catch (\Exception $e) {
+            $errorMsg = sprintf('Erreur lors de la configuration du système comptable: %s', $e->getMessage());
+            $this->logger->error(sprintf('❌ %s', $errorMsg));
+            throw new \Exception($errorMsg);
+        }
     }
 }

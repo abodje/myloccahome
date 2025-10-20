@@ -1,0 +1,189 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Configuration Comptable{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3 mb-0">
+                    <i class="bi bi-gear me-2"></i>
+                    Configuration Comptable
+                </h1>
+                <div class="btn-group" role="group">
+                    <a href="{{ path('app_admin_accounting_config_new') }}" class="btn btn-primary">
+                        <i class="bi bi-plus-circle me-2"></i>
+                        Nouvelle Configuration
+                    </a>
+                    <form method="post" action="{{ path('app_admin_accounting_config_create_defaults') }}" class="d-inline">
+                        <input type="hidden" name="_token" value="{{ csrf_token('create_defaults') }}">
+                        <button type="submit" class="btn btn-outline-secondary"
+                                onclick="return confirm('Créer les configurations par défaut ? Cela ajoutera de nouvelles configurations si elles n\'existent pas.')">
+                            <i class="bi bi-download me-2"></i>
+                            Configurations par Défaut
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            {% if configurations is empty %}
+                <div class="alert alert-info">
+                    <h4 class="alert-heading">Aucune configuration comptable</h4>
+                    <p>Il n'y a actuellement aucune configuration comptable définie. Vous pouvez :</p>
+                    <ul class="mb-0">
+                        <li>Créer des configurations personnalisées</li>
+                        <li>Utiliser les configurations par défaut</li>
+                    </ul>
+                </div>
+            {% else %}
+                <!-- Statistiques -->
+                <div class="row mb-4">
+                    <div class="col-md-3">
+                        <div class="card text-center">
+                            <div class="card-body">
+                                <h5 class="card-title text-primary">{{ configurations|length }}</h5>
+                                <p class="card-text">Configurations Total</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card text-center">
+                            <div class="card-body">
+                                <h5 class="card-title text-success">{{ configurations|filter(c => c.isActive)|length }}</h5>
+                                <p class="card-text">Configurations Actives</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card text-center">
+                            <div class="card-body">
+                                <h5 class="card-title text-warning">{{ configurations|filter(c => not c.isActive)|length }}</h5>
+                                <p class="card-text">Configurations Inactives</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card text-center">
+                            <div class="card-body">
+                                <h5 class="card-title text-info">{{ groupedConfigs|keys|length }}</h5>
+                                <p class="card-text">Catégories</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Configurations par catégorie -->
+                {% for category, configs in groupedConfigs %}
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">
+                                <i class="bi bi-folder me-2"></i>
+                                {{ categories[category] ?? category }}
+                                <span class="badge bg-secondary ms-2">{{ configs|length }}</span>
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Type d'Opération</th>
+                                            <th>Compte</th>
+                                            <th>Libellé</th>
+                                            <th>Sens</th>
+                                            <th>Référence</th>
+                                            <th>Statut</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for config in configs %}
+                                            <tr>
+                                                <td>
+                                                    <strong>{{ config.operationType }}</strong>
+                                                </td>
+                                                <td>
+                                                    <code>{{ config.accountNumber }}</code>
+                                                </td>
+                                                <td>{{ config.accountLabel }}</td>
+                                                <td>
+                                                    {% if config.entryType == 'CREDIT' %}
+                                                        <span class="badge bg-success">CRÉDIT</span>
+                                                    {% else %}
+                                                        <span class="badge bg-danger">DÉBIT</span>
+                                                    {% endif %}
+                                                </td>
+                                                <td>
+                                                    {% if config.reference %}
+                                                        <code>{{ config.reference }}</code>
+                                                    {% else %}
+                                                        <em class="text-muted">Aucune</em>
+                                                    {% endif %}
+                                                </td>
+                                                <td>
+                                                    {% if config.isActive %}
+                                                        <span class="badge bg-success">Actif</span>
+                                                    {% else %}
+                                                        <span class="badge bg-secondary">Inactif</span>
+                                                    {% endif %}
+                                                </td>
+                                                <td>
+                                                    <div class="btn-group btn-group-sm" role="group">
+                                                        <a href="{{ path('app_admin_accounting_config_show', {'id': config.id}) }}"
+                                                           class="btn btn-outline-primary" title="Voir">
+                                                            <i class="bi bi-eye"></i>
+                                                        </a>
+                                                        <a href="{{ path('app_admin_accounting_config_edit', {'id': config.id}) }}"
+                                                           class="btn btn-outline-warning" title="Modifier">
+                                                            <i class="bi bi-pencil"></i>
+                                                        </a>
+                                                        <form method="post" action="{{ path('app_admin_accounting_config_toggle_status', {'id': config.id}) }}" class="d-inline">
+                                                            <input type="hidden" name="_token" value="{{ csrf_token('toggle' ~ config.id) }}">
+                                                            <button type="submit" class="btn btn-outline-{{ config.isActive ? 'secondary' : 'success' }}"
+                                                                    title="{{ config.isActive ? 'Désactiver' : 'Activer' }}">
+                                                                <i class="bi bi-{{ config.isActive ? 'pause' : 'play' }}"></i>
+                                                            </button>
+                                                        </form>
+                                                        <form method="post" action="{{ path('app_admin_accounting_config_delete', {'id': config.id}) }}"
+                                                              onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cette configuration ?')" class="d-inline">
+                                                            <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ config.id) }}">
+                                                            <button type="submit" class="btn btn-outline-danger" title="Supprimer">
+                                                                <i class="bi bi-trash"></i>
+                                                            </button>
+                                                        </form>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+.card {
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+}
+
+.table th {
+    border-top: none;
+    font-weight: 600;
+}
+
+.badge {
+    font-size: 0.75em;
+}
+
+.btn-group-sm .btn {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+}
+</style>
+{% endblock %}

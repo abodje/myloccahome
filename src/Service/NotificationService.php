@@ -552,19 +552,54 @@ class NotificationService
             return; // Écriture déjà existante
         }
 
+        // Récupérer la configuration comptable pour les loyers attendus
+        $configService = new \App\Service\AccountingConfigService(
+            $this->entityManager->getRepository(\App\Entity\AccountingConfiguration::class),
+            $this->entityManager
+        );
+
+        $config = $configService->getConfigurationForOperation('LOYER_ATTENDU');
+
+        if (!$config) {
+            // Configuration par défaut si aucune configuration trouvée
+            $config = $this->createDefaultLoyerAttenduConfig();
+        }
+
         // Créer une nouvelle écriture comptable pour le loyer généré
         $entry = new \App\Entity\AccountingEntry();
         $entry->setEntryDate($payment->getDueDate());
-        $entry->setDescription('Loyer généré automatiquement - ' . $payment->getLease()->getProperty()->getFullAddress());
+        $entry->setDescription($config->getDescription() . ' - ' . $payment->getLease()->getProperty()->getFullAddress());
         $entry->setAmount($payment->getAmount());
-        $entry->setType('CREDIT'); // Les loyers sont des crédits (revenus attendus)
-        $entry->setCategory('LOYER_ATTENDU');
-        $entry->setReference('LOYER-GEN-' . $payment->getId());
+        $entry->setType($config->getEntryType());
+        $entry->setCategory($config->getCategory());
+        $entry->setReference($config->getReference() . $payment->getId());
         $entry->setProperty($payment->getLease()->getProperty());
         $entry->setOwner($payment->getLease()->getProperty()?->getOwner());
         $entry->setPayment($payment);
-        $entry->setNotes('Généré automatiquement lors de la création du loyer du mois suivant');
+        $entry->setNotes('Généré automatiquement selon la configuration comptable');
 
         $this->entityManager->persist($entry);
+    }
+
+    /**
+     * Crée une configuration par défaut pour les loyers attendus si aucune n'existe
+     */
+    private function createDefaultLoyerAttenduConfig(): \App\Entity\AccountingConfiguration
+    {
+        $config = new \App\Entity\AccountingConfiguration();
+        $config->setOperationType('LOYER_ATTENDU')
+               ->setAccountNumber('411000')
+               ->setAccountLabel('Clients - Loyers attendus')
+               ->setEntryType('CREDIT')
+               ->setDescription('Loyer généré automatiquement')
+               ->setReference('LOYER-GEN-')
+               ->setCategory('LOYER')
+               ->setNotes('Configuration par défaut')
+               ->setIsActive(true);
+
+        $this->entityManager->persist($config);
+        $this->entityManager->flush();
+
+        return $config;
     }
 }

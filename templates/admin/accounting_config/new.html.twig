@@ -1,0 +1,178 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Nouvelle Configuration Comptable{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3 mb-0">
+                    <i class="bi bi-plus-circle me-2"></i>
+                    Nouvelle Configuration Comptable
+                </h1>
+                <a href="{{ path('app_admin_accounting_config_index') }}" class="btn btn-secondary">
+                    <i class="bi bi-arrow-left me-2"></i>
+                    Retour à la liste
+                </a>
+            </div>
+
+            <div class="row">
+                <div class="col-lg-8">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">Informations de la Configuration</h5>
+                        </div>
+                        <div class="card-body">
+                            {{ form_start(form, {'attr': {'class': 'needs-validation', 'novalidate': true}}) }}
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    {{ form_label(form.operationType) }}
+                                    {{ form_widget(form.operationType) }}
+                                    {{ form_errors(form.operationType) }}
+                                    {{ form_help(form.operationType) }}
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    {{ form_label(form.category) }}
+                                    {{ form_widget(form.category) }}
+                                    {{ form_errors(form.category) }}
+                                    {{ form_help(form.category) }}
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    {{ form_label(form.accountNumber) }}
+                                    {{ form_widget(form.accountNumber) }}
+                                    {{ form_errors(form.accountNumber) }}
+                                    {{ form_help(form.accountNumber) }}
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    {{ form_label(form.entryType) }}
+                                    {{ form_widget(form.entryType) }}
+                                    {{ form_errors(form.entryType) }}
+                                    {{ form_help(form.entryType) }}
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                {{ form_label(form.accountLabel) }}
+                                {{ form_widget(form.accountLabel) }}
+                                {{ form_errors(form.accountLabel) }}
+                                {{ form_help(form.accountLabel) }}
+                            </div>
+
+                            <div class="mb-3">
+                                {{ form_label(form.description) }}
+                                {{ form_widget(form.description) }}
+                                {{ form_errors(form.description) }}
+                                {{ form_help(form.description) }}
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    {{ form_label(form.reference) }}
+                                    {{ form_widget(form.reference) }}
+                                    {{ form_errors(form.reference) }}
+                                    {{ form_help(form.reference) }}
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    {{ form_label(form.isActive) }}
+                                    <div class="form-check">
+                                        {{ form_widget(form.isActive) }}
+                                    </div>
+                                    {{ form_errors(form.isActive) }}
+                                    {{ form_help(form.isActive) }}
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                {{ form_label(form.notes) }}
+                                {{ form_widget(form.notes) }}
+                                {{ form_errors(form.notes) }}
+                                {{ form_help(form.notes) }}
+                            </div>
+
+                            <div class="d-flex justify-content-end gap-2">
+                                <a href="{{ path('app_admin_accounting_config_index') }}" class="btn btn-secondary">
+                                    Annuler
+                                </a>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="bi bi-check-circle me-2"></i>
+                                    Créer la Configuration
+                                </button>
+                            </div>
+
+                            {{ form_end(form) }}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <h6 class="card-title mb-0">
+                                <i class="bi bi-info-circle me-2"></i>
+                                Informations
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <h6>Guide de configuration :</h6>
+                            <ul class="list-unstyled small">
+                                <li><i class="bi bi-check-circle text-success me-2"></i><strong>CRÉDIT</strong> : Pour les revenus (loyers, produits)</li>
+                                <li><i class="bi bi-check-circle text-success me-2"></i><strong>DÉBIT</strong> : Pour les charges (travaux, assurances)</li>
+                                <li><i class="bi bi-info-circle text-info me-2"></i>Le numéro de compte doit suivre le plan comptable général</li>
+                                <li><i class="bi bi-info-circle text-info me-2"></i>La référence sera utilisée comme préfixe pour les écritures</li>
+                            </ul>
+
+                            <hr>
+
+                            <h6>Types d'opérations disponibles :</h6>
+                            <ul class="list-unstyled small">
+                                <li><code>LOYER_ATTENDU</code> - Loyer en attente</li>
+                                <li><code>LOYER_PAYE</code> - Loyer encaissé</li>
+                                <li><code>CHARGE</code> - Charge locative</li>
+                                <li><code>TRAVAUX</code> - Travaux de maintenance</li>
+                                <li><code>ASSURANCE</code> - Prime d'assurance</li>
+                                <li><code>TAXE_FONCIERE</code> - Taxe foncière</li>
+                                <li><code>CAUTION_*</code> - Cautions diverses</li>
+                            </ul>
+
+                            <hr>
+
+                            <h6>Exemples de comptes :</h6>
+                            <ul class="list-unstyled small">
+                                <li><code>411000</code> - Clients</li>
+                                <li><code>706000</code> - Produits</li>
+                                <li><code>625000</code> - Charges locatives</li>
+                                <li><code>628000</code> - Travaux</li>
+                                <li><code>616000</code> - Assurances</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Validation du formulaire
+(function() {
+    'use strict';
+    window.addEventListener('load', function() {
+        var forms = document.getElementsByClassName('needs-validation');
+        var validation = Array.prototype.filter.call(forms, function(form) {
+            form.addEventListener('submit', function(event) {
+                if (form.checkValidity() === false) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                }
+                form.classList.add('was-validated');
+            }, false);
+        });
+    }, false);
+})();
+</script>
+{% endblock %}
