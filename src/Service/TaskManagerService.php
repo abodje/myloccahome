@@ -190,17 +190,38 @@ class TaskManagerService
      */
     private function executeRentReceiptTask(Task $task): void
     {
-        $forMonth = null;
-        if ($task->getParameter('month_offset')) {
-            $forMonth = new \DateTime();
-            $forMonth->modify($task->getParameter('month_offset'));
-            $forMonth->modify('first day of this month');
+        try {
+            $forMonth = null;
+            if ($task->getParameter('month_offset')) {
+                $forMonth = new \DateTime();
+                $forMonth->modify($task->getParameter('month_offset'));
+                $forMonth->modify('first day of this month');
+            }
+
+            $results = $this->notificationService->sendRentReceipts($forMonth);
+
+            $task->setParameter('last_sent_count', $results['sent']);
+            $task->setParameter('last_failed_count', $results['failed']);
+
+            // S'assurer que la tâche est sauvegardée même en cas d'erreur partielle
+            $this->entityManager->flush();
+
+        } catch (\Exception $e) {
+            // Log l'erreur et marquer la tâche comme échouée
+            $task->setParameter('last_error', $e->getMessage());
+            $task->setParameter('last_failed_count', $task->getParameter('last_failed_count', 0) + 1);
+
+            // S'assurer que l'EntityManager reste ouvert
+            if (!$this->entityManager->isOpen()) {
+                $this->entityManager = $this->entityManager->create(
+                    $this->entityManager->getConnection(),
+                    $this->entityManager->getConfiguration()
+                );
+            }
+
+            $this->entityManager->flush();
+            throw $e;
         }
-
-        $results = $this->notificationService->sendRentReceipts($forMonth);
-
-        $task->setParameter('last_sent_count', $results['sent']);
-        $task->setParameter('last_failed_count', $results['failed']);
     }
 
     /**

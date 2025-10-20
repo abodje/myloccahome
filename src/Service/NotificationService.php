@@ -208,6 +208,11 @@ class NotificationService
 
         foreach ($payments as $payment) {
             try {
+                // Vérifier que l'EntityManager est toujours ouvert
+                if (!$this->entityManager->isOpen()) {
+                    throw new \Exception('EntityManager fermé');
+                }
+
                 $tenant = $payment->getLease()->getTenant();
                 if (!$tenant || !$tenant->getEmail()) {
                     $errors[] = "Paiement #{$payment->getId()}: Locataire sans email valide";
@@ -247,6 +252,12 @@ class NotificationService
                     'payment_id' => $payment->getId(),
                     'error' => $e->getMessage()
                 ]);
+
+                // Si l'EntityManager est fermé, on ne peut pas continuer
+                if (!$this->entityManager->isOpen()) {
+                    $errors[] = "EntityManager fermé - arrêt du traitement";
+                    break;
+                }
             }
         }
 

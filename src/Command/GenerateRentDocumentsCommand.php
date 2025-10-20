@@ -26,8 +26,8 @@ class GenerateRentDocumentsCommand extends Command
     {
         $this
             ->addOption('month', 'm', InputOption::VALUE_OPTIONAL, 'Mois pour lequel générer les documents (format: YYYY-MM)', date('Y-m'))
-            ->addOption('receipts-only', 'r', InputOption::VALUE_NONE, 'Générer uniquement les quittances')
-            ->addOption('notices-only', 'n', InputOption::VALUE_NONE, 'Générer uniquement les avis d\'échéance')
+            ->addOption('receipts-only', null, InputOption::VALUE_NONE, 'Générer uniquement les quittances')
+            ->addOption('notices-only', null, InputOption::VALUE_NONE, 'Générer uniquement les avis d\'échéance')
         ;
     }
 
@@ -66,7 +66,7 @@ class GenerateRentDocumentsCommand extends Command
                         fn($receipt) => sprintf(
                             'Quittance #%d - %s (%s)',
                             $receipt->getId(),
-                            $receipt->getTitle(),
+                            $receipt->getName(),
                             $receipt->getTenant()->getFullName()
                         ),
                         $receipts
@@ -95,7 +95,7 @@ class GenerateRentDocumentsCommand extends Command
                         fn($notice) => sprintf(
                             'Avis #%d - %s (%s)',
                             $notice->getId(),
-                            $notice->getTitle(),
+                            $notice->getName(),
                             $notice->getTenant()->getFullName()
                         ),
                         $notices

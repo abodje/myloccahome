@@ -247,9 +247,16 @@ class Property
     #[ORM\OneToMany(targetEntity: Lease::class, mappedBy: 'property')]
     private Collection $leases;
 
+    /**
+     * @var Collection<int, MaintenanceRequest>
+     */
+    #[ORM\OneToMany(targetEntity: MaintenanceRequest::class, mappedBy: 'property')]
+    private Collection $maintenanceRequests;
+
     public function __construct()
     {
         $this->leases = new ArrayCollection();
+        $this->maintenanceRequests = new ArrayCollection();
         $this->createdAt = new \DateTime();
         $this->status = 'Libre';
     }
@@ -424,6 +431,33 @@ class Property
         if ($this->leases->removeElement($lease)) {
             if ($lease->getProperty() === $this) {
                 $lease->setProperty(null);
+            }
+        }
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, MaintenanceRequest>
+     */
+    public function getMaintenanceRequests(): Collection
+    {
+        return $this->maintenanceRequests;
+    }
+
+    public function addMaintenanceRequest(MaintenanceRequest $maintenanceRequest): static
+    {
+        if (!$this->maintenanceRequests->contains($maintenanceRequest)) {
+            $this->maintenanceRequests->add($maintenanceRequest);
+            $maintenanceRequest->setProperty($this);
+        }
+        return $this;
+    }
+
+    public function removeMaintenanceRequest(MaintenanceRequest $maintenanceRequest): static
+    {
+        if ($this->maintenanceRequests->removeElement($maintenanceRequest)) {
+            if ($maintenanceRequest->getProperty() === $this) {
+                $maintenanceRequest->setProperty(null);
             }
         }
         return $this;

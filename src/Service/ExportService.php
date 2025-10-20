@@ -476,10 +476,11 @@ class ExportService
         $row = 4;
         foreach ($data['properties'] as $property) {
             $sheet->setCellValue('A' . $row, $property->getAddress());
-            $sheet->setCellValue('B' . $row, $property->getType() ?? 'N/A');
+            $sheet->setCellValue('B' . $row, $property->getPropertyType() ?? 'N/A');
             $sheet->setCellValue('C' . $row, $property->getSurface() . ' m²');
-            $sheet->setCellValue('D' . $row, number_format($property->getRentAmount(), 2) . ' ' . $this->getDefaultCurrency());
-            $sheet->setCellValue('E' . $row, $property->getLeases()->first()?->getStatus() ?? 'Libre');
+            $sheet->setCellValue('D' . $row, number_format((float)$property->getMonthlyRent(), 2) . ' ' . $this->getDefaultCurrency());
+            $firstLease = $property->getLeases()->first();
+            $sheet->setCellValue('E' . $row, $firstLease ? $firstLease->getStatus() : 'Libre');
             $row++;
         }
 
@@ -966,10 +967,11 @@ class ExportService
         $pdf->SetFont('helvetica', '', 9);
         foreach ($data['properties'] as $property) {
             $pdf->Cell(80, 8, $property->getAddress(), 1, 0, 'L');
-            $pdf->Cell(30, 8, $property->getType() ?? 'N/A', 1, 0, 'C');
+            $pdf->Cell(30, 8, $property->getPropertyType() ?? 'N/A', 1, 0, 'C');
             $pdf->Cell(25, 8, $property->getSurface() . ' m²', 1, 0, 'C');
-            $pdf->Cell(30, 8, number_format($property->getRentAmount(), 2) . ' ' . $this->getDefaultCurrency(), 1, 0, 'R');
-            $pdf->Cell(25, 8, $property->getLeases()->first()?->getStatus() ?? 'Libre', 1, 1, 'C');
+            $pdf->Cell(30, 8, number_format((float)$property->getMonthlyRent(), 2) . ' ' . $this->getDefaultCurrency(), 1, 0, 'R');
+            $firstLease = $property->getLeases()->first();
+            $pdf->Cell(25, 8, $firstLease ? $firstLease->getStatus() : 'Libre', 1, 1, 'C');
         }
 
         return $this->savePdfFile($pdf, 'inventaire-biens');
