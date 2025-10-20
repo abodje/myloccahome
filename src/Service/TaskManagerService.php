@@ -21,7 +21,8 @@ class TaskManagerService
         private UserPasswordHasherInterface $passwordHasher,
         private ?AuditLogService $auditLogService = null,
         private ?BackupService $backupService = null,
-        private ?DemoEnvironmentService $demoEnvironmentService = null
+        private ?DemoEnvironmentService $demoEnvironmentService = null,
+        private ?\App\Service\SmtpConfigurationService $smtpConfigurationService = null
     ) {
     }
 
@@ -152,6 +153,22 @@ class TaskManagerService
 
                 case 'SETUP_ACCOUNTING_SYSTEM':
                     $this->executeSetupAccountingSystemTask($task);
+                    break;
+
+                case 'INITIALIZE_EMAIL_SETTINGS':
+                    $this->executeInitializeEmailSettingsTask($task);
+                    break;
+
+                case 'TEST_EMAIL_SETTINGS':
+                    $this->executeTestEmailSettingsTask($task);
+                    break;
+
+                case 'TEST_SMTP_CONFIGURATION':
+                    $this->executeTestSmtpConfigurationTask($task);
+                    break;
+
+                case 'UPDATE_SMTP_CONFIGURATION':
+                    $this->executeUpdateSmtpConfigurationTask($task);
                     break;
 
                 default:
@@ -512,6 +529,44 @@ class TaskManagerService
                 'frequency' => 'MANUAL', // Tâche manuelle uniquement
                 'parameters' => [
                     'log_details' => true // Loguer les détails de la configuration
+                ]
+            ],
+            [
+                'name' => 'Initialisation des paramètres email',
+                'type' => 'INITIALIZE_EMAIL_SETTINGS',
+                'description' => 'Initialise les paramètres email par défaut (templates, expéditeur, notifications)',
+                'frequency' => 'MANUAL', // Tâche manuelle uniquement
+                'parameters' => [
+                    'log_details' => true // Loguer les détails de l'initialisation
+                ]
+            ],
+            [
+                'name' => 'Test des paramètres email',
+                'type' => 'TEST_EMAIL_SETTINGS',
+                'description' => 'Teste les paramètres email et envoie un email de test avec les templates personnalisés',
+                'frequency' => 'MANUAL', // Tâche manuelle uniquement
+                'parameters' => [
+                    'test_email' => 'info@app.lokapro.tech', // Email par défaut pour le test
+                    'log_details' => true // Loguer les détails du test
+                ]
+            ],
+            [
+                'name' => 'Test de la configuration SMTP',
+                'type' => 'TEST_SMTP_CONFIGURATION',
+                'description' => 'Teste la configuration SMTP et la connexion au serveur de mail',
+                'frequency' => 'MANUAL', // Tâche manuelle uniquement
+                'parameters' => [
+                    'test_email' => 'info@app.lokapro.tech', // Email par défaut pour le test
+                    'log_details' => true // Loguer les détails du test
+                ]
+            ],
+            [
+                'name' => 'Mise à jour de la configuration SMTP',
+                'type' => 'UPDATE_SMTP_CONFIGURATION',
+                'description' => 'Met à jour la configuration SMTP avec les paramètres app.lokapro.tech',
+                'frequency' => 'MANUAL', // Tâche manuelle uniquement
+                'parameters' => [
+                    'log_details' => true // Loguer les détails de la mise à jour
                 ]
             ]
         ];
@@ -1861,6 +1916,204 @@ HTML;
 
         } catch (\Exception $e) {
             $errorMsg = sprintf('Erreur lors de la configuration du système comptable: %s', $e->getMessage());
+            $this->logger->error(sprintf('❌ %s', $errorMsg));
+            throw new \Exception($errorMsg);
+        }
+    }
+
+    /**
+     * Exécute la tâche d'initialisation des paramètres email
+     */
+    public function executeInitializeEmailSettingsTask(Task $task, bool $logDetails = false): string
+    {
+        try {
+            $parameters = $task->getParameters() ?? [];
+            $logDetails = $parameters['log_details'] ?? false;
+
+            if ($logDetails) {
+                $this->logger->info('📧 Début de l\'initialisation des paramètres email');
+            }
+
+            // Initialiser les paramètres email par défaut
+            $this->settingsService->set('email_sender_name', 'MYLOCCA');
+            $this->settingsService->set('email_from_address', 'info@app.lokapro.tech');
+            $this->settingsService->set('email_signature', 'MYLOCCA - Votre partenaire immobilier');
+
+            // Configuration des notifications
+            $this->settingsService->set('email_auto_notifications', true);
+            $this->settingsService->set('email_reminder_days_before', 5);
+            $this->settingsService->set('email_reminder_frequency', 'daily');
+            $this->settingsService->set('email_send_time', '09:00');
+
+            // Paramètres de contenu
+            $this->settingsService->set('email_default_language', 'fr');
+            $this->settingsService->set('email_date_format', 'd/m/Y');
+            $this->settingsService->set('email_currency', 'FCFA');
+
+            // Templates par défaut (simplifiés pour la tâche)
+            $this->settingsService->set('email_template_receipt', '<h2>Quittance de loyer</h2><p>Bonjour {{ locataire_nom }}, votre quittance est en pièce jointe.</p>');
+            $this->settingsService->set('email_template_reminder', '<h2>Rappel de paiement</h2><p>Bonjour {{ locataire_nom }}, votre loyer est dû le {{ date_echeance }}.</p>');
+            $this->settingsService->set('email_template_expiration', '<h2>Expiration de contrat</h2><p>Bonjour {{ locataire_nom }}, votre contrat expire le {{ contrat_fin }}.</p>');
+            $this->settingsService->set('email_template_welcome', '<h2>Bienvenue</h2><p>Bonjour {{ locataire_nom }}, bienvenue chez {{ societe_nom }}.</p>');
+
+            // Paramètres de pièces jointes
+            $this->settingsService->set('email_attachment_max_size', 10);
+            $this->settingsService->set('email_compress_images', true);
+
+            $result = 'Paramètres email initialisés avec succès (expéditeur, templates, notifications).';
+
+            if ($logDetails) {
+                $this->logger->info(sprintf('✅ %s', $result));
+            }
+
+            return $result;
+
+        } catch (\Exception $e) {
+            $errorMsg = sprintf('Erreur lors de l\'initialisation des paramètres email: %s', $e->getMessage());
+            $this->logger->error(sprintf('❌ %s', $errorMsg));
+            throw new \Exception($errorMsg);
+        }
+    }
+
+    /**
+     * Exécute la tâche de test des paramètres email
+     */
+    public function executeTestEmailSettingsTask(Task $task, bool $logDetails = false): string
+    {
+        try {
+            $parameters = $task->getParameters() ?? [];
+            $logDetails = $parameters['log_details'] ?? false;
+            $testEmail = $parameters['test_email'] ?? 'info@app.lokapro.tech';
+
+            if ($logDetails) {
+                $this->logger->info(sprintf('📧 Test des paramètres email vers %s', $testEmail));
+            }
+
+            // Tester l'envoi d'email avec les paramètres actuels
+            $success = $this->notificationService->testEmailConfiguration($testEmail);
+
+            if ($success) {
+                $result = sprintf('Email de test envoyé avec succès à %s avec les paramètres configurés.', $testEmail);
+
+                if ($logDetails) {
+                    $this->logger->info(sprintf('✅ %s', $result));
+                }
+            } else {
+                $result = sprintf('Échec de l\'envoi de l\'email de test à %s.', $testEmail);
+
+                if ($logDetails) {
+                    $this->logger->error(sprintf('❌ %s', $result));
+                }
+            }
+
+            return $result;
+
+        } catch (\Exception $e) {
+            $errorMsg = sprintf('Erreur lors du test des paramètres email: %s', $e->getMessage());
+            $this->logger->error(sprintf('❌ %s', $errorMsg));
+            throw new \Exception($errorMsg);
+        }
+    }
+
+    /**
+     * Exécute la tâche de test de la configuration SMTP
+     */
+    public function executeTestSmtpConfigurationTask(Task $task, bool $logDetails = false): string
+    {
+        try {
+            $parameters = $task->getParameters() ?? [];
+            $logDetails = $parameters['log_details'] ?? false;
+            $testEmail = $parameters['test_email'] ?? 'info@app.lokapro.tech';
+
+            if ($logDetails) {
+                $this->logger->info(sprintf('🔧 Test de la configuration SMTP vers %s', $testEmail));
+            }
+
+            // Tester la connexion SMTP
+            if (!$this->smtpConfigurationService) {
+                $this->smtpConfigurationService = new \App\Service\SmtpConfigurationService($this->entityManager, $this->settingsService);
+            }
+
+            $connectionTest = $this->smtpConfigurationService->testSmtpConnection();
+
+            if ($connectionTest['success']) {
+                $result = sprintf('Connexion SMTP réussie. Configuration: %s:%d',
+                    $connectionTest['config']['host'],
+                    $connectionTest['config']['port']
+                );
+
+                if ($logDetails) {
+                    $this->logger->info(sprintf('✅ %s', $result));
+                }
+            } else {
+                $result = sprintf('Échec de la connexion SMTP: %s', $connectionTest['message']);
+
+                if ($logDetails) {
+                    $this->logger->error(sprintf('❌ %s', $result));
+                }
+            }
+
+            return $result;
+
+        } catch (\Exception $e) {
+            $errorMsg = sprintf('Erreur lors du test de la configuration SMTP: %s', $e->getMessage());
+            $this->logger->error(sprintf('❌ %s', $errorMsg));
+            throw new \Exception($errorMsg);
+        }
+    }
+
+    /**
+     * Exécute la tâche de mise à jour de la configuration SMTP
+     */
+    public function executeUpdateSmtpConfigurationTask(Task $task, bool $logDetails = false): string
+    {
+        try {
+            $parameters = $task->getParameters() ?? [];
+            $logDetails = $parameters['log_details'] ?? false;
+
+            if ($logDetails) {
+                $this->logger->info('🔧 Mise à jour de la configuration SMTP');
+            }
+
+            // Configuration SMTP pour app.lokapro.tech
+            $config = [
+                'host' => 'app.lokapro.tech',
+                'port' => 465,
+                'username' => 'info@app.lokapro.tech',
+                'password' => 'q+Dy-riz8EBi;oL]',
+                'encryption' => 'ssl',
+                'auth_mode' => 'login',
+            ];
+
+            // Mettre à jour la configuration SMTP
+            if (!$this->smtpConfigurationService) {
+                $this->smtpConfigurationService = new \App\Service\SmtpConfigurationService($this->entityManager, $this->settingsService);
+            }
+
+            $success = $this->smtpConfigurationService->updateSmtpConfiguration($config);
+
+            if ($success) {
+                $result = sprintf('Configuration SMTP mise à jour avec succès: %s:%d (%s)',
+                    $config['host'],
+                    $config['port'],
+                    $config['encryption']
+                );
+
+                if ($logDetails) {
+                    $this->logger->info(sprintf('✅ %s', $result));
+                }
+            } else {
+                $result = 'Échec de la mise à jour de la configuration SMTP.';
+
+                if ($logDetails) {
+                    $this->logger->error(sprintf('❌ %s', $result));
+                }
+            }
+
+            return $result;
+
+        } catch (\Exception $e) {
+            $errorMsg = sprintf('Erreur lors de la mise à jour de la configuration SMTP: %s', $e->getMessage());
             $this->logger->error(sprintf('❌ %s', $errorMsg));
             throw new \Exception($errorMsg);
         }
