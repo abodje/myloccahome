@@ -122,6 +122,10 @@ class TaskManagerService
                     $this->executeDemoCreateTask($task);
                     break;
 
+                case 'UPDATE_PROPERTY_STATUS':
+                    $this->executeUpdatePropertyStatusTask($task);
+                    break;
+
                 default:
                     throw new \Exception("Type de tâche non reconnu: {$task->getType()}");
             }
@@ -405,6 +409,16 @@ class TaskManagerService
                     'default_days' => 14, // Durée par défaut en jours
                     'auto_cleanup' => true, // Nettoyage automatique des démos expirées
                     'log_details' => true // Loguer les détails de la création
+                ]
+            ],
+            [
+                'name' => 'Mise à jour du statut des propriétés',
+                'type' => 'UPDATE_PROPERTY_STATUS',
+                'description' => 'Met à jour automatiquement le statut des propriétés selon leur occupation (Libre/Occupé)',
+                'frequency' => 'DAILY', // Exécution quotidienne
+                'parameters' => [
+                    'hour' => 1, // 1h du matin
+                    'log_details' => true // Loguer les détails de la mise à jour
                 ]
             ]
         ];
@@ -1356,5 +1370,92 @@ HTML;
             $task->setResult('Erreur: ' . $e->getMessage());
             throw $e;
         }
+    }
+
+    /**
+     * Exécute la tâche de mise à jour du statut des propriétés
+     */
+    public function executeUpdatePropertyStatusTask(Task $task, bool $logDetails = false): string
+    {
+        try {
+            $parameters = $task->getParameters() ?? [];
+            $logDetails = $parameters['log_details'] ?? false;
+
+            $this->logger->info('🔄 Début de la mise à jour du statut des propriétés');
+
+            // Récupérer toutes les propriétés
+            $properties = $this->entityManager->getRepository(\App\Entity\Property::class)->findAll();
+
+            $updatedCount = 0;
+            $occupiedCount = 0;
+            $freeCount = 0;
+
+            foreach ($properties as $property) {
+                $oldStatus = $property->getStatus();
+                $hasActiveLease = $this->hasActiveLease($property);
+
+                if ($hasActiveLease) {
+                    $newStatus = 'Occupé';
+                    $occupiedCount++;
+                } else {
+                    $newStatus = 'Libre';
+                    $freeCount++;
+                }
+
+                // Mettre à jour le statut si nécessaire
+                if ($oldStatus !== $newStatus) {
+                    $property->setStatus($newStatus);
+                    $this->entityManager->persist($property);
+                    $updatedCount++;
+
+                    if ($logDetails) {
+                        $this->logger->info(sprintf(
+                            '🏠 Propriété #%d (%s): %s → %s',
+                            $property->getId(),
+                            $property->getFullAddress(),
+                            $oldStatus,
+                            $newStatus
+                        ));
+                    }
+                }
+            }
+
+            // Sauvegarder tous les changements
+            $this->entityManager->flush();
+
+            $result = sprintf(
+                'Mise à jour terminée: %d propriétés mises à jour, %d occupées, %d libres.',
+                $updatedCount,
+                $occupiedCount,
+                $freeCount
+            );
+
+            $this->logger->info(sprintf('✅ %s', $result));
+
+            return $result;
+
+        } catch (\Exception $e) {
+            $this->logger->error(sprintf('❌ Erreur lors de la mise à jour du statut des propriétés: %s', $e->getMessage()));
+            throw $e;
+        }
+    }
+
+    /**
+     * Vérifie si une propriété a un bail actif
+     */
+    private function hasActiveLease(\App\Entity\Property $property): bool
+    {
+        $now = new \DateTime();
+
+        foreach ($property->getLeases() as $lease) {
+            // Un bail est actif s'il a commencé et n'a pas encore fini
+            if ($lease->getStartDate() <= $now &&
+                ($lease->getEndDate() === null || $lease->getEndDate() >= $now) &&
+                $lease->getStatus() === 'Actif') {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

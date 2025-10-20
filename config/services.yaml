@@ -28,3 +28,10 @@ services:
     # Enregistrement du processeur d'environnement pour Orange SMS
     App\Service\OrangeSmsEnvironmentVariableProcessor:
         tags: ['container.env_var_processor']
+
+    # EventListener pour la mise à jour automatique du statut des propriétés
+    App\EventListener\PropertyStatusListener:
+        tags:
+            - { name: doctrine.event_listener, event: postPersist }
+            - { name: doctrine.event_listener, event: postUpdate }
+            - { name: doctrine.event_listener, event: postRemove }
