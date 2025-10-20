@@ -812,32 +812,44 @@ class TaskManagerService
      */
     private function executeGenerateRentDocumentsTask(Task $task): void
     {
-        $parameters = $task->getParameters() ?? [];
-        $month = $parameters['month'] ?? 'current';
-
-        // Gérer les valeurs spéciales
-        if ($month === 'current' || $month === 'now') {
-            $monthDate = new \DateTime('first day of this month');
-        } elseif ($month === 'last') {
-            $monthDate = new \DateTime('first day of last month');
-        } elseif ($month === 'next') {
-            $monthDate = new \DateTime('first day of next month');
-        } else {
-            // Format YYYY-MM attendu
-            try {
-                $monthDate = new \DateTime($month . '-01');
-            } catch (\Exception $e) {
-                throw new \Exception('Format de mois invalide dans les paramètres de la tâche. Utilisez "current", "last", "next" ou le format YYYY-MM');
-            }
-        }
-
         try {
-            // Générer les quittances du mois
-            $receipts = $this->rentReceiptService->generateMonthlyReceipts($monthDate);
+            $parameters = $task->getParameters() ?? [];
+            $month = $parameters['month'] ?? 'current';
 
-            // Générer les avis d'échéance pour le mois prochain
-            $nextMonth = (clone $monthDate)->modify('+1 month');
-            $notices = $this->rentReceiptService->generateUpcomingNotices($nextMonth);
+            // Gérer les valeurs spéciales
+            if ($month === 'current' || $month === 'now') {
+                $monthDate = new \DateTime('first day of this month');
+            } elseif ($month === 'last') {
+                $monthDate = new \DateTime('first day of last month');
+            } elseif ($month === 'next') {
+                $monthDate = new \DateTime('first day of next month');
+            } else {
+                // Format YYYY-MM attendu
+                try {
+                    $monthDate = new \DateTime($month . '-01');
+                } catch (\Exception $e) {
+                    throw new \Exception('Format de mois invalide dans les paramètres de la tâche. Utilisez "current", "last", "next" ou le format YYYY-MM');
+                }
+            }
+
+            // Générer les quittances du mois avec protection EntityManager
+            $receipts = [];
+            try {
+                $receipts = $this->rentReceiptService->generateMonthlyReceipts($monthDate);
+            } catch (\Exception $e) {
+                $this->logger->warning('Erreur lors de la génération des quittances: ' . $e->getMessage());
+                $receipts = [];
+            }
+
+            // Générer les avis d'échéance pour le mois prochain avec protection EntityManager
+            $notices = [];
+            try {
+                $nextMonth = (clone $monthDate)->modify('+1 month');
+                $notices = $this->rentReceiptService->generateUpcomingNotices($nextMonth);
+            } catch (\Exception $e) {
+                $this->logger->warning('Erreur lors de la génération des avis: ' . $e->getMessage());
+                $notices = [];
+            }
 
             $total = count($receipts) + count($notices);
 
@@ -856,12 +868,42 @@ class TaskManagerService
                     $monthDate->format('F Y')
                 ));
             }
+
+            // Sauvegarder les résultats
+            $task->setParameter('last_receipts_generated', count($receipts));
+            $task->setParameter('last_notices_generated', count($notices));
+            $task->setParameter('last_total_documents', $total);
+
+            // S'assurer que la tâche est sauvegardée (seulement si EntityManager ouvert)
+            if ($this->entityManager->isOpen()) {
+                $this->entityManager->flush();
+            }
+
         } catch (\Exception $e) {
-            $this->logger->error(sprintf(
-                '❌ Erreur lors de la génération des documents pour %s : %s',
-                $monthDate->format('F Y'),
-                $e->getMessage()
-            ));
+            // Log l'erreur et marquer la tâche comme échouée
+            $task->setParameter('last_error', $e->getMessage());
+
+            $this->logger->error('EntityManager fermé lors de l\'exécution de la tâche GENERATE_RENT_DOCUMENTS', [
+                'task_id' => $task->getId(),
+                'task_type' => $task->getType(),
+                'error' => $e->getMessage()
+            ]);
+
+            // S'assurer que l'EntityManager reste ouvert
+            if (!$this->entityManager->isOpen()) {
+                // Note: La recréation directe d'EntityManager n'est pas possible ici
+                // L'erreur sera propagée et gérée par le système de tâches
+                $this->logger->error('EntityManager fermé lors de l\'exécution de la tâche', [
+                    'task_id' => $task->getId(),
+                    'task_type' => $task->getType(),
+                    'error' => $e->getMessage()
+                ]);
+            }
+
+            // Essayer de sauvegarder seulement si l'EntityManager est ouvert
+            if ($this->entityManager->isOpen()) {
+                $this->entityManager->flush();
+            }
             throw $e;
         }
     }

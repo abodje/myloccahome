@@ -273,8 +273,10 @@ class RentReceiptService
                 $receipt = $this->generateRentReceipt($payment);
                 $generatedReceipts[] = $receipt;
 
-                // Clear l'EntityManager pour libérer la mémoire
-                $this->entityManager->clear(Document::class);
+                // Clear l'EntityManager pour libérer la mémoire (seulement si ouvert)
+                if ($this->entityManager->isOpen()) {
+                    $this->entityManager->clear(Document::class);
+                }
 
             } catch (\Exception $e) {
                 // Log l'erreur avec plus de détails
@@ -326,8 +328,10 @@ class RentReceiptService
                 $notice = $this->generatePaymentNotice($payment);
                 $generatedNotices[] = $notice;
 
-                // Clear l'EntityManager pour libérer la mémoire
-                $this->entityManager->clear(Document::class);
+                // Clear l'EntityManager pour libérer la mémoire (seulement si ouvert)
+                if ($this->entityManager->isOpen()) {
+                    $this->entityManager->clear(Document::class);
+                }
 
             } catch (\Exception $e) {
                 // Log l'erreur avec plus de détails
