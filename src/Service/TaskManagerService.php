@@ -71,7 +71,9 @@ class TaskManagerService
         }
 
         $task->markAsRunning();
-        $this->entityManager->flush();
+        if ($this->entityManager->isOpen()) {
+            $this->entityManager->flush();
+        }
 
         try {
             // Vérifier que l'EntityManager est ouvert avant l'exécution
@@ -79,7 +81,9 @@ class TaskManagerService
                 throw new \Exception('EntityManager fermé avant l\'exécution de la tâche');
             }
 
-            switch ($task->getType()) {
+            // Encapsuler l'exécution dans un try-catch global
+            try {
+                switch ($task->getType()) {
                 case 'RENT_RECEIPT':
                     $this->executeRentReceiptTask($task);
                     break;
@@ -178,14 +182,40 @@ class TaskManagerService
 
                 default:
                     throw new \Exception("Type de tâche non reconnu: {$task->getType()}");
+                }
+
+            } catch (\Exception $innerException) {
+                // Capturer les erreurs spécifiques comme "EntityManager is closed"
+                if (strpos($innerException->getMessage(), 'EntityManager is closed') !== false) {
+                    // Log l'erreur spécifique
+                    $this->logger->error('EntityManager fermé lors de l\'exécution de la tâche', [
+                        'task_id' => $task->getId(),
+                        'task_type' => $task->getType(),
+                        'error' => $innerException->getMessage()
+                    ]);
+
+                    // Marquer la tâche comme échouée avec un message plus clair
+                    $task->markAsFailed('EntityManager fermé - tâche interrompue');
+                    $task->setParameter('last_error', 'EntityManager fermé pendant l\'exécution');
+
+                    // Ne pas re-lancer l'exception, gérer gracieusement
+                    return;
+                } else {
+                    // Re-lancer les autres exceptions
+                    throw $innerException;
+                }
             }
 
             // Marquer la tâche comme terminée avec le résultat
             $task->markAsCompleted($task->getResult());
-            $this->entityManager->flush();
+            if ($this->entityManager->isOpen()) {
+                $this->entityManager->flush();
+            }
         } catch (\Exception $e) {
             $task->markAsFailed($e->getMessage());
-            $this->entityManager->flush();
+            if ($this->entityManager->isOpen()) {
+                $this->entityManager->flush();
+            }
             throw $e;
         }
     }
@@ -883,27 +913,27 @@ class TaskManagerService
             // Log l'erreur et marquer la tâche comme échouée
             $task->setParameter('last_error', $e->getMessage());
 
-            $this->logger->error('EntityManager fermé lors de l\'exécution de la tâche GENERATE_RENT_DOCUMENTS', [
+            $this->logger->error('Erreur lors de l\'exécution de la tâche GENERATE_RENT_DOCUMENTS', [
                 'task_id' => $task->getId(),
                 'task_type' => $task->getType(),
                 'error' => $e->getMessage()
             ]);
 
-            // S'assurer que l'EntityManager reste ouvert
-            if (!$this->entityManager->isOpen()) {
-                // Note: La recréation directe d'EntityManager n'est pas possible ici
-                // L'erreur sera propagée et gérée par le système de tâches
-                $this->logger->error('EntityManager fermé lors de l\'exécution de la tâche', [
-                    'task_id' => $task->getId(),
-                    'task_type' => $task->getType(),
-                    'error' => $e->getMessage()
-                ]);
+            // Si l'erreur est "EntityManager is closed", ne pas re-lancer l'exception
+            if (strpos($e->getMessage(), 'EntityManager is closed') !== false) {
+                $this->logger->warning('EntityManager fermé - tâche interrompue gracieusement');
+                $task->setParameter('last_error', 'EntityManager fermé - génération interrompue');
+
+                // Essayer de sauvegarder seulement si l'EntityManager est ouvert
+                if ($this->entityManager->isOpen()) {
+                    $this->entityManager->flush();
+                }
+
+                // Ne pas re-lancer l'exception pour "EntityManager is closed"
+                return;
             }
 
-            // Essayer de sauvegarder seulement si l'EntityManager est ouvert
-            if ($this->entityManager->isOpen()) {
-                $this->entityManager->flush();
-            }
+            // Re-lancer les autres exceptions
             throw $e;
         }
     }

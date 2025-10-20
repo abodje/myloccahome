@@ -248,18 +248,32 @@ class RentReceiptService
      */
     public function generateMonthlyReceipts(\DateTime $month): array
     {
-        $startDate = new \DateTime($month->format('Y-m-01 00:00:00'));
-        $endDate = new \DateTime($month->format('Y-m-t 23:59:59'));
+        try {
+            $startDate = new \DateTime($month->format('Y-m-01 00:00:00'));
+            $endDate = new \DateTime($month->format('Y-m-t 23:59:59'));
 
-        $payments = $this->entityManager->getRepository(Payment::class)
-            ->createQueryBuilder('p')
-            ->where('p.status = :status')
-            ->andWhere('p.paidDate BETWEEN :startDate AND :endDate')
-            ->setParameter('status', 'Payé')
-            ->setParameter('startDate', $startDate)
-            ->setParameter('endDate', $endDate)
-            ->getQuery()
-            ->getResult();
+            // Vérifier que l'EntityManager est ouvert avant de l'utiliser
+            if (!$this->entityManager->isOpen()) {
+                error_log('EntityManager fermé dans generateMonthlyReceipts - retour d\'un tableau vide');
+                return [];
+            }
+
+            $payments = $this->entityManager->getRepository(Payment::class)
+                ->createQueryBuilder('p')
+                ->where('p.status = :status')
+                ->andWhere('p.paidDate BETWEEN :startDate AND :endDate')
+                ->setParameter('status', 'Payé')
+                ->setParameter('startDate', $startDate)
+                ->setParameter('endDate', $endDate)
+                ->getQuery()
+                ->getResult();
+        } catch (\Exception $e) {
+            if (strpos($e->getMessage(), 'EntityManager is closed') !== false) {
+                error_log('EntityManager fermé dans generateMonthlyReceipts - retour d\'un tableau vide');
+                return [];
+            }
+            throw $e; // Re-lancer les autres exceptions
+        }
 
         $generatedReceipts = [];
         foreach ($payments as $payment) {
@@ -303,18 +317,32 @@ class RentReceiptService
      */
     public function generateUpcomingNotices(\DateTime $dueMonth): array
     {
-        $startDate = new \DateTime($dueMonth->format('Y-m-01 00:00:00'));
-        $endDate = new \DateTime($dueMonth->format('Y-m-t 23:59:59'));
+        try {
+            $startDate = new \DateTime($dueMonth->format('Y-m-01 00:00:00'));
+            $endDate = new \DateTime($dueMonth->format('Y-m-t 23:59:59'));
 
-        $payments = $this->entityManager->getRepository(Payment::class)
-            ->createQueryBuilder('p')
-            ->where('p.status = :status')
-            ->andWhere('p.dueDate BETWEEN :startDate AND :endDate')
-            ->setParameter('status', 'En attente')
-            ->setParameter('startDate', $startDate)
-            ->setParameter('endDate', $endDate)
-            ->getQuery()
-            ->getResult();
+            // Vérifier que l'EntityManager est ouvert avant de l'utiliser
+            if (!$this->entityManager->isOpen()) {
+                error_log('EntityManager fermé dans generateUpcomingNotices - retour d\'un tableau vide');
+                return [];
+            }
+
+            $payments = $this->entityManager->getRepository(Payment::class)
+                ->createQueryBuilder('p')
+                ->where('p.status = :status')
+                ->andWhere('p.dueDate BETWEEN :startDate AND :endDate')
+                ->setParameter('status', 'En attente')
+                ->setParameter('startDate', $startDate)
+                ->setParameter('endDate', $endDate)
+                ->getQuery()
+                ->getResult();
+        } catch (\Exception $e) {
+            if (strpos($e->getMessage(), 'EntityManager is closed') !== false) {
+                error_log('EntityManager fermé dans generateUpcomingNotices - retour d\'un tableau vide');
+                return [];
+            }
+            throw $e; // Re-lancer les autres exceptions
+        }
 
         $generatedNotices = [];
         foreach ($payments as $payment) {
