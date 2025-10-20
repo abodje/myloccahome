@@ -44,6 +44,16 @@ class AccountingEntry
     #[ORM\ManyToOne]
     private ?Expense $expense = null;
 
+    // Relation avec Organization (Multi-tenant SaaS)
+    #[ORM\ManyToOne(targetEntity: Organization::class)]
+    #[ORM\JoinColumn(nullable: true)]
+    private ?Organization $organization = null;
+
+    // Relation avec Company (Multi-tenant SaaS)
+    #[ORM\ManyToOne(targetEntity: Company::class)]
+    #[ORM\JoinColumn(nullable: true)]
+    private ?Company $company = null;
+
     #[ORM\Column(type: Types::DECIMAL, precision: 10, scale: 2, nullable: true)]
     private ?string $runningBalance = null; // Solde courant après cette écriture
 
@@ -218,6 +228,28 @@ class AccountingEntry
     public function setUpdatedAt(?\DateTimeInterface $updatedAt): static
     {
         $this->updatedAt = $updatedAt;
+        return $this;
+    }
+
+    public function getOrganization(): ?Organization
+    {
+        return $this->organization;
+    }
+
+    public function setOrganization(?Organization $organization): static
+    {
+        $this->organization = $organization;
+        return $this;
+    }
+
+    public function getCompany(): ?Company
+    {
+        return $this->company;
+    }
+
+    public function setCompany(?Company $company): static
+    {
+        $this->company = $company;
         return $this;
     }
 

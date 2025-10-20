@@ -362,7 +362,7 @@ class AccountingEntryRepository extends ServiceEntityRepository
             $entryMonth = (int)$entry->getEntryDate()->format('m');
             $entryYear = (int)$entry->getEntryDate()->format('Y');
 
-            if ($entry->getType() === 'Crédit') {
+            if ($entry->getType() === 'CREDIT') {
                 $totalCredits += $amount;
                 if ($entryMonth === $currentMonth && $entryYear === $currentYear) {
                     $currentMonthCredits += $amount;
@@ -410,7 +410,7 @@ class AccountingEntryRepository extends ServiceEntityRepository
             $entryMonth = (int)$entry->getEntryDate()->format('m');
             $entryYear = (int)$entry->getEntryDate()->format('Y');
 
-            if ($entry->getType() === 'Crédit') {
+            if ($entry->getType() === 'CREDIT') {
                 $totalCredits += $amount;
                 if ($entryMonth === $currentMonth && $entryYear === $currentYear) {
                     $currentMonthCredits += $amount;
@@ -439,8 +439,7 @@ class AccountingEntryRepository extends ServiceEntityRepository
     public function findByCompanyWithFilters($company, ?string $type = null, ?string $category = null, ?int $year = null, ?int $month = null): array
     {
         $qb = $this->createQueryBuilder('ae')
-            ->join('ae.property', 'p')
-            ->where('p.company = :company')
+            ->where('ae.company = :company')
             ->setParameter('company', $company);
 
         if ($type) {
@@ -482,8 +481,7 @@ class AccountingEntryRepository extends ServiceEntityRepository
     public function findByOrganizationWithFilters($organization, ?string $type = null, ?string $category = null, ?int $year = null, ?int $month = null): array
     {
         $qb = $this->createQueryBuilder('ae')
-            ->join('ae.property', 'p')
-            ->where('p.organization = :organization')
+            ->where('ae.organization = :organization')
             ->setParameter('organization', $organization);
 
         if ($type) {
@@ -577,4 +575,51 @@ class AccountingEntryRepository extends ServiceEntityRepository
             'total_entries' => count($entries),
         ];
     }
+
+    /**
+     * Trouve les écritures par organisation
+     */
+    public function findByOrganization($organization): array
+    {
+        return $this->createQueryBuilder('ae')
+            ->where('ae.organization = :organization')
+            ->setParameter('organization', $organization)
+            ->orderBy('ae.entryDate', 'DESC')
+            ->addOrderBy('ae.createdAt', 'DESC')
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
+     * Trouve les écritures par société
+     */
+    public function findByCompany($company): array
+    {
+        return $this->createQueryBuilder('ae')
+            ->where('ae.company = :company')
+            ->setParameter('company', $company)
+            ->orderBy('ae.entryDate', 'DESC')
+            ->addOrderBy('ae.createdAt', 'DESC')
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
+     * Trouve les écritures par organisation et société
+     */
+    public function findByOrganizationAndCompany($organization, $company): array
+    {
+        return $this->createQueryBuilder('ae')
+            ->where('ae.organization = :organization')
+            ->andWhere('ae.company = :company')
+            ->setParameter('organization', $organization)
+            ->setParameter('company', $company)
+            ->orderBy('ae.entryDate', 'DESC')
+            ->addOrderBy('ae.createdAt', 'DESC')
+            ->getQuery()
+            ->getResult();
+    }
+
+
+
 }

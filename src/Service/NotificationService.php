@@ -576,6 +576,8 @@ class NotificationService
         $entry->setProperty($payment->getLease()->getProperty());
         $entry->setOwner($payment->getLease()->getProperty()?->getOwner());
         $entry->setPayment($payment);
+        $entry->setOrganization($payment->getOrganization());
+        $entry->setCompany($payment->getCompany());
         $entry->setNotes('Généré automatiquement selon la configuration comptable');
 
         $this->entityManager->persist($entry);

@@ -382,6 +382,8 @@ class RentReceiptService
         $entry->setProperty($payment->getProperty());
         $entry->setOwner($payment->getProperty()?->getOwner());
         $entry->setPayment($payment);
+        $entry->setOrganization($payment->getOrganization());
+        $entry->setCompany($payment->getCompany());
         $entry->setNotes('Généré automatiquement lors de la création de la quittance');
 
         $this->entityManager->persist($entry);
@@ -413,6 +415,8 @@ class RentReceiptService
         $entry->setProperty($payment->getProperty());
         $entry->setOwner($payment->getProperty()?->getOwner());
         $entry->setPayment($payment);
+        $entry->setOrganization($payment->getOrganization());
+        $entry->setCompany($payment->getCompany());
         $entry->setNotes('Généré automatiquement lors de la création de l\'avis d\'échéance');
 
         $this->entityManager->persist($entry);
