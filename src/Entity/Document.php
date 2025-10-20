@@ -14,11 +14,11 @@ class Document
     #[ORM\Column]
     private ?int $id = null;
 
-    #[ORM\ManyToOne(targetEntity: Organization::class)]
+    #[ORM\ManyToOne(targetEntity: Organization::class, cascade: ['persist'])]
     #[ORM\JoinColumn(nullable: true)]
     private ?Organization $organization = null;
 
-    #[ORM\ManyToOne(targetEntity: Company::class)]
+    #[ORM\ManyToOne(targetEntity: Company::class, cascade: ['persist'])]
     #[ORM\JoinColumn(nullable: true)]
     private ?Company $company = null;
 
@@ -40,13 +40,13 @@ class Document
     #[ORM\Column(nullable: true)]
     private ?int $fileSize = null; // Taille en octets
 
-    #[ORM\ManyToOne]
+    #[ORM\ManyToOne(cascade: ['persist'])]
     private ?Property $property = null;
 
-    #[ORM\ManyToOne]
+    #[ORM\ManyToOne(cascade: ['persist'])]
     private ?Tenant $tenant = null;
 
-    #[ORM\ManyToOne]
+    #[ORM\ManyToOne(cascade: ['persist'])]
     private ?Lease $lease = null;
 
     #[ORM\ManyToOne]

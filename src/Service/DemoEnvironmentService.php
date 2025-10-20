@@ -648,6 +648,7 @@ class DemoEnvironmentService
                 $document->setFileSize(rand(50000, 500000)); // Taille aléatoire entre 50KB et 500KB
                 $document->setTenant($payment->getLease()->getTenant());
                 $document->setProperty($payment->getLease()->getProperty());
+                $document->setLease($payment->getLease()); // Assigner explicitement le lease
                 $document->setOrganization($organization);
                 $document->setCompany($company);
                 $document->setCreatedAt(new \DateTime());
