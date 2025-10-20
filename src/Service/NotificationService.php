@@ -384,6 +384,10 @@ class NotificationService
                     $payment->setCompany($lease->getCompany());
 
                     $this->entityManager->persist($payment);
+
+                    // Créer automatiquement une écriture comptable pour le loyer généré
+                    $this->createAccountingEntryForGeneratedRent($payment);
+
                     $generated++;
                 } else {
                     $skipped++;
@@ -533,5 +537,34 @@ class NotificationService
 
         $uploadDir = 'uploads/documents/';
         return $uploadDir . $document->getFileName();
+    }
+
+    /**
+     * Crée une écriture comptable pour un loyer généré automatiquement
+     */
+    private function createAccountingEntryForGeneratedRent(Payment $payment): void
+    {
+        // Vérifier si une écriture comptable existe déjà pour ce paiement
+        $existingEntry = $this->entityManager->getRepository(\App\Entity\AccountingEntry::class)
+            ->findOneBy(['payment' => $payment]);
+
+        if ($existingEntry) {
+            return; // Écriture déjà existante
+        }
+
+        // Créer une nouvelle écriture comptable pour le loyer généré
+        $entry = new \App\Entity\AccountingEntry();
+        $entry->setEntryDate($payment->getDueDate());
+        $entry->setDescription('Loyer généré automatiquement - ' . $payment->getLease()->getProperty()->getFullAddress());
+        $entry->setAmount($payment->getAmount());
+        $entry->setType('CREDIT'); // Les loyers sont des crédits (revenus attendus)
+        $entry->setCategory('LOYER_ATTENDU');
+        $entry->setReference('LOYER-GEN-' . $payment->getId());
+        $entry->setProperty($payment->getLease()->getProperty());
+        $entry->setOwner($payment->getLease()->getProperty()?->getOwner());
+        $entry->setPayment($payment);
+        $entry->setNotes('Généré automatiquement lors de la création du loyer du mois suivant');
+
+        $this->entityManager->persist($entry);
     }
 }
