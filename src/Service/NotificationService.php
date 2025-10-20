@@ -21,7 +21,8 @@ class NotificationService
         private SettingsService $settingsService,
         private LoggerInterface $logger,
         private MailerInterface $mailer,
-        private EntityManagerInterface $entityManager
+        private EntityManagerInterface $entityManager,
+        private SmtpConfigurationService $smtpConfigurationService
     ) {
     }
 
@@ -160,11 +161,20 @@ class NotificationService
     }
 
     /**
-     * Récupère l'adresse email de l'expéditeur depuis les paramètres
+     * Récupère l'adresse email de l'expéditeur depuis les paramètres email
      */
     private function getFromEmail(): string
     {
-        return $this->settingsService->get('email_from', 'noreply@mylocca.com');
+        // Utiliser l'adresse email configurée dans les paramètres email
+        return $this->settingsService->get('email_from_address', 'info@app.lokapro.tech');
+    }
+
+    /**
+     * Récupère le nom de l'expéditeur depuis les paramètres email
+     */
+    private function getFromName(): string
+    {
+        return $this->settingsService->get('email_sender_name', 'MYLOCCA');
     }
 
     /**
@@ -420,13 +430,17 @@ class NotificationService
             $email = (new Email())
                 ->from($this->getFromEmail())
                 ->to($testEmail)
-                ->subject('Test de configuration email - MYLOCCA')
-                ->html('<p>Ceci est un email de test pour vérifier la configuration SMTP de MYLOCCA.</p>');
+                ->subject('Test de configuration email - ' . $this->getFromName())
+                ->html('<p>Ceci est un email de test pour vérifier la configuration SMTP de ' . $this->getFromName() . '.</p>');
 
-            $this->mailer->send($email);
+            // Utiliser le mailer SMTP personnalisé
+            $customMailer = $this->smtpConfigurationService->createCustomMailer();
+            $customMailer->send($email);
+
+            $this->logger->info('Email de test envoyé avec succès', ['to' => $testEmail]);
             return true;
         } catch (\Exception $e) {
-            $this->logger->error('Erreur test email', ['error' => $e->getMessage()]);
+            $this->logger->error('Erreur test email', ['error' => $e->getMessage(), 'to' => $testEmail]);
             return false;
         }
     }
@@ -448,7 +462,9 @@ class NotificationService
             $email->attachFromPath($filePath, 'quittance-' . $payment->getPaidDate()->format('Y-m') . '.pdf');
         }
 
-        $this->mailer->send($email);
+        // Utiliser le mailer SMTP personnalisé
+        $customMailer = $this->smtpConfigurationService->createCustomMailer();
+        $customMailer->send($email);
     }
 
     /**
@@ -462,7 +478,9 @@ class NotificationService
             ->subject('Rappel de paiement - MYLOCCA')
             ->html($this->getPaymentReminderEmailTemplate($tenantName, $payment));
 
-        $this->mailer->send($email);
+        // Utiliser le mailer SMTP personnalisé
+        $customMailer = $this->smtpConfigurationService->createCustomMailer();
+        $customMailer->send($email);
     }
 
     /**
@@ -476,7 +494,9 @@ class NotificationService
             ->subject('Alerte: Expiration de votre contrat - MYLOCCA')
             ->html($this->getLeaseExpirationEmailTemplate($tenantName, $lease));
 
-        $this->mailer->send($email);
+        // Utiliser le mailer SMTP personnalisé
+        $customMailer = $this->smtpConfigurationService->createCustomMailer();
+        $customMailer->send($email);
     }
 
     /**
@@ -484,12 +504,39 @@ class NotificationService
      */
     private function getReceiptEmailTemplate(string $tenantName, Payment $payment): string
     {
+        // Récupérer le template personnalisé
+        $customTemplate = $this->settingsService->get('email_template_receipt');
+
+        if ($customTemplate) {
+            // Remplacer les variables dans le template
+            $data = [
+                'locataire_nom' => $tenantName,
+                'locataire_prenom' => explode(' ', $tenantName)[0] ?? $tenantName,
+                'loyer_montant' => number_format($payment->getAmount(), 0, ',', ' ') . ' ' . $this->settingsService->get('email_currency', 'FCFA'),
+                'mois' => $payment->getPaidDate()->format('F'),
+                'annee' => $payment->getPaidDate()->format('Y'),
+                'date_echeance' => $payment->getDueDate() ? $payment->getDueDate()->format($this->settingsService->get('email_date_format', 'd/m/Y')) : '',
+                'date_aujourdhui' => date($this->settingsService->get('email_date_format', 'd/m/Y')),
+                'societe_nom' => $this->getFromName(),
+                'societe_contact' => $this->getFromEmail(),
+                'email_signature' => $this->settingsService->get('email_signature', 'MYLOCCA - Votre partenaire immobilier'),
+            ];
+
+            $template = $customTemplate;
+            foreach ($data as $key => $value) {
+                $template = str_replace('{{ ' . $key . ' }}', $value, $template);
+            }
+
+            return $template;
+        }
+
+        // Template par défaut si aucun template personnalisé
         return "
             <h2>Bonjour {$tenantName},</h2>
             <p>Veuillez trouver ci-joint votre quittance de loyer pour le mois de " . $payment->getPaidDate()->format('F Y') . ".</p>
-            <p>Montant payé : " . number_format($payment->getAmount(), 0, ',', ' ') . " FCFA</p>
+            <p>Montant payé : " . number_format($payment->getAmount(), 0, ',', ' ') . " " . $this->settingsService->get('email_currency', 'FCFA') . "</p>
             <p>Merci pour votre confiance.</p>
-            <p>L'équipe MYLOCCA</p>
+            <p>" . $this->getFromName() . "</p>
         ";
     }
 

@@ -81,6 +81,9 @@ class AccountingController extends AbstractController
             $stats = $accountingRepository->getAccountingStatistics();
         }
 
+        // Déterminer le contexte de filtrage
+        $filterContext = $this->getFilterContext($user);
+
         // Passer une variable pour indiquer si c'est la vue locataire
         $isTenantView = $user && in_array('ROLE_TENANT', $user->getRoles());
 
@@ -92,7 +95,109 @@ class AccountingController extends AbstractController
             'current_year' => $year,
             'current_month' => $month,
             'is_tenant_view' => $isTenantView,
+            'filter_context' => $filterContext,
         ]);
+    }
+
+    /**
+     * Détermine le contexte de filtrage pour l'affichage
+     */
+    private function getFilterContext($user): array
+    {
+        if (!$user) {
+            return [
+                'type' => 'guest',
+                'description' => 'Invité',
+                'scope' => 'Aucune donnée visible'
+            ];
+        }
+
+        $roles = $user->getRoles();
+
+        if (in_array('ROLE_SUPER_ADMIN', $roles)) {
+            return [
+                'type' => 'super_admin',
+                'description' => 'Super Administrateur',
+                'scope' => 'Toutes les écritures comptables',
+                'organization' => $user->getOrganization()?->getName(),
+                'company' => $user->getCompany()?->getName(),
+                'icon' => 'bi-shield-check',
+                'color' => 'primary'
+            ];
+        }
+
+        if (in_array('ROLE_ADMIN', $roles)) {
+            $organization = $user->getOrganization();
+            $company = $user->getCompany();
+
+            if ($company) {
+                return [
+                    'type' => 'admin_company',
+                    'description' => 'Administrateur Société',
+                    'scope' => sprintf('Écritures de la société "%s"', $company->getName()),
+                    'organization' => $organization?->getName(),
+                    'company' => $company->getName(),
+                    'icon' => 'bi-building',
+                    'color' => 'success'
+                ];
+            } elseif ($organization) {
+                return [
+                    'type' => 'admin_organization',
+                    'description' => 'Administrateur Organisation',
+                    'scope' => sprintf('Écritures de l\'organisation "%s"', $organization->getName()),
+                    'organization' => $organization->getName(),
+                    'company' => null,
+                    'icon' => 'bi-people',
+                    'color' => 'info'
+                ];
+            } else {
+                return [
+                    'type' => 'admin_global',
+                    'description' => 'Administrateur Global',
+                    'scope' => 'Toutes les écritures comptables',
+                    'organization' => null,
+                    'company' => null,
+                    'icon' => 'bi-gear',
+                    'color' => 'warning'
+                ];
+            }
+        }
+
+        if (in_array('ROLE_MANAGER', $roles)) {
+            $owner = $user->getOwner();
+            return [
+                'type' => 'manager',
+                'description' => 'Gestionnaire',
+                'scope' => $owner ? sprintf('Écritures des propriétés de "%s %s"', $owner->getFirstName(), $owner->getLastName()) : 'Toutes les écritures',
+                'organization' => $user->getOrganization()?->getName(),
+                'company' => $user->getCompany()?->getName(),
+                'icon' => 'bi-person-badge',
+                'color' => 'secondary'
+            ];
+        }
+
+        if (in_array('ROLE_TENANT', $roles)) {
+            $tenant = $user->getTenant();
+            return [
+                'type' => 'tenant',
+                'description' => 'Locataire',
+                'scope' => $tenant ? sprintf('Mes écritures personnelles (%s %s)', $tenant->getFirstName(), $tenant->getLastName()) : 'Mes écritures personnelles',
+                'organization' => $user->getOrganization()?->getName(),
+                'company' => $user->getCompany()?->getName(),
+                'icon' => 'bi-house',
+                'color' => 'light'
+            ];
+        }
+
+        return [
+            'type' => 'user',
+            'description' => 'Utilisateur',
+            'scope' => 'Écritures limitées',
+            'organization' => $user->getOrganization()?->getName(),
+            'company' => $user->getCompany()?->getName(),
+            'icon' => 'bi-person',
+            'color' => 'muted'
+        ];
     }
 
     #[Route('/nouvelle-ecriture', name: 'app_accounting_new', methods: ['GET', 'POST'])]

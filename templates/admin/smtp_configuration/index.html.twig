@@ -1,0 +1,163 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Configuration SMTP - Administration{% endblock %}
+
+{% block page_title %}
+    <h5 class="mb-0">
+        <i class="bi bi-envelope-gear me-2"></i>
+        Configuration SMTP
+    </h5>
+{% endblock %}
+
+{% block page_actions %}
+    <div class="d-flex gap-2">
+        <button type="button" class="btn btn-outline-info btn-sm" data-bs-toggle="modal" data-bs-target="#testModal">
+            <i class="bi bi-send"></i> Tester la configuration
+        </button>
+    </div>
+{% endblock %}
+
+{% block body %}
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="bi bi-gear me-2"></i>
+                        Paramètres SMTP
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label for="smtp_host" class="form-label">Serveur SMTP</label>
+                                <input type="text" class="form-control" id="smtp_host" name="smtp_host" 
+                                       value="{{ config.host }}" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="smtp_port" class="form-label">Port</label>
+                                <select class="form-select" id="smtp_port" name="smtp_port" required>
+                                    <option value="25" {{ config.port == 25 ? 'selected' : '' }}>25 (Non sécurisé)</option>
+                                    <option value="465" {{ config.port == 465 ? 'selected' : '' }}>465 (SSL)</option>
+                                    <option value="587" {{ config.port == 587 ? 'selected' : '' }}>587 (TLS)</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="smtp_username" class="form-label">Nom d'utilisateur</label>
+                                <input type="text" class="form-control" id="smtp_username" name="smtp_username" 
+                                       value="{{ config.username }}" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="smtp_password" class="form-label">Mot de passe</label>
+                                <input type="password" class="form-control" id="smtp_password" name="smtp_password" 
+                                       value="{{ config.password }}" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="smtp_encryption" class="form-label">Chiffrement</label>
+                                <select class="form-select" id="smtp_encryption" name="smtp_encryption" required>
+                                    <option value="none" {{ config.encryption == 'none' ? 'selected' : '' }}>Aucun</option>
+                                    <option value="ssl" {{ config.encryption == 'ssl' ? 'selected' : '' }}>SSL</option>
+                                    <option value="tls" {{ config.encryption == 'tls' ? 'selected' : '' }}>TLS</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="smtp_auth_mode" class="form-label">Mode d'authentification</label>
+                                <select class="form-select" id="smtp_auth_mode" name="smtp_auth_mode" required>
+                                    <option value="login" {{ config.auth_mode == 'login' ? 'selected' : '' }}>Login</option>
+                                    <option value="plain" {{ config.auth_mode == 'plain' ? 'selected' : '' }}>Plain</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-4">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-save me-2"></i>
+                                Sauvegarder la configuration
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="bi bi-info-circle me-2"></i>
+                        Informations de connexion
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <h6>DSN SMTP généré :</h6>
+                    <code class="small">{{ dsn }}</code>
+                    
+                    <hr>
+                    
+                    <h6>Configuration actuelle :</h6>
+                    <ul class="list-unstyled small">
+                        <li><strong>Host:</strong> {{ config.host }}</li>
+                        <li><strong>Port:</strong> {{ config.port }}</li>
+                        <li><strong>Username:</strong> {{ config.username }}</li>
+                        <li><strong>Encryption:</strong> {{ config.encryption|upper }}</li>
+                        <li><strong>Auth Mode:</strong> {{ config.auth_mode }}</li>
+                    </ul>
+                    
+                    <div class="alert alert-info mt-3">
+                        <i class="bi bi-lightbulb me-2"></i>
+                        <small>
+                            Cette configuration sera utilisée pour tous les emails du système (quittances, rappels, notifications).
+                        </small>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="bi bi-shield-check me-2"></i>
+                        Sécurité
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-warning">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        <small>
+                            Les informations de connexion SMTP sont stockées de manière sécurisée et chiffrée.
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de test -->
+    <div class="modal fade" id="testModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Tester la configuration SMTP</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form method="POST" action="{{ path('admin_smtp_configuration_test') }}">
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="test_email" class="form-label">Adresse email de test</label>
+                            <input type="email" class="form-control" id="test_email" name="test_email" 
+                                   value="{{ config.username }}" required>
+                            <div class="form-text">Un email de test sera envoyé à cette adresse.</div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-send me-2"></i>
+                            Envoyer le test
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+{% endblock %}

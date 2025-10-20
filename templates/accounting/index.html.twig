@@ -24,6 +24,30 @@
 {% endblock %}
 
 {% block body %}
+    <!-- Contexte de filtrage -->
+    {% if filter_context %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="alert alert-{{ filter_context.color ?? 'info' }} d-flex align-items-center">
+                <i class="bi {{ filter_context.icon ?? 'bi-info-circle' }} me-3 fs-4"></i>
+                <div>
+                    <strong>{{ filter_context.description }}</strong>
+                    <br>
+                    <small class="text-muted">{{ filter_context.scope }}</small>
+                    {% if filter_context.organization %}
+                        <br>
+                        <small><i class="bi bi-people me-1"></i> Organisation: {{ filter_context.organization }}</small>
+                    {% endif %}
+                    {% if filter_context.company %}
+                        <br>
+                        <small><i class="bi bi-building me-1"></i> Société: {{ filter_context.company }}</small>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
     <!-- Solde actuel -->
     <div class="row mb-4">
         <div class="col-12">
@@ -97,6 +121,48 @@
         </div>
     </div>
 
+    <!-- Statistiques détaillées -->
+    {% if stats %}
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body text-center">
+                    <i class="bi bi-arrow-up-circle fs-1"></i>
+                    <h6 class="mt-2">Crédits</h6>
+                    <h4>{{ (stats.total_credits ?? stats.current_month_credits ?? 0)|currency }}</h4>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-danger text-white">
+                <div class="card-body text-center">
+                    <i class="bi bi-arrow-down-circle fs-1"></i>
+                    <h6 class="mt-2">Débits</h6>
+                    <h4>{{ (stats.total_debits ?? stats.current_month_debits ?? 0)|currency }}</h4>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body text-center">
+                    <i class="bi bi-list-check fs-1"></i>
+                    <h6 class="mt-2">Écritures</h6>
+                    <h4>{{ entries|length }}</h4>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body text-center">
+                    <i class="bi bi-calculator fs-1"></i>
+                    <h6 class="mt-2">Solde</h6>
+                    <h4>{{ (stats.balance ?? stats.current_balance ?? 0)|currency }}</h4>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
     <!-- Tableau comptable -->
     <div class="card">
         <div class="card-header" style="background-color: var(--primary-color); color: white;">
@@ -121,6 +187,12 @@
                                 {% endif %}
                                 {% if entry.property %}
                                     <br><small class="text-muted">{{ entry.property.fullAddress }}</small>
+                                {% endif %}
+                                {% if entry.organization %}
+                                    <br><small class="text-muted"><i class="bi bi-people me-1"></i>{{ entry.organization.name }}</small>
+                                {% endif %}
+                                {% if entry.company %}
+                                    <br><small class="text-muted"><i class="bi bi-building me-1"></i>{{ entry.company.name }}</small>
                                 {% endif %}
                             </div>
                         </div>

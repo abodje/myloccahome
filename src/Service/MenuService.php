@@ -378,6 +378,20 @@ class MenuService
                     ],
                 ],
             ],
+            'admin_smtp_configuration' => [
+                'label' => '📧 Configuration SMTP',
+                'icon' => 'bi-envelope-gear',
+                'route' => 'admin_smtp_configuration_index',
+                'roles' => ['ROLE_ADMIN', 'ROLE_SUPER_ADMIN'],
+                'order' => 110,
+            ],
+            'admin_email_settings' => [
+                'label' => '📨 Paramètres Email',
+                'icon' => 'bi-envelope-at',
+                'route' => 'admin_email_settings_index',
+                'roles' => ['ROLE_ADMIN', 'ROLE_SUPER_ADMIN'],
+                'order' => 111,
+            ],
         ];
     }
 

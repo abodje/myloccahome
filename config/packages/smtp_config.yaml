@@ -1,0 +1,13 @@
+# Configuration SMTP pour app.lokapro.tech
+parameters:
+    # Configuration SMTP
+    smtp.host: 'app.lokapro.tech'
+    smtp.port: 465
+    smtp.username: 'info@app.lokapro.tech'
+    smtp.password: 'q+Dy-riz8EBi;oL]'
+    smtp.encryption: 'ssl'
+    smtp.auth_mode: 'login'
+
+    # Email par défaut
+    mailer.default_sender: 'info@app.lokapro.tech'
+    mailer.default_sender_name: 'MYLOCCA'

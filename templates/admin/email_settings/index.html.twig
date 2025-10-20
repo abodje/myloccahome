@@ -1,0 +1,367 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Paramètres Email - Administration{% endblock %}
+
+{% block page_title %}
+    <h5 class="mb-0">
+        <i class="bi bi-envelope-at me-2"></i>
+        Paramètres Email
+    </h5>
+{% endblock %}
+
+{% block page_actions %}
+    <div class="d-flex gap-2">
+        <button type="button" class="btn btn-outline-info btn-sm" data-bs-toggle="modal" data-bs-target="#testEmailModal">
+            <i class="bi bi-send"></i> Tester l'email
+        </button>
+    </div>
+{% endblock %}
+
+{% block body %}
+    <form method="POST">
+        <div class="row">
+            <!-- Paramètres d'expéditeur -->
+            <div class="col-md-6">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h6 class="mb-0">
+                            <i class="bi bi-person-gear me-2"></i>
+                            Paramètres d'expéditeur
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label for="email_sender_name" class="form-label">Nom de l'expéditeur</label>
+                            <input type="text" class="form-control" id="email_sender_name" name="email_sender_name" 
+                                   value="{{ settings.email_sender_name }}" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="email_from_address" class="form-label">Adresse email d'expéditeur</label>
+                            <input type="email" class="form-control" id="email_from_address" name="email_from_address" 
+                                   value="{{ settings.email_from_address }}" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="email_signature" class="form-label">Signature automatique</label>
+                            <textarea class="form-control" id="email_signature" name="email_signature" rows="3">{{ settings.email_signature }}</textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Configuration des notifications -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h6 class="mb-0">
+                            <i class="bi bi-bell-gear me-2"></i>
+                            Notifications automatiques
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="email_auto_notifications" 
+                                       name="email_auto_notifications" {{ settings.email_auto_notifications ? 'checked' : '' }}>
+                                <label class="form-check-label" for="email_auto_notifications">
+                                    Activer les notifications automatiques
+                                </label>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="email_reminder_days_before" class="form-label">Rappel (jours avant échéance)</label>
+                            <select class="form-select" id="email_reminder_days_before" name="email_reminder_days_before">
+                                <option value="1" {{ settings.email_reminder_days_before == 1 ? 'selected' : '' }}>1 jour</option>
+                                <option value="3" {{ settings.email_reminder_days_before == 3 ? 'selected' : '' }}>3 jours</option>
+                                <option value="5" {{ settings.email_reminder_days_before == 5 ? 'selected' : '' }}>5 jours</option>
+                                <option value="7" {{ settings.email_reminder_days_before == 7 ? 'selected' : '' }}>7 jours</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="email_reminder_frequency" class="form-label">Fréquence des rappels</label>
+                            <select class="form-select" id="email_reminder_frequency" name="email_reminder_frequency">
+                                <option value="daily" {{ settings.email_reminder_frequency == 'daily' ? 'selected' : '' }}>Quotidien</option>
+                                <option value="weekly" {{ settings.email_reminder_frequency == 'weekly' ? 'selected' : '' }}>Hebdomadaire</option>
+                                <option value="once" {{ settings.email_reminder_frequency == 'once' ? 'selected' : '' }}>Une seule fois</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="email_send_time" class="form-label">Heure d'envoi</label>
+                            <input type="time" class="form-control" id="email_send_time" name="email_send_time" 
+                                   value="{{ settings.email_send_time }}">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Paramètres de contenu -->
+            <div class="col-md-6">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h6 class="mb-0">
+                            <i class="bi bi-globe me-2"></i>
+                            Paramètres de contenu
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label for="email_default_language" class="form-label">Langue par défaut</label>
+                            <select class="form-select" id="email_default_language" name="email_default_language">
+                                <option value="fr" {{ settings.email_default_language == 'fr' ? 'selected' : '' }}>Français</option>
+                                <option value="en" {{ settings.email_default_language == 'en' ? 'selected' : '' }}>English</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="email_date_format" class="form-label">Format des dates</label>
+                            <select class="form-select" id="email_date_format" name="email_date_format">
+                                <option value="d/m/Y" {{ settings.email_date_format == 'd/m/Y' ? 'selected' : '' }}>dd/mm/yyyy</option>
+                                <option value="m/d/Y" {{ settings.email_date_format == 'm/d/Y' ? 'selected' : '' }}>mm/dd/yyyy</option>
+                                <option value="Y-m-d" {{ settings.email_date_format == 'Y-m-d' ? 'selected' : '' }}>yyyy-mm-dd</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="email_currency" class="form-label">Devise par défaut</label>
+                            <select class="form-select" id="email_currency" name="email_currency">
+                                <option value="FCFA" {{ settings.email_currency == 'FCFA' ? 'selected' : '' }}>FCFA</option>
+                                <option value="EUR" {{ settings.email_currency == 'EUR' ? 'selected' : '' }}>EUR</option>
+                                <option value="USD" {{ settings.email_currency == 'USD' ? 'selected' : '' }}>USD</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Paramètres de pièces jointes -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h6 class="mb-0">
+                            <i class="bi bi-paperclip me-2"></i>
+                            Pièces jointes
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label for="email_attachment_max_size" class="form-label">Taille maximale (MB)</label>
+                            <select class="form-select" id="email_attachment_max_size" name="email_attachment_max_size">
+                                <option value="5" {{ settings.email_attachment_max_size == 5 ? 'selected' : '' }}>5 MB</option>
+                                <option value="10" {{ settings.email_attachment_max_size == 10 ? 'selected' : '' }}>10 MB</option>
+                                <option value="25" {{ settings.email_attachment_max_size == 25 ? 'selected' : '' }}>25 MB</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="email_compress_images" 
+                                       name="email_compress_images" {{ settings.email_compress_images ? 'checked' : '' }}>
+                                <label class="form-check-label" for="email_compress_images">
+                                    Compresser automatiquement les images
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Templates d'email -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h6 class="mb-0">
+                            <i class="bi bi-file-text me-2"></i>
+                            Templates d'email
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <ul class="nav nav-tabs" id="templateTabs" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active" id="receipt-tab" data-bs-toggle="tab" data-bs-target="#receipt" type="button" role="tab">
+                                    <i class="bi bi-receipt me-1"></i>Quittances
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="reminder-tab" data-bs-toggle="tab" data-bs-target="#reminder" type="button" role="tab">
+                                    <i class="bi bi-bell me-1"></i>Rappels
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="expiration-tab" data-bs-toggle="tab" data-bs-target="#expiration" type="button" role="tab">
+                                    <i class="bi bi-calendar-x me-1"></i>Expiration
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="welcome-tab" data-bs-toggle="tab" data-bs-target="#welcome" type="button" role="tab">
+                                    <i class="bi bi-hand-thumbs-up me-1"></i>Bienvenue
+                                </button>
+                            </li>
+                        </ul>
+                        
+                        <div class="tab-content mt-3" id="templateTabsContent">
+                            <div class="tab-pane fade show active" id="receipt" role="tabpanel">
+                                <div class="mb-3">
+                                    <label for="email_template_receipt" class="form-label">Template de quittance</label>
+                                    <textarea class="form-control" id="email_template_receipt" name="email_template_receipt" rows="15">{{ settings.email_template_receipt }}</textarea>
+                                </div>
+                                <button type="button" class="btn btn-outline-primary btn-sm" onclick="previewTemplate('receipt')">
+                                    <i class="bi bi-eye me-1"></i>Aperçu
+                                </button>
+                            </div>
+                            
+                            <div class="tab-pane fade" id="reminder" role="tabpanel">
+                                <div class="mb-3">
+                                    <label for="email_template_reminder" class="form-label">Template de rappel</label>
+                                    <textarea class="form-control" id="email_template_reminder" name="email_template_reminder" rows="15">{{ settings.email_template_reminder }}</textarea>
+                                </div>
+                                <button type="button" class="btn btn-outline-primary btn-sm" onclick="previewTemplate('reminder')">
+                                    <i class="bi bi-eye me-1"></i>Aperçu
+                                </button>
+                            </div>
+                            
+                            <div class="tab-pane fade" id="expiration" role="tabpanel">
+                                <div class="mb-3">
+                                    <label for="email_template_expiration" class="form-label">Template d'expiration</label>
+                                    <textarea class="form-control" id="email_template_expiration" name="email_template_expiration" rows="15">{{ settings.email_template_expiration }}</textarea>
+                                </div>
+                                <button type="button" class="btn btn-outline-primary btn-sm" onclick="previewTemplate('expiration')">
+                                    <i class="bi bi-eye me-1"></i>Aperçu
+                                </button>
+                            </div>
+                            
+                            <div class="tab-pane fade" id="welcome" role="tabpanel">
+                                <div class="mb-3">
+                                    <label for="email_template_welcome" class="form-label">Template de bienvenue</label>
+                                    <textarea class="form-control" id="email_template_welcome" name="email_template_welcome" rows="15">{{ settings.email_template_welcome }}</textarea>
+                                </div>
+                                <button type="button" class="btn btn-outline-primary btn-sm" onclick="previewTemplate('welcome')">
+                                    <i class="bi bi-eye me-1"></i>Aperçu
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-3">
+                            <div class="alert alert-info">
+                                <h6><i class="bi bi-info-circle me-2"></i>Variables disponibles :</h6>
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <small>
+                                            <strong>Locataire :</strong><br>
+                                            {{ locataire_nom }}<br>
+                                            {{ locataire_prenom }}
+                                        </small>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <small>
+                                            <strong>Propriété :</strong><br>
+                                            {{ propriete_adresse }}
+                                        </small>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <small>
+                                            <strong>Paiement :</strong><br>
+                                            {{ loyer_montant }}<br>
+                                            {{ mois }} {{ annee }}
+                                        </small>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <small>
+                                            <strong>Dates :</strong><br>
+                                            {{ date_echeance }}<br>
+                                            {{ date_aujourdhui }}
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-4">
+            <button type="submit" class="btn btn-primary">
+                <i class="bi bi-save me-2"></i>
+                Sauvegarder les paramètres
+            </button>
+        </div>
+    </form>
+
+    <!-- Modal de test email -->
+    <div class="modal fade" id="testEmailModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Tester l'envoi d'email</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form method="POST" action="{{ path('admin_email_settings_test_email') }}">
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="test_email" class="form-label">Adresse email de test</label>
+                            <input type="email" class="form-control" id="test_email" name="test_email" 
+                                   value="{{ settings.email_from_address }}" required>
+                            <div class="form-text">Un email de test sera envoyé à cette adresse avec les paramètres actuels.</div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-send me-2"></i>
+                            Envoyer le test
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal d'aperçu template -->
+    <div class="modal fade" id="previewModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Aperçu du template</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="preview-content"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block javascripts %}
+    <script>
+        function previewTemplate(templateType) {
+            const textarea = document.getElementById('email_template_' + templateType);
+            const content = textarea.value;
+            
+            // Créer un formulaire pour envoyer l'aperçu
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = '{{ path("admin_email_settings_preview_template") }}';
+            
+            const templateTypeInput = document.createElement('input');
+            templateTypeInput.type = 'hidden';
+            templateTypeInput.name = 'template_type';
+            templateTypeInput.value = templateType;
+            
+            const templateContentInput = document.createElement('input');
+            templateContentInput.type = 'hidden';
+            templateContentInput.name = 'template_content';
+            templateContentInput.value = content;
+            
+            form.appendChild(templateTypeInput);
+            form.appendChild(templateContentInput);
+            document.body.appendChild(form);
+            form.submit();
+        }
+        
+        // Si on vient de l'aperçu, afficher le modal
+        {% if app.request.get('preview') %}
+        document.addEventListener('DOMContentLoaded', function() {
+            const previewModal = new bootstrap.Modal(document.getElementById('previewModal'));
+            previewModal.show();
+        });
+        {% endif %}
+    </script>
+{% endblock %}
