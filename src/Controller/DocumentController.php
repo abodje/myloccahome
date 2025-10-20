@@ -208,7 +208,11 @@ class DocumentController extends AbstractController
                 $document->setFileName($newFilename);
                 $document->setOriginalFileName($uploadedFile->getClientOriginalName());
                 $document->setMimeType($uploadedFile->getClientMimeType());
-                $document->setFileSize($uploadedFile->getSize());
+                
+                // Récupérer la taille du fichier de manière sécurisée
+                $filePath = $this->getParameter('documents_directory') . '/' . $newFilename;
+                $fileSize = $this->getSecureFileSize($uploadedFile, $filePath);
+                $document->setFileSize($fileSize);
             }
 
             $entityManager->persist($document);
@@ -223,6 +227,25 @@ class DocumentController extends AbstractController
             'document' => $document,
             'form' => $form,
         ]);
+    }
+
+    /**
+     * Récupère la taille d'un fichier uploadé de manière sécurisée
+     */
+    private function getSecureFileSize($uploadedFile, ?string $fallbackPath = null): int
+    {
+        try {
+            return $uploadedFile->getSize();
+        } catch (\Exception $e) {
+            // Si on ne peut pas récupérer la taille du fichier temporaire,
+            // essayer depuis le fichier déplacé
+            if ($fallbackPath && file_exists($fallbackPath)) {
+                return filesize($fallbackPath);
+            }
+            
+            // Si tout échoue, retourner 0
+            return 0;
+        }
     }
 
     #[Route('/{id}', name: 'app_document_show', methods: ['GET'])]
