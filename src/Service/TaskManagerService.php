@@ -74,6 +74,11 @@ class TaskManagerService
         $this->entityManager->flush();
 
         try {
+            // Vérifier que l'EntityManager est ouvert avant l'exécution
+            if (!$this->entityManager->isOpen()) {
+                throw new \Exception('EntityManager fermé avant l\'exécution de la tâche');
+            }
+
             switch ($task->getType()) {
                 case 'RENT_RECEIPT':
                     $this->executeRentReceiptTask($task);
@@ -213,10 +218,13 @@ class TaskManagerService
 
             // S'assurer que l'EntityManager reste ouvert
             if (!$this->entityManager->isOpen()) {
-                $this->entityManager = $this->entityManager->create(
-                    $this->entityManager->getConnection(),
-                    $this->entityManager->getConfiguration()
-                );
+                // Note: La recréation directe d'EntityManager n'est pas possible ici
+                // L'erreur sera propagée et gérée par le système de tâches
+                $this->logger->error('EntityManager fermé lors de l\'exécution de la tâche', [
+                    'task_id' => $task->getId(),
+                    'task_type' => $task->getType(),
+                    'error' => $e->getMessage()
+                ]);
             }
 
             $this->entityManager->flush();

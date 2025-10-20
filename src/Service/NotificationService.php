@@ -210,7 +210,9 @@ class NotificationService
             try {
                 // Vérifier que l'EntityManager est toujours ouvert
                 if (!$this->entityManager->isOpen()) {
-                    throw new \Exception('EntityManager fermé');
+                    $errors[] = "Paiement #{$payment->getId()}: EntityManager fermé";
+                    $failed++;
+                    break;
                 }
 
                 $tenant = $payment->getLease()->getTenant();
@@ -245,12 +247,20 @@ class NotificationService
                 $this->sendReceiptEmail($tenant->getEmail(), $tenant->getFirstName(), $receipt, $payment);
                 $sent++;
 
+                // Vérifier l'état de l'EntityManager après chaque envoi
+                if (!$this->entityManager->isOpen()) {
+                    $errors[] = "Paiement #{$payment->getId()}: EntityManager fermé après envoi";
+                    $failed++;
+                    break;
+                }
+
             } catch (\Exception $e) {
                 $errors[] = "Paiement #{$payment->getId()}: " . $e->getMessage();
                 $failed++;
                 $this->logger->error('Erreur envoi quittance', [
                     'payment_id' => $payment->getId(),
-                    'error' => $e->getMessage()
+                    'error' => $e->getMessage(),
+                    'entity_manager_open' => $this->entityManager->isOpen()
                 ]);
 
                 // Si l'EntityManager est fermé, on ne peut pas continuer
