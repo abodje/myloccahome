@@ -45,7 +45,7 @@ class TestEmailSettingsCommand extends Command
 
         // Afficher les paramètres email actuels
         $io->definitionList(
-            ['Nom expéditeur' => 'MYLOCCA'], // À récupérer depuis SettingsService
+            ['Nom expéditeur' => 'LOKAPRO'], // À récupérer depuis SettingsService
             ['Email expéditeur' => 'info@app.lokapro.tech'], // À récupérer depuis SettingsService
             ['Devise' => 'FCFA'], // À récupérer depuis SettingsService
             ['Format date' => 'd/m/Y'], // À récupérer depuis SettingsService

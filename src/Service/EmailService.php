@@ -35,8 +35,8 @@ class EmailService
         }
 
         try {
-            $fromEmail = $this->settingsService->get('email_from', 'noreply@mylocca.com');
-            $fromName = $this->settingsService->get('email_from_name', 'MYLOCCA');
+            $fromEmail = $this->settingsService->get('email_from', 'noreply@app.lokapro.tech');
+            $fromName = $this->settingsService->get('email_from_name', 'LOKAPRO');
 
             $email = (new Email())
                 ->from($fromEmail, $fromName)
@@ -108,13 +108,13 @@ class EmailService
      */
     public function testConfiguration(string $testEmail): bool
     {
-        $subject = 'Test de configuration email - ' . $this->settingsService->get('app_name', 'MYLOCCA');
+        $subject = 'Test de configuration email - ' . $this->settingsService->get('app_name', 'LOKAPRO');
 
         $htmlContent = $this->twig->render('emails/test.html.twig', [
             'company' => $this->settingsService->getAppSettings(),
             'test_date' => new \DateTime(),
-            'from_email' => $this->settingsService->get('email_from', 'noreply@mylocca.com'),
-            'from_name' => $this->settingsService->get('email_from_name', 'MYLOCCA'),
+            'from_email' => $this->settingsService->get('email_from', 'noreply@app.lokapro.tech'),
+            'from_name' => $this->settingsService->get('email_from_name', 'LOKAPRO'),
         ]);
 
         return $this->sendEmail($testEmail, $subject, $htmlContent);
@@ -133,7 +133,7 @@ class EmailService
      */
     public function getFromEmail(): string
     {
-        return $this->settingsService->get('email_from', 'noreply@mylocca.com');
+        return $this->settingsService->get('email_from', 'noreply@app.lokapro.tech');
     }
 
     /**
@@ -141,7 +141,7 @@ class EmailService
      */
     public function getFromName(): string
     {
-        return $this->settingsService->get('email_from_name', 'MYLOCCA');
+        return $this->settingsService->get('email_from_name', 'LOKAPRO');
     }
 
     /**

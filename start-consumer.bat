@@ -1,5 +1,5 @@
 @echo off
-REM Script batch pour démarrer le consumer Messenger pour MYLOCCA
+REM Script batch pour démarrer le consumer Messenger pour LOKAPRO
 REM Ce script redémarre automatiquement le consumer s'il s'arrête
 
 setlocal enabledelayedexpansion
@@ -55,17 +55,17 @@ if exist "%PID_FILE%" (
     set /p CONSUMER_PID=<"%PID_FILE%"
     echo [%date% %time%] Arrêt du consumer (PID: !CONSUMER_PID!)...
     echo [%date% %time%] Arrêt du consumer (PID: !CONSUMER_PID!)... >> "%LOG_FILE%"
-    
+
     taskkill /PID !CONSUMER_PID! /F 2>nul
     timeout /t 2 /nobreak >nul
-    
+
     tasklist /FI "PID eq !CONSUMER_PID!" 2>nul | find /I "!CONSUMER_PID!" >nul
     if !errorlevel! equ 0 (
         echo [%date% %time%] Le consumer ne s'est pas arrêté, forçage de l'arrêt...
         echo [%date% %time%] Le consumer ne s'est pas arrêté, forçage de l'arrêt... >> "%LOG_FILE%"
         taskkill /PID !CONSUMER_PID! /F /T 2>nul
     )
-    
+
     del "%PID_FILE%" 2>nul
     echo [%date% %time%] Consumer arrêté
     echo [%date% %time%] Consumer arrêté >> "%LOG_FILE%"
@@ -156,16 +156,16 @@ echo [%date% %time%] Surveillance du consumer démarrée... >> "%LOG_FILE%"
 call :is_consumer_running
 if !errorlevel! neq 0 (
     set /a RESTART_COUNT+=1
-    
+
     if !RESTART_COUNT! gtr %MAX_RESTARTS% (
         echo [%date% %time%] ERREUR: Nombre maximum de redémarrages atteint (%MAX_RESTARTS%). Arrêt de la surveillance.
         echo [%date% %time%] ERREUR: Nombre maximum de redémarrages atteint (%MAX_RESTARTS%). Arrêt de la surveillance. >> "%LOG_FILE%"
         goto :eof
     )
-    
+
     echo [%date% %time%] AVERTISSEMENT: Consumer arrêté détecté. Redémarrage #!RESTART_COUNT!...
     echo [%date% %time%] AVERTISSEMENT: Consumer arrêté détecté. Redémarrage #!RESTART_COUNT!... >> "%LOG_FILE%"
-    
+
     call :start_consumer
     if !errorlevel! equ 0 (
         set RESTART_COUNT=0

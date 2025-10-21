@@ -20,7 +20,7 @@ class ContractGenerationService
     /**
      * Génère automatiquement un contrat de bail après paiement de la caution
      */
-    public function generateContractAfterDeposit(Payment $payment): ?Document
+    public function generateContractAfterDeposit(Payment $payment, ?\App\Entity\User $user = null): ?Document
     {
         $lease = $payment->getLease();
 
@@ -47,7 +47,7 @@ class ContractGenerationService
         }
 
         // Générer le PDF du contrat
-        $pdfContent = $this->pdfService->generateLeaseContract($lease, false);
+        $pdfContent = $this->pdfService->generateLeaseContract($lease, false, $user);
 
         // Créer le nom du fichier
         $fileName = sprintf(
@@ -92,10 +92,10 @@ class ContractGenerationService
     /**
      * Génère manuellement un contrat pour un bail
      */
-    public function generateContractManually(Lease $lease): Document
+    public function generateContractManually(Lease $lease, ?\App\Entity\User $user = null): Document
     {
         // Générer le PDF
-        $pdfContent = $this->pdfService->generateLeaseContract($lease, false);
+        $pdfContent = $this->pdfService->generateLeaseContract($lease, false, $user);
 
         // Créer le nom du fichier
         $fileName = sprintf(

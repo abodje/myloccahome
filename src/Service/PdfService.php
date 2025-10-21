@@ -45,10 +45,10 @@ class PdfService
     /**
      * Génère un contrat de bail en PDF
      */
-    public function generateLeaseContract(Lease $lease, bool $download = true): string
+    public function generateLeaseContract(Lease $lease, bool $download = true, ?\App\Entity\User $user = null): string
     {
-        // Récupérer la configuration du contrat
-        $contractConfig = $this->contractConfigService->getContractConfig();
+        // Récupérer la configuration du contrat pour l'utilisateur
+        $contractConfig = $this->contractConfigService->getContractConfig($user);
 
         $html = $this->twig->render('pdf/lease_contract.html.twig', array_merge([
             'lease' => $lease,
@@ -72,9 +72,12 @@ class PdfService
     /**
      * Génère un reçu de paiement en PDF
      */
-    public function generatePaymentReceipt(Payment $payment, bool $download = true): string
+    public function generatePaymentReceipt(Payment $payment, bool $download = true, ?\App\Entity\User $user = null): string
     {
-        $html = $this->twig->render('pdf/payment_receipt.html.twig', [
+        // Récupérer la configuration du contrat pour l'utilisateur
+        $contractConfig = $this->contractConfigService->getContractConfig($user);
+
+        $html = $this->twig->render('pdf/payment_receipt.html.twig', array_merge([
             'payment' => $payment,
             'lease' => $payment->getLease(),
             'property' => $payment->getLease()->getProperty(),
@@ -82,7 +85,7 @@ class PdfService
             'company' => $this->settingsService->getAppSettings(),
             'currency' => $this->currencyService->getActiveCurrency(),
             'generated_at' => new \DateTime(),
-        ]);
+        ], $contractConfig));
 
         $filename = sprintf(
             'Recu_Paiement_%s_%s.pdf',
@@ -96,7 +99,7 @@ class PdfService
     /**
      * Génère un échéancier de paiement en PDF
      */
-    public function generatePaymentSchedule(Lease $lease, int $months = 12, bool $download = true): string
+    public function generatePaymentSchedule(Lease $lease, int $months = 12, bool $download = true, ?\App\Entity\User $user = null): string
     {
         // Générer les échéances futures
         $schedule = [];
@@ -116,7 +119,10 @@ class PdfService
             ];
         }
 
-        $html = $this->twig->render('pdf/payment_schedule.html.twig', [
+        // Récupérer la configuration du contrat pour l'utilisateur
+        $contractConfig = $this->contractConfigService->getContractConfig($user);
+
+        $html = $this->twig->render('pdf/payment_schedule.html.twig', array_merge([
             'lease' => $lease,
             'property' => $lease->getProperty(),
             'tenant' => $lease->getTenant(),
@@ -125,7 +131,7 @@ class PdfService
             'company' => $this->settingsService->getAppSettings(),
             'currency' => $this->currencyService->getActiveCurrency(),
             'generated_at' => new \DateTime(),
-        ]);
+        ], $contractConfig));
 
         $filename = sprintf(
             'Echeancier_%s_%s.pdf',
@@ -139,14 +145,17 @@ class PdfService
     /**
      * Génère une quittance de loyer en PDF (mensuelle)
      */
-    public function generateRentQuittance(array $payments, Lease $lease, \DateTime $month, bool $download = true): string
+    public function generateRentQuittance(array $payments, Lease $lease, \DateTime $month, bool $download = true, ?\App\Entity\User $user = null): string
     {
         $totalAmount = 0;
         foreach ($payments as $payment) {
             $totalAmount += (float)$payment->getAmount();
         }
 
-        $html = $this->twig->render('pdf/rent_quittance.html.twig', [
+        // Récupérer la configuration du contrat pour l'utilisateur
+        $contractConfig = $this->contractConfigService->getContractConfig($user);
+
+        $html = $this->twig->render('pdf/rent_quittance.html.twig', array_merge([
             'payments' => $payments,
             'lease' => $lease,
             'property' => $lease->getProperty(),
@@ -156,7 +165,7 @@ class PdfService
             'company' => $this->settingsService->getAppSettings(),
             'currency' => $this->currencyService->getActiveCurrency(),
             'generated_at' => new \DateTime(),
-        ]);
+        ], $contractConfig));
 
         $filename = sprintf(
             'Quittance_Loyer_%s_%s.pdf',
@@ -170,9 +179,12 @@ class PdfService
     /**
      * Génère un état des lieux en PDF
      */
-    public function generateInventory(\App\Entity\Inventory $inventory, bool $download = true): string
+    public function generateInventory(\App\Entity\Inventory $inventory, bool $download = true, ?\App\Entity\User $user = null): string
     {
-        $html = $this->twig->render('pdf/inventory.html.twig', [
+        // Récupérer la configuration du contrat pour l'utilisateur
+        $contractConfig = $this->contractConfigService->getContractConfig($user);
+
+        $html = $this->twig->render('pdf/inventory.html.twig', array_merge([
             'inventory' => $inventory,
             'property' => $inventory->getProperty(),
             'lease' => $inventory->getLease(),
@@ -180,7 +192,7 @@ class PdfService
             'items' => $inventory->getItems(),
             'company' => $this->settingsService->getAppSettings(),
             'generated_at' => new \DateTime(),
-        ]);
+        ], $contractConfig));
 
         $filename = sprintf(
             'Etat_des_lieux_%s_%s.pdf',
@@ -194,14 +206,17 @@ class PdfService
     /**
      * Génère un rapport de synthèse pour un propriétaire
      */
-    public function generateOwnerReport(\App\Entity\Owner $owner, \DateTime $startDate, \DateTime $endDate, bool $download = true): string
+    public function generateOwnerReport(\App\Entity\Owner $owner, \DateTime $startDate, \DateTime $endDate, bool $download = true, ?\App\Entity\User $user = null): string
     {
         // Récupérer les données nécessaires
         $properties = $owner->getProperties();
         $totalRevenue = 0;
         $totalExpenses = 0;
 
-        $html = $this->twig->render('pdf/owner_report.html.twig', [
+        // Récupérer la configuration du contrat pour l'utilisateur
+        $contractConfig = $this->contractConfigService->getContractConfig($user);
+
+        $html = $this->twig->render('pdf/owner_report.html.twig', array_merge([
             'owner' => $owner,
             'properties' => $properties,
             'start_date' => $startDate,
@@ -211,7 +226,7 @@ class PdfService
             'company' => $this->settingsService->getAppSettings(),
             'currency' => $this->currencyService->getActiveCurrency(),
             'generated_at' => new \DateTime(),
-        ]);
+        ], $contractConfig));
 
         $filename = sprintf(
             'Rapport_Proprietaire_%s_%s.pdf',

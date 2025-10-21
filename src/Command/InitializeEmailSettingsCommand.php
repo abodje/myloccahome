@@ -30,9 +30,9 @@ class InitializeEmailSettingsCommand extends Command
         $io->title('Initialisation des paramètres email par défaut');
 
         // Paramètres d'expéditeur
-        $this->settingsService->set('email_sender_name', 'MYLOCCA');
+        $this->settingsService->set('email_sender_name', 'LOKAPRO');
         $this->settingsService->set('email_from_address', 'info@app.lokapro.tech');
-        $this->settingsService->set('email_signature', 'MYLOCCA - Votre partenaire immobilier');
+        $this->settingsService->set('email_signature', 'LOKAPRO - Votre partenaire immobilier');
 
         // Configuration des notifications
         $this->settingsService->set('email_auto_notifications', true);

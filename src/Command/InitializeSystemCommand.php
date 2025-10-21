@@ -11,7 +11,7 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 
 #[AsCommand(
     name: 'app:initialize-system',
-    description: 'Initialise le système MYLOCCA : crée les tâches et plans par défaut',
+    description: 'Initialise le système LOKAPRO : crée les tâches et plans par défaut',
 )]
 class InitializeSystemCommand extends Command
 {
@@ -25,7 +25,7 @@ class InitializeSystemCommand extends Command
     {
         $io = new SymfonyStyle($input, $output);
 
-        $io->title('🚀 Initialisation du Système MYLOCCA');
+        $io->title('🚀 Initialisation du Système LOKAPRO');
 
         $io->section('Création des ressources par défaut...');
 

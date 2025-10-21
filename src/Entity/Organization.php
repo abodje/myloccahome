@@ -23,7 +23,7 @@ class Organization
     private ?string $name = null;
 
     #[ORM\Column(length: 255, unique: true)]
-    private ?string $slug = null; // URL unique: mycompany.mylocca.com
+    private ?string $slug = null; // URL unique: mycompany.app.lokapro.tech
 
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $logo = null;

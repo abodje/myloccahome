@@ -237,7 +237,7 @@ class SettingsController extends AbstractController
                 'smtp_username' => $settingsService->get('smtp_username', ''),
                 'smtp_password' => $settingsService->get('smtp_password', ''),
                 'smtp_encryption' => $settingsService->get('smtp_encryption', 'tls'),
-                'email_from_name' => $settingsService->get('email_from_name', 'MYLOCCA'),
+                'email_from_name' => $settingsService->get('email_from_name', 'LOKAPRO'),
                 'email_notifications' => $settingsService->get('email_notifications', true),
             ]),
         ]);
@@ -400,7 +400,7 @@ class SettingsController extends AbstractController
         $settings = [
             'orange_sms_client_id' => $settingsService->get('orange_sms_client_id', ''),
             'orange_sms_client_secret' => $settingsService->get('orange_sms_client_secret', ''),
-            'orange_sms_sender_name' => $settingsService->get('orange_sms_sender_name', 'MYLOCCA'),
+            'orange_sms_sender_name' => $settingsService->get('orange_sms_sender_name', 'LOKAPRO'),
             'orange_sms_enabled' => $settingsService->get('orange_sms_enabled', false),
             'is_configured' => !empty($settingsService->get('orange_sms_client_id')) && !empty($settingsService->get('orange_sms_client_secret')),
         ];
@@ -420,7 +420,7 @@ class SettingsController extends AbstractController
             $clientId = $settingsService->get('orange_sms_client_id');
             $clientSecret = $settingsService->get('orange_sms_client_secret');
             $testPhone = $request->request->get('test_phone', '');
-            $senderName = $settingsService->get('orange_sms_sender_name', 'MYLOCCA');
+            $senderName = $settingsService->get('orange_sms_sender_name', 'LOKAPRO');
 
             if (empty($clientId) || empty($clientSecret)) {
                 return $this->json([
@@ -452,14 +452,14 @@ class SettingsController extends AbstractController
                     // le numéro de téléphone pour envoyer le SMS
                     $formattedPhone,
                     // le message
-                    'Test SMS depuis MYLOCCA - Configuration réussie !',
+                    'Test SMS depuis LOKAPRO - Configuration réussie !',
                     // le numéro d'envoi (optionnel, sera défini par le transport)
                     ''
                 );
 
                 $logger->info('Tentative d\'envoi SMS', [
                     'phone' => $formattedPhone,
-                    'message' => 'Test SMS depuis MYLOCCA - Configuration réussie !',
+                    'message' => 'Test SMS depuis LOKAPRO - Configuration réussie !',
                     'transport' => 'orange-sms'
                 ]);
 
@@ -510,7 +510,7 @@ class SettingsController extends AbstractController
                         throw new \Exception("Impossible d'obtenir le token d'accès Orange SMS");
                     }
 
-                    $result = $osms->envoyerSms($testPhone, 'Test SMS depuis MYLOCCA - Configuration réussie !', $senderName);
+                    $result = $osms->envoyerSms($testPhone, 'Test SMS depuis LOKAPRO - Configuration réussie !', $senderName);
 
                     if (isset($result['error'])) {
                         throw new \Exception('Erreur Orange SMS direct : ' . $result['error']);

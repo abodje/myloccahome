@@ -46,7 +46,7 @@ class NotificationService
 
             // Utiliser le sender name configuré si non spécifié
             if (!$senderName) {
-                $senderName = $this->settingsService->get('orange_sms_sender_name', 'MYLOCCA');
+                $senderName = $this->settingsService->get('orange_sms_sender_name', 'LOKAPRO');
             }
 
             $sms = new SmsMessage(
@@ -90,7 +90,7 @@ class NotificationService
     public function sendPaymentReminder(string $phoneNumber, string $tenantName, float $amount, string $dueDate): bool
     {
         $message = sprintf(
-            'Bonjour %s, rappel : votre loyer de %.0f FCFA est attendu pour le %s. MYLOCCA',
+            'Bonjour %s, rappel : votre loyer de %.0f FCFA est attendu pour le %s. LOKAPRO',
             $tenantName,
             $amount,
             $dueDate
@@ -105,7 +105,7 @@ class NotificationService
     public function sendPaymentConfirmation(string $phoneNumber, string $tenantName, float $amount): bool
     {
         $message = sprintf(
-            'Merci %s ! Paiement de %.0f FCFA reçu et confirmé. MYLOCCA',
+            'Merci %s ! Paiement de %.0f FCFA reçu et confirmé. LOKAPRO',
             $tenantName,
             $amount
         );
@@ -119,7 +119,7 @@ class NotificationService
     public function sendMaintenanceAssignment(string $phoneNumber, string $maintenanceType, string $propertyAddress): bool
     {
         $message = sprintf(
-            'Maintenance %s assignée pour %s. Nous vous contacterons bientôt. MYLOCCA',
+            'Maintenance %s assignée pour %s. Nous vous contacterons bientôt. LOKAPRO',
             $maintenanceType,
             $propertyAddress
         );
@@ -174,7 +174,7 @@ class NotificationService
      */
     private function getFromName(): string
     {
-        return $this->settingsService->get('email_sender_name', 'MYLOCCA');
+        return $this->settingsService->get('email_sender_name', 'LOKAPRO');
     }
 
     /**
@@ -474,7 +474,7 @@ class NotificationService
         $email = (new Email())
             ->from($this->getFromEmail())
             ->to($emailAddress)
-            ->subject('Votre quittance de loyer - MYLOCCA')
+            ->subject('Votre quittance de loyer - LOKAPRO')
             ->html($this->getReceiptEmailTemplate($tenantName, $payment));
 
         // Ajouter la quittance en pièce jointe si le fichier existe
@@ -496,7 +496,7 @@ class NotificationService
         $email = (new Email())
             ->from($this->getFromEmail())
             ->to($emailAddress)
-            ->subject('Rappel de paiement - MYLOCCA')
+            ->subject('Rappel de paiement - LOKAPRO')
             ->html($this->getPaymentReminderEmailTemplate($tenantName, $payment));
 
         // Utiliser le mailer SMTP personnalisé
@@ -512,7 +512,7 @@ class NotificationService
         $email = (new Email())
             ->from($this->getFromEmail())
             ->to($emailAddress)
-            ->subject('Alerte: Expiration de votre contrat - MYLOCCA')
+            ->subject('Alerte: Expiration de votre contrat - LOKAPRO')
             ->html($this->getLeaseExpirationEmailTemplate($tenantName, $lease));
 
         // Utiliser le mailer SMTP personnalisé
@@ -540,7 +540,7 @@ class NotificationService
                 'date_aujourdhui' => date($this->settingsService->get('email_date_format', 'd/m/Y')),
                 'societe_nom' => $this->getFromName(),
                 'societe_contact' => $this->getFromEmail(),
-                'email_signature' => $this->settingsService->get('email_signature', 'MYLOCCA - Votre partenaire immobilier'),
+                'email_signature' => $this->settingsService->get('email_signature', 'LOKAPRO - Votre partenaire immobilier'),
             ];
 
             $template = $customTemplate;
@@ -573,7 +573,7 @@ class NotificationService
             <p>Nous vous rappelons que votre loyer de " . number_format($payment->getAmount(), 0, ',', ' ') . " FCFA était attendu le " . $payment->getDueDate()->format('d/m/Y') . ".</p>
             <p>Le paiement est en retard de {$daysOverdue} jour(s).</p>
             <p>Merci de régulariser votre situation dans les plus brefs délais.</p>
-            <p>L'équipe MYLOCCA</p>
+            <p>L'équipe LOKAPRO</p>
         ";
     }
 
@@ -590,7 +590,7 @@ class NotificationService
             <p>Nous vous informons que votre contrat de location pour <strong>{$propertyAddress}</strong> expire le " . $lease->getEndDate()->format('d/m/Y') . ".</p>
             <p>Il reste {$daysUntilExpiration} jour(s) avant l'expiration de votre contrat.</p>
             <p>Si vous souhaitez renouveler votre contrat ou si vous avez des questions, n'hésitez pas à nous contacter.</p>
-            <p>L'équipe MYLOCCA</p>
+            <p>L'équipe LOKAPRO</p>
         ";
     }
 
@@ -716,7 +716,7 @@ class NotificationService
                 'date_aujourdhui' => date($this->settingsService->get('email_date_format', 'd/m/Y')),
                 'societe_nom' => $this->getFromName(),
                 'societe_contact' => $this->getFromEmail(),
-                'email_signature' => $this->settingsService->get('email_signature', 'MYLOCCA - Votre partenaire immobilier'),
+                'email_signature' => $this->settingsService->get('email_signature', 'LOKAPRO - Votre partenaire immobilier'),
             ];
 
             $template = $customTemplate;

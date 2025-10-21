@@ -1,4 +1,4 @@
-# Script PowerShell pour démarrer le consumer Messenger pour MYLOCCA
+# Script PowerShell pour démarrer le consumer Messenger pour LOKAPRO
 # Ce script redémarre automatiquement le consumer s'il s'arrête
 
 param(

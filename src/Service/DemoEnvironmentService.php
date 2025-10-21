@@ -193,7 +193,7 @@ class DemoEnvironmentService
         $organization = new Organization();
         $organization->setName("Organisation Démo - {$user->getFirstName()} {$user->getLastName()}");
         $organization->setSlug($this->slugger->slug($organization->getName())->lower()); // Ajouter le slug
-        $organization->setDescription("Environnement de démo pour tester MYLOCCA");
+        $organization->setDescription("Environnement de démo pour tester LOKAPRO");
         $organization->setSubdomain($subdomain);
         $organization->setIsDemo(true);
         $organization->setCreatedAt(new \DateTime());
@@ -872,7 +872,7 @@ EOF;
         if (file_exists($hostsFile)) {
             $content = file_get_contents($hostsFile);
             if (strpos($content, $dnsEntry) === false) {
-                $content .= "\n# MYLOCCA Demo Environment\n{$dnsEntry}\n";
+                $content .= "\n# LOKAPRO Demo Environment\n{$dnsEntry}\n";
                 file_put_contents($hostsFile, $content);
             }
         }

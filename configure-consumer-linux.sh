@@ -184,7 +184,7 @@ setup_monitoring() {
     cat > "$PROJECT_DIR/monitor-consumer.sh" << EOF
 #!/bin/bash
 
-# Script de monitoring du consumer MYLOCCA
+# Script de monitoring du consumer LOKAPRO
 # Adapté pour l'environnement détecté
 
 PROJECT_DIR="$PROJECT_DIR"
@@ -206,7 +206,7 @@ if ! systemctl is-active --quiet "\$SERVICE_NAME"; then
     else
         log "ERREUR: Échec du redémarrage du service \$SERVICE_NAME"
         # Envoyer une alerte par email si possible
-        echo "Service \$SERVICE_NAME en panne sur \$(hostname)" | mail -s "ALERTE: Consumer MYLOCCA" admin@example.com 2>/dev/null || true
+        echo "Service \$SERVICE_NAME en panne sur \$(hostname)" | mail -s "ALERTE: Consumer LOKAPRO" admin@example.com 2>/dev/null || true
     fi
 else
     log "INFO: Service \$SERVICE_NAME actif"
@@ -240,7 +240,7 @@ create_maintenance_script() {
     cat > "$PROJECT_DIR/maintain-consumer.sh" << EOF
 #!/bin/bash
 
-# Script de maintenance du consumer MYLOCCA
+# Script de maintenance du consumer LOKAPRO
 # À exécuter quotidiennement
 
 PROJECT_DIR="$PROJECT_DIR"
@@ -248,7 +248,7 @@ SERVICE_NAME="mylocca-consumer"
 WEB_USER="$WEB_USER"
 WEB_GROUP="$WEB_GROUP"
 
-echo "=== Maintenance du Consumer MYLOCCA ==="
+echo "=== Maintenance du Consumer LOKAPRO ==="
 echo "Date: \$(date)"
 echo ""
 
@@ -340,7 +340,7 @@ show_configuration_summary() {
 
 # Fonction principale
 main() {
-    log "=== Configuration du Consumer MYLOCCA pour Linux ==="
+    log "=== Configuration du Consumer LOKAPRO pour Linux ==="
 
     detect_environment
     adapt_configuration

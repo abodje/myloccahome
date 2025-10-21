@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Script d'installation du consumer Messenger pour MYLOCCA sur serveur Linux
+# Script d'installation du consumer Messenger pour LOKAPRO sur serveur Linux
 # Compatible Ubuntu/CentOS/Debian
 
 set -e
@@ -185,7 +185,7 @@ create_monitoring_script() {
     cat > "$PROJECT_DIR/monitor-consumer.sh" << 'EOF'
 #!/bin/bash
 
-# Script de monitoring du consumer MYLOCCA
+# Script de monitoring du consumer LOKAPRO
 # À exécuter via Cron toutes les 5 minutes
 
 PROJECT_DIR="/home/Lokaprot/myloccahome"
@@ -274,7 +274,7 @@ test_installation() {
 show_configuration() {
     log_success "Installation terminée !"
     echo ""
-    echo "=== Configuration du Consumer MYLOCCA ==="
+    echo "=== Configuration du Consumer LOKAPRO ==="
     echo ""
     echo "Service systemd: $SERVICE_NAME"
     echo "Utilisateur: $SERVICE_USER"
@@ -299,7 +299,7 @@ show_configuration() {
 
 # Fonction principale
 main() {
-    log "=== Installation du Consumer MYLOCCA ==="
+    log "=== Installation du Consumer LOKAPRO ==="
 
     check_root
     detect_distro

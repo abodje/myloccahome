@@ -210,11 +210,11 @@ class MenuService
                 'order' => 104,
             ],
             'admin_contract_config' => [
-                'label' => 'Configuration contrats',
+                'label' => '📄 Configuration des contrats PDF',
                 'icon' => 'bi-file-earmark-text',
                 'route' => 'app_admin_contract_config_index',
                 'roles' => ['ROLE_ADMIN', 'ROLE_SUPER_ADMIN'],
-                'order' => 104,
+                'order' => 103,
             ],
             'admin_plans' => [
                 'label' => '💳 Plans d\'Abonnement',

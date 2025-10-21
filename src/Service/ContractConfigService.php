@@ -2,7 +2,12 @@
 
 namespace App\Service;
 
-use App\Entity\Settings;
+use App\Entity\ContractConfig;
+use App\Entity\Organization;
+use App\Entity\Company;
+use App\Entity\User;
+use App\Repository\ContractConfigRepository;
+use Doctrine\ORM\EntityManagerInterface;
 
 class ContractConfigService
 {
@@ -25,7 +30,7 @@ class ContractConfigService
         'contract_highlight_color' => '#f0f8ff',
 
         // Entreprise
-        'contract_company_name' => 'MYLOCCA Gestion',
+        'contract_company_name' => 'LOKAPRO Gestion',
         'contract_company_address' => '',
         'contract_logo_url' => null,
 
@@ -55,60 +60,114 @@ class ContractConfigService
     ];
 
     public function __construct(
-        private SettingsService $settingsService
+        private ContractConfigRepository $contractConfigRepository,
+        private EntityManagerInterface $entityManager
     ) {
     }
 
     /**
-     * Récupère la configuration complète du contrat
+     * Récupère la configuration complète du contrat pour un utilisateur donné
      */
-    public function getContractConfig(): array
+    public function getContractConfig(?User $user = null): array
     {
-        $config = $this->defaultConfig;
-
-        // Récupérer les paramètres personnalisés depuis la base de données
-        $appSettings = $this->settingsService->getAppSettings();
-
-        // Mapper les paramètres de l'application vers la configuration du contrat
-        if ($appSettings) {
-            $config['contract_company_name'] = $appSettings['company_name'] ?? $config['contract_company_name'];
-            $config['contract_company_address'] = $appSettings['company_address'] ?? $config['contract_company_address'];
-            $config['contract_primary_color'] = $this->settingsService->get('app_primary_color') ?? $config['contract_primary_color'];
-            $config['contract_logo_url'] = $this->settingsService->get('app_logo') ?? $config['contract_logo_url'];
+        if (!$user) {
+            return $this->defaultConfig;
         }
 
-        return $config;
+        // Déterminer l'organisation et la société selon le rôle
+        $organization = $user->getOrganization();
+        $company = $user->getCompany();
+
+        if (!$organization) {
+            return $this->defaultConfig;
+        }
+
+        // Chercher la configuration existante
+        $contractConfig = $this->contractConfigRepository->findByOrganizationAndCompany($organization, $company);
+
+        if ($contractConfig) {
+            return $contractConfig->toArray();
+        }
+
+        // Si pas de configuration trouvée, retourner les valeurs par défaut
+        return $this->defaultConfig;
     }
 
     /**
-     * Récupère une valeur de configuration spécifique
+     * Récupère la configuration complète du contrat pour une organisation/société spécifique
      */
-    public function getConfigValue(string $key, mixed $default = null): mixed
+    public function getContractConfigForOrganization(?Organization $organization, ?Company $company = null): array
     {
-        $config = $this->getContractConfig();
+        if (!$organization) {
+            return $this->defaultConfig;
+        }
+
+        $contractConfig = $this->contractConfigRepository->findByOrganizationAndCompany($organization, $company);
+
+        if ($contractConfig) {
+            return $contractConfig->toArray();
+        }
+
+        return $this->defaultConfig;
+    }
+
+    /**
+     * Récupère une valeur de configuration spécifique pour un utilisateur
+     */
+    public function getConfigValue(string $key, ?User $user = null, mixed $default = null): mixed
+    {
+        $config = $this->getContractConfig($user);
         return $config[$key] ?? $default;
     }
 
     /**
-     * Met à jour une valeur de configuration
+     * Met à jour une valeur de configuration pour un utilisateur
      */
-    public function setConfigValue(string $key, mixed $value): void
+    public function setConfigValue(string $key, mixed $value, ?User $user = null): void
     {
-        // Sauvegarder les paramètres importants en base de données
-        switch ($key) {
-            case 'contract_company_name':
-                $this->settingsService->set('company_name', $value);
-                break;
-            case 'contract_company_address':
-                $this->settingsService->set('company_address', $value);
-                break;
-            case 'contract_primary_color':
-                $this->settingsService->set('app_primary_color', $value);
-                break;
-            case 'contract_logo_url':
-                $this->settingsService->set('app_logo', $value);
-                break;
+        if (!$user || !$user->getOrganization()) {
+            return;
         }
+
+        $organization = $user->getOrganization();
+        $company = $user->getCompany();
+
+        // Trouver ou créer la configuration
+        $contractConfig = $this->contractConfigRepository->findOrCreateForOrganizationAndCompany($organization, $company);
+
+        // Mettre à jour la valeur
+        $method = 'set' . str_replace('_', '', ucwords($key, '_'));
+        if (method_exists($contractConfig, $method)) {
+            $contractConfig->$method($value);
+            $contractConfig->setUpdatedAt(new \DateTime());
+
+            $this->entityManager->persist($contractConfig);
+            $this->entityManager->flush();
+        }
+    }
+
+    /**
+     * Met à jour toute la configuration pour un utilisateur
+     */
+    public function updateContractConfig(array $configData, ?User $user = null): bool
+    {
+        if (!$user || !$user->getOrganization()) {
+            return false;
+        }
+
+        $organization = $user->getOrganization();
+        $company = $user->getCompany();
+
+        // Trouver ou créer la configuration
+        $contractConfig = $this->contractConfigRepository->findOrCreateForOrganizationAndCompany($organization, $company);
+
+        // Mettre à jour toutes les valeurs
+        $contractConfig->fromArray($configData);
+
+        $this->entityManager->persist($contractConfig);
+        $this->entityManager->flush();
+
+        return true;
     }
 
     /**
@@ -151,9 +210,9 @@ class ContractConfigService
     }
 
     /**
-     * Applique un thème prédéfini
+     * Applique un thème prédéfini pour un utilisateur
      */
-    public function applyTheme(string $themeName): array
+    public function applyTheme(string $themeName, ?User $user = null): array
     {
         $themes = $this->getAvailableThemes();
 
@@ -162,13 +221,18 @@ class ContractConfigService
         }
 
         $theme = $themes[$themeName];
-        $config = $this->getContractConfig();
+        $config = $this->getContractConfig($user);
 
         // Appliquer les couleurs du thème
         foreach ($theme as $key => $value) {
             if ($key !== 'name') {
                 $config[$key] = $value;
             }
+        }
+
+        // Sauvegarder le thème si un utilisateur est fourni
+        if ($user) {
+            $this->updateContractConfig($config, $user);
         }
 
         return $config;
@@ -198,5 +262,60 @@ class ContractConfigService
         }
 
         return $errors;
+    }
+
+    /**
+     * Récupère toutes les configurations d'une organisation
+     */
+    public function getConfigurationsForOrganization(Organization $organization): array
+    {
+        return $this->contractConfigRepository->findByOrganization($organization);
+    }
+
+    /**
+     * Récupère toutes les configurations d'une société
+     */
+    public function getConfigurationsForCompany(Company $company): array
+    {
+        return $this->contractConfigRepository->findByCompany($company);
+    }
+
+    /**
+     * Supprime une configuration
+     */
+    public function deleteConfiguration(ContractConfig $config): void
+    {
+        $this->entityManager->remove($config);
+        $this->entityManager->flush();
+    }
+
+    /**
+     * Crée une configuration par défaut pour une organisation
+     */
+    public function createDefaultConfiguration(Organization $organization, ?Company $company = null): ContractConfig
+    {
+        if ($company) {
+            return $this->contractConfigRepository->createForCompany($organization, $company);
+        } else {
+            return $this->contractConfigRepository->createDefaultForOrganization($organization);
+        }
+    }
+
+    /**
+     * Duplique une configuration vers une autre organisation/société
+     */
+    public function duplicateConfiguration(ContractConfig $sourceConfig, Organization $targetOrganization, ?Company $targetCompany = null): ContractConfig
+    {
+        $newConfig = new ContractConfig();
+        $newConfig->setOrganization($targetOrganization);
+        $newConfig->setCompany($targetCompany);
+
+        // Copier toutes les propriétés sauf l'organisation et la société
+        $newConfig->fromArray($sourceConfig->toArray());
+
+        $this->entityManager->persist($newConfig);
+        $this->entityManager->flush();
+
+        return $newConfig;
     }
 }

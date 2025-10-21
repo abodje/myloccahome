@@ -1,6 +1,6 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Dashboard Analytique - MYLOCCA{% endblock %}
+{% block title %}Dashboard Analytique - LOKAPRO{% endblock %}
 
 {% block stylesheets %}
     {{ parent() }}
@@ -292,7 +292,7 @@
     {{ parent() }}
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    
+
     <script>
         // Graphique Revenus vs Dépenses
         const revenueCtx = document.getElementById('revenueChart').getContext('2d');
@@ -344,9 +344,9 @@
                                 if (label) {
                                     label += ': ';
                                 }
-                                label += new Intl.NumberFormat('fr-FR', { 
-                                    style: 'currency', 
-                                    currency: '{{ default_currency().code }}' 
+                                label += new Intl.NumberFormat('fr-FR', {
+                                    style: 'currency',
+                                    currency: '{{ default_currency().code }}'
                                 }).format(context.parsed.y);
                                 return label;
                             }
@@ -358,8 +358,8 @@
                         beginAtZero: true,
                         ticks: {
                             callback: function(value) {
-                                return new Intl.NumberFormat('fr-FR', { 
-                                    style: 'currency', 
+                                return new Intl.NumberFormat('fr-FR', {
+                                    style: 'currency',
                                     currency: '{{ default_currency().code }}',
                                     minimumFractionDigits: 0
                                 }).format(value);

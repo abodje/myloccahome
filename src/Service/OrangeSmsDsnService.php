@@ -20,7 +20,7 @@ class OrangeSmsDsnService
     {
         $clientId = $this->settingsService->get('orange_sms_client_id', '');
         $clientSecret = $this->settingsService->get('orange_sms_client_secret', '');
-        $senderName = $this->settingsService->get('orange_sms_sender_name', 'MYLOCCA');
+        $senderName = $this->settingsService->get('orange_sms_sender_name', 'LOKAPRO');
 
         // Si les paramètres ne sont pas configurés, retourner une DSN vide
         if (empty($clientId) || empty($clientSecret)) {
@@ -57,7 +57,7 @@ class OrangeSmsDsnService
         return [
             'client_id' => $this->settingsService->get('orange_sms_client_id', ''),
             'client_secret' => $this->settingsService->get('orange_sms_client_secret', ''),
-            'sender_name' => $this->settingsService->get('orange_sms_sender_name', 'MYLOCCA'),
+            'sender_name' => $this->settingsService->get('orange_sms_sender_name', 'LOKAPRO'),
             'is_configured' => $this->isConfigured(),
             'dsn' => $this->generateDsn(),
         ];

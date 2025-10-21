@@ -44,7 +44,7 @@ class SendRentReceiptsCommand extends Command
             return Command::FAILURE;
         }
 
-        $io->title('📧 Envoi des quittances de loyer - MYLOCCA');
+        $io->title('📧 Envoi des quittances de loyer - LOKAPRO');
         $io->info("Mois: {$forMonth->format('F Y')}");
 
         if ($dryRun) {

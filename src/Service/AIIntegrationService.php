@@ -8,7 +8,7 @@ use Psr\Log\LoggerInterface;
 use Doctrine\ORM\EntityManagerInterface;
 
 /**
- * Service d'Intelligence Artificielle pour MYLOCCA
+ * Service d'Intelligence Artificielle pour LOKAPRO
  *
  * Ce service intègre diverses fonctionnalités d'IA :
  * - Analyse prédictive des loyers

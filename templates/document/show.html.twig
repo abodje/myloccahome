@@ -1,6 +1,6 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}{{ document.name }} - MYLOCCA{% endblock %}
+{% block title %}{{ document.name }} - LOKAPRO{% endblock %}
 
 {% block page_title %}
     <h5 class="mb-0">
@@ -292,7 +292,7 @@
             if (navigator.share) {
                 navigator.share({
                     title: '{{ document.name }}',
-                    text: '{{ document.description ?? "Document partagé depuis MYLOCCA" }}',
+                    text: '{{ document.description ?? "Document partagé depuis LOKAPRO" }}',
                     url: window.location.href
                 });
             } else {

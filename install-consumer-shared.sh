@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Script d'installation du consumer Messenger pour MYLOCCA sur serveur partagé
+# Script d'installation du consumer Messenger pour LOKAPRO sur serveur partagé
 # Compatible avec les hébergements partagés (sans droits root)
 
 set -e
@@ -443,7 +443,7 @@ test_installation() {
 show_configuration_instructions() {
     log_success "Installation terminée !"
     echo ""
-    echo "=== Configuration du Consumer MYLOCCA (Serveur Partagé) ==="
+    echo "=== Configuration du Consumer LOKAPRO (Serveur Partagé) ==="
     echo ""
     echo "Scripts créés:"
     echo "  - $PROJECT_DIR/start-consumer-shared.sh (démarrage manuel)"
@@ -488,7 +488,7 @@ show_configuration_instructions() {
 
 # Fonction principale
 main() {
-    log "=== Installation du Consumer MYLOCCA (Serveur Partagé) ==="
+    log "=== Installation du Consumer LOKAPRO (Serveur Partagé) ==="
 
     check_shared_hosting
     setup_permissions

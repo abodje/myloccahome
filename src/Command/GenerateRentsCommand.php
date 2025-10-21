@@ -57,7 +57,7 @@ class GenerateRentsCommand extends Command
         $organizationId = $input->getOption('organization');
         $dryRun = $input->getOption('dry-run');
 
-        $io->title('🏠 Génération automatique des loyers - MYLOCCA');
+        $io->title('🏠 Génération automatique des loyers - LOKAPRO');
 
         if ($dryRun) {
             $io->warning('🔍 MODE SIMULATION - Aucune donnée ne sera enregistrée');

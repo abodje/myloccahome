@@ -107,7 +107,7 @@ class OnlinePaymentController extends AbstractController
                         'customer_name' => $tenant->getLastName() ?? 'Locataire',
                         'customer_surname' => $tenant->getFirstName() ?? '',
                         'customer_phone_number' => $tenant->getPhone() ?? '22500000000',
-                        'customer_email' => $tenant->getEmail() ?? 'noreply@mylocca.com',
+                        'customer_email' => $tenant->getEmail() ?? 'noreply@app.lokapro.tech',
                         'customer_address' => $tenant->getAddress() ?? 'Adresse',
                         'customer_city' => $tenant->getCity() ?? 'Ville',
                         'customer_country' => 'CI',
@@ -204,7 +204,7 @@ class OnlinePaymentController extends AbstractController
                         'customer_name' => $tenant->getLastName() ?? 'Locataire',
                         'customer_surname' => $tenant->getFirstName() ?? '',
                         'customer_phone_number' => $tenant->getPhone() ?? '22500000000',
-                        'customer_email' => $tenant->getEmail() ?? 'noreply@mylocca.com',
+                        'customer_email' => $tenant->getEmail() ?? 'noreply@app.lokapro.tech',
                         'customer_address' => $tenant->getAddress() ?? 'Adresse',
                         'customer_city' => $tenant->getCity() ?? 'Ville',
                         'customer_country' => 'CI',
@@ -497,14 +497,14 @@ class OnlinePaymentController extends AbstractController
                 // Confirmation de paiement de loyer
                 $payment = $onlinePayment->getPayment();
                 $message = sprintf(
-                    "MYLOCCA: Paiement de %s bien recu le %s. Votre quittance est disponible sur mylocca.com. Merci!",
+                    "LOKAPRO: Paiement de %s bien recu le %s. Votre quittance est disponible sur app.lokapro.tech. Merci!",
                     number_format($payment->getAmount(), 0, ',', ' ') . ' FCFA',
                     (new \DateTime())->format('d/m/Y')
                 );
             } elseif ($onlinePayment->getPaymentType() === 'advance') {
                 // Confirmation d'acompte
                 $message = sprintf(
-                    "MYLOCCA: Acompte de %s bien recu. Il sera applique automatiquement a vos prochains loyers. Merci!",
+                    "LOKAPRO: Acompte de %s bien recu. Il sera applique automatiquement a vos prochains loyers. Merci!",
                     number_format($onlinePayment->getAmount(), 0, ',', ' ') . ' FCFA'
                 );
             } else {
@@ -517,7 +517,7 @@ class OnlinePaymentController extends AbstractController
             }
 
             $result = $orangeSmsService->envoyerSms($tenant->getPhone(), $message);
-          
+
 
             if (isset($result['error'])) {
                 file_put_contents($logFile, date('Y-m-d H:i:s') . " - ❌ Erreur SMS: {$result['error']}\n", FILE_APPEND);

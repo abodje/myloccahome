@@ -1,5 +1,5 @@
 [Unit]
-Description=MYLOCCA Messenger Consumer
+Description=LOKAPRO Messenger Consumer
 Documentation=https://symfony.com/doc/current/messenger.html
 After=network.target mysql.service
 Wants=mysql.service

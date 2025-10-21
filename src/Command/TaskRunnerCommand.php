@@ -34,7 +34,7 @@ class TaskRunnerCommand extends Command
     {
         $io = new SymfonyStyle($input, $output);
 
-        $io->title('🚀 Exécution des tâches programmées - MYLOCCA');
+        $io->title('🚀 Exécution des tâches programmées - LOKAPRO');
 
         try {
             if ($taskId = $input->getOption('task-id')) {

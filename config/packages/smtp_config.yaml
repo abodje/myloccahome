@@ -10,4 +10,4 @@ parameters:
 
     # Email par défaut
     mailer.default_sender: 'info@app.lokapro.tech'
-    mailer.default_sender_name: 'MYLOCCA'
+    mailer.default_sender_name: 'LOKAPRO'

@@ -249,7 +249,7 @@ class Environment
         }
 
         // Le domaine de base sera injecté par le service
-        return 'https://' . $this->subdomain . '.mylocca.com';
+        return 'https://' . $this->subdomain . '.app.lokapro.tech';
     }
 
     public function getUrlWithBaseDomain(string $baseDomain): string

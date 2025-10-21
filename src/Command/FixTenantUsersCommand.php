@@ -38,7 +38,7 @@ class FixTenantUsersCommand extends Command
     {
         $io = new SymfonyStyle($input, $output);
         $dryRun = $input->getOption('dry-run');
-        
+
         $io->title('🔧 Correction des utilisateurs Tenant');
         if ($dryRun) {
             $io->note('Mode DRY-RUN : Aucune modification ne sera effectuée');

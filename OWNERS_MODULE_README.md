@@ -2,7 +2,7 @@
 
 ## 📋 Résumé
 
-Un système complet de gestion des propriétaires de biens immobiliers a été ajouté à MYLOCCA.
+Un système complet de gestion des propriétaires de biens immobiliers a été ajouté à LOKAPRO.
 
 ## ✅ Fonctionnalités implémentées
 
@@ -138,5 +138,5 @@ php bin/console doctrine:migrations:migrate --dry-run
 
 **Date de création**: 16 octobre 2025  
 **Version**: 1.0  
-**Développé pour**: MYLOCCA - Gestion Immobilière
+**Développé pour**: LOKAPRO - Gestion Immobilière
 

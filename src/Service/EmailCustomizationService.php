@@ -46,8 +46,8 @@ class EmailCustomizationService
         }
 
         // Créer et envoyer l'email
-        $fromEmail = $this->settingsService->get('email_from', 'noreply@mylocca.com');
-        $fromName = $this->settingsService->get('email_from_name', 'MYLOCCA');
+        $fromEmail = $this->settingsService->get('email_from', 'noreply@app.lokapro.tech');
+        $fromName = $this->settingsService->get('email_from_name', 'LOKAPRO');
 
         $email = (new Email())
             ->from($fromEmail, $fromName)
@@ -80,11 +80,11 @@ class EmailCustomizationService
     {
         // Ajouter les variables système par défaut
         $defaultVariables = [
-            '{{app_name}}' => $this->settingsService->get('app_name', 'MYLOCCA'),
-            '{{company_name}}' => $this->settingsService->get('company_name', 'MYLOCCA Gestion'),
+            '{{app_name}}' => $this->settingsService->get('app_name', 'LOKAPRO'),
+            '{{company_name}}' => $this->settingsService->get('company_name', 'LOKAPRO Gestion'),
             '{{company_address}}' => $this->settingsService->get('company_address', ''),
             '{{company_phone}}' => $this->settingsService->get('company_phone', ''),
-            '{{company_email}}' => $this->settingsService->get('company_email', 'contact@mylocca.com'),
+            '{{company_email}}' => $this->settingsService->get('company_email', 'contact@app.lokapro.tech'),
             '{{current_date}}' => (new \DateTime())->format('d/m/Y'),
             '{{current_year}}' => date('Y'),
             '{{currency_symbol}}' => $this->currencyService->getActiveCurrency()->getSymbol(),

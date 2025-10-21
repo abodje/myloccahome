@@ -1,6 +1,6 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Nouveau propriétaire - MYLOCCA{% endblock %}
+{% block title %}Nouveau propriétaire - LOKAPRO{% endblock %}
 
 {% block page_title %}
     <h5 class="mb-0">
@@ -28,7 +28,7 @@
                 </div>
                 <div class="card-body">
                     {{ form_start(form, {'attr': {'novalidate': 'novalidate'}}) }}
-                    
+
                     <div class="row">
                         <div class="col-md-12 mb-3">
                             {{ form_row(form.ownerType) }}
@@ -36,7 +36,7 @@
                     </div>
 
                     <h6 class="border-bottom pb-2 mb-3">Informations personnelles</h6>
-                    
+
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             {{ form_row(form.firstName) }}
@@ -135,7 +135,7 @@
             font-weight: 500;
             color: #495057;
         }
-        
+
         h6.border-bottom {
             color: var(--primary-color);
         }
@@ -149,10 +149,10 @@
         document.addEventListener('DOMContentLoaded', function() {
             const ownerTypeSelect = document.querySelector('select[name*="[ownerType]"]');
             const siretField = document.querySelector('input[name*="[siret]"]');
-            
+
             if (ownerTypeSelect && siretField) {
                 const siretRow = siretField.closest('.mb-3');
-                
+
                 function toggleSiretField() {
                     if (ownerTypeSelect.value === 'Particulier') {
                         siretRow.style.display = 'none';
@@ -160,7 +160,7 @@
                         siretRow.style.display = 'block';
                     }
                 }
-                
+
                 ownerTypeSelect.addEventListener('change', toggleSiretField);
                 toggleSiretField(); // Initial call
             }

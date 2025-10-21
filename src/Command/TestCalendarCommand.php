@@ -48,7 +48,7 @@ class TestCalendarCommand extends Command
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $io = new SymfonyStyle($input, $output);
-        $io->title('🔍 Diagnostic Calendrier MYLOCCA');
+        $io->title('🔍 Diagnostic Calendrier LOKAPRO');
 
         // Test 1: Vérifier les données dans la base
         $io->section('1. Vérification des données');

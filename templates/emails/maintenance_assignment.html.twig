@@ -22,7 +22,7 @@
 
         <div class="content">
             <p>Bonjour {{ user.firstName }},</p>
-            
+
             <p>Une demande de maintenance vous a été attribuée :</p>
 
             <div class="info-box {% if request.priority == 'Urgent' %}priority-urgent{% elseif request.priority == 'Haute' %}priority-high{% endif %}">
@@ -49,7 +49,7 @@
         </div>
 
         <div class="footer">
-            <p>{{ company.company_name ?? 'MYLOCCA Gestion' }}<br>
+            <p>{{ company.company_name ?? 'LOKAPRO Gestion' }}<br>
             {{ company.company_address ?? '' }}<br>
             {{ company.company_phone ?? '' }}</p>
         </div>

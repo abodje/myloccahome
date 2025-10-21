@@ -1,8 +1,8 @@
-# MYLOCCA - Solution Complète de Gestion Locative
+# LOKAPRO - Solution Complète de Gestion Locative
 
 ## 🏢 **Présentation**
 
-MYLOCCA est une solution SaaS multi-tenant révolutionnaire qui automatise la gestion de vos biens immobiliers avec des environnements de démo instantanés.
+LOKAPRO est une solution SaaS multi-tenant révolutionnaire qui automatise la gestion de vos biens immobiliers avec des environnements de démo instantanés.
 
 ## ✨ **Fonctionnalités Principales**
 
@@ -144,10 +144,10 @@ MYLOCCA est une solution SaaS multi-tenant révolutionnaire qui automatise la ge
 
 ## 📞 **Contact**
 
-- **Email** : contact@mylocca.com
+- **Email** : contact@app.lokapro.tech
 - **Téléphone** : +33 1 23 45 67 89
 - **Adresse** : Paris, France
-- **Site web** : https://mylocca.com
+- **Site web** : https://app.lokapro.tech
 
 ## 🚀 **Démarrage Rapide**
 
@@ -158,4 +158,4 @@ MYLOCCA est une solution SaaS multi-tenant révolutionnaire qui automatise la ge
 
 ---
 
-**MYLOCCA - Révolutionnez votre gestion locative ! 🏠✨**
+**LOKAPRO - Révolutionnez votre gestion locative ! 🏠✨**

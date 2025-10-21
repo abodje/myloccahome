@@ -149,12 +149,12 @@ class MaintenanceAssignmentService
         $notifiedCount = 0;
         foreach ($urgentRequests as $request) {
             $this->notificationService->sendUrgentMaintenanceAlert($request);
-            
+
             // Envoyer SMS si activé
             if ($this->settingsService->get('orange_sms_enabled', false)) {
                 $this->sendUrgentMaintenanceSms($request);
             }
-            
+
             $notifiedCount++;
         }
 
@@ -169,10 +169,10 @@ class MaintenanceAssignmentService
         try {
             // Notifier le propriétaire/gestionnaire
             $owner = $request->getProperty()->getOwner();
-            
+
             if ($owner && $owner->getPhone()) {
                 $message = sprintf(
-                    "URGENT MYLOCCA: Demande maintenance a %s. Priorite: %s. Voir details sur mylocca.com",
+                    "URGENT LOKAPRO: Demande maintenance a %s. Priorite: %s. Voir details sur app.lokapro.tech",
                     substr($request->getProperty()->getAddress(), 0, 30),
                     $request->getPriority()
                 );
@@ -189,7 +189,7 @@ class MaintenanceAssignmentService
             if ($request->getTenant() && $request->getTenant()->getPhone()) {
                 $tenant = $request->getTenant();
                 $message = sprintf(
-                    "MYLOCCA: Votre demande urgente #%d a ete prise en compte. Intervention prevue sous 24h.",
+                    "LOKAPRO: Votre demande urgente #%d a ete prise en compte. Intervention prevue sous 24h.",
                     $request->getId()
                 );
 

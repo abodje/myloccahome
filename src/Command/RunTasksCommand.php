@@ -36,7 +36,7 @@ class RunTasksCommand extends Command
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $io = new SymfonyStyle($input, $output);
-        $io->title('🚀 Exécution des tâches programmées - MYLOCCA');
+        $io->title('🚀 Exécution des tâches programmées - LOKAPRO');
 
         $taskType = $input->getOption('task-type');
         $taskId = $input->getOption('task-id');

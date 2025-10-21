@@ -1,6 +1,6 @@
-# Consumer Messenger MYLOCCA - Guide Linux
+# Consumer Messenger LOKAPRO - Guide Linux
 
-Ce guide explique comment installer et configurer le consumer Messenger pour MYLOCCA sur un serveur Linux.
+Ce guide explique comment installer et configurer le consumer Messenger pour LOKAPRO sur un serveur Linux.
 
 ## 📋 Prérequis
 
@@ -45,7 +45,7 @@ Modifiez le fichier de service `/etc/systemd/system/mylocca-consumer.service` :
 
 ```ini
 [Unit]
-Description=MYLOCCA Messenger Consumer
+Description=LOKAPRO Messenger Consumer
 After=network.target mysql.service
 
 [Service]

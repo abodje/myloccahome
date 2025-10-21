@@ -1,6 +1,6 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Administration IA - MYLOCCA{% endblock %}
+{% block title %}Administration IA - LOKAPRO{% endblock %}
 
 {% block page_title %}
     <h5 class="mb-0">
@@ -142,27 +142,27 @@
                         <i class="bi bi-calculator me-2"></i> Prédiction des Loyers
                         <small class="d-block text-muted">Sélectionnez une propriété pour prédire son loyer</small>
                     </a>
-                    
+
                     <a href="{{ path('app_tenant_index') }}" class="btn btn-outline-success">
                         <i class="bi bi-shield-check me-2"></i> Évaluation des Risques
                         <small class="d-block text-muted">Sélectionnez un locataire pour évaluer son risque</small>
                     </a>
-                    
+
                     <a href="{{ path('app_lease_index') }}" class="btn btn-outline-info">
                         <i class="bi bi-file-text me-2"></i> Génération de Contrats
                         <small class="d-block text-muted">Sélectionnez un bail pour générer le contrat</small>
                     </a>
-                    
+
                     <button class="btn btn-outline-warning" onclick="showImageAnalysisModal()">
                         <i class="bi bi-image me-2"></i> Analyse d'Images
                         <small class="d-block text-muted">Analysez les photos de propriétés</small>
                     </button>
-                    
+
                     <a href="{{ path('app_tenant_index') }}" class="btn btn-outline-secondary">
                         <i class="bi bi-lightbulb me-2"></i> Recommandations
                         <small class="d-block text-muted">Sélectionnez un locataire pour des recommandations</small>
                     </a>
-                    
+
                     <button class="btn btn-outline-dark" onclick="showMarketAnalysisModal()">
                         <i class="bi bi-graph-up me-2"></i> Analyse du Marché
                         <small class="d-block text-muted">Analysez les tendances du marché</small>
@@ -441,14 +441,14 @@ function showMarketAnalysisModal() {
 // Gestion du formulaire d'analyse d'images
 document.getElementById('imageAnalysisForm').addEventListener('submit', function(e) {
     e.preventDefault();
-    
+
     const imageUrls = document.getElementById('imageUrls').value.split('\n').filter(url => url.trim());
-    
+
     if (imageUrls.length === 0) {
         alert('Veuillez entrer au moins une URL d\'image');
         return;
     }
-    
+
     // Appel à l'API d'analyse d'images
     fetch('/ai/analyze-images', {
         method: 'POST',
@@ -473,14 +473,14 @@ document.getElementById('imageAnalysisForm').addEventListener('submit', function
 // Gestion du formulaire d'analyse du marché
 document.getElementById('marketAnalysisForm').addEventListener('submit', function(e) {
     e.preventDefault();
-    
+
     const cityName = document.getElementById('cityName').value.trim();
-    
+
     if (!cityName) {
         alert('Veuillez entrer le nom d\'une ville');
         return;
     }
-    
+
     // Appel à l'API d'analyse du marché
     fetch(`/ai/analyze-market/${encodeURIComponent(cityName)}`)
     .then(response => response.json())

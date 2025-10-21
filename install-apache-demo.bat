@@ -1,6 +1,6 @@
 @echo off
 echo ========================================
-echo Installation Apache MYLOCCA Demo System
+echo Installation Apache LOKAPRO Demo System
 echo ========================================
 echo.
 
@@ -32,7 +32,7 @@ findstr /C:"Include conf/extra/mylocca-demo.conf" "C:\wamp64\bin\apache\apache2.
 if %errorLevel% == 0 (
     echo [OK] Include déjà présent dans httpd.conf
 ) else (
-    echo # Configuration MYLOCCA Demo System >> "C:\wamp64\bin\apache\apache2.4.54\conf\httpd.conf"
+    echo # Configuration LOKAPRO Demo System >> "C:\wamp64\bin\apache\apache2.4.54\conf\httpd.conf"
     echo Include conf/extra/mylocca-demo.conf >> "C:\wamp64\bin\apache\apache2.4.54\conf\httpd.conf"
     echo [OK] Include ajouté dans httpd.conf
 )
@@ -41,9 +41,9 @@ echo.
 echo [3/6] Configuration du fichier hosts...
 findstr /C:"mylocca.local" "C:\Windows\System32\drivers\etc\hosts" >nul
 if %errorLevel% == 0 (
-    echo [OK] Entrées MYLOCCA déjà présentes dans hosts
+    echo [OK] Entrées LOKAPRO déjà présentes dans hosts
 ) else (
-    echo # MYLOCCA Demo System >> "C:\Windows\System32\drivers\etc\hosts"
+    echo # LOKAPRO Demo System >> "C:\Windows\System32\drivers\etc\hosts"
     echo 127.0.0.1 mylocca.local >> "C:\Windows\System32\drivers\etc\hosts"
     echo 127.0.0.1 demo.mylocca.local >> "C:\Windows\System32\drivers\etc\hosts"
     echo 127.0.0.1 *.demo.mylocca.local >> "C:\Windows\System32\drivers\etc\hosts"

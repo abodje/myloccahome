@@ -1,6 +1,6 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Configuration des contrats - MYLOCCA{% endblock %}
+{% block title %}Configuration des contrats - LOKAPRO{% endblock %}
 
 {% block page_title %}
     <h5 class="mb-0">
@@ -23,6 +23,96 @@
 {% endblock %}
 
 {% block body %}
+    <!-- Informations multi-tenant -->
+    {% if organization %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="alert alert-info d-flex align-items-center">
+                <i class="bi bi-building me-3 fs-4"></i>
+                <div>
+                    <strong>Configuration pour :</strong>
+                    <br>
+                    <i class="bi bi-people me-1"></i> Organisation: {{ organization.name }}
+                    {% if company %}
+                        <br>
+                        <i class="bi bi-building me-1"></i> Société: {{ company.name }}
+                    {% else %}
+                        <br>
+                        <small class="text-muted">Configuration par défaut de l'organisation</small>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Liste des configurations pour les super admins -->
+    {% if configurations|length > 0 %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="bi bi-list-ul me-2"></i>
+                        Configurations disponibles
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Société</th>
+                                    <th>Nom de l'entreprise</th>
+                                    <th>Couleur principale</th>
+                                    <th>Dernière modification</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for config in configurations %}
+                                <tr>
+                                    <td>
+                                        {% if config.company %}
+                                            <i class="bi bi-building me-1"></i>{{ config.company.name }}
+                                        {% else %}
+                                            <span class="text-muted">Configuration par défaut</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ config.contractCompanyName }}</td>
+                                    <td>
+                                        <span class="color-preview" style="background-color: {{ config.contractPrimaryColor }}; width: 20px; height: 20px; display: inline-block; border-radius: 3px; margin-right: 5px;"></span>
+                                        {{ config.contractPrimaryColor }}
+                                    </td>
+                                    <td>{{ config.updatedAt|date('d/m/Y H:i') }}</td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm">
+                                            <a href="{{ path('app_admin_contract_config_preview') }}" class="btn btn-outline-info btn-sm" target="_blank">
+                                                <i class="bi bi-eye"></i>
+                                            </a>
+                                            <form method="POST" action="{{ path('app_admin_contract_config_duplicate', {id: config.id}) }}" class="d-inline">
+                                                <button type="submit" class="btn btn-outline-success btn-sm" title="Dupliquer">
+                                                    <i class="bi bi-copy"></i>
+                                                </button>
+                                            </form>
+                                            <form method="POST" action="{{ path('app_admin_contract_config_delete', {id: config.id}) }}" class="d-inline">
+                                                <button type="submit" class="btn btn-outline-danger btn-sm" title="Supprimer" onclick="return confirm('Supprimer cette configuration ?')">
+                                                    <i class="bi bi-trash"></i>
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
     <div class="row">
         <div class="col-md-12">
             <div class="card">
@@ -52,7 +142,7 @@
                         <div class="row">
                             <div class="col-md-6">
                                 <h6>📝 Apparence générale</h6>
-                                
+
                                 <div class="mb-3">
                                     <label class="form-label">Langue</label>
                                     <select name="contract_language" class="form-select">
@@ -63,7 +153,7 @@
 
                                 <div class="mb-3">
                                     <label class="form-label">Titre principal</label>
-                                    <input type="text" name="contract_main_title" class="form-control" 
+                                    <input type="text" name="contract_main_title" class="form-control"
                                            value="{{ config.contract_main_title }}">
                                 </div>
 
@@ -78,18 +168,18 @@
 
                                 <div class="mb-3">
                                     <label class="form-label">Taille de police</label>
-                                    <input type="text" name="contract_font_size" class="form-control" 
+                                    <input type="text" name="contract_font_size" class="form-control"
                                            value="{{ config.contract_font_size }}" placeholder="11pt">
                                 </div>
                             </div>
 
                             <div class="col-md-6">
                                 <h6>🎨 Couleurs</h6>
-                                
+
                                 <div class="mb-3">
                                     <label class="form-label">Couleur principale</label>
                                     <div class="input-group">
-                                        <input type="color" name="contract_primary_color" class="form-control form-control-color" 
+                                        <input type="color" name="contract_primary_color" class="form-control form-control-color"
                                                value="{{ config.contract_primary_color }}">
                                         <input type="text" class="form-control" value="{{ config.contract_primary_color }}">
                                     </div>
@@ -98,7 +188,7 @@
                                 <div class="mb-3">
                                     <label class="form-label">Couleur du texte</label>
                                     <div class="input-group">
-                                        <input type="color" name="contract_text_color" class="form-control form-control-color" 
+                                        <input type="color" name="contract_text_color" class="form-control form-control-color"
                                                value="{{ config.contract_text_color }}">
                                         <input type="text" class="form-control" value="{{ config.contract_text_color }}">
                                     </div>
@@ -107,7 +197,7 @@
                                 <div class="mb-3">
                                     <label class="form-label">Couleur de fond des infos</label>
                                     <div class="input-group">
-                                        <input type="color" name="contract_info_bg_color" class="form-control form-control-color" 
+                                        <input type="color" name="contract_info_bg_color" class="form-control form-control-color"
                                                value="{{ config.contract_info_bg_color }}">
                                         <input type="text" class="form-control" value="{{ config.contract_info_bg_color }}">
                                     </div>
@@ -116,7 +206,7 @@
                                 <div class="mb-3">
                                     <label class="form-label">Couleur de surbrillance</label>
                                     <div class="input-group">
-                                        <input type="color" name="contract_highlight_color" class="form-control form-control-color" 
+                                        <input type="color" name="contract_highlight_color" class="form-control form-control-color"
                                                value="{{ config.contract_highlight_color }}">
                                         <input type="text" class="form-control" value="{{ config.contract_highlight_color }}">
                                     </div>
@@ -130,10 +220,10 @@
                         <div class="row">
                             <div class="col-md-6">
                                 <h6>🏢 Informations entreprise</h6>
-                                
+
                                 <div class="mb-3">
                                     <label class="form-label">Nom de l'entreprise</label>
-                                    <input type="text" name="contract_company_name" class="form-control" 
+                                    <input type="text" name="contract_company_name" class="form-control"
                                            value="{{ config.contract_company_name }}">
                                 </div>
 
@@ -145,10 +235,10 @@
 
                             <div class="col-md-6">
                                 <h6>🖼️ Logo</h6>
-                                
+
                                 <div class="mb-3">
                                     <label class="form-label">URL du logo</label>
-                                    <input type="url" name="contract_logo_url" class="form-control" 
+                                    <input type="url" name="contract_logo_url" class="form-control"
                                            value="{{ config.contract_logo_url }}" placeholder="https://...">
                                     <div class="form-text">URL complète vers l'image du logo</div>
                                 </div>
@@ -170,28 +260,28 @@
                         <div class="row">
                             <div class="col-md-6">
                                 <h6>📋 Titres des sections</h6>
-                                
+
                                 <div class="mb-3">
                                     <label class="form-label">Article 1 - Les parties</label>
-                                    <input type="text" name="contract_section_1_title" class="form-control" 
+                                    <input type="text" name="contract_section_1_title" class="form-control"
                                            value="{{ config.contract_section_1_title }}">
                                 </div>
 
                                 <div class="mb-3">
                                     <label class="form-label">Article 2 - Le bien loué</label>
-                                    <input type="text" name="contract_section_2_title" class="form-control" 
+                                    <input type="text" name="contract_section_2_title" class="form-control"
                                            value="{{ config.contract_section_2_title }}">
                                 </div>
 
                                 <div class="mb-3">
                                     <label class="form-label">Article 3 - Durée du bail</label>
-                                    <input type="text" name="contract_section_3_title" class="form-control" 
+                                    <input type="text" name="contract_section_3_title" class="form-control"
                                            value="{{ config.contract_section_3_title }}">
                                 </div>
 
                                 <div class="mb-3">
                                     <label class="form-label">Article 4 - Loyer et charges</label>
-                                    <input type="text" name="contract_section_4_title" class="form-control" 
+                                    <input type="text" name="contract_section_4_title" class="form-control"
                                            value="{{ config.contract_section_4_title }}">
                                 </div>
                             </div>
@@ -199,25 +289,25 @@
                             <div class="col-md-6">
                                 <div class="mb-3">
                                     <label class="form-label">Article 5 - Dépôt de garantie</label>
-                                    <input type="text" name="contract_section_5_title" class="form-control" 
+                                    <input type="text" name="contract_section_5_title" class="form-control"
                                            value="{{ config.contract_section_5_title }}">
                                 </div>
 
                                 <div class="mb-3">
                                     <label class="form-label">Article 6 - Obligations locataire</label>
-                                    <input type="text" name="contract_section_6_title" class="form-control" 
+                                    <input type="text" name="contract_section_6_title" class="form-control"
                                            value="{{ config.contract_section_6_title }}">
                                 </div>
 
                                 <div class="mb-3">
                                     <label class="form-label">Article 7 - Obligations bailleur</label>
-                                    <input type="text" name="contract_section_7_title" class="form-control" 
+                                    <input type="text" name="contract_section_7_title" class="form-control"
                                            value="{{ config.contract_section_7_title }}">
                                 </div>
 
                                 <div class="mb-3">
                                     <label class="form-label">Article 8 - Clause résolutoire</label>
-                                    <input type="text" name="contract_section_8_title" class="form-control" 
+                                    <input type="text" name="contract_section_8_title" class="form-control"
                                            value="{{ config.contract_section_8_title }}">
                                 </div>
                             </div>
@@ -229,22 +319,22 @@
                         <div class="row">
                             <div class="col-md-6">
                                 <h6>✍️ Signatures</h6>
-                                
+
                                 <div class="mb-3">
                                     <label class="form-label">Titre bailleur</label>
-                                    <input type="text" name="contract_signature_landlord_title" class="form-control" 
+                                    <input type="text" name="contract_signature_landlord_title" class="form-control"
                                            value="{{ config.contract_signature_landlord_title }}">
                                 </div>
 
                                 <div class="mb-3">
                                     <label class="form-label">Titre locataire</label>
-                                    <input type="text" name="contract_signature_tenant_title" class="form-control" 
+                                    <input type="text" name="contract_signature_tenant_title" class="form-control"
                                            value="{{ config.contract_signature_tenant_title }}">
                                 </div>
 
                                 <div class="mb-3">
                                     <label class="form-label">Lieu de signature</label>
-                                    <input type="text" name="contract_signature_place" class="form-control" 
+                                    <input type="text" name="contract_signature_place" class="form-control"
                                            value="{{ config.contract_signature_place }}">
                                 </div>
                             </div>
@@ -252,19 +342,19 @@
                             <div class="col-md-6">
                                 <div class="mb-3">
                                     <label class="form-label">Texte signature bailleur</label>
-                                    <input type="text" name="contract_signature_landlord_text" class="form-control" 
+                                    <input type="text" name="contract_signature_landlord_text" class="form-control"
                                            value="{{ config.contract_signature_landlord_text }}">
                                 </div>
 
                                 <div class="mb-3">
                                     <label class="form-label">Texte signature locataire</label>
-                                    <input type="text" name="contract_signature_tenant_text" class="form-control" 
+                                    <input type="text" name="contract_signature_tenant_text" class="form-control"
                                            value="{{ config.contract_signature_tenant_text }}">
                                 </div>
 
                                 <div class="mb-3">
                                     <label class="form-label">Texte du footer</label>
-                                    <input type="text" name="contract_footer_text" class="form-control" 
+                                    <input type="text" name="contract_footer_text" class="form-control"
                                            value="{{ config.contract_footer_text }}">
                                 </div>
                             </div>
@@ -296,10 +386,10 @@
                         <li><code>{{ '{{lease.monthlyRent|currency}}' }}</code> - Loyer formaté</li>
                         <li><code>{{ '{{generated_at|date}}' }}</code> - Date de génération</li>
                     </ul>
-                    
+
                     <h6 class="mt-3">Format des couleurs</h6>
                     <p class="small">Utilisez le format hexadécimal : <code>#RRGGBB</code> (ex: #0066cc)</p>
-                    
+
                     <h6 class="mt-3">Format des tailles</h6>
                     <p class="small">Utilisez le format : <code>XXpt</code> (ex: 11pt, 24pt)</p>
                 </div>

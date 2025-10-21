@@ -1,6 +1,6 @@
-# Consumer Messenger MYLOCCA - Guide Serveur Partagé
+# Consumer Messenger LOKAPRO - Guide Serveur Partagé
 
-Ce guide explique comment installer et configurer le consumer Messenger pour MYLOCCA sur un serveur partagé (hébergement mutualisé).
+Ce guide explique comment installer et configurer le consumer Messenger pour LOKAPRO sur un serveur partagé (hébergement mutualisé).
 
 ## 📋 Prérequis
 

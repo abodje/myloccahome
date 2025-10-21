@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Script de démarrage du consumer Messenger pour MYLOCCA
+# Script de démarrage du consumer Messenger pour LOKAPRO
 # Ce script redémarre automatiquement le consumer s'il s'arrête
 # Optimisé pour serveurs Linux (Ubuntu/CentOS/Debian) et serveurs partagés
 

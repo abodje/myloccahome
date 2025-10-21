@@ -1,4 +1,4 @@
-// MYLOCCA - Scripts de Présentation
+// LOKAPRO - Scripts de Présentation
 
 document.addEventListener('DOMContentLoaded', function() {
     // Initialisation AOS
@@ -365,7 +365,7 @@ function throttle(func, limit) {
 }
 
 // Export des fonctions pour utilisation externe
-window.MYLOCCA = {
+window.LOKAPRO = {
     showNotification: function(message, type) {
         // Fonction de notification publique
         const notification = document.createElement('div');

@@ -301,7 +301,7 @@ class TaskManagerService
             $daysLate = (new \DateTime())->diff($payment->getDueDate())->days;
 
             $message = sprintf(
-                "Rappel MYLOCCA: Votre loyer de %s est en retard de %d jour(s). Echéance: %s. Payez sur mylocca.com",
+                "Rappel LOKAPRO: Votre loyer de %s est en retard de %d jour(s). Echéance: %s. Payez sur app.lokapro.tech",
                 number_format($payment->getAmount(), 0, ',', ' ') . ' FCFA',
                 $daysLate,
                 $payment->getDueDate()->format('d/m/Y')
@@ -366,7 +366,7 @@ class TaskManagerService
             $daysUntilExpiration = (new \DateTime())->diff($lease->getEndDate())->days;
 
             $message = sprintf(
-                "MYLOCCA: Votre bail %s expire dans %d jours (%s). Contactez-nous",
+                "LOKAPRO: Votre bail %s expire dans %d jours (%s). Contactez-nous",
                 $lease->getProperty()->getAddress(),
                 $daysUntilExpiration,
                 $lease->getEndDate()->format('d/m/Y')
@@ -480,7 +480,7 @@ class TaskManagerService
                 'description' => 'Teste la configuration email en envoyant un email de test',
                 'frequency' => 'MANUAL', // Tâche manuelle uniquement
                 'parameters' => [
-                    'email' => 'admin@mylocca.com' // Email par défaut pour le test
+                    'email' => 'admin@app.lokapro.tech' // Email par défaut pour le test
                 ]
             ],
             [
@@ -1132,8 +1132,8 @@ class TaskManagerService
             $this->logger->info('🧪 Test de configuration email démarré');
             $this->logger->info(sprintf('📧 Email de test : %s', $testEmail));
             $this->logger->info(sprintf('📤 Expéditeur : %s <%s>',
-                $emailSettings['email_from_name'] ?? 'MYLOCCA',
-                $emailSettings['email_from'] ?? 'noreply@mylocca.com'
+                $emailSettings['email_from_name'] ?? 'LOKAPRO',
+                $emailSettings['email_from'] ?? 'noreply@app.lokapro.tech'
             ));
 
             // Vérifier si les notifications sont activées
@@ -1153,7 +1153,7 @@ class TaskManagerService
             }
 
             // Créer le contenu de test
-            $testSubject = 'Test de configuration email - ' . ($emailSettings['app_name'] ?? 'MYLOCCA');
+            $testSubject = 'Test de configuration email - ' . ($emailSettings['app_name'] ?? 'LOKAPRO');
 
             // Utiliser le NotificationService qui gère correctement l'envoi
             $success = $this->notificationService->testEmailConfiguration($testEmail);
@@ -1187,10 +1187,10 @@ class TaskManagerService
      */
     private function createTestEmailContent(array $settings): string
     {
-        $appName = $settings['app_name'] ?? 'MYLOCCA';
-        $companyName = $settings['company_name'] ?? 'MYLOCCA Gestion';
-        $fromEmail = $settings['email_from'] ?? 'noreply@mylocca.com';
-        $fromName = $settings['email_from_name'] ?? 'MYLOCCA';
+        $appName = $settings['app_name'] ?? 'LOKAPRO';
+        $companyName = $settings['company_name'] ?? 'LOKAPRO Gestion';
+        $fromEmail = $settings['email_from'] ?? 'noreply@app.lokapro.tech';
+        $fromName = $settings['email_from_name'] ?? 'LOKAPRO';
         $testDate = (new \DateTime())->format('d/m/Y H:i:s');
 
         return <<<HTML
@@ -2036,9 +2036,9 @@ HTML;
             }
 
             // Initialiser les paramètres email par défaut
-            $this->settingsService->set('email_sender_name', 'MYLOCCA');
+            $this->settingsService->set('email_sender_name', 'LOKAPRO');
             $this->settingsService->set('email_from_address', 'info@app.lokapro.tech');
-            $this->settingsService->set('email_signature', 'MYLOCCA - Votre partenaire immobilier');
+            $this->settingsService->set('email_signature', 'LOKAPRO - Votre partenaire immobilier');
 
             // Configuration des notifications
             $this->settingsService->set('email_auto_notifications', true);

@@ -34,7 +34,7 @@ class BackupCommand extends Command
     {
         $io = new SymfonyStyle($input, $output);
 
-        $io->title('💾 Sauvegarde MYLOCCA');
+        $io->title('💾 Sauvegarde LOKAPRO');
 
         // Nettoyage si demandé
         if ($input->getOption('clean') !== null) {

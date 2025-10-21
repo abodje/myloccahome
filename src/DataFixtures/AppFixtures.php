@@ -369,7 +369,7 @@ class AppFixtures extends Fixture
                 'property' => $property1
             ],
             [
-                'name' => 'Guide du locataire MYLOCCA',
+                'name' => 'Guide du locataire LOKAPRO',
                 'type' => 'Conseils',
                 'description' => 'Conseils et informations pour bien gérer votre location',
                 'document_date' => '2025-01-01'

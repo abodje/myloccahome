@@ -1,6 +1,6 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Nouvelle écriture comptable - MYLOCCA{% endblock %}
+{% block title %}Nouvelle écriture comptable - LOKAPRO{% endblock %}
 
 {% block page_title %}
     <h5 class="mb-0">
@@ -28,7 +28,7 @@
                 </div>
                 <div class="card-body">
                     {{ form_start(form, {'attr': {'novalidate': 'novalidate'}}) }}
-                    
+
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             {{ form_row(form.entryDate, {
@@ -36,7 +36,7 @@
                                 'attr': {'class': 'form-control'}
                             }) }}
                         </div>
-                        
+
                         <div class="col-md-6 mb-3">
                             {{ form_row(form.type, {
                                 'label': 'Type',
@@ -54,7 +54,7 @@
                                 'placeholder': 'Sélectionner une catégorie'
                             }) }}
                         </div>
-                        
+
                         <div class="col-md-6 mb-3">
                             {{ form_row(form.amount, {
                                 'label': 'Montant',
@@ -78,7 +78,7 @@
                                 'required': false
                             }) }}
                         </div>
-                        
+
                         <div class="col-md-6 mb-3">
                             {% if form.tenant is defined %}
                                 {{ form_row(form.tenant, {
@@ -141,7 +141,7 @@
                         <li><strong>Crédit :</strong> Entrée d'argent (loyers, paiements reçus, etc.)</li>
                         <li><strong>Débit :</strong> Sortie d'argent (factures, travaux, charges, etc.)</li>
                     </ul>
-                    
+
                     <h6 class="mt-3">Catégories courantes :</h6>
                     <ul>
                         <li><strong>Loyer :</strong> Paiement de loyer par un locataire</li>
@@ -163,12 +163,12 @@
         .card-header {
             font-weight: 600;
         }
-        
+
         .form-label {
             font-weight: 500;
             color: #495057;
         }
-        
+
         .bg-info {
             background-color: #0dcaf0 !important;
         }

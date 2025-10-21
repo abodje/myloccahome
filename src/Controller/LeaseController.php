@@ -373,7 +373,7 @@ class LeaseController extends AbstractController
     public function downloadSchedule(Lease $lease, PdfService $pdfService, Request $request): Response
     {
         $months = $request->query->getInt('months', 12);
-        $pdfService->generatePaymentSchedule($lease, $months, true);
+        $pdfService->generatePaymentSchedule($lease, $months, true, $this->getUser());
         return new Response(); // Le PDF est déjà envoyé par generatePaymentSchedule
     }
 
@@ -381,7 +381,7 @@ class LeaseController extends AbstractController
     public function generateContractDocument(Lease $lease, ContractGenerationService $contractService): Response
     {
         try {
-            $document = $contractService->generateContractManually($lease);
+            $document = $contractService->generateContractManually($lease, $this->getUser());
             $this->addFlash('success', '📄 Le contrat de bail a été généré et enregistré dans les documents !');
         } catch (\Exception $e) {
             $this->addFlash('error', 'Erreur lors de la génération : ' . $e->getMessage());

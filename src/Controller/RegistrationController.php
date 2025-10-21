@@ -232,7 +232,7 @@ class RegistrationController extends AbstractController
 
             $entityManager->flush();
 
-            $this->addFlash('success', 'Votre abonnement a été activé avec succès ! Bienvenue sur MYLOCCA.');
+            $this->addFlash('success', 'Votre abonnement a été activé avec succès ! Bienvenue sur LOKAPRO.');
             return $this->redirectToRoute('app_login');
         }
 

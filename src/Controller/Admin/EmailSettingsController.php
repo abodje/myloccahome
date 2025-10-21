@@ -118,9 +118,9 @@ class EmailSettingsController extends AbstractController
     {
         return [
             // Paramètres d'expéditeur
-            'email_sender_name' => $this->settingsService->get('email_sender_name', 'MYLOCCA'),
-            'email_from_address' => $this->settingsService->get('email_from_address', 'noreply@mylocca.com'),
-            'email_signature' => $this->settingsService->get('email_signature', 'MYLOCCA - Votre partenaire immobilier'),
+            'email_sender_name' => $this->settingsService->get('email_sender_name', 'LOKAPRO'),
+            'email_from_address' => $this->settingsService->get('email_from_address', 'noreply@app.lokapro.tech'),
+            'email_signature' => $this->settingsService->get('email_signature', 'LOKAPRO - Votre partenaire immobilier'),
 
             // Configuration des notifications
             'email_auto_notifications' => $this->settingsService->get('email_auto_notifications', true),
@@ -156,8 +156,8 @@ class EmailSettingsController extends AbstractController
             'annee' => '2024',
             'date_echeance' => '05/02/2024',
             'date_aujourdhui' => date('d/m/Y'),
-            'societe_nom' => 'MYLOCCA',
-            'societe_contact' => 'contact@mylocca.com',
+            'societe_nom' => 'LOKAPRO',
+            'societe_contact' => 'contact@app.lokapro.tech',
             'contrat_debut' => '01/01/2024',
             'contrat_fin' => '31/12/2024',
         ];

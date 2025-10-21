@@ -71,7 +71,7 @@
 </head>
 <body>
     <div class="header">
-        <h1>{{ company.app_name ?? 'MYLOCCA' }}</h1>
+        <h1>{{ company.app_name ?? 'LOKAPRO' }}</h1>
         <p>Rappel de paiement</p>
     </div>
 
@@ -111,7 +111,7 @@
         <ul>
             <li>Virement bancaire</li>
             <li>Prélèvement automatique</li>
-            <li>Chèque à l'ordre de {{ company.company_name ?? 'MYLOCCA Gestion' }}</li>
+            <li>Chèque à l'ordre de {{ company.company_name ?? 'LOKAPRO Gestion' }}</li>
         </ul>
 
         <div style="text-align: center;">
@@ -120,7 +120,7 @@
 
         <p>
             Si vous avez déjà effectué ce paiement, merci de nous transmettre le justificatif
-            à {{ company.company_email ?? 'contact@mylocca.com' }}.
+            à {{ company.company_email ?? 'contact@app.lokapro.tech' }}.
         </p>
 
         <p>
@@ -131,7 +131,7 @@
         <div class="footer">
             <p>
                 Email envoyé automatiquement le {{ 'now'|date('d/m/Y à H:i') }}<br>
-                {{ company.company_name ?? 'MYLOCCA Gestion' }} - {{ company.company_address ?? '123 Avenue de la République, 69000 Lyon' }}
+                {{ company.company_name ?? 'LOKAPRO Gestion' }} - {{ company.company_address ?? '123 Avenue de la République, 69000 Lyon' }}
             </p>
         </div>
     </div>

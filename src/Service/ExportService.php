@@ -740,8 +740,8 @@ class ExportService
         $pdf = new TCPDF(PDF_PAGE_ORIENTATION, PDF_UNIT, PDF_PAGE_FORMAT, true, 'UTF-8', false);
 
         // Configuration du document
-        $pdf->SetCreator('MYLOCCA');
-        $pdf->SetAuthor('MYLOCCA System');
+        $pdf->SetCreator('LOKAPRO');
+        $pdf->SetAuthor('LOKAPRO System');
         $pdf->SetTitle($data['title']);
         $pdf->SetSubject('Rapport Financier');
 
@@ -789,8 +789,8 @@ class ExportService
     {
         $pdf = new TCPDF(PDF_PAGE_ORIENTATION, PDF_UNIT, PDF_PAGE_FORMAT, true, 'UTF-8', false);
 
-        $pdf->SetCreator('MYLOCCA');
-        $pdf->SetAuthor('MYLOCCA System');
+        $pdf->SetCreator('LOKAPRO');
+        $pdf->SetAuthor('LOKAPRO System');
         $pdf->SetTitle($data['title']);
         $pdf->SetSubject('Export Paiements');
 
@@ -841,8 +841,8 @@ class ExportService
     {
         $pdf = new TCPDF(PDF_PAGE_ORIENTATION, PDF_UNIT, PDF_PAGE_FORMAT, true, 'UTF-8', false);
 
-        $pdf->SetCreator('MYLOCCA');
-        $pdf->SetAuthor('MYLOCCA System');
+        $pdf->SetCreator('LOKAPRO');
+        $pdf->SetAuthor('LOKAPRO System');
         $pdf->SetTitle($data['title']);
         $pdf->SetSubject('Paiements Impayés');
 
@@ -888,8 +888,8 @@ class ExportService
     {
         $pdf = new TCPDF(PDF_PAGE_ORIENTATION, PDF_UNIT, PDF_PAGE_FORMAT, true, 'UTF-8', false);
 
-        $pdf->SetCreator('MYLOCCA');
-        $pdf->SetAuthor('MYLOCCA System');
+        $pdf->SetCreator('LOKAPRO');
+        $pdf->SetAuthor('LOKAPRO System');
         $pdf->SetTitle($data['title']);
         $pdf->SetSubject('Liste Locataires');
 
@@ -934,8 +934,8 @@ class ExportService
     {
         $pdf = new TCPDF(PDF_PAGE_ORIENTATION, PDF_UNIT, PDF_PAGE_FORMAT, true, 'UTF-8', false);
 
-        $pdf->SetCreator('MYLOCCA');
-        $pdf->SetAuthor('MYLOCCA System');
+        $pdf->SetCreator('LOKAPRO');
+        $pdf->SetAuthor('LOKAPRO System');
         $pdf->SetTitle($data['title']);
         $pdf->SetSubject('Inventaire Biens');
 
@@ -981,8 +981,8 @@ class ExportService
     {
         $pdf = new TCPDF(PDF_PAGE_ORIENTATION, PDF_UNIT, PDF_PAGE_FORMAT, true, 'UTF-8', false);
 
-        $pdf->SetCreator('MYLOCCA');
-        $pdf->SetAuthor('MYLOCCA System');
+        $pdf->SetCreator('LOKAPRO');
+        $pdf->SetAuthor('LOKAPRO System');
         $pdf->SetTitle($data['title']);
         $pdf->SetSubject('Export Baux');
 
@@ -1029,8 +1029,8 @@ class ExportService
     {
         $pdf = new TCPDF(PDF_PAGE_ORIENTATION, PDF_UNIT, PDF_PAGE_FORMAT, true, 'UTF-8', false);
 
-        $pdf->SetCreator('MYLOCCA');
-        $pdf->SetAuthor('MYLOCCA System');
+        $pdf->SetCreator('LOKAPRO');
+        $pdf->SetAuthor('LOKAPRO System');
         $pdf->SetTitle($data['title']);
         $pdf->SetSubject('Déclaration Fiscale');
 
@@ -1091,8 +1091,8 @@ class ExportService
     {
         $pdf = new TCPDF(PDF_PAGE_ORIENTATION, PDF_UNIT, PDF_PAGE_FORMAT, true, 'UTF-8', false);
 
-        $pdf->SetCreator('MYLOCCA');
-        $pdf->SetAuthor('MYLOCCA System');
+        $pdf->SetCreator('LOKAPRO');
+        $pdf->SetAuthor('LOKAPRO System');
         $pdf->SetTitle($data['title']);
         $pdf->SetSubject('Rapport Comptable');
 

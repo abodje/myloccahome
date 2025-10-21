@@ -15,7 +15,7 @@ $dotenv->load('.env.local', '.env');
 $baseUrl = 'http://localhost:8000'; // Ajustez selon votre configuration
 $calendarApiUrl = $baseUrl . '/calendrier/events';
 
-echo "=== Diagnostic Calendrier MYLOCCA ===\n";
+echo "=== Diagnostic Calendrier LOKAPRO ===\n";
 echo "URL API: $calendarApiUrl\n\n";
 
 // Test 1: Vérifier la connectivité
@@ -63,18 +63,18 @@ echo "📊 Nombre d'événements: $eventCount\n\n";
 // Test 3: Analyser les événements
 if ($eventCount > 0) {
     echo "3. Analyse des événements...\n";
-    
+
     $eventTypes = [];
     foreach ($events as $event) {
         $type = $event['type'] ?? 'unknown';
         $eventTypes[$type] = ($eventTypes[$type] ?? 0) + 1;
     }
-    
+
     echo "Types d'événements trouvés:\n";
     foreach ($eventTypes as $type => $count) {
         echo "  - $type: $count événements\n";
     }
-    
+
     // Afficher le premier événement comme exemple
     if (!empty($events)) {
         echo "\nPremier événement:\n";
@@ -109,13 +109,13 @@ try {
         'password' => $_ENV['DATABASE_PASSWORD'] ?? '',
         'charset' => 'utf8mb4'
     ];
-    
+
     $dsn = "mysql:host={$config['host']};port={$config['port']};dbname={$config['dbname']};charset={$config['charset']}";
     $pdo = new PDO($dsn, $config['user'], $config['password']);
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-    
+
     echo "✅ Connexion base de données OK\n";
-    
+
     // Compter les entités
     $tables = [
         'payment' => 'Paiements',
@@ -125,7 +125,7 @@ try {
         'tenant' => 'Locataires',
         'user' => 'Utilisateurs'
     ];
-    
+
     echo "\nDonnées dans la base:\n";
     foreach ($tables as $table => $label) {
         try {
@@ -136,7 +136,7 @@ try {
             echo "  - $label: Table non trouvée\n";
         }
     }
-    
+
 } catch (Exception $e) {
     echo "❌ Erreur base de données: " . $e->getMessage() . "\n";
 }

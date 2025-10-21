@@ -82,7 +82,7 @@ class RentReceiptService
             'company' => $company, // ✅ Informations de la société
             'organization' => $organization,
             'settings' => [
-                'company_name' => $company ? ($company->getLegalName() ?: $company->getName()) : $this->settingsService->get('company_name', 'MYLOCCA'),
+                'company_name' => $company ? ($company->getLegalName() ?: $company->getName()) : $this->settingsService->get('company_name', 'LOKAPRO'),
                 'company_address' => $company ? $company->getAddress() : $this->settingsService->get('company_address', ''),
                 'company_city' => $company ? ($company->getPostalCode() . ' ' . $company->getCity()) : '',
                 'company_phone' => $company ? $company->getPhone() : $this->settingsService->get('company_phone', ''),
@@ -192,7 +192,7 @@ class RentReceiptService
             'company' => $company, // ✅ Informations de la société
             'organization' => $organization,
             'settings' => [
-                'company_name' => $company ? ($company->getLegalName() ?: $company->getName()) : $this->settingsService->get('company_name', 'MYLOCCA'),
+                'company_name' => $company ? ($company->getLegalName() ?: $company->getName()) : $this->settingsService->get('company_name', 'LOKAPRO'),
                 'company_address' => $company ? $company->getAddress() : $this->settingsService->get('company_address', ''),
                 'company_city' => $company ? ($company->getPostalCode() . ' ' . $company->getCity()) : '',
                 'company_phone' => $company ? $company->getPhone() : $this->settingsService->get('company_phone', ''),

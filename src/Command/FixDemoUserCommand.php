@@ -85,7 +85,7 @@ class FixDemoUserCommand extends Command
                 $user->setLastName('User');
             }
 
-            $user->setEmail("demo-{$demoCode}@mylocca.com");
+            $user->setEmail("demo-{$demoCode}@app.lokapro.tech");
             $user->setRoles(['ROLE_ADMIN']);
             $user->setOrganization($organization);
 

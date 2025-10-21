@@ -33,11 +33,11 @@ class SettingsService
     public function getAppSettings(): array
     {
         return [
-            'app_name' => $this->get('app_name', 'MYLOCCA'),
-            'company_name' => $this->get('company_name', 'MYLOCCA Gestion'),
+            'app_name' => $this->get('app_name', 'LOKAPRO'),
+            'company_name' => $this->get('company_name', 'LOKAPRO Gestion'),
             'company_address' => $this->get('company_address', '123 Avenue de la République, 69000 Lyon'),
             'company_phone' => $this->get('company_phone', '04 72 00 00 00'),
-            'company_email' => $this->get('company_email', 'contact@mylocca.com'),
+            'company_email' => $this->get('company_email', 'contact@app.lokapro.tech'),
         ];
     }
 
@@ -61,7 +61,7 @@ class SettingsService
         return [
             'smtp_host' => $this->get('smtp_host', 'localhost'),
             'smtp_port' => $this->get('smtp_port', 587),
-            'email_from' => $this->get('email_from', 'noreply@mylocca.com'),
+            'email_from' => $this->get('email_from', 'noreply@app.lokapro.tech'),
         ];
     }
 
@@ -101,7 +101,7 @@ class SettingsService
         return [
             'orange_sms_client_id' => $this->get('orange_sms_client_id', ''),
             'orange_sms_client_secret' => $this->get('orange_sms_client_secret', ''),
-            'orange_sms_sender_name' => $this->get('orange_sms_sender_name', 'MYLOCCA'),
+            'orange_sms_sender_name' => $this->get('orange_sms_sender_name', 'LOKAPRO'),
             'orange_sms_enabled' => $this->get('orange_sms_enabled', false),
         ];
     }
@@ -162,11 +162,11 @@ class SettingsService
     {
         $defaultSettings = [
             // Application
-            'app_name' => 'MYLOCCA',
-            'company_name' => 'MYLOCCA Gestion',
+            'app_name' => 'LOKAPRO',
+            'company_name' => 'LOKAPRO Gestion',
             'company_address' => '123 Avenue de la République, 69000 Lyon',
             'company_phone' => '04 72 00 00 00',
-            'company_email' => 'contact@mylocca.com',
+            'company_email' => 'contact@app.lokapro.tech',
             'app_logo' => '',
             'app_description' => 'Logiciel de gestion locative professionnel',
             'maintenance_mode' => false,
@@ -198,8 +198,8 @@ class SettingsService
             'smtp_username' => '',
             'smtp_password' => '',
             'smtp_encryption' => 'tls',
-            'email_from' => 'noreply@mylocca.com',
-            'email_from_name' => 'MYLOCCA',
+            'email_from' => 'noreply@app.lokapro.tech',
+            'email_from_name' => 'LOKAPRO',
             'email_notifications' => true,
 
             // Maintenance

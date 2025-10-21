@@ -181,11 +181,11 @@ class AdminController extends AbstractController
     {
         $defaultSettings = [
             // Paramètres généraux
-            ['key' => 'app_name', 'value' => 'MYLOCCA', 'category' => 'GENERAL', 'description' => 'Nom de l\'application', 'type' => 'STRING'],
-            ['key' => 'company_name', 'value' => 'MYLOCCA Gestion', 'category' => 'GENERAL', 'description' => 'Nom de la société', 'type' => 'STRING'],
+            ['key' => 'app_name', 'value' => 'LOKAPRO', 'category' => 'GENERAL', 'description' => 'Nom de l\'application', 'type' => 'STRING'],
+            ['key' => 'company_name', 'value' => 'LOKAPRO Gestion', 'category' => 'GENERAL', 'description' => 'Nom de la société', 'type' => 'STRING'],
             ['key' => 'company_address', 'value' => '123 Avenue de la République, 69000 Lyon', 'category' => 'GENERAL', 'description' => 'Adresse de la société', 'type' => 'STRING'],
             ['key' => 'company_phone', 'value' => '04 72 00 00 00', 'category' => 'GENERAL', 'description' => 'Téléphone de la société', 'type' => 'STRING'],
-            ['key' => 'company_email', 'value' => 'contact@mylocca.com', 'category' => 'GENERAL', 'description' => 'Email de contact', 'type' => 'STRING'],
+            ['key' => 'company_email', 'value' => 'contact@app.lokapro.tech', 'category' => 'GENERAL', 'description' => 'Email de contact', 'type' => 'STRING'],
 
             // Paramètres de paiement
             ['key' => 'default_rent_due_day', 'value' => '1', 'category' => 'PAYMENT', 'description' => 'Jour d\'échéance par défaut', 'type' => 'INTEGER'],
@@ -195,7 +195,7 @@ class AdminController extends AbstractController
             // Paramètres email
             ['key' => 'smtp_host', 'value' => 'localhost', 'category' => 'EMAIL', 'description' => 'Serveur SMTP', 'type' => 'STRING'],
             ['key' => 'smtp_port', 'value' => '587', 'category' => 'EMAIL', 'description' => 'Port SMTP', 'type' => 'INTEGER'],
-            ['key' => 'email_from', 'value' => 'noreply@mylocca.com', 'category' => 'EMAIL', 'description' => 'Email expéditeur', 'type' => 'STRING'],
+            ['key' => 'email_from', 'value' => 'noreply@app.lokapro.tech', 'category' => 'EMAIL', 'description' => 'Email expéditeur', 'type' => 'STRING'],
 
             // Paramètres maintenance
             ['key' => 'auto_assign_maintenance', 'value' => '0', 'category' => 'MAINTENANCE', 'description' => 'Attribution automatique des demandes', 'type' => 'BOOLEAN'],

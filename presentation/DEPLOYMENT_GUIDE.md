@@ -1,8 +1,8 @@
-# 🎯 Page de Présentation MYLOCCA - Configuration Complète
+# 🎯 Page de Présentation LOKAPRO - Configuration Complète
 
 ## 📋 **Fichiers Créés**
 
-J'ai créé une page de présentation complète et professionnelle pour MYLOCCA dans le dossier `presentation/`.
+J'ai créé une page de présentation complète et professionnelle pour LOKAPRO dans le dossier `presentation/`.
 
 ---
 
@@ -26,7 +26,7 @@ presentation/
 - **Interface moderne** avec Bootstrap 5
 - **Design responsive** pour tous les appareils
 - **Animations fluides** avec AOS (Animate On Scroll)
-- **Couleurs cohérentes** avec la charte graphique MYLOCCA
+- **Couleurs cohérentes** avec la charte graphique LOKAPRO
 
 ### **2. Sections Complètes**
 - **Hero Section** : Présentation accrocheuse avec CTA
@@ -202,8 +202,8 @@ presentation/
 - **HTTPS** : Certificat SSL
 
 ### **3. URLs Recommandées**
-- **Principal** : `https://mylocca.com/presentation/`
-- **Alternative** : `https://presentation.mylocca.com/`
+- **Principal** : `https://app.lokapro.tech/presentation/`
+- **Alternative** : `https://presentation.app.lokapro.tech/`
 - **CDN** : Cloudflare ou similaire
 
 ---
@@ -297,6 +297,6 @@ presentation/
 
 ---
 
-**La page de présentation MYLOCCA est maintenant complète ! 🚀**
+**La page de présentation LOKAPRO est maintenant complète ! 🚀**
 
 **Accédez-y via : `presentation/index.html` ou `presentation/index-optimized.html`** ✅

@@ -106,7 +106,7 @@
     <!-- En-tête -->
     <div class="header">
         <h1>{{ contract_main_title ?? 'CONTRAT DE BAIL D\'HABITATION' }}</h1>
-        <p><strong>{{ company.company_name ?? contract_company_name ?? 'MYLOCCA Gestion' }}</strong></p>
+        <p><strong>{{ company.company_name ?? contract_company_name ?? 'LOKAPRO Gestion' }}</strong></p>
         <p>{{ company.company_address ?? contract_company_address ?? '' }}</p>
         {% if contract_logo_url %}
             <img src="{{ contract_logo_url }}" alt="Logo" style="max-height: 60px; margin: 10px 0;">
@@ -142,7 +142,7 @@
             {{ owner.phone ?? 'Non renseigné' }}
         </div>
         {% else %}
-        <p>{{ company.company_name ?? 'MYLOCCA Gestion' }}</p>
+        <p>{{ company.company_name ?? 'LOKAPRO Gestion' }}</p>
         <p>{{ company.company_address ?? '' }}</p>
         {% endif %}
     </div>
@@ -318,7 +318,7 @@
 
     <!-- Footer -->
     <div class="footer">
-        <p>{{ company.company_name ?? contract_company_name ?? 'MYLOCCA Gestion' }} - {{ contract_footer_text ?? 'Document généré le' }} {{ generated_at|date('d/m/Y à H:i') }}</p>
+        <p>{{ company.company_name ?? contract_company_name ?? 'LOKAPRO Gestion' }} - {{ contract_footer_text ?? 'Document généré le' }} {{ generated_at|date('d/m/Y à H:i') }}</p>
     </div>
 </body>
 </html>

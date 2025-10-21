@@ -1,8 +1,8 @@
-# 🎯 Page de Présentation MYLOCCA - Guide Complet
+# 🎯 Page de Présentation LOKAPRO - Guide Complet
 
 ## 📋 **Fichier Créé**
 
-J'ai créé une page de présentation complète et professionnelle pour MYLOCCA dans le dossier `presentation/`.
+J'ai créé une page de présentation complète et professionnelle pour LOKAPRO dans le dossier `presentation/`.
 
 ---
 
@@ -20,7 +20,7 @@ J'ai créé une page de présentation complète et professionnelle pour MYLOCCA 
 
 ### **1. Hero Section**
 - **Titre accrocheur** : "Solution Complète de Gestion Locative"
-- **Description** : Présentation de MYLOCCA comme plateforme SaaS multi-tenant
+- **Description** : Présentation de LOKAPRO comme plateforme SaaS multi-tenant
 - **Call-to-action** : Boutons "Voir la Démo" et "En Savoir Plus"
 - **Éléments flottants** : Icônes animées en arrière-plan
 
@@ -64,7 +64,7 @@ J'ai créé une page de présentation complète et professionnelle pour MYLOCCA 
 - **Entreprise** : 99€/mois - Propriétés illimitées
 
 ### **8. Contact**
-- **Email** : contact@mylocca.com
+- **Email** : contact@app.lokapro.tech
 - **Téléphone** : +33 1 23 45 67 89
 - **Adresse** : Paris, France
 
@@ -207,8 +207,8 @@ presentation/
 - **HTTPS** : Certificat SSL
 
 ### **3. Domaine**
-- **URL** : `https://mylocca.com/presentation/`
-- **Redirection** : `https://presentation.mylocca.com/`
+- **URL** : `https://app.lokapro.tech/presentation/`
+- **Redirection** : `https://presentation.app.lokapro.tech/`
 - **CDN** : Cloudflare ou similaire
 
 ---
@@ -262,6 +262,6 @@ presentation/
 
 ---
 
-**La page de présentation MYLOCCA est maintenant prête ! 🚀**
+**La page de présentation LOKAPRO est maintenant prête ! 🚀**
 
 **Accédez-y via : `presentation/index.html`** ✅

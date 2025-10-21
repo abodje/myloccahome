@@ -14,7 +14,7 @@ use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
 #[AsCommand(
     name: 'app:create-super-admin',
-    description: 'Crée un compte Super Administrateur MYLOCCA',
+    description: 'Crée un compte Super Administrateur LOKAPRO',
 )]
 class CreateSuperAdminCommand extends Command
 {
@@ -30,10 +30,10 @@ class CreateSuperAdminCommand extends Command
         $io = new SymfonyStyle($input, $output);
         $helper = $this->getHelper('question');
 
-        $io->title('🔐 Création d\'un Super Administrateur MYLOCCA');
+        $io->title('🔐 Création d\'un Super Administrateur LOKAPRO');
         $io->warning([
             'Ce compte aura un accès COMPLET à TOUTES les organisations.',
-            'Ce rôle est réservé aux propriétaires de la plateforme MYLOCCA.',
+            'Ce rôle est réservé aux propriétaires de la plateforme LOKAPRO.',
         ]);
 
         // Demander les informations

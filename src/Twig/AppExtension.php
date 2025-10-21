@@ -52,10 +52,10 @@ class AppExtension extends AbstractExtension
     public function getCompanyInfo(): array
     {
         return [
-            'name' => $this->settingsService->get('company_name', 'MYLOCCA Gestion'),
+            'name' => $this->settingsService->get('company_name', 'LOKAPRO Gestion'),
             'address' => $this->settingsService->get('company_address', ''),
             'phone' => $this->settingsService->get('company_phone', ''),
-            'email' => $this->settingsService->get('company_email', 'contact@mylocca.com'),
+            'email' => $this->settingsService->get('company_email', 'contact@app.lokapro.tech'),
             'logo' => $this->settingsService->get('app_logo', ''),
         ];
     }

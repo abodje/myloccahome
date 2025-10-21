@@ -68,15 +68,15 @@ class TestWelcomeEmailCommand extends Command
                 $io->success(sprintf('✅ Email de bienvenue envoyé avec succès à %s', $testEmail));
                 $io->writeln('L\'email utilise le template configuré avec les variables remplacées.');
                 $io->writeln('Vérifiez votre boîte de réception.');
-                
+
                 $io->section('Contenu de l\'email');
-                $io->writeln('Sujet: Bienvenue chez MYLOCCA');
+                $io->writeln('Sujet: Bienvenue chez LOKAPRO');
                 $io->writeln('Contenu:');
-                $io->writeln('  - Bienvenue chez MYLOCCA');
+                $io->writeln('  - Bienvenue chez LOKAPRO');
                 $io->writeln('  - Bonjour Jean Dupont,');
                 $io->writeln('  - Nous sommes ravis de vous accueillir dans votre nouveau logement !');
                 $io->writeln('  - Propriété: 123 Rue de la Paix, 75001 Paris');
-                
+
             } else {
                 $io->error(sprintf('❌ Échec de l\'envoi de l\'email de bienvenue à %s', $testEmail));
                 $io->writeln('Vérifiez les logs pour plus de détails.');
@@ -92,7 +92,7 @@ class TestWelcomeEmailCommand extends Command
         $io->writeln('✅ Template de bienvenue configuré');
         $io->writeln('✅ Variables remplacées correctement');
         $io->writeln('✅ Email envoyé avec succès');
-        
+
         $io->success('🎉 Test de l\'email de bienvenue réussi !');
 
         return Command::SUCCESS;

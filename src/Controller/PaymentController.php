@@ -229,7 +229,7 @@ class PaymentController extends AbstractController
         // 🎯 Générer automatiquement le contrat de bail si c'est la caution
         if ($payment->getType() === 'Dépôt de garantie' || $payment->getType() === 'Caution') {
             try {
-                $contract = $contractService->generateContractAfterDeposit($payment);
+                $contract = $contractService->generateContractAfterDeposit($payment, $this->getUser());
                 if ($contract) {
                     $this->addFlash('success', '📄 Le contrat de bail a été généré automatiquement et est disponible dans les documents !');
                 } else {
@@ -509,7 +509,7 @@ class PaymentController extends AbstractController
             throw $this->createNotFoundException('Reçu disponible uniquement pour les paiements effectués.');
         }
 
-        $pdfService->generatePaymentReceipt($payment, true);
+        $pdfService->generatePaymentReceipt($payment, true, $this->getUser());
         return new Response(); // Le PDF est déjà envoyé par generatePaymentReceipt
     }
 
@@ -551,7 +551,7 @@ class PaymentController extends AbstractController
             throw $this->createNotFoundException('Aucun paiement trouvé pour ce mois.');
         }
 
-        $pdfService->generateRentQuittance($payments, $lease, $monthDate, true);
+        $pdfService->generateRentQuittance($payments, $lease, $monthDate, true, $this->getUser());
         return new Response(); // Le PDF est déjà envoyé
     }
 

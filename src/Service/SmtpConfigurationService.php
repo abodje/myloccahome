@@ -103,7 +103,7 @@ class SmtpConfigurationService
     public function configureEmail(Email $email): Email
     {
         $defaultSender = $this->parameterBag->get('mailer.default_sender') ?? 'info@app.lokapro.tech';
-        $defaultSenderName = $this->parameterBag->get('mailer.default_sender_name') ?? 'MYLOCCA';
+        $defaultSenderName = $this->parameterBag->get('mailer.default_sender_name') ?? 'LOKAPRO';
 
         // Si l'expéditeur n'est pas défini, utiliser le défaut
         if (!$email->getFrom()) {
@@ -126,7 +126,7 @@ class SmtpConfigurationService
             $testEmail->from($this->smtpConfig['username'])
                      ->to($this->smtpConfig['username']) // Envoyer à soi-même
                      ->subject('Test de connexion SMTP')
-                     ->text('Ceci est un test de connexion SMTP depuis MYLOCCA.');
+                     ->text('Ceci est un test de connexion SMTP depuis LOKAPRO.');
 
             // Tenter d'envoyer (sans vraiment envoyer)
             $transport->send($testEmail);

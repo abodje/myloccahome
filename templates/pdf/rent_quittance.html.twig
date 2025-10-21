@@ -86,7 +86,7 @@
 <body>
     <!-- Company Info -->
     <div class="company-info">
-        <strong>{{ company.company_name ?? 'MYLOCCA Gestion' }}</strong><br>
+        <strong>{{ company.company_name ?? 'LOKAPRO Gestion' }}</strong><br>
         {{ company.company_address ?? '' }}<br>
         {% if company.company_phone %}Tél: {{ company.company_phone }}<br>{% endif %}
         {% if company.company_email %}Email: {{ company.company_email }}{% endif %}
@@ -133,7 +133,7 @@
 
     <!-- Déclaration -->
     <div style="margin: 30px 0; text-align: center; font-size: 12pt;">
-        <p>Je soussigné(e) <strong>{{ company.company_name ?? 'MYLOCCA Gestion' }}</strong>,</p>
+        <p>Je soussigné(e) <strong>{{ company.company_name ?? 'LOKAPRO Gestion' }}</strong>,</p>
         <p>certifie avoir reçu de <strong>{{ tenant.firstName }} {{ tenant.lastName }}</strong></p>
         <p>la somme détaillée ci-dessous pour le paiement du loyer et des charges</p>
         <p>concernant le mois de <strong>{{ month|date('F Y') }}</strong></p>
@@ -207,7 +207,7 @@
     <!-- Footer -->
     <div class="footer">
         <p>
-            <strong>{{ company.company_name ?? 'MYLOCCA Gestion' }}</strong><br>
+            <strong>{{ company.company_name ?? 'LOKAPRO Gestion' }}</strong><br>
             {{ company.company_address ?? '' }}
         </p>
         <p style="margin-top: 10px;">
