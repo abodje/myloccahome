@@ -23,6 +23,10 @@ class MaintenanceRequest
     #[ORM\ManyToOne]
     private ?Tenant $tenant = null;
 
+    #[ORM\ManyToOne]
+    #[ORM\JoinColumn(nullable: false)]
+    private ?Organization $organization = null;
+
     #[ORM\Column(length: 255)]
     private ?string $title = null;
 
@@ -113,6 +117,17 @@ class MaintenanceRequest
     public function setTenant(?Tenant $tenant): static
     {
         $this->tenant = $tenant;
+        return $this;
+    }
+
+    public function getOrganization(): ?Organization
+    {
+        return $this->organization;
+    }
+
+    public function setOrganization(?Organization $organization): static
+    {
+        $this->organization = $organization;
         return $this;
     }
 
