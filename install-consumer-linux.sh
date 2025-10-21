@@ -188,7 +188,7 @@ create_monitoring_script() {
 # Script de monitoring du consumer MYLOCCA
 # À exécuter via Cron toutes les 5 minutes
 
-PROJECT_DIR="/home/Lokaprot/public_html"
+PROJECT_DIR="/home/Lokaprot/myloccahome"
 SERVICE_NAME="mylocca-consumer"
 LOG_FILE="$PROJECT_DIR/var/log/consumer-monitor.log"
 

@@ -8,7 +8,7 @@ Wants=mysql.service
 Type=simple
 User=www-data
 Group=www-data
-WorkingDirectory=/home/Lokaprot/public_html
+WorkingDirectory=/home/Lokaprot/myloccahome
 ExecStart=/usr/bin/php bin/console messenger:consume async --time-limit=0 --memory-limit=256 --sleep=5
 ExecReload=/bin/kill -HUP $MAINPID
 Restart=always
@@ -22,7 +22,7 @@ NoNewPrivileges=true
 PrivateTmp=true
 ProtectSystem=strict
 ProtectHome=true
-ReadWritePaths=/home/Lokaprot/public_html/var
+ReadWritePaths=/home/Lokaprot/myloccahome/var
 
 # Limites de ressources
 LimitNOFILE=65536

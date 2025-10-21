@@ -52,7 +52,7 @@ After=network.target mysql.service
 Type=simple
 User=www-data                    # Adaptez selon votre configuration
 Group=www-data                   # Adaptez selon votre configuration
-WorkingDirectory=/home/Lokaprot/public_html  # Chemin vers votre projet
+WorkingDirectory=/home/Lokaprot/myloccahome  # Chemin vers votre projet
 ExecStart=/usr/bin/php bin/console messenger:consume async --time-limit=0 --memory-limit=256 --sleep=5
 Restart=always
 RestartSec=10
@@ -65,9 +65,9 @@ WantedBy=multi-user.target
 
 ```bash
 # Configurer les permissions
-sudo chown -R www-data:www-data /home/Lokaprot/public_html
-sudo chmod -R 755 /home/Lokaprot/public_html
-sudo chmod -R 775 /home/Lokaprot/public_html/var
+sudo chown -R www-data:www-data /home/Lokaprot/myloccahome
+sudo chmod -R 755 /home/Lokaprot/myloccahome
+sudo chmod -R 775 /home/Lokaprot/myloccahome/var
 ```
 
 ## 🔧 Utilisation
@@ -91,7 +91,7 @@ sudo systemctl status mylocca-consumer
 sudo journalctl -u mylocca-consumer -f
 
 # Voir les logs du consumer
-tail -f /home/Lokaprot/public_html/var/log/consumer.log
+tail -f /home/Lokaprot/myloccahome/var/log/consumer.log
 ```
 
 ### Scripts utilitaires
@@ -123,7 +123,7 @@ Le script `monitor-consumer.sh` vérifie automatiquement le service :
 # Configurer Cron (surveillance toutes les 5 minutes)
 sudo crontab -e
 # Ajouter cette ligne :
-*/5 * * * * /home/Lokaprot/public_html/monitor-consumer.sh
+*/5 * * * * /home/Lokaprot/myloccahome/monitor-consumer.sh
 ```
 
 ### Maintenance quotidienne
@@ -135,7 +135,7 @@ sudo crontab -e
 # Configurer Cron (maintenance quotidienne à 2h du matin)
 sudo crontab -e
 # Ajouter cette ligne :
-0 2 * * * /home/Lokaprot/public_html/maintain-consumer.sh
+0 2 * * * /home/Lokaprot/myloccahome/maintain-consumer.sh
 ```
 
 ## 🧪 Tests
@@ -144,7 +144,7 @@ sudo crontab -e
 
 ```bash
 # Tester l'envoi d'un message
-cd /home/Lokaprot/public_html
+cd /home/Lokaprot/myloccahome
 php bin/console app:messenger:dispatch-task --task-type=TEST_EMAIL_SETTINGS --email=votre@email.com
 
 # Vérifier que le message est traité
@@ -172,10 +172,10 @@ php bin/console app:messenger:dispatch-task --task-type=GENERATE_RENTS --logDeta
 sudo journalctl -u mylocca-consumer -n 50
 
 # Vérifier les permissions
-ls -la /home/Lokaprot/public_html/bin/console
+ls -la /home/Lokaprot/myloccahome/bin/console
 
 # Tester manuellement
-cd /home/Lokaprot/public_html
+cd /home/Lokaprot/myloccahome
 sudo -u www-data php bin/console messenger:consume async --time-limit=60
 ```
 
@@ -196,9 +196,9 @@ php bin/console doctrine:query:sql "SELECT COUNT(*) FROM messenger_messages"
 
 ```bash
 # Corriger les permissions
-sudo chown -R www-data:www-data /home/Lokaprot/public_html
-sudo chmod -R 775 /home/Lokaprot/public_html/var
-sudo chmod +x /home/Lokaprot/public_html/start-consumer.sh
+sudo chown -R www-data:www-data /home/Lokaprot/myloccahome
+sudo chmod -R 775 /home/Lokaprot/myloccahome/var
+sudo chmod +x /home/Lokaprot/myloccahome/start-consumer.sh
 ```
 
 #### 4. Consommation mémoire élevée
@@ -224,13 +224,13 @@ sudo systemctl edit mylocca-consumer
 sudo journalctl -u mylocca-consumer -f
 
 # Logs du consumer
-tail -f /home/Lokaprot/public_html/var/log/consumer.log
+tail -f /home/Lokaprot/myloccahome/var/log/consumer.log
 
 # Logs de surveillance
-tail -f /home/Lokaprot/public_html/var/log/consumer-monitor.log
+tail -f /home/Lokaprot/myloccahome/var/log/consumer-monitor.log
 
 # Logs Symfony
-tail -f /home/Lokaprot/public_html/var/log/dev.log
+tail -f /home/Lokaprot/myloccahome/var/log/dev.log
 ```
 
 ## 📈 Optimisation
@@ -263,8 +263,8 @@ htop -p $(pgrep -f "messenger:consume")
 
 ```bash
 # Limiter l'accès aux fichiers sensibles
-sudo chmod 600 /home/Lokaprot/public_html/.env.local
-sudo chmod 600 /home/Lokaprot/public_html/.env
+sudo chmod 600 /home/Lokaprot/myloccahome/.env.local
+sudo chmod 600 /home/Lokaprot/myloccahome/.env
 
 # Configurer un firewall
 sudo ufw allow 22    # SSH
@@ -287,7 +287,7 @@ mkdir -p "$BACKUP_DIR"
 cp /etc/systemd/system/mylocca-consumer.service "$BACKUP_DIR/mylocca-consumer.service.$DATE"
 
 # Sauvegarder les logs
-tar -czf "$BACKUP_DIR/consumer-logs.$DATE.tar.gz" /home/Lokaprot/public_html/var/log/
+tar -czf "$BACKUP_DIR/consumer-logs.$DATE.tar.gz" /home/Lokaprot/myloccahome/var/log/
 
 echo "Sauvegarde terminée: $BACKUP_DIR"
 EOF

@@ -2,7 +2,7 @@
 
 # Script de démarrage du consumer Messenger pour MYLOCCA
 # Ce script redémarre automatiquement le consumer s'il s'arrête
-# Optimisé pour serveurs Linux (Ubuntu/CentOS/Debian)
+# Optimisé pour serveurs Linux (Ubuntu/CentOS/Debian) et serveurs partagés
 
 # Configuration
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -10,10 +10,24 @@ LOG_FILE="$SCRIPT_DIR/var/log/consumer.log"
 PID_FILE="$SCRIPT_DIR/var/consumer.pid"
 CONSUMER_COMMAND="php bin/console messenger:consume async --time-limit=3600 --memory-limit=256 --sleep=5"
 
-# Configuration pour serveur Linux
-PHP_BIN="php"
-USER="www-data"  # Utilisateur web par défaut (à adapter selon votre configuration)
-GROUP="www-data"
+# Détection automatique de l'environnement
+if [ "$EUID" -eq 0 ]; then
+    # Serveur dédié avec droits root
+    ENVIRONMENT="dedicated"
+    USER="www-data"
+    GROUP="www-data"
+    PHP_BIN="php"
+    USE_SUDO=true
+else
+    # Serveur partagé sans droits root
+    ENVIRONMENT="shared"
+    USER="$(whoami)"
+    GROUP="$(id -gn)"
+    PHP_BIN="php"
+    USE_SUDO=false
+    # Ajuster les limites pour serveur partagé
+    CONSUMER_COMMAND="php bin/console messenger:consume async --time-limit=300 --memory-limit=128 --sleep=5"
+fi
 
 # Couleurs pour les logs
 RED='\033[0;31m'
@@ -71,7 +85,7 @@ stop_consumer() {
 
 # Fonction pour démarrer le consumer
 start_consumer() {
-    log "Démarrage du consumer Messenger..."
+    log "Démarrage du consumer Messenger (Environnement: $ENVIRONMENT)..."
 
     # Vérifier que nous sommes dans le bon répertoire
     if [ ! -f "bin/console" ]; then
@@ -97,16 +111,18 @@ start_consumer() {
         exit 1
     fi
 
-    # Démarrer le consumer avec l'utilisateur approprié
+    # Démarrer le consumer selon l'environnement
     log "Exécution de la commande: $CONSUMER_COMMAND"
 
-    # Utiliser sudo si nécessaire pour changer d'utilisateur
-    if [ "$(whoami)" != "$USER" ] && [ "$USER" != "root" ]; then
+    if [ "$ENVIRONMENT" = "dedicated" ] && [ "$USE_SUDO" = true ] && [ "$(whoami)" != "$USER" ]; then
+        # Serveur dédié avec sudo
         log "Démarrage avec l'utilisateur: $USER"
-        sudo -u "$USER" nohup $PHP_BIN bin/console messenger:consume async --time-limit=3600 --memory-limit=256 --sleep=5 >> "$LOG_FILE" 2>&1 &
+        sudo -u "$USER" nohup $CONSUMER_COMMAND >> "$LOG_FILE" 2>&1 &
         local consumer_pid=$!
     else
-        nohup $PHP_BIN bin/console messenger:consume async --time-limit=3600 --memory-limit=256 --sleep=5 >> "$LOG_FILE" 2>&1 &
+        # Serveur partagé ou utilisateur actuel
+        log "Démarrage avec l'utilisateur actuel: $(whoami)"
+        nohup $CONSUMER_COMMAND >> "$LOG_FILE" 2>&1 &
         local consumer_pid=$!
     fi
 
@@ -117,7 +133,7 @@ start_consumer() {
     sleep 3
 
     if ps -p "$consumer_pid" > /dev/null 2>&1; then
-        log_success "Consumer démarré avec succès (PID: $consumer_pid)"
+        log_success "Consumer démarré avec succès (PID: $consumer_pid, Environnement: $ENVIRONMENT)"
         return 0
     else
         log_error "Échec du démarrage du consumer"
