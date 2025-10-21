@@ -136,20 +136,19 @@
 
                     <!-- Indicateur d'environnement -->
                     {% if is_environment_active() %}
-                        {% set currentEnv = get_current_environment() %}
                         <div class="demo-banner bg-info text-white py-2 px-3 mb-3">
                             <div class="d-flex justify-content-between align-items-center">
                                 <div class="d-flex align-items-center">
                                     <i class="bi bi-server me-2"></i>
-                                    <strong>Environnement: {{ currentEnv.name }}</strong>
-                                    <span class="ms-2">Code: {{ currentEnv.code }}</span>
+                                    <strong>Environnement: {{ get_current_environment().name ?? 'Aucun' }}</strong>
+                                    <span class="ms-2">Code: {{ get_current_environment().code ?? 'N/A' }}</span>
                                 </div>
                                 <div class="d-flex align-items-center">
                                     <small class="me-3">
                                         <i class="bi bi-gear me-1"></i>
-                                        {{ currentEnv.type }}
+                                        {{ get_current_environment().type ?? 'N/A' }}
                                     </small>
-                                    <a href="{{ currentEnv.url }}" class="btn btn-outline-light btn-sm" target="_blank">
+                                    <a href="{{ get_current_environment().url ?? '#' }}" class="btn btn-outline-light btn-sm" target="_blank">
                                         <i class="bi bi-box-arrow-up-right me-1"></i>
                                         Ouvrir
                                     </a>
