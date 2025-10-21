@@ -1,0 +1,141 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Statistiques d'accès aux documents - LOKAPRO{% endblock %}
+
+{% block page_title %}
+    <h5 class="mb-0">
+        <i class="bi bi-shield-lock me-2"></i>
+        Sécurité des Documents
+    </h5>
+{% endblock %}
+
+{% block page_actions %}
+    <a href="{{ path('app_document_index') }}" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-arrow-left"></i> Retour aux documents
+    </a>
+{% endblock %}
+
+{% block body %}
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="bi bi-graph-up me-2"></i>
+                        Statistiques d'accès aux documents
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <h6 class="alert-heading">
+                            <i class="bi bi-info-circle me-2"></i>
+                            Sécurité des documents
+                        </h6>
+                        <p class="mb-0">
+                            Tous les documents sont maintenant chiffrés et protégés contre l'accès direct.
+                            Les téléchargements sont contrôlés et tracés pour assurer la sécurité.
+                        </p>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="card bg-primary text-white">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between">
+                                        <div>
+                                            <h4 class="card-title">Documents sécurisés</h4>
+                                            <p class="card-text">Tous les fichiers sont chiffrés</p>
+                                        </div>
+                                        <div class="align-self-center">
+                                            <i class="bi bi-shield-check fs-1"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-4">
+                            <div class="card bg-success text-white">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between">
+                                        <div>
+                                            <h4 class="card-title">Accès contrôlé</h4>
+                                            <p class="card-text">Permissions basées sur les rôles</p>
+                                        </div>
+                                        <div class="align-self-center">
+                                            <i class="bi bi-person-check fs-1"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-4">
+                            <div class="card bg-warning text-white">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between">
+                                        <div>
+                                            <h4 class="card-title">Traçabilité</h4>
+                                            <p class="card-text">Tous les accès sont loggés</p>
+                                        </div>
+                                        <div class="align-self-center">
+                                            <i class="bi bi-journal-text fs-1"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr>
+
+                    <h6>Fonctionnalités de sécurité implémentées :</h6>
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <i class="bi bi-check-circle text-success me-2"></i>
+                                <strong>Chiffrement AES-256</strong>
+                                <small class="d-block text-muted">Tous les fichiers sont chiffrés avant stockage</small>
+                            </div>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <i class="bi bi-check-circle text-success me-2"></i>
+                                <strong>Validation de sécurité</strong>
+                                <small class="d-block text-muted">Scan du contenu et validation des types MIME</small>
+                            </div>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <i class="bi bi-check-circle text-success me-2"></i>
+                                <strong>Contrôle d'accès</strong>
+                                <small class="d-block text-muted">Permissions basées sur les rôles utilisateur</small>
+                            </div>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <i class="bi bi-check-circle text-success me-2"></i>
+                                <strong>Logs d'audit</strong>
+                                <small class="d-block text-muted">Traçage de tous les accès et téléchargements</small>
+                            </div>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <i class="bi bi-check-circle text-success me-2"></i>
+                                <strong>Suppression sécurisée</strong>
+                                <small class="d-block text-muted">Écrasement des données avant suppression</small>
+                            </div>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <i class="bi bi-check-circle text-success me-2"></i>
+                                <strong>Protection .htaccess</strong>
+                                <small class="d-block text-muted">Blocage de l'accès direct aux fichiers</small>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

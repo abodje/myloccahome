@@ -25,6 +25,15 @@ services:
         arguments:
             $documentsDirectory: '%documents_directory%'
 
+    App\Service\SecureFileService:
+        arguments:
+            $documentsDirectory: '%documents_directory%'
+            $encryptionKey: '%app.encryption_key%'
+
+    App\Command\MigrateDocumentsSecurityCommand:
+        arguments:
+            $documentsDirectory: '%documents_directory%'
+
     # Enregistrement du processeur d'environnement pour Orange SMS
     App\Service\OrangeSmsEnvironmentVariableProcessor:
         tags: ['container.env_var_processor']

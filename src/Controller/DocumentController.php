@@ -7,6 +7,7 @@ use App\Form\DocumentType;
 use App\Repository\DocumentRepository;
 use App\Repository\PaymentRepository;
 use App\Service\RentReceiptService;
+use App\Service\SecureFileService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -36,7 +37,7 @@ class DocumentController extends AbstractController
         // Filtrer les documents selon le rôle de l'utilisateur
         if ($user && in_array('ROLE_TENANT', $user->getRoles())) {
             // Si l'utilisateur est un locataire, ne montrer que ses documents
-            $tenant = $user->getTenant();
+            $tenant = $user?->getTenant();
             if ($tenant) {
                 $tenantDocuments = $documentRepository->findByTenant($tenant->getId());
 
@@ -60,7 +61,7 @@ class DocumentController extends AbstractController
             }
         } elseif ($user && in_array('ROLE_MANAGER', $user->getRoles())) {
             // Si l'utilisateur est un gestionnaire, montrer les documents des propriétés qu'il gère
-            $owner = $user->getOwner();
+            $owner = $user?->getOwner();
             if ($owner) {
                 $allDocuments = $documentRepository->findByManager($owner->getId());
             } else {
@@ -68,8 +69,8 @@ class DocumentController extends AbstractController
             }
         } elseif ($user && (in_array('ROLE_ADMIN', $user->getRoles()) || in_array('ROLE_SUPER_ADMIN', $user->getRoles()))) {
             // Pour les admins, filtrer selon l'organisation/société
-            $organization = $user->getOrganization();
-            $company = $user->getCompany();
+            $organization = $user?->getOrganization();
+            $company = $user?->getCompany();
 
             error_log("DocumentController - Admin: organization=" . ($organization ? $organization->getName() : 'null') . ", company=" . ($company ? $company->getName() : 'null'));
 
@@ -130,7 +131,7 @@ class DocumentController extends AbstractController
         // Filtrer selon le rôle
         if ($user && in_array('ROLE_TENANT', $user->getRoles())) {
             // Pour les locataires, filtrer par type ET par tenant
-            $tenant = $user->getTenant();
+            $tenant = $user?->getTenant();
             if ($tenant) {
                 $allDocuments = $documentRepository->findByTenant($tenant->getId());
                 foreach ($allDocuments as $document) {
@@ -181,7 +182,7 @@ class DocumentController extends AbstractController
     }
 
     #[Route('/nouveau', name: 'app_document_new', methods: ['GET', 'POST'])]
-    public function new(Request $request, EntityManagerInterface $entityManager, SluggerInterface $slugger): Response
+    public function new(Request $request, EntityManagerInterface $entityManager, SecureFileService $secureFileService): Response
     {
         $document = new Document();
         $form = $this->createForm(DocumentType::class, $document);
@@ -191,28 +192,19 @@ class DocumentController extends AbstractController
             $uploadedFile = $form->get('file')->getData();
 
             if ($uploadedFile) {
-                $originalFilename = pathinfo($uploadedFile->getClientOriginalName(), PATHINFO_FILENAME);
-                $safeFilename = $slugger->slug($originalFilename);
-                $newFilename = $safeFilename.'-'.uniqid().'.'.$uploadedFile->guessExtension();
-
                 try {
-                    $uploadedFile->move(
-                        $this->getParameter('documents_directory'),
-                        $newFilename
-                    );
-                } catch (FileException $e) {
-                    $this->addFlash('error', 'Erreur lors de l\'upload du fichier.');
+                    // Utilisation du service sécurisé pour l'upload
+                    $secureFilename = $secureFileService->uploadSecureFile($uploadedFile, $document, $this->getUser());
+
+                    $document->setFileName($secureFilename);
+                    $document->setOriginalFileName($uploadedFile->getClientOriginalName());
+                    $document->setMimeType($uploadedFile->getClientMimeType());
+                    $document->setFileSize($uploadedFile->getSize());
+
+                } catch (\Exception $e) {
+                    $this->addFlash('error', 'Erreur lors de l\'upload du fichier : ' . $e->getMessage());
                     return $this->redirectToRoute('app_document_new');
                 }
-
-                $document->setFileName($newFilename);
-                $document->setOriginalFileName($uploadedFile->getClientOriginalName());
-                $document->setMimeType($uploadedFile->getClientMimeType());
-                
-                // Récupérer la taille du fichier de manière sécurisée
-                $filePath = $this->getParameter('documents_directory') . '/' . $newFilename;
-                $fileSize = $this->getSecureFileSize($uploadedFile, $filePath);
-                $document->setFileSize($fileSize);
             }
 
             $entityManager->persist($document);
@@ -242,7 +234,7 @@ class DocumentController extends AbstractController
             if ($fallbackPath && file_exists($fallbackPath)) {
                 return filesize($fallbackPath);
             }
-            
+
             // Si tout échoue, retourner 0
             return 0;
         }
@@ -278,26 +270,22 @@ class DocumentController extends AbstractController
     }
 
     #[Route('/{id}/telecharger', name: 'app_document_download', methods: ['GET'])]
-    public function download(Document $document): Response
+    public function download(Document $document, SecureFileService $secureFileService): Response
     {
-        $filePath = $this->getParameter('documents_directory') . '/' . $document->getFileName();
-
-        if (!file_exists($filePath)) {
-            throw $this->createNotFoundException('Le fichier n\'existe pas.');
+        try {
+            return $secureFileService->downloadSecureFile($document, $this->getUser());
+        } catch (\Exception $e) {
+            $this->addFlash('error', 'Erreur lors du téléchargement : ' . $e->getMessage());
+            return $this->redirectToRoute('app_document_index');
         }
-
-        return $this->file($filePath, $document->getOriginalFileName());
     }
 
     #[Route('/{id}/supprimer', name: 'app_document_delete', methods: ['POST'])]
-    public function delete(Request $request, Document $document, EntityManagerInterface $entityManager): Response
+    public function delete(Request $request, Document $document, EntityManagerInterface $entityManager, SecureFileService $secureFileService): Response
     {
         if ($this->isCsrfTokenValid('delete'.$document->getId(), $request->getPayload()->getString('_token'))) {
-            // Supprimer le fichier physique
-            $filePath = $this->getParameter('documents_directory') . '/' . $document->getFileName();
-            if (file_exists($filePath)) {
-                unlink($filePath);
-            }
+            // Suppression sécurisée du fichier
+            $secureFileService->deleteSecureFile($document->getFileName());
 
             $entityManager->remove($document);
             $entityManager->flush();
@@ -318,7 +306,7 @@ class DocumentController extends AbstractController
         if ($query) {
             if ($user && in_array('ROLE_TENANT', $user->getRoles())) {
                 // Pour les locataires, filtrer par tenant ET par recherche
-                $tenant = $user->getTenant();
+                $tenant = $user?->getTenant();
                 if ($tenant) {
                     $allDocuments = $documentRepository->findByTenant($tenant->getId());
                     foreach ($allDocuments as $document) {
@@ -350,7 +338,7 @@ class DocumentController extends AbstractController
 
         if ($user && in_array('ROLE_TENANT', $user->getRoles())) {
             // Pour les locataires, filtrer par tenant
-            $tenant = $user->getTenant();
+            $tenant = $user?->getTenant();
             if ($tenant) {
                 $allDocuments = $documentRepository->findByTenant($tenant->getId());
                 $now = new \DateTime();
@@ -486,7 +474,7 @@ class DocumentController extends AbstractController
     {
         if ($user && in_array('ROLE_TENANT', $user->getRoles())) {
             // Pour les locataires, calculer les stats sur leurs documents seulement
-            $tenant = $user->getTenant();
+            $tenant = $user?->getTenant();
             if ($tenant) {
                 $tenantDocuments = $documentRepository->findByTenant($tenant->getId());
 
@@ -519,7 +507,7 @@ class DocumentController extends AbstractController
             }
         } elseif ($user && in_array('ROLE_MANAGER', $user->getRoles())) {
             // Pour les gestionnaires, calculer les stats sur les documents qu'ils gèrent
-            $owner = $user->getOwner();
+            $owner = $user?->getOwner();
             if ($owner) {
                 $managerDocuments = $documentRepository->findByManager($owner->getId());
 
@@ -552,8 +540,8 @@ class DocumentController extends AbstractController
             }
         } elseif ($user && (in_array('ROLE_ADMIN', $user->getRoles()) || in_array('ROLE_SUPER_ADMIN', $user->getRoles()))) {
             // Pour les admins, calculer les stats selon l'organisation/société
-            $organization = $user->getOrganization();
-            $company = $user->getCompany();
+            $organization = $user?->getOrganization();
+            $company = $user?->getCompany();
 
             if ($company) {
                 // Admin avec société spécifique

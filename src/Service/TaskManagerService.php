@@ -8,6 +8,7 @@ use App\Repository\TaskRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
+use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 
 class TaskManagerService
 {
@@ -19,6 +20,7 @@ class TaskManagerService
         private OrangeSmsService $orangeSmsService,
         private SettingsService $settingsService,
         private UserPasswordHasherInterface $passwordHasher,
+        private ParameterBagInterface $parameterBag,
         private ?AuditLogService $auditLogService = null,
         private ?BackupService $backupService = null,
         private ?DemoEnvironmentService $demoEnvironmentService = null,
@@ -32,6 +34,14 @@ class TaskManagerService
     public function getEntityManager(): EntityManagerInterface
     {
         return $this->entityManager;
+    }
+
+    /**
+     * Récupère un paramètre
+     */
+    private function getParameter(string $name): mixed
+    {
+        return $this->parameterBag->get($name);
     }
 
     /**
@@ -178,6 +188,10 @@ class TaskManagerService
 
                 case 'UPDATE_SMTP_CONFIGURATION':
                     $this->executeUpdateSmtpConfigurationTask($task);
+                    break;
+
+                case 'MIGRATE_DOCUMENTS_SECURITY':
+                    $this->executeMigrateDocumentsSecurityTask($task);
                     break;
 
                 default:
@@ -649,6 +663,222 @@ class TaskManagerService
         }
 
         $this->entityManager->flush();
+    }
+
+    /**
+     * Exécute la tâche de migration des documents de sécurité
+     */
+    private function executeMigrateDocumentsSecurityTask(Task $task): void
+    {
+        $this->logger->info('Début de la migration des documents de sécurité', [
+            'task_id' => $task->getId(),
+            'task_name' => $task->getName()
+        ]);
+
+        try {
+            // Récupérer les paramètres de la tâche
+            $parameters = $task->getParameters() ?? [];
+            $dryRun = $parameters['dry_run'] ?? false;
+            $backup = $parameters['backup'] ?? true;
+            $batchSize = $parameters['batch_size'] ?? 10;
+
+            // Récupérer tous les documents non migrés
+            $documentRepository = $this->entityManager->getRepository(\App\Entity\Document::class);
+            $documents = $documentRepository->createQueryBuilder('d')
+                ->where('d.fileName NOT LIKE :pattern')
+                ->setParameter('pattern', '%_%_%')
+                ->getQuery()
+                ->getResult();
+
+            $totalDocuments = count($documents);
+            $processedCount = 0;
+            $successCount = 0;
+            $errorCount = 0;
+            $errors = [];
+
+            $this->logger->info(sprintf('Trouvé %d documents à migrer', $totalDocuments));
+
+            if ($totalDocuments === 0) {
+                $task->setResult(json_encode([
+                    'status' => 'completed',
+                    'message' => 'Aucun document à migrer',
+                    'processed' => 0,
+                    'success' => 0,
+                    'errors' => 0
+                ]));
+                $task->markAsCompleted();
+                return;
+            }
+
+            // Créer une sauvegarde si demandé et pas en mode dry-run
+            if ($backup && !$dryRun) {
+                $this->createDocumentsBackup();
+            }
+
+            // Traiter les documents par lots
+            foreach (array_chunk($documents, $batchSize) as $batch) {
+                foreach ($batch as $document) {
+                    try {
+                        $this->migrateDocument($document, $dryRun);
+                        $successCount++;
+                    } catch (\Exception $e) {
+                        $errorCount++;
+                        $errors[] = sprintf('Document %d: %s', $document->getId(), $e->getMessage());
+                        $this->logger->error('Erreur lors de la migration du document', [
+                            'document_id' => $document->getId(),
+                            'error' => $e->getMessage()
+                        ]);
+                    }
+
+                    $processedCount++;
+
+                    // Mettre à jour le statut de la tâche périodiquement
+                    if ($processedCount % 5 === 0) {
+                        $task->setResult(json_encode([
+                            'status' => 'running',
+                            'processed' => $processedCount,
+                            'total' => $totalDocuments,
+                            'success' => $successCount,
+                            'errors' => $errorCount,
+                            'progress' => round(($processedCount / $totalDocuments) * 100, 2)
+                        ]));
+                        $this->entityManager->flush();
+                    }
+                }
+            }
+
+            // Résultat final
+            $result = [
+                'status' => 'completed',
+                'processed' => $processedCount,
+                'total' => $totalDocuments,
+                'success' => $successCount,
+                'errors' => $errorCount,
+                'progress' => 100,
+                'dry_run' => $dryRun,
+                'backup_created' => $backup && !$dryRun,
+                'error_details' => array_slice($errors, 0, 10) // Limiter à 10 erreurs pour éviter des logs trop longs
+            ];
+
+            $task->setResult(json_encode($result));
+
+            if ($errorCount === 0) {
+                $task->markAsCompleted();
+                $this->logger->info('Migration des documents de sécurité terminée avec succès', $result);
+            } else {
+                $task->markAsFailed(sprintf('Migration terminée avec %d erreurs sur %d documents', $errorCount, $totalDocuments));
+                $this->logger->warning('Migration des documents de sécurité terminée avec des erreurs', $result);
+            }
+
+        } catch (\Exception $e) {
+            $task->markAsFailed($e->getMessage());
+            $this->logger->error('Erreur lors de la migration des documents de sécurité', [
+                'task_id' => $task->getId(),
+                'error' => $e->getMessage()
+            ]);
+            throw $e;
+        }
+    }
+
+    /**
+     * Migre un document individuel vers le système de sécurité
+     */
+    private function migrateDocument(\App\Entity\Document $document, bool $dryRun): void
+    {
+        $documentsDirectory = $this->getParameter('documents_directory');
+        $oldFilePath = $documentsDirectory . '/' . $document->getFileName();
+
+        if (!file_exists($oldFilePath)) {
+            throw new \RuntimeException('Fichier original non trouvé');
+        }
+
+        if ($dryRun) {
+            return; // Simulation
+        }
+
+        // Lire le contenu du fichier original
+        $content = file_get_contents($oldFilePath);
+        if ($content === false) {
+            throw new \RuntimeException('Impossible de lire le fichier original');
+        }
+
+        // Chiffrer le fichier
+        $encryptedContent = $this->encryptFile($content);
+
+        // Générer un nouveau nom de fichier sécurisé
+        $originalFilename = pathinfo($document->getOriginalFileName(), PATHINFO_FILENAME);
+        $safeFilename = preg_replace('/[^a-zA-Z0-9_-]/', '_', $originalFilename);
+        $hash = hash('sha256', uniqid() . microtime(true));
+        $timestamp = date('YmdHis');
+        $extension = pathinfo($document->getFileName(), PATHINFO_EXTENSION);
+
+        $newFilename = sprintf(
+            '%s_%s_%s.%s',
+            $safeFilename,
+            $timestamp,
+            substr($hash, 0, 16),
+            $extension
+        );
+
+        // Sauvegarder le fichier chiffré
+        $newFilePath = $documentsDirectory . '/' . $newFilename;
+        if (file_put_contents($newFilePath, $encryptedContent) === false) {
+            throw new \RuntimeException('Impossible de sauvegarder le fichier chiffré');
+        }
+
+        // Mettre à jour l'entité Document
+        $document->setFileName($newFilename);
+        $this->entityManager->flush();
+
+        // Supprimer l'ancien fichier
+        if (!unlink($oldFilePath)) {
+            $this->logger->warning('Impossible de supprimer l\'ancien fichier', [
+                'old_file' => $oldFilePath
+            ]);
+        }
+    }
+
+    /**
+     * Chiffre un fichier
+     */
+    private function encryptFile(string $content): string
+    {
+        $encryptionKey = $_ENV['APP_ENCRYPTION_KEY'] ?? 'default-key-change-in-production';
+        $iv = random_bytes(16);
+        $encrypted = openssl_encrypt($content, 'AES-256-CBC', $encryptionKey, 0, $iv);
+
+        if ($encrypted === false) {
+            throw new \RuntimeException('Erreur lors du chiffrement');
+        }
+
+        return base64_encode($iv . $encrypted);
+    }
+
+    /**
+     * Crée une sauvegarde des documents
+     */
+    private function createDocumentsBackup(): void
+    {
+        $documentsDirectory = $this->getParameter('documents_directory');
+        $backupDir = $documentsDirectory . '/backup_' . date('Y-m-d_H-i-s');
+
+        if (!is_dir($backupDir)) {
+            mkdir($backupDir, 0750, true);
+        }
+
+        $files = glob($documentsDirectory . '/*');
+        $backupCount = 0;
+
+        foreach ($files as $file) {
+            if (is_file($file)) {
+                $filename = basename($file);
+                if (copy($file, $backupDir . '/' . $filename)) {
+                    $backupCount++;
+                }
+            }
+        }
+
+        $this->logger->info(sprintf('Sauvegarde créée dans %s (%d fichiers)', $backupDir, $backupCount));
     }
 
     /**
@@ -1342,9 +1572,8 @@ HTML;
         $task->setName('Correction des utilisateurs sans organisation');
         $task->setDescription('Corrige automatiquement les utilisateurs qui n\'ont pas d\'organization_id ou company_id définis');
         $task->setType('FIX_USER_ORGANIZATION');
-        $task->setIsActive(true);
-        $task->setIsRecurring(false);
-        $task->setPriority('MEDIUM');
+        $task->setStatus('ACTIVE');
+        $task->setFrequency('ONCE');
         $task->setCreatedAt(new \DateTime());
         $task->setNextRunAt(new \DateTime()); // Exécution immédiate
 
@@ -1538,10 +1767,9 @@ HTML;
                 try {
                     // Vérifier si l'EntityManager est fermé et le rouvrir si nécessaire
                     if (!$this->entityManager->isOpen()) {
-                        $this->entityManager = $this->entityManager->create(
-                            $this->entityManager->getConnection(),
-                            $this->entityManager->getConfiguration()
-                        );
+                        $this->logger->warning('EntityManager fermé, tentative de réouverture');
+                        // Note: Dans un contexte réel, il faudrait recréer l'EntityManager via le container
+                        throw new \Exception('EntityManager fermé, impossible de continuer');
                     }
 
                     // Vérifier d'abord dans la base de données si l'utilisateur a déjà une organisation démo
@@ -2132,7 +2360,7 @@ HTML;
 
             // Tester la connexion SMTP
             if (!$this->smtpConfigurationService) {
-                $this->smtpConfigurationService = new \App\Service\SmtpConfigurationService($this->entityManager, $this->settingsService);
+                $this->smtpConfigurationService = new \App\Service\SmtpConfigurationService($this->parameterBag, $this->settingsService);
             }
 
             $connectionTest = $this->smtpConfigurationService->testSmtpConnection();
@@ -2188,7 +2416,7 @@ HTML;
 
             // Mettre à jour la configuration SMTP
             if (!$this->smtpConfigurationService) {
-                $this->smtpConfigurationService = new \App\Service\SmtpConfigurationService($this->entityManager, $this->settingsService);
+                $this->smtpConfigurationService = new \App\Service\SmtpConfigurationService($this->parameterBag, $this->settingsService);
             }
 
             $success = $this->smtpConfigurationService->updateSmtpConfiguration($config);

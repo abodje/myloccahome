@@ -1,0 +1,28 @@
+# Sécurisation spécifique du dossier documents
+# Double protection pour les documents sensibles
+
+# Interdire complètement l'accès direct
+Order Deny,Allow
+Deny from all
+
+# Empêcher l'exécution de scripts
+Options -ExecCGI
+AddHandler cgi-script .php .pl .py .jsp .asp .sh .cgi
+
+# Désactiver l'affichage du contenu du répertoire
+Options -Indexes
+
+# Headers de sécurité supplémentaires
+<IfModule mod_headers.c>
+    Header always set X-Content-Type-Options nosniff
+    Header always set X-Frame-Options DENY
+    Header always set X-XSS-Protection "1; mode=block"
+    Header always set Content-Security-Policy "default-src 'none'"
+</IfModule>
+
+# Log des tentatives d'accès
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteCond %{REQUEST_FILENAME} -f
+    RewriteRule ^.*$ - [F,L]
+</IfModule>
