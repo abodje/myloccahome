@@ -486,7 +486,7 @@ class DocumentController extends AbstractController
                 ];
 
                 foreach ($tenantDocuments as $document) {
-                    if ($document->getIsArchived()) {
+                    if ($document->isArchived()) {
                         $stats['archived']++;
                     }
                     // Vérifier les dates d'expiration si applicable
@@ -519,7 +519,7 @@ class DocumentController extends AbstractController
                 ];
 
                 foreach ($managerDocuments as $document) {
-                    if ($document->getIsArchived()) {
+                    if ($document->isArchived()) {
                         $stats['archived']++;
                     }
                     // Vérifier les dates d'expiration si applicable
@@ -555,7 +555,7 @@ class DocumentController extends AbstractController
                 ];
 
                 foreach ($companyDocuments as $document) {
-                    if ($document->getIsArchived()) {
+                    if ($document->isArchived()) {
                         $stats['archived']++;
                     }
                     // Vérifier les dates d'expiration si applicable
@@ -585,7 +585,7 @@ class DocumentController extends AbstractController
                 ];
 
                 foreach ($orgDocuments as $document) {
-                    if ($document->getIsArchived()) {
+                    if ($document->isArchived()) {
                         $stats['archived']++;
                     }
                     // Vérifier les dates d'expiration si applicable
