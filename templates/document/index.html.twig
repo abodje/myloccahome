@@ -284,10 +284,10 @@
                             </div>
                         </div>
                         <div class="d-flex gap-2">
-                            <a href="{{ path('app_secure_document_download', {id: document.id}) }}"
-                               class="btn btn-sm btn-outline-primary" title="Télécharger">
-                                <i class="bi bi-download"></i>
-                            </a>
+                        <a href="{{ path('app_document_download', {id: document.id}) }}"
+                           class="btn btn-sm btn-outline-primary" title="Télécharger">
+                            <i class="bi bi-download"></i>
+                        </a>
                             <a href="{{ path('app_document_show', {id: document.id}) }}"
                                class="btn btn-sm btn-outline-secondary" title="Voir">
                                 <i class="bi bi-eye"></i>

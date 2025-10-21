@@ -3,11 +3,11 @@
 namespace App\Controller;
 
 use App\Entity\Document;
+use App\Entity\User;
 use App\Form\DocumentType;
 use App\Repository\DocumentRepository;
 use App\Repository\PaymentRepository;
 use App\Service\RentReceiptService;
-use App\Service\SecureFileService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -187,7 +187,7 @@ class DocumentController extends AbstractController
     }
 
     #[Route('/nouveau', name: 'app_document_new', methods: ['GET', 'POST'])]
-    public function new(Request $request, EntityManagerInterface $entityManager, SecureFileService $secureFileService): Response
+    public function new(Request $request, EntityManagerInterface $entityManager): Response
     {
         $document = new Document();
         $form = $this->createForm(DocumentType::class, $document);
@@ -198,10 +198,20 @@ class DocumentController extends AbstractController
 
             if ($uploadedFile) {
                 try {
-                    // Utilisation du service sécurisé pour l'upload
-                    $secureFilename = $secureFileService->uploadSecureFile($uploadedFile, $document, $this->getUser());
+                    // Générer un nom de fichier unique
+                    $originalFilename = pathinfo($uploadedFile->getClientOriginalName(), PATHINFO_FILENAME);
+                    $safeFilename = transliterator_transliterate('Any-Latin; Latin-ASCII; [^A-Za-z0-9_] remove; Lower()', $originalFilename);
+                    $fileName = $safeFilename.'-'.uniqid().'.'.$uploadedFile->guessExtension();
 
-                    $document->setFileName($secureFilename);
+                    // Déplacer le fichier vers le répertoire de destination
+                    $uploadDir = $this->getParameter('kernel.project_dir') . '/public/uploads/documents';
+                    if (!is_dir($uploadDir)) {
+                        mkdir($uploadDir, 0777, true);
+                    }
+
+                    $uploadedFile->move($uploadDir, $fileName);
+
+                    $document->setFileName($fileName);
                     $document->setOriginalFileName($uploadedFile->getClientOriginalName());
                     $document->setMimeType($uploadedFile->getClientMimeType());
                     $document->setFileSize($uploadedFile->getSize());
@@ -226,24 +236,6 @@ class DocumentController extends AbstractController
         ]);
     }
 
-    /**
-     * Récupère la taille d'un fichier uploadé de manière sécurisée
-     */
-    private function getSecureFileSize($uploadedFile, ?string $fallbackPath = null): int
-    {
-        try {
-            return $uploadedFile->getSize();
-        } catch (\Exception $e) {
-            // Si on ne peut pas récupérer la taille du fichier temporaire,
-            // essayer depuis le fichier déplacé
-            if ($fallbackPath && file_exists($fallbackPath)) {
-                return filesize($fallbackPath);
-            }
-
-            // Si tout échoue, retourner 0
-            return 0;
-        }
-    }
 
     #[Route('/{id}', name: 'app_document_show', methods: ['GET'])]
     public function show(Document $document): Response
@@ -275,7 +267,7 @@ class DocumentController extends AbstractController
     }
 
     #[Route('/{id}/telecharger', name: 'app_document_download', methods: ['GET'])]
-    public function download(Document $document, SecureFileService $secureFileService): Response
+    public function download(Document $document): Response
     {
         try {
             $user = $this->getUser();
@@ -286,15 +278,32 @@ class DocumentController extends AbstractController
                 return $this->redirectToRoute('app_login');
             }
 
-            // Log pour debug
-            $this->logger->info('Tentative de téléchargement', [
-                'document_id' => $document->getId(),
-                'user_id' => $user->getId(),
-                'user_email' => $user->getEmail(),
-                'user_roles' => $user->getRoles()
-            ]);
+            // Vérification des permissions basiques
+            if (!$this->hasAccessToDocument($document, $user)) {
+                $this->addFlash('error', 'Accès non autorisé à ce document.');
+                return $this->redirectToRoute('app_document_index');
+            }
 
-            return $secureFileService->downloadSecureFile($document, $user);
+            // Chemin du fichier
+            $filePath = $this->getParameter('kernel.project_dir') . '/public/uploads/documents/' . $document->getFileName();
+
+            if (!file_exists($filePath)) {
+                $this->addFlash('error', 'Le fichier demandé n\'existe pas.');
+                return $this->redirectToRoute('app_document_index');
+            }
+
+            // Créer la réponse de téléchargement
+            $response = new Response();
+            $response->headers->set('Content-Type', $document->getMimeType());
+            $response->headers->set('Content-Disposition', sprintf(
+                'attachment; filename="%s"',
+                $document->getOriginalFileName()
+            ));
+            $response->headers->set('Content-Length', filesize($filePath));
+            $response->setContent(file_get_contents($filePath));
+
+            return $response;
+
         } catch (\Exception $e) {
             $this->logger->error('Erreur lors du téléchargement', [
                 'document_id' => $document->getId(),
@@ -309,11 +318,14 @@ class DocumentController extends AbstractController
     }
 
     #[Route('/{id}/supprimer', name: 'app_document_delete', methods: ['POST'])]
-    public function delete(Request $request, Document $document, EntityManagerInterface $entityManager, SecureFileService $secureFileService): Response
+    public function delete(Request $request, Document $document, EntityManagerInterface $entityManager): Response
     {
         if ($this->isCsrfTokenValid('delete'.$document->getId(), $request->getPayload()->getString('_token'))) {
-            // Suppression sécurisée du fichier
-            $secureFileService->deleteSecureFile($document->getFileName());
+            // Suppression du fichier physique
+            $filePath = $this->getParameter('kernel.project_dir') . '/public/uploads/documents/' . $document->getFileName();
+            if (file_exists($filePath)) {
+                unlink($filePath);
+            }
 
             $entityManager->remove($document);
             $entityManager->flush();
@@ -636,5 +648,57 @@ class DocumentController extends AbstractController
 
         // Pour les super admins sans organisation/société, retourner les stats globales
         return $documentRepository->getStatistics();
+    }
+
+    /**
+     * Vérification des permissions d'accès à un document
+     */
+    private function hasAccessToDocument(Document $document, \App\Entity\User $user): bool
+    {
+        if (!$user) {
+            return false;
+        }
+
+        $userRoles = $user->getRoles();
+        $documentOrg = $document->getOrganization();
+        $userOrg = $user->getOrganization();
+
+        // Super admin a accès à tout
+        if (in_array('ROLE_SUPER_ADMIN', $userRoles)) {
+            return true;
+        }
+
+        // Admin peut voir les documents de son organisation
+        if (in_array('ROLE_ADMIN', $userRoles)) {
+            return $documentOrg && $userOrg && $documentOrg->getId() === $userOrg->getId();
+        }
+
+        // Manager peut voir les documents de sa société
+        if (in_array('ROLE_MANAGER', $userRoles)) {
+            $documentCompany = $document->getCompany();
+            $userCompany = $user->getCompany();
+            return $documentCompany && $userCompany && $documentCompany->getId() === $userCompany->getId();
+        }
+
+        // Tenant peut voir ses propres documents
+        if (in_array('ROLE_TENANT', $userRoles)) {
+            $documentTenant = $document->getTenant();
+            $userTenant = $user->getTenant();
+            return $documentTenant && $userTenant && $documentTenant->getId() === $userTenant->getId();
+        }
+
+        // Owner peut voir les documents de ses propriétés
+        if (in_array('ROLE_OWNER', $userRoles)) {
+            $documentOwner = $document->getOwner();
+            $userOwner = $user->getOwner();
+            return $documentOwner && $userOwner && $documentOwner->getId() === $userOwner->getId();
+        }
+
+        // Utilisateur standard peut voir les documents de son organisation
+        if ($documentOrg && $userOrg && $documentOrg->getId() === $userOrg->getId()) {
+            return true;
+        }
+
+        return false;
     }
 }

@@ -14,7 +14,7 @@
         <a href="{{ path('app_document_index') }}" class="btn btn-outline-secondary btn-sm">
             <i class="bi bi-arrow-left"></i> Retour
         </a>
-        <a href="{{ path('app_secure_document_download', {id: document.id}) }}" class="btn btn-success btn-sm">
+        <a href="{{ path('app_document_download', {id: document.id}) }}" class="btn btn-success btn-sm">
             <i class="bi bi-download"></i> Télécharger
         </a>
         <a href="{{ path('app_document_edit', {id: document.id}) }}" class="btn btn-primary btn-sm">
@@ -197,7 +197,7 @@
                     </div>
 
                     <div class="d-grid gap-2">
-                        <a href="{{ path('app_secure_document_download', {id: document.id}) }}"
+                        <a href="{{ path('app_document_download', {id: document.id}) }}"
                            class="btn btn-success">
                             <i class="bi bi-download me-2"></i>
                             Télécharger
@@ -285,7 +285,7 @@
 
     <script>
         function openPdfViewer() {
-            window.open('{{ path("app_secure_document_download", {id: document.id}) }}', '_blank');
+            window.open('{{ path("app_document_download", {id: document.id}) }}', '_blank');
         }
 
         function shareDocument() {
