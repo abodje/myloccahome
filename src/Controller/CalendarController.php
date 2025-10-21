@@ -155,11 +155,11 @@ class CalendarController extends AbstractController
             } else {
                 return [];
             }
-        } elseif ($user && in_array('ROLE_ADMIN', $user->getRoles())) {
-            // ADMIN : Filtrer par organization/company
+        } elseif ($user && (in_array('ROLE_ADMIN', $user->getRoles()) || in_array('ROLE_SUPER_ADMIN', $user->getRoles()))) {
+            // ADMIN/SUPER_ADMIN : Filtrer par organization/company ou tout voir
             $criteria = $this->getUserFilterCriteria($user);
 
-            if ($criteria['organization']) {
+            if ($criteria['organization'] && !in_array('ROLE_SUPER_ADMIN', $user->getRoles())) {
                 $qb = $this->createFilteredQuery($paymentRepo, 'p', $criteria);
                 $allPayments = $qb->getQuery()->getResult();
 
@@ -263,11 +263,11 @@ class CalendarController extends AbstractController
             } else {
                 return [];
             }
-        } elseif ($user && in_array('ROLE_ADMIN', $user->getRoles())) {
-            // ADMIN : Filtrer par organization/company
+        } elseif ($user && (in_array('ROLE_ADMIN', $user->getRoles()) || in_array('ROLE_SUPER_ADMIN', $user->getRoles()))) {
+            // ADMIN/SUPER_ADMIN : Filtrer par organization/company ou tout voir
             $criteria = $this->getUserFilterCriteria($user);
 
-            if ($criteria['organization']) {
+            if ($criteria['organization'] && !in_array('ROLE_SUPER_ADMIN', $user->getRoles())) {
                 $qb = $this->createFilteredQuery($leaseRepo, 'l', $criteria);
                 $allLeases = $qb->getQuery()->getResult();
 
@@ -353,11 +353,11 @@ class CalendarController extends AbstractController
             } else {
                 return [];
             }
-        } elseif ($user && in_array('ROLE_ADMIN', $user->getRoles())) {
-            // ADMIN : Filtrer par organization/company
+        } elseif ($user && (in_array('ROLE_ADMIN', $user->getRoles()) || in_array('ROLE_SUPER_ADMIN', $user->getRoles()))) {
+            // ADMIN/SUPER_ADMIN : Filtrer par organization/company ou tout voir
             $criteria = $this->getUserFilterCriteria($user);
 
-            if ($criteria['organization']) {
+            if ($criteria['organization'] && !in_array('ROLE_SUPER_ADMIN', $user->getRoles())) {
                 $qb = $this->createFilteredQuery($maintenanceRepo, 'm', $criteria);
                 $allMaintenances = $qb->getQuery()->getResult();
 
@@ -470,11 +470,11 @@ class CalendarController extends AbstractController
             } else {
                 return [];
             }
-        } elseif ($user && in_array('ROLE_ADMIN', $user->getRoles())) {
-            // ADMIN : Filtrer par organization/company
+        } elseif ($user && (in_array('ROLE_ADMIN', $user->getRoles()) || in_array('ROLE_SUPER_ADMIN', $user->getRoles()))) {
+            // ADMIN/SUPER_ADMIN : Filtrer par organization/company ou tout voir
             $criteria = $this->getUserFilterCriteria($user);
 
-            if ($criteria['organization']) {
+            if ($criteria['organization'] && !in_array('ROLE_SUPER_ADMIN', $user->getRoles())) {
                 $qb = $this->createFilteredQuery($propertyRepo, 'p', $criteria);
                 $tenantProperties = $qb->getQuery()->getResult();
 
@@ -546,6 +546,9 @@ class CalendarController extends AbstractController
             $criteria['user_type'] = 'tenant';
         } elseif (in_array('ROLE_MANAGER', $user->getRoles())) {
             $criteria['user_type'] = 'manager';
+        } elseif (in_array('ROLE_SUPER_ADMIN', $user->getRoles())) {
+            $criteria['user_type'] = 'super_admin';
+            // Super admin voit tout, pas de filtrage
         } elseif (in_array('ROLE_ADMIN', $user->getRoles())) {
             $criteria['user_type'] = 'admin';
 
@@ -710,13 +713,15 @@ class CalendarController extends AbstractController
                 return 'Utilisateur LOCATAIRE : Voit uniquement ses propres données';
             case 'manager':
                 return 'Utilisateur MANAGER : Voit les données de sa société';
+            case 'super_admin':
+                return 'Utilisateur SUPER ADMIN : Voit toutes les données de toutes les organisations et sociétés';
             case 'admin':
                 if ($criteria['company']) {
                     return 'Utilisateur ADMIN : Voit les données de la société "' . $criteria['company']->getName() . '"';
                 } elseif ($criteria['organization']) {
                     return 'Utilisateur ADMIN : Voit toutes les données de l\'organisation "' . $criteria['organization']->getName() . '"';
                 } else {
-                    return 'Utilisateur SUPER ADMIN : Voit toutes les données';
+                    return 'Utilisateur ADMIN : Aucune organisation/société assignée';
                 }
             default:
                 return 'Utilisateur sans rôle spécifique : Aucun accès';

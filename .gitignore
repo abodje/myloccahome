@@ -34,4 +34,6 @@
 
 ###> symfony/asset-mapper ###
 /public/assets/
+/config/packages/messenger.yaml
+/config/packages/messenger-prod.yaml
 ###< symfony/asset-mapper ###
