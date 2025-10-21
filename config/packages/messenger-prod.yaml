@@ -1,19 +1,30 @@
-# config/packages/messenger.yaml
+# config/packages/messenger.yaml - Configuration Production MySQL 8
 framework:
     messenger:
-        # Uncomment this (and the failed transport below) to send failed messages to this transport for later handling.
-        # failure_transport: failed
+        # Transport pour les messages échoués
+        failure_transport: failed
 
         transports:
-            # https://symfony.com/doc/current/messenger.html#transport-configuration
+            # Transport async optimisé pour MySQL 8
             async:
                 dsn: 'doctrine://default?auto_setup=0'
-            # failed: 'doctrine://default?queue_name=failed'
+                options:
+                    table_name: messenger_messages
+                    queue_name: async
+                    redeliver_timeout: 3600
+                    check_delayed_interval: 60
+                    get_notify_timeout: 5
+
+            # Transport pour les messages échoués
+            failed:
+                dsn: 'doctrine://default?queue_name=failed'
+
+            # Transport synchrone (pour les tests)
             sync: 'sync://'
 
         routing:
             # Route your messages to the transports
-            # Configuration pour MySQL 8.0+ (production) avec async
+            # Configuration optimisée pour MySQL 8.0+ (production)
             'App\Message\GenerateRentsMessage': async
             'App\Message\GenerateRentDocumentsMessage': async
             'App\Message\SendRentReceiptsMessage': async
@@ -39,4 +50,3 @@ framework:
             'App\Message\TestEmailSettingsMessage': async
             'App\Message\TestSmtpConfigurationMessage': async
             'App\Message\UpdateSmtpConfigurationMessage': async
-            # 'App\Message\YourMessageName': async
