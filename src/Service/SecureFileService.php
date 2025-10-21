@@ -290,6 +290,29 @@ class SecureFileService
     }
 
     /**
+     * Méthode de test pour le déchiffrement (contourne les permissions)
+     */
+    public function testDecryptFile(Document $document): string
+    {
+        $filePath = $this->documentsDirectory . '/' . $document->getFileName();
+
+        if (!file_exists($filePath)) {
+            throw new \RuntimeException('Le fichier n\'existe pas.');
+        }
+
+        // Déchiffrement direct sans vérification des permissions
+        return $this->decryptFile($filePath);
+    }
+
+    /**
+     * Obtenir le répertoire des documents
+     */
+    public function getDocumentsDirectory(): string
+    {
+        return $this->documentsDirectory;
+    }
+
+    /**
      * Suppression sécurisée d'un fichier
      */
     public function deleteSecureFile(string $filename): void

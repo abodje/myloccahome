@@ -2,6 +2,11 @@
 
 namespace App\Command;
 
+use App\Entity\Document;
+use App\Entity\Organization;
+use App\Entity\User;
+use App\Service\SecureFileService;
+use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
@@ -11,83 +16,126 @@ use Symfony\Component\HttpFoundation\File\UploadedFile;
 
 #[AsCommand(
     name: 'app:test-document-upload',
-    description: 'Teste la gestion sécurisée de la taille des fichiers uploadés',
+    description: 'Teste le processus complet d\'upload et téléchargement de documents',
 )]
 class TestDocumentUploadCommand extends Command
 {
+    public function __construct(
+        private EntityManagerInterface $entityManager,
+        private SecureFileService $secureFileService
+    ) {
+        parent::__construct();
+    }
+
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $io = new SymfonyStyle($input, $output);
 
-        $io->title('Test de la gestion sécurisée des fichiers uploadés');
+        $io->title('Test complet d\'upload et téléchargement de documents');
 
-        // Créer un fichier temporaire de test
-        $tempFile = tempnam(sys_get_temp_dir(), 'test_upload_');
-        file_put_contents($tempFile, 'Contenu de test pour le fichier uploadé');
-
-        $io->writeln(sprintf('Fichier temporaire créé: %s', $tempFile));
-        $io->writeln(sprintf('Taille réelle du fichier: %d bytes', filesize($tempFile)));
-
-        // Simuler un UploadedFile
-        $uploadedFile = new UploadedFile(
-            $tempFile,
-            'test_document.pdf',
-            'application/pdf',
-            null,
-            true // Tester le cas où le fichier temporaire pourrait être supprimé
-        );
-
-        $io->section('Test 1: Récupération normale de la taille');
         try {
-            $size = $uploadedFile->getSize();
-            $io->success(sprintf('✅ Taille récupérée avec succès: %d bytes', $size));
-        } catch (\Exception $e) {
-            $io->error(sprintf('❌ Erreur lors de la récupération de la taille: %s', $e->getMessage()));
-        }
+            // 1. Créer un fichier de test temporaire
+            $testContent = "Ceci est un fichier de test pour vérifier le chiffrement/déchiffrement.\nDate: " . date('Y-m-d H:i:s');
+            $tempFile = tempnam(sys_get_temp_dir(), 'test_document');
+            file_put_contents($tempFile, $testContent);
 
-        // Supprimer le fichier temporaire pour simuler le problème
-        unlink($tempFile);
-        $io->writeln('Fichier temporaire supprimé pour simuler le problème...');
+            $io->section('1. Création du fichier de test');
+            $io->writeln("Fichier temporaire créé: $tempFile");
+            $io->writeln("Contenu: " . substr($testContent, 0, 50) . "...");
 
-        $io->section('Test 2: Récupération après suppression du fichier temporaire');
-        try {
-            $size = $uploadedFile->getSize();
-            $io->success(sprintf('✅ Taille récupérée avec succès: %d bytes', $size));
-        } catch (\Exception $e) {
-            $io->error(sprintf('❌ Erreur attendue: %s', $e->getMessage()));
-            $io->writeln('Cette erreur est maintenant gérée par notre méthode getSecureFileSize()');
-        }
+            // 2. Créer un UploadedFile simulé
+            $uploadedFile = new UploadedFile(
+                $tempFile,
+                'test_document.txt',
+                'text/plain',
+                null,
+                true
+            );
 
-        $io->section('Test 3: Simulation de notre méthode sécurisée');
+            $io->section('2. Simulation de l\'upload');
+            $io->writeln("Nom original: " . $uploadedFile->getClientOriginalName());
+            $io->writeln("Type MIME: " . $uploadedFile->getMimeType());
+            $io->writeln("Taille: " . $uploadedFile->getSize() . " bytes");
 
-        // Simuler notre méthode getSecureFileSize
-        $secureSize = $this->getSecureFileSize($uploadedFile);
-        $io->success(sprintf('✅ Méthode sécurisée retourne: %d bytes', $secureSize));
+            // 3. Créer un document en base de données
+            $document = new Document();
+            $document->setName('Document de test');
+            $document->setType('Test'); // Champ requis
+            $document->setDescription('Test de chiffrement/déchiffrement');
+            $document->setMimeType('text/plain');
+            $document->setOriginalFileName('test_document.txt');
+            $document->setFileSize($uploadedFile->getSize());
+            $document->setCreatedAt(new \DateTime());
 
-        $io->section('Résumé');
-        $io->writeln('✅ Le problème SplFileInfo::getSize() est maintenant géré');
-        $io->writeln('✅ Une méthode sécurisée getSecureFileSize() a été implémentée');
-        $io->writeln('✅ Le DocumentController utilise maintenant cette méthode sécurisée');
+            // Récupérer ou créer une organisation de test
+            $organization = $this->entityManager->getRepository(Organization::class)->findOneBy([]);
+            if (!$organization) {
+                $organization = new Organization();
+                $organization->setName('Organisation de test');
+                $organization->setSlug('test-org');
+                $organization->setCreatedAt(new \DateTime());
+                $this->entityManager->persist($organization);
+            }
+            $document->setOrganization($organization);
 
-        return Command::SUCCESS;
-    }
+            // 4. Uploader le fichier de manière sécurisée AVANT de sauvegarder en base
+            $secureFileName = $this->secureFileService->uploadSecureFile($uploadedFile, $document);
+            $document->setFileName($secureFileName);
 
-    /**
-     * Simule la méthode getSecureFileSize du DocumentController
-     */
-    private function getSecureFileSize($uploadedFile, ?string $fallbackPath = null): int
-    {
-        try {
-            return $uploadedFile->getSize();
-        } catch (\Exception $e) {
-            // Si on ne peut pas récupérer la taille du fichier temporaire,
-            // essayer depuis le fichier déplacé
-            if ($fallbackPath && file_exists($fallbackPath)) {
-                return filesize($fallbackPath);
+            $this->entityManager->persist($document);
+            $this->entityManager->flush();
+
+            $io->writeln("Document créé en base avec ID: " . $document->getId());
+            $io->writeln("Fichier uploadé avec le nom sécurisé: $secureFileName");
+
+            // 5. Vérifier que le fichier chiffré existe
+            $filePath = $this->secureFileService->getDocumentsDirectory() . '/' . $secureFileName;
+            if (file_exists($filePath)) {
+                $io->writeln("✅ Fichier chiffré créé: $filePath");
+                $encryptedContent = file_get_contents($filePath);
+                $io->writeln("Contenu chiffré (premiers 50 chars): " . substr($encryptedContent, 0, 50) . "...");
+            } else {
+                $io->error("❌ Fichier chiffré non trouvé: $filePath");
+                return Command::FAILURE;
             }
 
-            // Si tout échoue, retourner 0
-            return 0;
+            // 6. Tester le déchiffrement
+            $io->section('3. Test de déchiffrement');
+            try {
+                $decryptedContent = $this->secureFileService->testDecryptFile($document);
+
+                if ($decryptedContent === $testContent) {
+                    $io->writeln("✅ Déchiffrement réussi !");
+                    $io->writeln("Contenu déchiffré: " . substr($decryptedContent, 0, 50) . "...");
+                } else {
+                    $io->error("❌ Contenu déchiffré incorrect");
+                    $io->writeln("Attendu: " . substr($testContent, 0, 50) . "...");
+                    $io->writeln("Reçu: " . substr($decryptedContent, 0, 50) . "...");
+                    return Command::FAILURE;
+                }
+            } catch (\Exception $e) {
+                $io->error("❌ Erreur lors du déchiffrement: " . $e->getMessage());
+                return Command::FAILURE;
+            }
+
+            // 7. Nettoyage
+            $io->section('4. Nettoyage');
+            unlink($tempFile);
+            $this->secureFileService->deleteSecureFile($secureFileName);
+            $this->entityManager->remove($document);
+            $this->entityManager->flush();
+
+            $io->writeln("✅ Fichiers temporaires supprimés");
+            $io->writeln("✅ Document supprimé de la base de données");
+
+            $io->success('Test complet réussi ! Le système de chiffrement/déchiffrement fonctionne correctement.');
+
+            return Command::SUCCESS;
+
+        } catch (\Exception $e) {
+            $io->error('Erreur lors du test: ' . $e->getMessage());
+            $io->writeln('Trace: ' . $e->getTraceAsString());
+            return Command::FAILURE;
         }
     }
 }
