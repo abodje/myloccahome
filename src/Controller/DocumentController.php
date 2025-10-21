@@ -15,10 +15,15 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\File\Exception\FileException;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\String\Slugger\SluggerInterface;
+use Psr\Log\LoggerInterface;
 
 #[Route('/mes-documents')]
 class DocumentController extends AbstractController
 {
+    public function __construct(
+        private LoggerInterface $logger
+    ) {
+    }
     #[Route('/', name: 'app_document_index', methods: ['GET'])]
     public function index(DocumentRepository $documentRepository): Response
     {
@@ -273,8 +278,31 @@ class DocumentController extends AbstractController
     public function download(Document $document, SecureFileService $secureFileService): Response
     {
         try {
-            return $secureFileService->downloadSecureFile($document, $this->getUser());
+            $user = $this->getUser();
+
+            // Vérification de l'authentification
+            if (!$user) {
+                $this->addFlash('error', 'Vous devez être connecté pour télécharger ce document.');
+                return $this->redirectToRoute('app_login');
+            }
+
+            // Log pour debug
+            $this->logger->info('Tentative de téléchargement', [
+                'document_id' => $document->getId(),
+                'user_id' => $user->getId(),
+                'user_email' => $user->getEmail(),
+                'user_roles' => $user->getRoles()
+            ]);
+
+            return $secureFileService->downloadSecureFile($document, $user);
         } catch (\Exception $e) {
+            $this->logger->error('Erreur lors du téléchargement', [
+                'document_id' => $document->getId(),
+                'user_id' => $this->getUser()?->getId(),
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
             $this->addFlash('error', 'Erreur lors du téléchargement : ' . $e->getMessage());
             return $this->redirectToRoute('app_document_index');
         }
