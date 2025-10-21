@@ -33,14 +33,14 @@
                         <div class="col-md-6">
                             <h6 class="text-muted mb-1">Locataire</h6>
                             <p class="mb-2">{{ tenant.fullName }}</p>
-                            
+
                             <h6 class="text-muted mb-1">Email</h6>
                             <p class="mb-2">{{ tenant.email }}</p>
                         </div>
                         <div class="col-md-6">
                             <h6 class="text-muted mb-1">Téléphone</h6>
                             <p class="mb-2">{{ tenant.phone ?: 'Non renseigné' }}</p>
-                            
+
                             <h6 class="text-muted mb-1">Adresse</h6>
                             <p class="mb-2">{{ tenant.address ?: 'Non renseignée' }}</p>
                         </div>
@@ -149,7 +149,7 @@
                                                 <p class="text-muted mb-1 small">{{ document.description }}</p>
                                             {% endif %}
                                             {% if document.expirationDate %}
-                                                <span class="badge 
+                                                <span class="badge
                                                     {% if document.expirationDate < date() %}
                                                         bg-danger
                                                     {% elseif document.expirationDate < date('+30 days') %}
@@ -162,16 +162,16 @@
                                             {% endif %}
                                         </div>
                                         <div class="btn-group" role="group">
-                                            <a href="{{ path('app_document_show', {'id': document.id}) }}" 
+                                            <a href="{{ path('app_document_show', {'id': document.id}) }}"
                                                class="btn btn-outline-primary btn-sm" title="Voir">
                                                 <i class="bi bi-eye"></i>
                                             </a>
-                                            <a href="{{ path('app_document_download', {'id': document.id}) }}" 
+                                            <a href="{{ path('app_secure_document_download', {'id': document.id}) }}"
                                                class="btn btn-outline-success btn-sm" title="Télécharger">
                                                 <i class="bi bi-download"></i>
                                             </a>
                                             {% if is_granted('ROLE_ADMIN') or is_granted('ROLE_MANAGER') %}
-                                                <a href="{{ path('app_document_edit', {'id': document.id}) }}" 
+                                                <a href="{{ path('app_document_edit', {'id': document.id}) }}"
                                                    class="btn btn-outline-warning btn-sm" title="Modifier">
                                                     <i class="bi bi-pencil"></i>
                                                 </a>
