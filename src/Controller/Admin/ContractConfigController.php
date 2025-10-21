@@ -22,11 +22,13 @@ class ContractConfigController extends AbstractController
     #[Route('', name: 'app_admin_contract_config_index', methods: ['GET', 'POST'])]
     public function index(Request $request): Response
     {
-        $this->denyAccessUnlessGranted('ROLE_ADMIN');
+        if (!$this->isGranted('ROLE_ADMIN') && !$this->isGranted('ROLE_SUPER_ADMIN')) {
+            throw $this->createAccessDeniedException('Accès refusé. Rôle admin requis.');
+        }
 
         /** @var \App\Entity\User $user */
         $user = $this->getUser();
-        
+
         // Déterminer l'organisation et la société selon le rôle
         $organization = $user->getOrganization();
         $company = $user->getCompany();
@@ -43,6 +45,7 @@ class ContractConfigController extends AbstractController
         }
 
         if ($request->isMethod('POST')) {
+            // Récupérer les données du formulaire
             $configData = $request->request->all();
 
             // Valider la configuration
@@ -52,6 +55,7 @@ class ContractConfigController extends AbstractController
                 // Sauvegarder la configuration
                 if ($this->contractConfigService->updateContractConfig($configData, $user)) {
                     $this->addFlash('success', 'Configuration du contrat sauvegardée !');
+                    return $this->redirectToRoute('app_admin_contract_config_index');
                 } else {
                     $this->addFlash('error', 'Erreur lors de la sauvegarde de la configuration.');
                 }
@@ -64,7 +68,7 @@ class ContractConfigController extends AbstractController
 
         $config = $this->contractConfigService->getContractConfig($user);
         $themes = $this->contractConfigService->getAvailableThemes();
-        
+
         // Récupérer toutes les configurations de l'organisation pour les super admins
         $configurations = [];
         if (in_array('ROLE_SUPER_ADMIN', $user->getRoles())) {
@@ -83,7 +87,9 @@ class ContractConfigController extends AbstractController
     #[Route('/theme/{themeName}', name: 'app_admin_contract_config_theme', methods: ['POST'])]
     public function applyTheme(string $themeName): Response
     {
-        $this->denyAccessUnlessGranted('ROLE_ADMIN');
+        if (!$this->isGranted('ROLE_ADMIN') && !$this->isGranted('ROLE_SUPER_ADMIN')) {
+            throw $this->createAccessDeniedException('Accès refusé. Rôle admin requis.');
+        }
 
         /** @var \App\Entity\User $user */
         $user = $this->getUser();
@@ -101,7 +107,9 @@ class ContractConfigController extends AbstractController
     #[Route('/preview', name: 'app_admin_contract_config_preview', methods: ['GET'])]
     public function preview(): Response
     {
-        $this->denyAccessUnlessGranted('ROLE_ADMIN');
+        if (!$this->isGranted('ROLE_ADMIN') && !$this->isGranted('ROLE_SUPER_ADMIN')) {
+            throw $this->createAccessDeniedException('Accès refusé. Rôle admin requis.');
+        }
 
         /** @var \App\Entity\User $user */
         $user = $this->getUser();
@@ -115,7 +123,9 @@ class ContractConfigController extends AbstractController
     #[Route('/reset', name: 'app_admin_contract_config_reset', methods: ['POST'])]
     public function reset(): Response
     {
-        $this->denyAccessUnlessGranted('ROLE_ADMIN');
+        if (!$this->isGranted('ROLE_ADMIN') && !$this->isGranted('ROLE_SUPER_ADMIN')) {
+            throw $this->createAccessDeniedException('Accès refusé. Rôle admin requis.');
+        }
 
         /** @var \App\Entity\User $user */
         $user = $this->getUser();
