@@ -55,6 +55,24 @@
                             </div>
 
                             <h6 class="mt-4 mb-3">
+                                <i class="bi bi-currency-exchange me-2"></i>
+                                Montant et Devise
+                            </h6>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    {{ form_label(form.amount) }}
+                                    {{ form_widget(form.amount) }}
+                                    {{ form_errors(form.amount) }}
+                                    <div class="form-text">{{ form_help(form.amount) }}</div>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    {{ form_label(form.currency) }}
+                                    {{ form_widget(form.currency) }}
+                                    {{ form_errors(form.currency) }}
+                                </div>
+                            </div>
+
+                            <h6 class="mt-4 mb-3">
                                 <i class="bi bi-calendar me-2"></i>
                                 Dates
                             </h6>

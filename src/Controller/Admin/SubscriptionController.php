@@ -78,6 +78,46 @@ class SubscriptionController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
+            // Calculate amount from plan if not manually set
+            if (!$subscription->getAmount() && $subscription->getPlan()) {
+                $plan = $subscription->getPlan();
+                $billingCycle = $subscription->getBillingCycle();
+
+                if ($billingCycle === 'yearly') {
+                    $amount = $plan->getYearlyPrice() ?? $plan->getMonthlyPrice() * 12;
+                } else {
+                    $amount = $plan->getMonthlyPrice();
+                }
+
+                $subscription->setAmount($amount);
+
+                // Set currency from plan if not set
+                if (!$subscription->getCurrency()) {
+                    $subscription->setCurrency($plan->getCurrency());
+                }
+            }
+
+            // Set default dates if not provided
+            if (!$subscription->getStartDate()) {
+                $subscription->setStartDate(new \DateTime());
+            }
+
+            if (!$subscription->getEndDate()) {
+                $startDate = $subscription->getStartDate();
+                $billingCycle = $subscription->getBillingCycle();
+
+                if ($billingCycle === 'yearly') {
+                    $endDate = new \DateTime($startDate->format('Y-m-d'));
+                    $endDate->modify('+1 year');
+                } else {
+                    $endDate = new \DateTime($startDate->format('Y-m-d'));
+                    $endDate->modify('+1 month');
+                }
+
+                $subscription->setEndDate($endDate);
+                $subscription->setNextBillingDate($endDate);
+            }
+
             // Si c'est le premier abonnement de l'organisation, le marquer comme actif
             $existingActive = $this->subscriptionRepository->findOneBy([
                 'organization' => $subscription->getOrganization(),

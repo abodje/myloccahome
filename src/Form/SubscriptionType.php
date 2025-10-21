@@ -10,6 +10,7 @@ use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 use Symfony\Component\Form\Extension\Core\Type\DateTimeType;
 use Symfony\Component\Form\Extension\Core\Type\DateType;
+use Symfony\Component\Form\Extension\Core\Type\MoneyType;
 use Symfony\Component\Form\Extension\Core\Type\SubmitType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
@@ -56,6 +57,27 @@ class SubscriptionType extends AbstractType
                 'choices' => [
                     'Mensuel' => 'monthly',
                     'Annuel' => 'yearly',
+                ],
+                'attr' => [
+                    'class' => 'form-select'
+                ]
+            ])
+            ->add('amount', MoneyType::class, [
+                'label' => 'Montant',
+                'required' => false,
+                'attr' => [
+                    'class' => 'form-control',
+                    'placeholder' => '0.00'
+                ],
+                'help' => 'Laissez vide pour calcul automatique basé sur le plan',
+                'currency' => 'XOF', // FCFA
+            ])
+            ->add('currency', ChoiceType::class, [
+                'label' => 'Devise',
+                'choices' => [
+                    'FCFA' => 'FCFA',
+                    'EUR' => 'EUR',
+                    'USD' => 'USD',
                 ],
                 'attr' => [
                     'class' => 'form-select'
