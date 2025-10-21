@@ -1,0 +1,36 @@
+[Unit]
+Description=MYLOCCA Messenger Consumer
+Documentation=https://symfony.com/doc/current/messenger.html
+After=network.target mysql.service
+Wants=mysql.service
+
+[Service]
+Type=simple
+User=www-data
+Group=www-data
+WorkingDirectory=/home/Lokaprot/public_html
+ExecStart=/usr/bin/php bin/console messenger:consume async --time-limit=0 --memory-limit=256 --sleep=5
+ExecReload=/bin/kill -HUP $MAINPID
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=mylocca-consumer
+
+# Configuration de sécurité
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/home/Lokaprot/public_html/var
+
+# Limites de ressources
+LimitNOFILE=65536
+MemoryLimit=512M
+
+# Variables d'environnement
+Environment=APP_ENV=prod
+Environment=APP_DEBUG=0
+
+[Install]
+WantedBy=multi-user.target
