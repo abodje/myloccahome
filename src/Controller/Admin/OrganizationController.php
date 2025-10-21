@@ -11,6 +11,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
+use Symfony\Component\String\Slugger\SluggerInterface;
 
 #[Route('/admin/organisations')]
 #[IsGranted('ROLE_SUPER_ADMIN')]
@@ -38,13 +39,28 @@ class OrganizationController extends AbstractController
     }
 
     #[Route('/nouvelle', name: 'app_admin_organization_new', methods: ['GET', 'POST'])]
-    public function new(Request $request, EntityManagerInterface $entityManager): Response
+    public function new(Request $request, EntityManagerInterface $entityManager, SluggerInterface $slugger): Response
     {
         $organization = new Organization();
         $form = $this->createForm(OrganizationType::class, $organization);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
+            // Generate slug from organization name if not already set
+            if (!$organization->getSlug()) {
+                $slug = $slugger->slug($organization->getName())->lower();
+
+                // Ensure slug uniqueness
+                $originalSlug = $slug;
+                $counter = 1;
+                while ($entityManager->getRepository(Organization::class)->findOneBy(['slug' => $slug])) {
+                    $slug = $originalSlug . '-' . $counter;
+                    $counter++;
+                }
+
+                $organization->setSlug($slug);
+            }
+
             $organization->setCreatedAt(new \DateTime());
             $entityManager->persist($organization);
             $entityManager->flush();
@@ -79,12 +95,28 @@ class OrganizationController extends AbstractController
     }
 
     #[Route('/{id}/modifier', name: 'app_admin_organization_edit', methods: ['GET', 'POST'])]
-    public function edit(Request $request, Organization $organization, EntityManagerInterface $entityManager): Response
+    public function edit(Request $request, Organization $organization, EntityManagerInterface $entityManager, SluggerInterface $slugger): Response
     {
         $form = $this->createForm(OrganizationType::class, $organization);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
+            // Generate slug from organization name if not already set
+            if (!$organization->getSlug()) {
+                $slug = $slugger->slug($organization->getName())->lower();
+
+                // Ensure slug uniqueness (excluding current organization)
+                $originalSlug = $slug;
+                $counter = 1;
+                while ($entityManager->getRepository(Organization::class)->findOneBy(['slug' => $slug]) &&
+                       $entityManager->getRepository(Organization::class)->findOneBy(['slug' => $slug])->getId() !== $organization->getId()) {
+                    $slug = $originalSlug . '-' . $counter;
+                    $counter++;
+                }
+
+                $organization->setSlug($slug);
+            }
+
             $organization->setUpdatedAt(new \DateTime());
             $entityManager->flush();
 

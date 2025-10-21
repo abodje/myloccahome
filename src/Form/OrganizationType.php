@@ -21,6 +21,12 @@ class OrganizationType extends AbstractType
                 'label' => 'Nom de l\'organisation',
                 'attr' => ['class' => 'form-control', 'placeholder' => 'Ex: ACME Corporation'],
             ])
+            ->add('slug', TextType::class, [
+                'label' => 'Slug (URL unique)',
+                'required' => false,
+                'attr' => ['class' => 'form-control', 'placeholder' => 'Ex: acme-corporation'],
+                'help' => 'Laissez vide pour génération automatique à partir du nom',
+            ])
             ->add('email', EmailType::class, [
                 'label' => 'Email',
                 'required' => false,
