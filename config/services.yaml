@@ -6,6 +6,8 @@
 parameters:
     documents_directory: '%kernel.project_dir%/public/uploads/documents'
     app.encryption_key: '%env(APP_ENCRYPTION_KEY)%'
+    app.documents.encryption_key: '%env(APP_DOCUMENTS_ENCRYPTION_KEY)%'
+    app.legacy.documents.encryption_key: '%env(APP_LEGACY_DOCUMENTS_ENCRYPTION_KEY)%'
 
 services:
     # default configuration for services in *this* file
@@ -28,7 +30,8 @@ services:
     App\Service\SecureFileService:
         arguments:
             $documentsDirectory: '%documents_directory%'
-            $encryptionKey: '%app.encryption_key%'
+            $documentsEncryptionKey: '%app.documents.encryption_key%'
+            $legacyEncryptionKey: '%app.legacy.documents.encryption_key%'
 
     App\Command\MigrateDocumentsSecurityCommand:
         arguments:

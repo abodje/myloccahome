@@ -36,7 +36,8 @@ class SecureFileService
         private SluggerInterface $slugger,
         private EntityManagerInterface $entityManager,
         private LoggerInterface $logger,
-        private string $encryptionKey
+        private string $documentsEncryptionKey,
+        private string $legacyEncryptionKey
     ) {
     }
 
@@ -158,7 +159,7 @@ class SecureFileService
         }
 
         $iv = random_bytes(16);
-        $encrypted = openssl_encrypt($content, self::ENCRYPTION_METHOD, $this->encryptionKey, 0, $iv);
+        $encrypted = openssl_encrypt($content, self::ENCRYPTION_METHOD, $this->documentsEncryptionKey, 0, $iv);
 
         if ($encrypted === false) {
             throw new \RuntimeException('Erreur lors du chiffrement.');
@@ -168,7 +169,7 @@ class SecureFileService
     }
 
     /**
-     * Déchiffrement d'un fichier
+     * Déchiffrement d'un fichier avec support des clés legacy
      */
     private function decryptFile(string $filePath): string
     {
@@ -181,10 +182,19 @@ class SecureFileService
         $iv = substr($data, 0, 16);
         $encrypted = substr($data, 16);
 
-        $decrypted = openssl_decrypt($encrypted, self::ENCRYPTION_METHOD, $this->encryptionKey, 0, $iv);
+        // Essayer d'abord avec la nouvelle clé
+        $decrypted = openssl_decrypt($encrypted, self::ENCRYPTION_METHOD, $this->documentsEncryptionKey, 0, $iv);
+
+        // Si ça échoue, essayer avec l'ancienne clé (legacy)
+        if ($decrypted === false) {
+            $this->logger->info('Tentative de déchiffrement avec la clé legacy', [
+                'file_path' => $filePath
+            ]);
+            $decrypted = openssl_decrypt($encrypted, self::ENCRYPTION_METHOD, $this->legacyEncryptionKey, 0, $iv);
+        }
 
         if ($decrypted === false) {
-            throw new \RuntimeException('Erreur lors du déchiffrement.');
+            throw new \RuntimeException('Erreur lors du déchiffrement avec toutes les clés disponibles.');
         }
 
         return $decrypted;
