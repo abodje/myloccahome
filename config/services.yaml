@@ -5,6 +5,11 @@
 # https://symfony.com/doc/current/best_practices.html#use-parameters-for-application-configuration
 parameters:
     documents_directory: '%kernel.project_dir%/public/uploads/documents'
+    # Mapping des clés de chiffrement depuis les variables d'environnement
+    # Permet d'utiliser %app.encryption_key% dans la configuration/services si nécessaire
+    app.encryption_key: '%env(APP_ENCRYPTION_KEY)%'
+    app.documents_encryption_key: '%env(APP_DOCUMENTS_ENCRYPTION_KEY)%'
+    app.legacy_documents_encryption_key: '%env(APP_LEGACY_DOCUMENTS_ENCRYPTION_KEY)%'
 
 services:
     # default configuration for services in *this* file
