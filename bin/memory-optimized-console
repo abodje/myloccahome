@@ -1,0 +1,54 @@
+#!/usr/bin/env php
+<?php
+
+/**
+ * Console Symfony avec optimisation de mémoire
+ * Utilisez ce script pour les tâches qui nécessitent plus de mémoire
+ */
+
+// Augmenter la limite de mémoire
+ini_set('memory_limit', '1024M');
+
+// Augmenter le temps d'exécution
+ini_set('max_execution_time', 0);
+
+// Configuration du garbage collection
+gc_enable();
+
+// Log de l'utilisation mémoire
+error_log("Utilisation mémoire au début: " . formatBytes(memory_get_usage(true)));
+
+// Inclure le script console Symfony standard
+require __DIR__ . '/../vendor/autoload.php';
+
+use App\Kernel;
+use Symfony\Bundle\FrameworkBundle\Console\Application;
+
+if (!is_dir(dirname(__DIR__) . '/vendor')) {
+    throw new \RuntimeException('Dependencies are missing. Try running "composer install".');
+}
+
+$kernel = new Kernel($_SERVER['APP_ENV'] ?? 'prod', (bool) ($_SERVER['APP_DEBUG'] ?? false));
+$application = new Application($kernel);
+$application->run();
+
+/**
+ * Formate les bytes en format lisible
+ */
+function formatBytes(int $bytes): string
+{
+    $units = ['B', 'KB', 'MB', 'GB'];
+    $bytes = max($bytes, 0);
+    $pow = floor(($bytes ? log($bytes) : 0) / log(1024));
+    $pow = min($pow, count($units) - 1);
+
+    $bytes /= (1 << (10 * $pow));
+
+    return round($bytes, 2) . ' ' . $units[$pow];
+}
+
+// Log de l'utilisation mémoire à la fin
+register_shutdown_function(function() {
+    error_log("Utilisation mémoire à la fin: " . formatBytes(memory_get_usage(true)));
+    error_log("Pic d'utilisation mémoire: " . formatBytes(memory_get_peak_usage(true)));
+});

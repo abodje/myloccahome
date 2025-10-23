@@ -49,6 +49,9 @@ class TaskManagerService
      */
     public function runDueTasks(): array
     {
+        // Optimiser la mémoire avant l'exécution des tâches
+        $this->optimizeMemoryBeforeExecution();
+
         $taskRepository = $this->entityManager->getRepository(Task::class);
         $dueTasks = $taskRepository->findDueTasks();
 
@@ -59,6 +62,10 @@ class TaskManagerService
                 $this->executeTask($task);
                 $results['executed']++;
                 $this->logger->info("Tâche exécutée avec succès: {$task->getName()}");
+
+                // Optimiser la mémoire après chaque tâche
+                $this->optimizeMemoryAfterTask();
+
             } catch (\Exception $e) {
                 $task->markAsFailed($e->getMessage());
                 $this->entityManager->flush();
@@ -2446,5 +2453,86 @@ HTML;
             $this->logger->error(sprintf('❌ %s', $errorMsg));
             throw new \Exception($errorMsg);
         }
+    }
+
+    /**
+     * Optimise la mémoire avant l'exécution des tâches
+     */
+    private function optimizeMemoryBeforeExecution(): void
+    {
+        // Augmenter la limite de mémoire si nécessaire
+        $currentMemoryLimit = ini_get('memory_limit');
+        $currentMemoryLimitBytes = $this->convertToBytes($currentMemoryLimit);
+
+        // Si la limite actuelle est inférieure à 1GB, l'augmenter
+        if ($currentMemoryLimitBytes < 1073741824) { // 1GB
+            ini_set('memory_limit', '1024M');
+            $this->logger->info("Limite de mémoire augmentée à 1024M");
+        }
+
+        // Forcer le garbage collection
+        gc_collect_cycles();
+
+        $memoryUsage = memory_get_usage(true);
+        $this->logger->info("Utilisation mémoire avant exécution: " . $this->formatBytes($memoryUsage));
+    }
+
+    /**
+     * Optimise la mémoire après l'exécution d'une tâche
+     */
+    private function optimizeMemoryAfterTask(): void
+    {
+        $memoryUsage = memory_get_usage(true);
+        $memoryLimit = ini_get('memory_limit');
+        $memoryLimitBytes = $this->convertToBytes($memoryLimit);
+
+        // Si on utilise plus de 80% de la mémoire, forcer le garbage collection
+        if ($memoryUsage > ($memoryLimitBytes * 0.8)) {
+            $this->logger->warning("Utilisation mémoire élevée ({$memoryUsage} bytes), libération de la mémoire");
+
+            // Forcer le garbage collection
+            gc_collect_cycles();
+
+            // Clear l'EntityManager si possible
+            if ($this->entityManager->isOpen()) {
+                $this->entityManager->clear();
+            }
+        }
+    }
+
+    /**
+     * Convertit une chaîne de limite de mémoire en bytes
+     */
+    private function convertToBytes(string $memoryLimit): int
+    {
+        $memoryLimit = trim($memoryLimit);
+        $last = strtolower($memoryLimit[strlen($memoryLimit) - 1]);
+        $value = (int) $memoryLimit;
+
+        switch ($last) {
+            case 'g':
+                $value *= 1024;
+            case 'm':
+                $value *= 1024;
+            case 'k':
+                $value *= 1024;
+        }
+
+        return $value;
+    }
+
+    /**
+     * Formate les bytes en format lisible
+     */
+    private function formatBytes(int $bytes): string
+    {
+        $units = ['B', 'KB', 'MB', 'GB'];
+        $bytes = max($bytes, 0);
+        $pow = floor(($bytes ? log($bytes) : 0) / log(1024));
+        $pow = min($pow, count($units) - 1);
+
+        $bytes /= (1 << (10 * $pow));
+
+        return round($bytes, 2) . ' ' . $units[$pow];
     }
 }

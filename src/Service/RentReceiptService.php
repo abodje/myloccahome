@@ -142,6 +142,9 @@ class RentReceiptService
         // Créer automatiquement une écriture comptable pour la quittance
         $this->createAccountingEntryForReceipt($document, $payment);
 
+        // Libérer la mémoire après génération
+        $this->optimizeMemoryUsage();
+
         return $document;
     }
 
@@ -252,6 +255,9 @@ class RentReceiptService
         // Créer automatiquement une écriture comptable pour l'avis d'échéance
         $this->createAccountingEntryForNotice($document, $payment);
 
+        // Libérer la mémoire après génération
+        $this->optimizeMemoryUsage();
+
         return $document;
     }
 
@@ -270,15 +276,20 @@ class RentReceiptService
                 return [];
             }
 
-            $payments = $this->entityManager->getRepository(Payment::class)
+            // Compter le nombre total de paiements pour le traitement par lots
+            $totalCount = $this->entityManager->getRepository(Payment::class)
                 ->createQueryBuilder('p')
+                ->select('COUNT(p.id)')
                 ->where('p.status = :status')
                 ->andWhere('p.paidDate BETWEEN :startDate AND :endDate')
                 ->setParameter('status', 'Payé')
                 ->setParameter('startDate', $startDate)
                 ->setParameter('endDate', $endDate)
                 ->getQuery()
-                ->getResult();
+                ->getSingleScalarResult();
+
+            error_log("Génération de quittances pour {$totalCount} paiements");
+
         } catch (\Exception $e) {
             if (strpos($e->getMessage(), 'EntityManager is closed') !== false) {
                 error_log('EntityManager fermé dans generateMonthlyReceipts - retour d\'un tableau vide');
@@ -287,46 +298,7 @@ class RentReceiptService
             throw $e; // Re-lancer les autres exceptions
         }
 
-        $generatedReceipts = [];
-        foreach ($payments as $payment) {
-            try {
-                // Vérifier que l'EntityManager est toujours ouvert
-                if (!$this->entityManager->isOpen()) {
-                    error_log("EntityManager fermé - impossible de continuer la génération");
-                    break;
-                }
-
-                // Valider les données du paiement
-                if (!$this->validatePaymentData($payment)) {
-                    continue;
-                }
-
-                $receipt = $this->generateRentReceipt($payment);
-                $generatedReceipts[] = $receipt;
-
-                // Clear l'EntityManager pour libérer la mémoire (seulement si ouvert)
-                if ($this->entityManager->isOpen()) {
-                    $this->entityManager->clear(Document::class);
-                }
-
-            } catch (\Exception $e) {
-                // Log l'erreur avec plus de détails
-                error_log(sprintf(
-                    "Erreur génération quittance pour paiement #%d: %s\nStack trace: %s",
-                    $payment->getId(),
-                    $e->getMessage(),
-                    $e->getTraceAsString()
-                ));
-
-                // Si l'EntityManager est fermé, on continue avec le suivant
-                if (!$this->entityManager->isOpen()) {
-                    error_log("EntityManager fermé - impossible de continuer la génération");
-                    break;
-                }
-            }
-        }
-
-        return $generatedReceipts;
+        return $this->processPaymentsInBatches($startDate, $endDate, 'Payé', 'generateRentReceipt');
     }
 
     /**
@@ -344,15 +316,20 @@ class RentReceiptService
                 return [];
             }
 
-            $payments = $this->entityManager->getRepository(Payment::class)
+            // Compter le nombre total de paiements pour le traitement par lots
+            $totalCount = $this->entityManager->getRepository(Payment::class)
                 ->createQueryBuilder('p')
+                ->select('COUNT(p.id)')
                 ->where('p.status = :status')
                 ->andWhere('p.dueDate BETWEEN :startDate AND :endDate')
                 ->setParameter('status', 'En attente')
                 ->setParameter('startDate', $startDate)
                 ->setParameter('endDate', $endDate)
                 ->getQuery()
-                ->getResult();
+                ->getSingleScalarResult();
+
+            error_log("Génération d'avis pour {$totalCount} paiements");
+
         } catch (\Exception $e) {
             if (strpos($e->getMessage(), 'EntityManager is closed') !== false) {
                 error_log('EntityManager fermé dans generateUpcomingNotices - retour d\'un tableau vide');
@@ -361,46 +338,7 @@ class RentReceiptService
             throw $e; // Re-lancer les autres exceptions
         }
 
-        $generatedNotices = [];
-        foreach ($payments as $payment) {
-            try {
-                // Vérifier que l'EntityManager est toujours ouvert
-                if (!$this->entityManager->isOpen()) {
-                    error_log("EntityManager fermé - impossible de continuer la génération");
-                    break;
-                }
-
-                // Valider les données du paiement
-                if (!$this->validatePaymentData($payment)) {
-                    continue;
-                }
-
-                $notice = $this->generatePaymentNotice($payment);
-                $generatedNotices[] = $notice;
-
-                // Clear l'EntityManager pour libérer la mémoire (seulement si ouvert)
-                if ($this->entityManager->isOpen()) {
-                    $this->entityManager->clear(Document::class);
-                }
-
-            } catch (\Exception $e) {
-                // Log l'erreur avec plus de détails
-                error_log(sprintf(
-                    "Erreur génération avis pour paiement #%d: %s\nStack trace: %s",
-                    $payment->getId(),
-                    $e->getMessage(),
-                    $e->getTraceAsString()
-                ));
-
-                // Si l'EntityManager est fermé, on continue avec le suivant
-                if (!$this->entityManager->isOpen()) {
-                    error_log("EntityManager fermé - impossible de continuer la génération");
-                    break;
-                }
-            }
-        }
-
-        return $generatedNotices;
+        return $this->processPaymentsInBatches($startDate, $endDate, 'En attente', 'generatePaymentNotice');
     }
 
     /**
@@ -409,6 +347,129 @@ class RentReceiptService
     private function getProjectDir(): string
     {
         return $this->params->get('kernel.project_dir');
+    }
+
+    /**
+     * Traite les paiements par lots pour éviter l'épuisement de mémoire
+     */
+    private function processPaymentsInBatches(\DateTime $startDate, \DateTime $endDate, string $status, string $methodName): array
+    {
+        $batchSize = 50; // Traiter 50 paiements à la fois
+        $offset = 0;
+        $allGenerated = [];
+        $processedCount = 0;
+
+        while (true) {
+            // Vérifier la mémoire disponible
+            $memoryUsage = memory_get_usage(true);
+            $memoryLimit = ini_get('memory_limit');
+            $memoryLimitBytes = $this->convertToBytes($memoryLimit);
+
+            if ($memoryUsage > ($memoryLimitBytes * 0.8)) { // Si on utilise plus de 80% de la mémoire
+                error_log("Utilisation mémoire élevée ({$memoryUsage} bytes), libération de la mémoire");
+                gc_collect_cycles(); // Forcer le garbage collection
+            }
+
+            try {
+                // Vérifier que l'EntityManager est toujours ouvert
+                if (!$this->entityManager->isOpen()) {
+                    error_log("EntityManager fermé - arrêt du traitement par lots");
+                    break;
+                }
+
+                // Récupérer un lot de paiements
+                $payments = $this->entityManager->getRepository(Payment::class)
+                    ->createQueryBuilder('p')
+                    ->where('p.status = :status')
+                    ->andWhere('p.dueDate BETWEEN :startDate AND :endDate')
+                    ->setParameter('status', $status)
+                    ->setParameter('startDate', $startDate)
+                    ->setParameter('endDate', $endDate)
+                    ->setFirstResult($offset)
+                    ->setMaxResults($batchSize)
+                    ->getQuery()
+                    ->getResult();
+
+                // Si aucun paiement n'est trouvé, on a terminé
+                if (empty($payments)) {
+                    break;
+                }
+
+                error_log("Traitement du lot {$offset}-" . ($offset + count($payments)) . " (" . count($payments) . " paiements)");
+
+                // Traiter chaque paiement du lot
+                foreach ($payments as $payment) {
+                    try {
+                        // Valider les données du paiement
+                        if (!$this->validatePaymentData($payment)) {
+                            continue;
+                        }
+
+                        // Générer le document selon la méthode spécifiée
+                        $document = $this->$methodName($payment);
+                        $allGenerated[] = $document;
+                        $processedCount++;
+
+                        // Libérer la mémoire après chaque génération
+                        unset($document);
+
+                    } catch (\Exception $e) {
+                        error_log(sprintf(
+                            "Erreur génération document pour paiement #%d: %s",
+                            $payment->getId(),
+                            $e->getMessage()
+                        ));
+
+                        // Si l'EntityManager est fermé, arrêter le traitement
+                        if (!$this->entityManager->isOpen()) {
+                            error_log("EntityManager fermé - arrêt du traitement");
+                            break 2;
+                        }
+                    }
+                }
+
+                // Clear l'EntityManager pour libérer la mémoire
+                if ($this->entityManager->isOpen()) {
+                    $this->entityManager->clear();
+                }
+
+                // Forcer le garbage collection
+                gc_collect_cycles();
+
+                $offset += $batchSize;
+
+                // Pause pour éviter la surcharge
+                usleep(100000); // 100ms
+
+            } catch (\Exception $e) {
+                error_log("Erreur lors du traitement par lots: " . $e->getMessage());
+                break;
+            }
+        }
+
+        error_log("Traitement terminé: {$processedCount} documents générés");
+        return $allGenerated;
+    }
+
+    /**
+     * Convertit une chaîne de limite de mémoire en bytes
+     */
+    private function convertToBytes(string $memoryLimit): int
+    {
+        $memoryLimit = trim($memoryLimit);
+        $last = strtolower($memoryLimit[strlen($memoryLimit) - 1]);
+        $value = (int) $memoryLimit;
+
+        switch ($last) {
+            case 'g':
+                $value *= 1024;
+            case 'm':
+                $value *= 1024;
+            case 'k':
+                $value *= 1024;
+        }
+
+        return $value;
     }
 
     /**
@@ -444,6 +505,30 @@ class RentReceiptService
         }
 
         return true;
+    }
+
+    /**
+     * Optimise l'utilisation de la mémoire
+     */
+    private function optimizeMemoryUsage(): void
+    {
+        // Vérifier l'utilisation mémoire
+        $memoryUsage = memory_get_usage(true);
+        $memoryLimit = ini_get('memory_limit');
+        $memoryLimitBytes = $this->convertToBytes($memoryLimit);
+
+        // Si on utilise plus de 70% de la mémoire, forcer le garbage collection
+        if ($memoryUsage > ($memoryLimitBytes * 0.7)) {
+            error_log("Utilisation mémoire élevée ({$memoryUsage} bytes), libération de la mémoire");
+
+            // Forcer le garbage collection
+            gc_collect_cycles();
+
+            // Clear l'EntityManager si possible
+            if ($this->entityManager->isOpen()) {
+                $this->entityManager->clear();
+            }
+        }
     }
 
     /**
