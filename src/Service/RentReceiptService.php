@@ -117,6 +117,12 @@ class RentReceiptService
 
         // Créer l'entité Document
         $document = new Document();
+
+        // Vérifier que les données nécessaires sont présentes
+        if (!$payment->getDueDate()) {
+            throw new \InvalidArgumentException("La date d'échéance du paiement est manquante");
+        }
+
         $document->setName('Quittance de loyer - ' . $payment->getDueDate()->format('F Y'));
         $document->setType('Quittance de loyer');
         $document->setFileName($fileName);
@@ -221,6 +227,12 @@ class RentReceiptService
 
         // Créer l'entité Document
         $document = new Document();
+
+        // Vérifier que les données nécessaires sont présentes
+        if (!$payment->getDueDate()) {
+            throw new \InvalidArgumentException("La date d'échéance du paiement est manquante");
+        }
+
         $document->setName('Avis d\'échéance - ' . $payment->getDueDate()->format('F Y'));
         $document->setType('Avis d\'échéance');
         $document->setFileName($fileName);
@@ -278,9 +290,14 @@ class RentReceiptService
         $generatedReceipts = [];
         foreach ($payments as $payment) {
             try {
-                // Vérifier que toutes les entités nécessaires sont présentes
-                if (!$payment->getLease() || !$payment->getLease()->getTenant()) {
-                    error_log("Paiement #{$payment->getId()}: bail ou locataire manquant");
+                // Vérifier que l'EntityManager est toujours ouvert
+                if (!$this->entityManager->isOpen()) {
+                    error_log("EntityManager fermé - impossible de continuer la génération");
+                    break;
+                }
+
+                // Valider les données du paiement
+                if (!$this->validatePaymentData($payment)) {
                     continue;
                 }
 
@@ -347,9 +364,14 @@ class RentReceiptService
         $generatedNotices = [];
         foreach ($payments as $payment) {
             try {
-                // Vérifier que toutes les entités nécessaires sont présentes
-                if (!$payment->getLease() || !$payment->getLease()->getTenant()) {
-                    error_log("Paiement #{$payment->getId()}: bail ou locataire manquant");
+                // Vérifier que l'EntityManager est toujours ouvert
+                if (!$this->entityManager->isOpen()) {
+                    error_log("EntityManager fermé - impossible de continuer la génération");
+                    break;
+                }
+
+                // Valider les données du paiement
+                if (!$this->validatePaymentData($payment)) {
                     continue;
                 }
 
@@ -387,6 +409,41 @@ class RentReceiptService
     private function getProjectDir(): string
     {
         return $this->params->get('kernel.project_dir');
+    }
+
+    /**
+     * Valide les données d'un paiement avant génération de document
+     */
+    private function validatePaymentData(Payment $payment): bool
+    {
+        // Vérifier que le paiement a un bail
+        if (!$payment->getLease()) {
+            error_log("Paiement #{$payment->getId()}: bail manquant");
+            return false;
+        }
+
+        $lease = $payment->getLease();
+
+        // Vérifier que le bail a un locataire
+        if (!$lease->getTenant()) {
+            error_log("Paiement #{$payment->getId()}: locataire manquant");
+            return false;
+        }
+
+        // Vérifier que la date d'échéance est présente
+        if (!$payment->getDueDate()) {
+            error_log("Paiement #{$payment->getId()}: date d'échéance manquante");
+            return false;
+        }
+
+        // Vérifier que le locataire a un nom de famille
+        $tenant = $lease->getTenant();
+        if (!$tenant->getLastName()) {
+            error_log("Paiement #{$payment->getId()}: nom de famille du locataire manquant");
+            return false;
+        }
+
+        return true;
     }
 
     /**
