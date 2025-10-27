@@ -7,6 +7,8 @@ use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: PaymentRepository::class)]
+#[ORM\Table(name: 'payment')]
+#[ORM\UniqueConstraint(name: 'unique_lease_date_type', columns: ['lease_id', 'due_date', 'type'])]
 class Payment
 {
     #[ORM\Id]

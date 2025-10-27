@@ -125,6 +125,13 @@ class GenerateRentsCommand extends Command
                     $lease->getRentDueDay() ?? 1
                 );
 
+                // ⚠️ Vérifier que la date est dans la période du bail
+                // Ne pas générer de loyer avant le début du bail
+                if ($lease->getStartDate() && $dueDate < $lease->getStartDate()) {
+                    $leaseSkipped++;
+                    continue; // Passer au mois suivant
+                }
+
                 // ⚠️ Vérifier que la date n'excède pas la fin du bail
                 if ($lease->getEndDate() && $dueDate > $lease->getEndDate()) {
                     $leaseSkipped++;
@@ -139,14 +146,21 @@ class GenerateRentsCommand extends Command
                     break; // Arrêter pour ce bail
                 }
 
-                // Vérifier si le loyer existe déjà
-                $existingPayment = $this->entityManager->getRepository(Payment::class)->findOneBy([
+                // 🔒 SÉCURITÉ RENFORCÉE : Vérifier si le loyer existe déjà (avec TOUS les critères)
+                $existingPayments = $this->entityManager->getRepository(Payment::class)->findBy([
                     'lease' => $lease,
                     'dueDate' => $dueDate,
                     'type' => 'Loyer'
                 ]);
 
-                if (!$existingPayment) {
+                // 🚨 Si plusieurs paiements existent pour la même date, on alerte
+                if (count($existingPayments) > 1) {
+                    $io->warning("⚠️  ANOMALIE: {count($existingPayments)} paiements trouvés pour {$lease->getTenant()->getFullName()} - échéance {$dueDate->format('d/m/Y')}");
+                    $leaseSkipped++;
+                    continue; // Passer au suivant sans créer de doublon
+                }
+
+                if (empty($existingPayments)) {
                     if (!$dryRun) {
                         $payment = new Payment();
                         $payment->setLease($lease)
@@ -158,6 +172,10 @@ class GenerateRentsCommand extends Command
                                ->setCompany($lease->getCompany()); // ✅ Auto-assign company
 
                         $this->entityManager->persist($payment);
+                        
+                        // 🔒 Flush immédiatement pour garantir l'insertion en base
+                        // Évite les race conditions si la commande est lancée en parallèle
+                        $this->entityManager->flush();
                     }
                     $leaseGenerated++;
                     $totalGenerated++;
@@ -176,10 +194,9 @@ class GenerateRentsCommand extends Command
             }
         }
 
-        // Sauvegarder en base (si pas dry-run)
-        if (!$dryRun && $totalGenerated > 0) {
-            $this->entityManager->flush();
-        }
+        // 🔒 Note: Le flush est fait immédiatement après chaque création
+        // pour garantir la cohérence et éviter les doublons
+        // Plus besoin de flush global ici
 
         // Afficher les résultats
         $io->section('📋 Résultats par contrat');

@@ -73,7 +73,7 @@ if [[ $REPLY =~ ^[OoYy]$ ]]; then
     echo "0 6 1 * * cd $PROJECT_PATH && $PHP_PATH bin/console app:send-rent-receipts >> $LOG_PATH/send-receipts.log 2>&1"; \
     echo "0 1 * * 1 cd $PROJECT_PATH && $PHP_PATH bin/console app:generate-rent-documents >> $LOG_PATH/generate-docs.log 2>&1"; \
     echo "0 2 25 * * cd $PROJECT_PATH && $PHP_PATH bin/console app:generate-rents --months-ahead=3 >> $LOG_PATH/generate-future.log 2>&1") | crontab -
-    
+
     echo "✅ Tâches cron configurées avec succès!"
     echo ""
     echo "📋 Vérification du crontab:"

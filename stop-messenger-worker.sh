@@ -15,13 +15,13 @@ if ps -p $PID > /dev/null 2>&1; then
     echo "🛑 Arrêt du worker Messenger (PID: $PID)..."
     kill $PID
     sleep 2
-    
+
     # Vérifier si le processus est toujours actif
     if ps -p $PID > /dev/null 2>&1; then
         echo "⚠️  Forçage de l'arrêt..."
         kill -9 $PID
     fi
-    
+
     rm -f "$PID_FILE"
     echo "✅ Worker Messenger arrêté"
 else
