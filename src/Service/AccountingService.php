@@ -39,6 +39,11 @@ class AccountingService
         $entry->setOwner($payment->getProperty()?->getOwner());
         $entry->setPayment($payment);
 
+        // organisation et société
+        $entry->setOrganization($payment->getOrganization());
+        $entry->setCompany($payment->getCompany());
+
+
         $this->entityManager->persist($entry);
         $this->entityManager->flush();
 
