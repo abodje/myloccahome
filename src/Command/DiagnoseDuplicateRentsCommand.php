@@ -114,7 +114,7 @@ class DiagnoseDuplicateRentsCommand extends Command
 
                 foreach ($leaseDuplicates as $date => $paymentsForDate) {
                     $io->warning("❌ {count($paymentsForDate)} paiements pour la date {$date}:");
-                    
+
                     $tableData = [];
                     foreach ($paymentsForDate as $index => $payment) {
                         $tableData[] = [
@@ -139,7 +139,7 @@ class DiagnoseDuplicateRentsCommand extends Command
         $io->section('📊 Résumé');
         if ($totalDuplicates > 0) {
             $io->warning("{$totalDuplicates} doublon(s) détecté(s) dans " . count($duplicatesDetails) . " contrat(s)");
-            
+
             if ($fix) {
                 $io->info('🔧 Suppression des doublons...');
                 $deleted = 0;
@@ -148,7 +148,7 @@ class DiagnoseDuplicateRentsCommand extends Command
                     foreach ($detail['duplicates'] as $paymentsForDate) {
                         // Garder le premier, supprimer les autres
                         $keep = array_shift($paymentsForDate);
-                        
+
                         foreach ($paymentsForDate as $payment) {
                             $this->entityManager->remove($payment);
                             $deleted++;

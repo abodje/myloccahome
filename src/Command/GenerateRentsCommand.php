@@ -172,7 +172,7 @@ class GenerateRentsCommand extends Command
                                ->setCompany($lease->getCompany()); // ✅ Auto-assign company
 
                         $this->entityManager->persist($payment);
-                        
+
                         // 🔒 Flush immédiatement pour garantir l'insertion en base
                         // Évite les race conditions si la commande est lancée en parallèle
                         $this->entityManager->flush();
