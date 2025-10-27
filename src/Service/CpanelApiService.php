@@ -351,14 +351,20 @@ PHP;
 
         // Nettoyer le demoId pour éviter les caractères invalides
         $cleanDemoId = preg_replace('/[^a-z0-9]/i', '', $demoId);
-        $cleanDemoId = substr($cleanDemoId, 0, 10); // Limiter à 10 caractères
+
+        // Pour les noms MySQL, on doit respecter les limites strictes de cPanel:
+        // - Database name: max 64 chars (lokaprot_ = 9 chars, reste 55)
+        // - User name: max 16 chars (lokaprot_ = 9 chars, reste 7!)
+        //
+        // Utilisons un hash court basé sur le demoId pour garantir l'unicité
+        $hash = substr(md5($demoId), 0, 6); // 6 caractères hexadécimaux
 
         // Générer les noms
         $subdomain = "demo-{$cleanDemoId}";
 
-        // Noms courts pour MySQL (limites: DB=64 chars, User=16 chars)
-        $dbName = "demo_{$cleanDemoId}";
-        $dbUser = "d_{$cleanDemoId}";
+        // Noms courts pour MySQL
+        $dbName = "demo_{$hash}";  // lokaprot_demo_abc123 = 21 chars
+        $dbUser = "d_{$hash}";      // lokaprot_d_abc123 = 16 chars (limite exacte!)
         $dbPassword = bin2hex(random_bytes(12)); // 24 caractères
 
         $this->logger->info("🚀 Création environnement démo (BDD uniquement)", [
