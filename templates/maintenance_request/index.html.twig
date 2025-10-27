@@ -214,23 +214,56 @@
 
                     <!-- Formulaire de demande -->
                     <div id="requestForm" class="mt-4" style="display: none;">
-                        <form action="{{ path('app_maintenance_request_new') }}" method="POST">
+                        {% if tenant_properties is defined and tenant_properties|length == 0 %}
+                            <div class="alert alert-warning">
+                                <i class="bi bi-exclamation-triangle me-2"></i>
+                                <strong>Aucune propriété trouvée</strong>
+                                <p class="mb-0 mt-2">Vous n'avez actuellement aucune propriété associée à votre compte. Veuillez contacter votre gestionnaire pour créer une demande.</p>
+                            </div>
+                        {% else %}
+                        <form id="maintenanceRequestForm" method="POST">
+                            <input type="hidden" name="request_type" id="requestTypeInput">
+
+                            {% if tenant_properties|length > 1 %}
                             <div class="mb-3">
-                                <label class="form-label">Détail de la demande</label>
-                                <textarea name="description" class="form-control" rows="4" placeholder="Décrivez votre demande en détail..."></textarea>
+                                <label class="form-label">Propriété concernée <span class="text-danger">*</span></label>
+                                <select name="property_id" class="form-select" required>
+                                    <option value="">Sélectionnez une propriété</option>
+                                    {% for property in tenant_properties %}
+                                        <option value="{{ property.id }}">{{ property.fullAddress }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            {% elseif tenant_properties|length == 1 %}
+                                <input type="hidden" name="property_id" value="{{ tenant_properties[0].id }}">
+                                <div class="alert alert-info mb-3">
+                                    <i class="bi bi-info-circle me-2"></i>
+                                    <strong>Propriété :</strong> {{ tenant_properties[0].fullAddress }}
+                                </div>
+                            {% endif %}
+
+                            <div class="mb-3">
+                                <label class="form-label">Détail de la demande <span class="text-danger">*</span></label>
+                                <textarea name="description" class="form-control" rows="4" placeholder="Décrivez votre demande en détail..." required></textarea>
                             </div>
 
                             <div class="mb-3">
                                 <label class="form-label">Pièces jointes</label>
-                                <input type="file" class="form-control" multiple>
+                                <input type="file" name="attachments[]" class="form-control" multiple>
                                 <small class="text-muted">Ajoutez jusqu'à 5 pièces jointes</small>
                             </div>
 
+                            <div id="formAlert" class="alert d-none"></div>
+
                             <div class="d-flex justify-content-end">
                                 <button type="button" class="btn btn-secondary me-2" data-bs-dismiss="modal">Annuler</button>
-                                <button type="submit" class="btn btn-primary">Envoyer</button>
+                                <button type="submit" class="btn btn-primary">
+                                    <span class="spinner-border spinner-border-sm d-none" role="status"></span>
+                                    <span class="btn-text">Envoyer</span>
+                                </button>
                             </div>
                         </form>
+                        {% endif %}
                     </div>
                 </div>
             </div>
@@ -260,18 +293,120 @@
         document.addEventListener('DOMContentLoaded', function() {
             const typeCards = document.querySelectorAll('.request-type-card');
             const requestForm = document.getElementById('requestForm');
+            const form = document.getElementById('maintenanceRequestForm');
+            const requestTypeInput = document.getElementById('requestTypeInput');
+            const modal = document.getElementById('newRequestModal');
+            const bsModal = new bootstrap.Modal(modal);
+            const formAlert = document.getElementById('formAlert');
 
             typeCards.forEach(card => {
                 card.addEventListener('click', function() {
+                    const requestType = this.getAttribute('data-type');
+
+                    // Si c'est un type de demande de maintenance, rediriger vers le formulaire complet
+                    if (requestType === 'maintenance') {
+                        // Rediriger vers la page de création de demande de maintenance
+                        window.location.href = '{{ path("app_maintenance_request_new") }}';
+                        return;
+                    }
+
+                    // Pour les autres types de demandes, afficher le formulaire simple
                     // Remove selected class from all cards
                     typeCards.forEach(c => c.classList.remove('selected'));
 
                     // Add selected class to clicked card
                     this.classList.add('selected');
 
+                    // Set request type si le champ existe
+                    if (requestTypeInput) {
+                        requestTypeInput.value = requestType;
+                    }
+
                     // Show form
                     requestForm.style.display = 'block';
                 });
+            });
+
+            // Soumettre le formulaire en AJAX seulement si le formulaire existe
+            if (form) {
+                form.addEventListener('submit', function(e) {
+                e.preventDefault();
+
+                const submitBtn = form.querySelector('button[type="submit"]');
+                const spinner = submitBtn.querySelector('.spinner-border');
+                const btnText = submitBtn.querySelector('.btn-text');
+
+                // Afficher le spinner
+                spinner.classList.remove('d-none');
+                submitBtn.disabled = true;
+                formAlert.classList.add('d-none');
+
+                // Créer FormData avec les données du formulaire
+                const formData = new FormData(form);
+
+                // Debug: afficher les données du formulaire
+                console.log('Données du formulaire:');
+                for (let [key, value] of formData.entries()) {
+                    console.log(key + ':', value);
+                }
+
+                // Envoyer la requête AJAX
+                fetch('{{ path("app_maintenance_request_new") }}', {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Réponse du serveur:', data);
+                    if (data.success) {
+                        // Afficher un message de succès
+                        formAlert.className = 'alert alert-success';
+                        formAlert.textContent = data.message || 'Demande créée avec succès !';
+                        formAlert.classList.remove('d-none');
+
+                        // Réinitialiser le formulaire
+                        form.reset();
+
+                        // Fermer le modal après 2 secondes
+                        setTimeout(() => {
+                            bsModal.hide();
+                            // Recharger la page pour afficher la nouvelle demande
+                            window.location.reload();
+                        }, 2000);
+                    } else {
+                        // Afficher un message d'erreur
+                        formAlert.className = 'alert alert-danger';
+                        formAlert.textContent = data.message || 'Une erreur est survenue.';
+                        formAlert.classList.remove('d-none');
+                    }
+                })
+                .catch(error => {
+                    console.error('Erreur:', error);
+                    formAlert.className = 'alert alert-danger';
+                    formAlert.textContent = 'Une erreur est survenue lors de l\'envoi.';
+                    formAlert.classList.remove('d-none');
+                })
+                .finally(() => {
+                    // Masquer le spinner
+                    spinner.classList.add('d-none');
+                    submitBtn.disabled = false;
+                });
+            });
+            }
+
+            // Réinitialiser le formulaire à la fermeture du modal
+            modal.addEventListener('hidden.bs.modal', function() {
+                if (form) {
+                    form.reset();
+                    if (formAlert) {
+                        formAlert.classList.add('d-none');
+                    }
+                }
+                requestForm.style.display = 'none';
+                typeCards.forEach(c => c.classList.remove('selected'));
             });
         });
     </script>

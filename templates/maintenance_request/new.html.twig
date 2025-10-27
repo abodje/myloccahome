@@ -3,16 +3,22 @@
 {% block title %}Nouvelle demande - LOKAPRO{% endblock %}
 
 {% block page_title %}
-    <h5 class="mb-0">
-        <i class="bi bi-plus-circle me-2"></i>
-        Nouvelle demande de maintenance
-    </h5>
+    <div class="d-flex align-items-center">
+        <i class="bi bi-wrench me-2"></i>
+        <h5 class="mb-0">Nouvelle demande de maintenance</h5>
+    </div>
 {% endblock %}
 
 {% block page_actions %}
-    <a href="{{ path('app_maintenance_request_index') }}" class="btn btn-outline-secondary btn-sm">
-        <i class="bi bi-arrow-left"></i> Retour
-    </a>
+    <div class="d-flex align-items-center gap-2">
+        <a href="{{ path('app_maintenance_request_index') }}" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-arrow-left"></i> Retour
+        </a>
+        <button class="btn btn-outline-secondary btn-sm" type="button" data-bs-toggle="search">
+            <i class="bi bi-search"></i> Rechercher
+            <small class="d-block">Ctrl+K</small>
+        </button>
+    </div>
 {% endblock %}
 
 {% block body %}

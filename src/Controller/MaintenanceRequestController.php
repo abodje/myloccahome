@@ -16,7 +16,7 @@ use Symfony\Component\Routing\Attribute\Route;
 class MaintenanceRequestController extends AbstractController
 {
     #[Route('/', name: 'app_maintenance_request_index', methods: ['GET'])]
-    public function index(MaintenanceRequestRepository $maintenanceRequestRepository, Request $request): Response
+    public function index(MaintenanceRequestRepository $maintenanceRequestRepository, PropertyRepository $propertyRepository, Request $request): Response
     {
         /** @var \App\Entity\User|null $user */
         $user = $this->getUser();
@@ -24,12 +24,16 @@ class MaintenanceRequestController extends AbstractController
         $priority = $request->query->get('priority');
         $category = $request->query->get('category');
 
+        // Récupérer les propriétés du locataire pour le modal
+        $tenantProperties = [];
+
         // Filtrer les demandes selon le rôle de l'utilisateur
         if ($user && in_array('ROLE_TENANT', $user->getRoles())) {
             // Si l'utilisateur est un locataire, ne montrer que ses demandes
             $tenant = $user->getTenant();
             if ($tenant) {
                 $requests = $maintenanceRequestRepository->findByTenantWithFilters($tenant->getId(), $status, $priority, $category);
+                $tenantProperties = $propertyRepository->findByTenantWithFilters($tenant->getId());
             } else {
                 $requests = [];
             }
@@ -58,6 +62,7 @@ class MaintenanceRequestController extends AbstractController
             'current_priority' => $priority,
             'current_category' => $category,
             'is_tenant_view' => $isTenantView,
+            'tenant_properties' => $tenantProperties,
         ]);
     }
 
@@ -84,6 +89,112 @@ class MaintenanceRequestController extends AbstractController
                 // Pré-remplir avec la première propriété si disponible
                 if (!empty($tenantProperties)) {
                     $maintenanceRequest->setProperty($tenantProperties[0]);
+                }
+            }
+        }
+
+        // Vérifier si c'est une requête AJAX depuis le modal
+        $isAjaxRequest = $request->isXmlHttpRequest();
+
+        if ($request->isMethod('POST')) {
+            // Si c'est une requête AJAX simple (sans formulaire Symfony)
+            if ($isAjaxRequest && !$request->request->has('maintenance_request')) {
+                try {
+                    $description = $request->request->get('description');
+                    $requestType = $request->request->get('request_type', 'other');
+                    $propertyId = $request->request->get('property_id');
+
+                    if (empty($description)) {
+                        return $this->json([
+                            'success' => false,
+                            'message' => 'La description est obligatoire.'
+                        ], 400);
+                    }
+
+                    // Créer une demande simple
+                    $maintenanceRequest->setTitle('Demande ' . ucfirst($requestType));
+                    $maintenanceRequest->setDescription($description);
+                    $maintenanceRequest->setCategory('Autre');
+
+                    // Gestion de la propriété selon le rôle
+                    $propertySet = false;
+
+                    if ($user && in_array('ROLE_TENANT', $user->getRoles())) {
+                        $tenant = $user->getTenant();
+                        if (!$tenant) {
+                            return $this->json([
+                                'success' => false,
+                                'message' => 'Votre compte locataire n\'est pas correctement configuré.'
+                            ], 400);
+                        }
+
+                        $maintenanceRequest->setTenant($tenant);
+
+                        // Récupérer les propriétés du locataire
+                        $tenantProperties = $propertyRepository->findByTenantWithFilters($tenant->getId());
+
+                        if (empty($tenantProperties)) {
+                            return $this->json([
+                                'success' => false,
+                                'message' => 'Vous n\'avez aucune propriété associée. Veuillez contacter votre gestionnaire.'
+                            ], 400);
+                        }
+
+                        // Si une propriété spécifique est sélectionnée
+                        if ($propertyId) {
+                            $property = $propertyRepository->find($propertyId);
+                            if ($property && in_array($property, $tenantProperties)) {
+                                $maintenanceRequest->setProperty($property);
+                                $propertySet = true;
+                            } else {
+                                return $this->json([
+                                    'success' => false,
+                                    'message' => 'La propriété sélectionnée n\'est pas valide.'
+                                ], 400);
+                            }
+                        } else {
+                            // Prendre la première propriété par défaut
+                            $maintenanceRequest->setProperty($tenantProperties[0]);
+                            $propertySet = true;
+                        }
+                    } elseif ($propertyId) {
+                        // Pour les propriétaires/gestionnaires
+                        $property = $propertyRepository->find($propertyId);
+                        if ($property) {
+                            $maintenanceRequest->setProperty($property);
+                            $propertySet = true;
+                        } else {
+                            return $this->json([
+                                'success' => false,
+                                'message' => 'La propriété sélectionnée n\'existe pas.'
+                            ], 400);
+                        }
+                    }
+
+                    if (!$propertySet) {
+                        return $this->json([
+                            'success' => false,
+                            'message' => 'Veuillez sélectionner une propriété.'
+                        ], 400);
+                    }
+
+                    $maintenanceRequest->setCreatedAt(new \DateTime());
+                    $maintenanceRequest->setStatus('En attente');
+                    $maintenanceRequest->setPriority('Normale');
+
+                    $entityManager->persist($maintenanceRequest);
+                    $entityManager->flush();
+
+                    return $this->json([
+                        'success' => true,
+                        'message' => 'Votre demande a été créée avec succès.',
+                        'request_id' => $maintenanceRequest->getId()
+                    ]);
+                } catch (\Exception $e) {
+                    return $this->json([
+                        'success' => false,
+                        'message' => 'Une erreur est survenue : ' . $e->getMessage()
+                    ], 500);
                 }
             }
         }

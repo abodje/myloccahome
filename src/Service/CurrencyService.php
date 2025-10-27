@@ -123,6 +123,7 @@ class CurrencyService
             ['code' => 'GBP', 'name' => 'Livre sterling', 'symbol' => '£', 'rate' => 0.87, 'default' => false],
             ['code' => 'CHF', 'name' => 'Franc suisse', 'symbol' => 'CHF', 'rate' => 0.96, 'default' => false],
             ['code' => 'CAD', 'name' => 'Dollar canadien', 'symbol' => 'CAD', 'rate' => 1.47, 'default' => false],
+            ['code' => 'CFA', 'name' => 'XOF', 'symbol' => 'XOF', 'rate' => 1, 'default' => true],
         ];
 
         foreach ($defaultCurrencies as $currencyData) {
