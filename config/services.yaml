@@ -36,6 +36,11 @@ services:
         arguments:
             $documentsDirectory: '%documents_directory%'
 
+    # Service pour gérer les dumps de base de données
+    App\Service\DatabaseDumpService:
+        arguments:
+            $projectDir: '%kernel.project_dir%'
+
     # Service cPanel API pour gestion des environnements de démo
     App\Service\CpanelApiService:
         arguments:

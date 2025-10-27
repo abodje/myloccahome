@@ -25,6 +25,7 @@ class DemoEnvironmentService
     private RequestStack $requestStack;
     private LoggerInterface $logger;
     private ?CpanelApiService $cpanelService;
+    private ?DatabaseDumpService $dumpService;
     private string $demoBaseUrl;
     private string $demoDataDir;
     private bool $cpanelEnabled;
@@ -36,7 +37,8 @@ class DemoEnvironmentService
         SluggerInterface $slugger,
         RequestStack $requestStack,
         LoggerInterface $logger,
-        ?CpanelApiService $cpanelService = null
+        ?CpanelApiService $cpanelService = null,
+        ?DatabaseDumpService $dumpService = null
     ) {
         $this->entityManager = $entityManager;
         $this->filesystem = $filesystem;
@@ -45,6 +47,7 @@ class DemoEnvironmentService
         $this->requestStack = $requestStack;
         $this->logger = $logger;
         $this->cpanelService = $cpanelService;
+        $this->dumpService = $dumpService;
         $this->cpanelEnabled = $cpanelService !== null && !empty($_ENV['CPANEL_API_TOKEN'] ?? '');
         $this->demoBaseUrl = $this->getCurrentDomain();
         $this->demoDataDir = $this->params->get('kernel.project_dir') . '/demo_data';
@@ -143,6 +146,43 @@ class DemoEnvironmentService
 
                 $cpanelData = $cpanelResult;
                 $this->logger->info("✅ Infrastructure cPanel créée avec succès");
+
+                // Étape 0.5: Importer le dump de la base de données si le service est disponible
+                if ($this->dumpService && isset($cpanelData['database'])) {
+                    $this->logger->info("📦 Import du dump de base de données dans la base cPanel");
+
+                    // Récupérer les paramètres de connexion actuels
+                    $currentParams = $this->entityManager->getConnection()->getParams();
+
+                    // Préparer les paramètres de connexion pour la base cPanel
+                    $targetDb = [
+                        'host' => $currentParams['host'] ?? 'localhost',
+                        'port' => $currentParams['port'] ?? 3306,
+                        'database' => $cpanelData['database'],
+                        'user' => $cpanelData['db_user'],
+                        'password' => $cpanelData['db_password']
+                    ];
+
+                    // Cloner la base de données
+                    $cloneResult = $this->dumpService->cloneDatabase($targetDb, [
+                        'excludeTables' => [
+                            'messenger_messages',
+                            'sessions',
+                            'migration_versions',
+                            'doctrine_migration_versions'
+                        ],
+                        'cleanup' => true
+                    ]);
+
+                    if ($cloneResult['success']) {
+                        $this->logger->info("✅ Base de données clonée avec succès");
+                        $cpanelData['database_imported'] = true;
+                    } else {
+                        $this->logger->warning("⚠️ Échec import BDD: " . $cloneResult['error']);
+                        $cpanelData['database_imported'] = false;
+                        $cpanelData['import_error'] = $cloneResult['error'];
+                    }
+                }
             }
 
             // 1. Créer l'organisation de démo

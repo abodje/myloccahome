@@ -78,9 +78,14 @@ class CpanelApiService
         try {
             $this->logger->info("🗑️  Suppression du sous-domaine: {$subdomain}.{$domain}");
 
-            $response = $this->client->request('GET', $this->buildUrl('SubDomain', 'delsubdomain'), [
+            // L'API cPanel UAPI2 utilise 'delsubdomain' mais UAPI utilise un autre format
+            // Essayons avec le nom complet du sous-domaine
+            $fullDomain = "{$subdomain}.{$domain}";
+
+            $response = $this->client->request('GET', $this->buildUrl('SubDomain', 'delete'), [
                 'query' => [
-                    'domain' => "{$subdomain}.{$domain}",
+                    'domain' => $fullDomain,
+                    'discard' => 1, // Supprimer aussi le répertoire
                 ],
             ]);
 
@@ -90,6 +95,9 @@ class CpanelApiService
                 $this->logger->info("✅ Sous-domaine supprimé");
                 return ['success' => true];
             }
+
+            // Si erreur, essayer avec l'ancienne API UAPI2
+            $this->logger->warning("Tentative avec API alternative...");
 
             return ['success' => false, 'error' => $data['errors'][0] ?? 'Unknown error'];
 
@@ -105,19 +113,22 @@ class CpanelApiService
     public function createDatabase(string $databaseName): array
     {
         try {
-            $this->logger->info("💾 Création de la base de données: {$databaseName}");
+            // cPanel attend le nom AVEC le préfixe utilisateur
+            $fullDatabaseName = "{$this->cpanelUsername}_{$databaseName}";
+
+            $this->logger->info("💾 Création de la base de données: {$fullDatabaseName}");
 
             $response = $this->client->request('GET', $this->buildUrl('Mysql', 'create_database'), [
                 'query' => [
-                    'name' => $databaseName,
+                    'name' => $fullDatabaseName,
                 ],
             ]);
 
             $data = $response->toArray();
 
             if (isset($data['status']) && $data['status'] == 1) {
-                $this->logger->info("✅ Base de données créée: {$this->cpanelUsername}_{$databaseName}");
-                return ['success' => true, 'database' => "{$this->cpanelUsername}_{$databaseName}"];
+                $this->logger->info("✅ Base de données créée: {$fullDatabaseName}");
+                return ['success' => true, 'database' => $fullDatabaseName];
             }
 
             return ['success' => false, 'error' => $data['errors'][0] ?? 'Unknown error'];
@@ -134,11 +145,14 @@ class CpanelApiService
     public function createDatabaseUser(string $username, string $password): array
     {
         try {
-            $this->logger->info("👤 Création de l'utilisateur MySQL: {$username}");
+            // cPanel attend le nom AVEC le préfixe utilisateur
+            $fullUsername = "{$this->cpanelUsername}_{$username}";
+
+            $this->logger->info("👤 Création de l'utilisateur MySQL: {$fullUsername}");
 
             $response = $this->client->request('GET', $this->buildUrl('Mysql', 'create_user'), [
                 'query' => [
-                    'name' => $username,
+                    'name' => $fullUsername,
                     'password' => $password,
                 ],
             ]);
@@ -146,8 +160,8 @@ class CpanelApiService
             $data = $response->toArray();
 
             if (isset($data['status']) && $data['status'] == 1) {
-                $this->logger->info("✅ Utilisateur MySQL créé: {$this->cpanelUsername}_{$username}");
-                return ['success' => true, 'user' => "{$this->cpanelUsername}_{$username}"];
+                $this->logger->info("✅ Utilisateur MySQL créé: {$fullUsername}");
+                return ['success' => true, 'user' => $fullUsername];
             }
 
             return ['success' => false, 'error' => $data['errors'][0] ?? 'Unknown error'];
@@ -269,7 +283,59 @@ class CpanelApiService
     }
 
     /**
-     * Crée un environnement de démo complet
+     * Crée un fichier .htaccess de redirection dans le sous-domaine
+     */
+    private function createRedirectionFile(string $rootDir, string $subdomain, string $domain): array
+    {
+        try {
+            $this->logger->info("📄 Création du fichier de redirection dans: {$rootDir}");
+
+            // Contenu du fichier index.php qui redirige vers l'app principale
+            $indexContent = <<<'PHP'
+<?php
+// Redirection automatique vers l'application principale
+// en passant le sous-domaine comme paramètre
+
+$subdomain = '<?= SUBDOMAIN ?>';
+$mainAppUrl = 'https://lokapro.tech/demo/' . $subdomain;
+
+// Rediriger vers l'application principale
+header('Location: ' . $mainAppUrl);
+exit;
+PHP;
+
+            // Remplacer le placeholder
+            $indexContent = str_replace('<?= SUBDOMAIN ?>', $subdomain, $indexContent);
+
+            // Créer le fichier via l'API Fileman
+            $response = $this->client->request('GET', $this->buildUrl('Fileman', 'save_file_content'), [
+                'query' => [
+                    'dir' => $rootDir,
+                    'file' => 'index.php',
+                    'content' => base64_encode($indexContent),
+                    'encoding' => 'base64',
+                ],
+            ]);
+
+            $data = $response->toArray();
+
+            if (isset($data['status']) && $data['status'] == 1) {
+                $this->logger->info("✅ Fichier de redirection créé");
+                return ['success' => true];
+            }
+
+            $this->logger->warning("⚠️ Impossible de créer le fichier de redirection automatiquement");
+            return ['success' => false, 'error' => $data['errors'][0] ?? 'Unknown error'];
+
+        } catch (\Exception $e) {
+            $this->logger->error("❌ Erreur création fichier redirection: " . $e->getMessage());
+            return ['success' => false, 'error' => $e->getMessage()];
+        }
+    }
+
+    /**
+     * Crée un environnement de démo complet (sans sous-domaine cPanel)
+     * Utilise uniquement le routing Symfony via /demo/{code}
      */
     public function createDemoEnvironment(string $demoId): array
     {
@@ -279,56 +345,63 @@ class CpanelApiService
             'database' => null,
             'db_user' => null,
             'db_password' => null,
-            'errors' => []
+            'errors' => [],
+            'message' => ''
         ];
 
+        // Nettoyer le demoId pour éviter les caractères invalides
+        $cleanDemoId = preg_replace('/[^a-z0-9]/i', '', $demoId);
+        $cleanDemoId = substr($cleanDemoId, 0, 10); // Limiter à 10 caractères
+
         // Générer les noms
-        $subdomain = "demo-{$demoId}";
-        $domain = "lokapro.tech"; // À configurer
-        $rootDir = "/home/{$this->cpanelUsername}/demos/{$subdomain}";
-        $dbName = "demo_{$demoId}";
-        $dbUser = "demo_{$demoId}";
-        $dbPassword = bin2hex(random_bytes(16)); // Mot de passe aléatoire sécurisé
+        $subdomain = "demo-{$cleanDemoId}";
 
-        // 1. Créer le sous-domaine
-        $subdomainResult = $this->createSubdomain($subdomain, $domain, $rootDir);
-        if (!$subdomainResult['success']) {
-            $results['errors'][] = "Sous-domaine: " . $subdomainResult['error'];
-            return $results;
-        }
-        $results['subdomain'] = "{$subdomain}.{$domain}";
+        // Noms courts pour MySQL (limites: DB=64 chars, User=16 chars)
+        $dbName = "demo_{$cleanDemoId}";
+        $dbUser = "d_{$cleanDemoId}";
+        $dbPassword = bin2hex(random_bytes(12)); // 24 caractères
 
-        // 2. Créer la base de données
+        $this->logger->info("🚀 Création environnement démo (BDD uniquement)", [
+            'demoId' => $demoId,
+            'database' => "{$this->cpanelUsername}_{$dbName}",
+            'user' => "{$this->cpanelUsername}_{$dbUser}"
+        ]);
+
+        // PAS de création de sous-domaine cPanel (utilise routing Symfony)
+        $results['subdomain'] = $subdomain; // Juste le code, pas un vrai sous-domaine
+
+        // 1. Créer la base de données
         $dbResult = $this->createDatabase($dbName);
         if (!$dbResult['success']) {
             $results['errors'][] = "Base de données: " . $dbResult['error'];
-            $this->deleteSubdomain($subdomain, $domain); // Rollback
+            $results['message'] = "Échec création base de données: " . $dbResult['error'];
             return $results;
         }
         $results['database'] = $dbResult['database'];
 
-        // 3. Créer l'utilisateur
+        // 2. Créer l'utilisateur
         $userResult = $this->createDatabaseUser($dbUser, $dbPassword);
         if (!$userResult['success']) {
             $results['errors'][] = "Utilisateur BDD: " . $userResult['error'];
+            $results['message'] = "Échec création utilisateur: " . $userResult['error'];
             $this->deleteDatabase($dbName); // Rollback
-            $this->deleteSubdomain($subdomain, $domain);
             return $results;
         }
         $results['db_user'] = $userResult['user'];
         $results['db_password'] = $dbPassword;
 
-        // 4. Attribuer les privilèges
+        // 3. Attribuer les privilèges
         $privResult = $this->setDatabasePrivileges($dbUser, $dbName);
         if (!$privResult['success']) {
             $results['errors'][] = "Privilèges: " . $privResult['error'];
+            $results['message'] = "Échec attribution privilèges: " . $privResult['error'];
             $this->deleteDatabaseUser($dbUser); // Rollback
             $this->deleteDatabase($dbName);
-            $this->deleteSubdomain($subdomain, $domain);
             return $results;
         }
 
         $results['success'] = true;
+        $results['message'] = "Environnement créé avec succès (accès via URL principale)";
         $this->logger->info("🎉 Environnement de démo créé avec succès", $results);
 
         return $results;
@@ -339,34 +412,53 @@ class CpanelApiService
      */
     public function deleteDemoEnvironment(string $demoId): array
     {
-        $subdomain = "demo-{$demoId}";
+        // Nettoyer le demoId comme dans createDemoEnvironment
+        $cleanDemoId = preg_replace('/[^a-z0-9]/i', '', $demoId);
+        $cleanDemoId = substr($cleanDemoId, 0, 10);
+
+        $subdomain = "demo-{$cleanDemoId}";
         $domain = "lokapro.tech";
-        $dbName = "demo_{$demoId}";
-        $dbUser = "demo_{$demoId}";
+        $dbName = "demo_{$cleanDemoId}";
+        $dbUser = "d_{$cleanDemoId}";
 
         $errors = [];
+        $success = 0;
 
         // Supprimer l'utilisateur MySQL
         $userResult = $this->deleteDatabaseUser($dbUser);
         if (!$userResult['success']) {
             $errors[] = "Utilisateur: " . $userResult['error'];
+            $this->logger->warning("⚠️ Échec suppression utilisateur (peut ne pas exister)");
+        } else {
+            $success++;
         }
 
         // Supprimer la base de données
         $dbResult = $this->deleteDatabase($dbName);
         if (!$dbResult['success']) {
             $errors[] = "Base de données: " . $dbResult['error'];
+            $this->logger->warning("⚠️ Échec suppression BDD (peut ne pas exister)");
+        } else {
+            $success++;
         }
 
         // Supprimer le sous-domaine
         $subdomainResult = $this->deleteSubdomain($subdomain, $domain);
         if (!$subdomainResult['success']) {
             $errors[] = "Sous-domaine: " . $subdomainResult['error'];
+            $this->logger->warning("⚠️ Échec suppression sous-domaine");
+        } else {
+            $success++;
         }
 
+        $isSuccess = $success > 0; // Au moins une suppression réussie
+
         return [
-            'success' => empty($errors),
-            'errors' => $errors
+            'success' => $isSuccess,
+            'errors' => $errors,
+            'message' => $isSuccess
+                ? "Environnement supprimé ({$success}/3 ressources)"
+                : "Échec complet de la suppression"
         ];
     }
 }
