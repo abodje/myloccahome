@@ -181,7 +181,7 @@ class DatabaseDumpService
 
             // 2. Importer le dump dans la base cible
             $importResult = $this->importDump($dumpFile, $targetDb);
-            
+
             // 3. Nettoyer le fichier temporaire si demandé
             if ($options['cleanup'] ?? true) {
                 unlink($dumpFile);
@@ -219,7 +219,7 @@ class DatabaseDumpService
             }
 
             $sql = file_get_contents($dumpFile);
-            
+
             // Séparer les instructions SQL
             $statements = array_filter(
                 explode(';', $sql),
