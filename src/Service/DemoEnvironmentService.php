@@ -148,7 +148,11 @@ class DemoEnvironmentService
                 $this->logger->info("✅ Infrastructure cPanel créée avec succès");
 
                 // Étape 0.5: Importer le dump de la base de données si le service est disponible
-                if ($this->dumpService && isset($cpanelData['database'])) {
+                // DÉSACTIVÉ pour les environnements cPanel hébergés (pas d'accès shell mysqldump)
+                // Pour activer, définir ENABLE_AUTO_DB_CLONE=true dans .env
+                $enableAutoClone = ($_ENV['ENABLE_AUTO_DB_CLONE'] ?? 'false') === 'true';
+
+                if ($enableAutoClone && $this->dumpService && isset($cpanelData['database'])) {
                     $this->logger->info("📦 Import du dump de base de données dans la base cPanel");
 
                     // Récupérer les paramètres de connexion actuels
@@ -182,6 +186,11 @@ class DemoEnvironmentService
                         $cpanelData['database_imported'] = false;
                         $cpanelData['import_error'] = $cloneResult['error'];
                     }
+                } else {
+                    // Import automatique désactivé
+                    $this->logger->info("ℹ️ Import automatique de BDD désactivé (serveur cPanel hébergé)");
+                    $cpanelData['database_imported'] = false;
+                    $cpanelData['import_note'] = 'Import manuel requis via cPanel phpMyAdmin';
                 }
             }
 

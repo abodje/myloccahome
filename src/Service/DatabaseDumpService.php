@@ -20,6 +20,42 @@ class DatabaseDumpService
     }
 
     /**
+     * Détecte le chemin du binaire mysqldump (Linux cPanel ou Windows)
+     */
+    private function getMysqldumpPath(): string
+    {
+        // Si défini dans .env, l'utiliser
+        if (!empty($_ENV['MYSQL_DUMP_PATH'])) {
+            return $_ENV['MYSQL_DUMP_PATH'];
+        }
+
+        // Sur Linux cPanel partagé, les binaires MySQL sont dans /usr/bin
+        if (PHP_OS_FAMILY === 'Linux' && file_exists('/usr/bin/mysqldump')) {
+            return '/usr/bin/mysqldump';
+        }
+
+        // Sinon utiliser le PATH système
+        return 'mysqldump';
+    }
+
+    /**
+     * Détecte le chemin du binaire mysql (Linux cPanel ou Windows)
+     */
+    private function getMysqlPath(): string
+    {
+        // Si défini dans .env, l'utiliser
+        if (!empty($_ENV['MYSQL_CLIENT_PATH'])) {
+            return $_ENV['MYSQL_CLIENT_PATH'];
+        }
+
+        // Sur Linux cPanel partagé, les binaires MySQL sont dans /usr/bin
+        if (PHP_OS_FAMILY === 'Linux' && file_exists('/usr/bin/mysql')) {
+            return '/usr/bin/mysql';
+        }
+
+        // Sinon utiliser le PATH système
+        return 'mysql';
+    }    /**
      * Crée un dump SQL de la base de données actuelle
      */
     public function createDump(array $options = []): array
@@ -58,9 +94,10 @@ class DatabaseDumpService
                 $ignoreTables[] = "--ignore-table={$dbname}.{$table}";
             }
 
-            // Commande mysqldump
+            // Commande mysqldump avec chemin détecté automatiquement
+            $mysqldumpPath = $this->getMysqldumpPath();
             $command = [
-                'mysqldump',
+                $mysqldumpPath,
                 '-h', $host,
                 '-P', (string)$port,
                 '-u', $user,
@@ -71,6 +108,8 @@ class DatabaseDumpService
                 ...$ignoreTables,
                 $dbname
             ];
+
+            $this->logger->info("🔧 Utilisation de mysqldump: {$mysqldumpPath}");
 
             $process = new Process($command);
             $process->setTimeout(300); // 5 minutes max
@@ -128,15 +167,18 @@ class DatabaseDumpService
             // Vérifier que la base de données cible existe
             $this->logger->info("Vérification de la base cible...");
 
-            // Commande mysql pour importer
+            // Commande mysql pour importer avec chemin détecté automatiquement
+            $mysqlPath = $this->getMysqlPath();
             $command = [
-                'mysql',
+                $mysqlPath,
                 '-h', $host,
                 '-P', (string)$port,
                 '-u', $user,
                 '--password=' . $password,
                 $database
             ];
+
+            $this->logger->info("🔧 Utilisation de mysql: {$mysqlPath}");
 
             $process = new Process($command);
             $process->setInput(file_get_contents($dumpFile));
