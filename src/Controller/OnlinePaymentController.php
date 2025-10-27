@@ -255,7 +255,7 @@ class OnlinePaymentController extends AbstractController
         ]);
     }
 
-    #[Route('/notification', name: 'app_online_payment_notify', methods: ['POST'])]
+    #[Route('/notification', name: 'app_online_payment_notify', methods: ['POST','GET'])]
     public function notification(
         Request $request,
         OnlinePaymentRepository $onlinePaymentRepo,
@@ -266,23 +266,60 @@ class OnlinePaymentController extends AbstractController
         OrangeSmsService $orangeSmsService,
         EntityManagerInterface $em
     ): Response {
+        // Définir le fichier de log avec le chemin correct
+        $logFile = $this->getParameter('kernel.project_dir') . '/var/log/cinetpay_notifications.log';
+
+        // S'assurer que le dossier existe
+        $logDir = dirname($logFile);
+        if (!is_dir($logDir)) {
+            mkdir($logDir, 0755, true);
+        }
+
+        // Logger IMMÉDIATEMENT toutes les informations reçues
+        file_put_contents($logFile, "\n" . str_repeat('=', 80) . "\n", FILE_APPEND);
+        file_put_contents($logFile, date('Y-m-d H:i:s') . " - 🔔 NOUVELLE NOTIFICATION REÇUE\n", FILE_APPEND);
+        file_put_contents($logFile, str_repeat('=', 80) . "\n", FILE_APPEND);
+
+        // Logger la méthode HTTP
+        file_put_contents($logFile, "Méthode: " . $request->getMethod() . "\n", FILE_APPEND);
+
+        // Logger les headers
+        file_put_contents($logFile, "\n--- HEADERS ---\n", FILE_APPEND);
+        file_put_contents($logFile, "x-token: " . ($request->headers->get('x-token') ?? 'NON DÉFINI') . "\n", FILE_APPEND);
+        file_put_contents($logFile, "Content-Type: " . ($request->headers->get('Content-Type') ?? 'NON DÉFINI') . "\n", FILE_APPEND);
+
         // Récupérer les données de notification
         $content = $request->getContent();
-        $data = $request->request->all();
-        $dataJson = json_decode($content, true);
+        $data = $request->request->all(); // POST form-data
+        $dataJson = json_decode($content, true); // JSON body
+        $queryParams = $request->query->all(); // GET params
 
-        // Logger pour debug
-        $logFile = __DIR__ . '/../../var/log/cinetpay_notifications.log';
-        file_put_contents($logFile, date('Y-m-d H:i:s') . " - POST DATA: " . print_r($data, true) . "\n", FILE_APPEND);
-        file_put_contents($logFile, date('Y-m-d H:i:s') . " - JSON DATA: " . print_r($dataJson, true) . "\n", FILE_APPEND);
+        // Logger toutes les sources de données
+        file_put_contents($logFile, "\n--- POST FORM DATA (request->request->all()) ---\n", FILE_APPEND);
+        file_put_contents($logFile, print_r($data, true) . "\n", FILE_APPEND);
 
-        // Utiliser les données POST si disponibles, sinon JSON
+        file_put_contents($logFile, "\n--- JSON BODY (getContent()) ---\n", FILE_APPEND);
+        file_put_contents($logFile, $content . "\n", FILE_APPEND);
+        file_put_contents($logFile, "Parsed JSON: " . print_r($dataJson, true) . "\n", FILE_APPEND);
+
+        file_put_contents($logFile, "\n--- GET PARAMS (query->all()) ---\n", FILE_APPEND);
+        file_put_contents($logFile, print_r($queryParams, true) . "\n", FILE_APPEND);
+
+        // Utiliser les données POST (form-urlencoded) en priorité comme recommandé par CinetPay
         $data = !empty($data) ? $data : ($dataJson ?? []);
 
+        file_put_contents($logFile, "\n--- DONNÉES UTILISÉES POUR LE TRAITEMENT ---\n", FILE_APPEND);
+        file_put_contents($logFile, print_r($data, true) . "\n", FILE_APPEND);
+
         try {
+            file_put_contents($logFile, "\n🔐 DÉBUT DE LA VÉRIFICATION HMAC\n", FILE_APPEND);
+
             // 🔐 VÉRIFICATION HMAC (Sécurité CinetPay)
             $secretKey = $settingsService->get('cinetpay_secret_key', '202783455685bd868b44665.45198979');
             $receivedToken = $request->headers->get('x-token');
+
+            file_put_contents($logFile, "Secret Key (premiers 10 chars): " . substr($secretKey, 0, 10) . "...\n", FILE_APPEND);
+            file_put_contents($logFile, "Received x-token: " . ($receivedToken ?? 'NON PRÉSENT') . "\n", FILE_APPEND);
 
             // Liste des champs requis pour le token HMAC
             $requiredFields = [
@@ -292,13 +329,25 @@ class OnlinePaymentController extends AbstractController
                 'cpm_designation', 'cpm_error_message'
             ];
 
+            file_put_contents($logFile, "\n📋 VÉRIFICATION DES CHAMPS REQUIS:\n", FILE_APPEND);
+
             // Vérifier les champs requis
+            $missingFields = [];
             foreach ($requiredFields as $field) {
                 if (!isset($data[$field])) {
-                    file_put_contents($logFile, date('Y-m-d H:i:s') . " - Champ manquant: $field\n", FILE_APPEND);
-                    return new Response("Champ manquant : $field", 400);
+                    $missingFields[] = $field;
+                    file_put_contents($logFile, "  ❌ Champ manquant: $field\n", FILE_APPEND);
+                } else {
+                    file_put_contents($logFile, "  ✅ $field = " . (strlen($data[$field]) > 50 ? substr($data[$field], 0, 50) . '...' : $data[$field]) . "\n", FILE_APPEND);
                 }
             }
+
+            if (!empty($missingFields)) {
+                file_put_contents($logFile, "\n❌ ERREUR: Champs manquants - " . implode(', ', $missingFields) . "\n", FILE_APPEND);
+                return new Response("Champs manquants : " . implode(', ', $missingFields), 400);
+            }
+
+            file_put_contents($logFile, "\n✅ Tous les champs requis sont présents\n", FILE_APPEND);
 
             // Construction de la chaîne pour HMAC
             $concatenated = implode('', [
@@ -323,33 +372,50 @@ class OnlinePaymentController extends AbstractController
             // Générer le token HMAC
             $generatedToken = hash_hmac('sha256', $concatenated, $secretKey);
 
+            file_put_contents($logFile, "\n🔑 COMPARAISON HMAC:\n", FILE_APPEND);
+            file_put_contents($logFile, "  Generated: $generatedToken\n", FILE_APPEND);
+            file_put_contents($logFile, "  Received:  " . ($receivedToken ?? 'NULL') . "\n", FILE_APPEND);
+
             // Vérifier la signature
             if ($receivedToken && $generatedToken !== $receivedToken) {
-                file_put_contents($logFile, date('Y-m-d H:i:s') . " - HMAC INVALIDE\n", FILE_APPEND);
-                file_put_contents($logFile, "Expected: $generatedToken\n", FILE_APPEND);
-                file_put_contents($logFile, "Received: $receivedToken\n", FILE_APPEND);
+                file_put_contents($logFile, "\n❌ HMAC INVALIDE - Rejet de la notification\n", FILE_APPEND);
                 return new Response('Signature HMAC invalide', 403);
             }
 
+            if ($receivedToken) {
+                file_put_contents($logFile, "✅ HMAC valide\n", FILE_APPEND);
+            } else {
+                file_put_contents($logFile, "⚠️  Aucun x-token reçu (mode test?)\n", FILE_APPEND);
+            }
+
             $transactionId = $data['cpm_trans_id'];
+
+            file_put_contents($logFile, "\n🔍 RECHERCHE TRANSACTION: $transactionId\n", FILE_APPEND);
 
             // Récupérer la transaction
             $onlinePayment = $onlinePaymentRepo->findByTransactionId($transactionId);
 
             if (!$onlinePayment) {
-                file_put_contents($logFile, date('Y-m-d H:i:s') . " - Transaction not found: $transactionId\n", FILE_APPEND);
+                file_put_contents($logFile, "❌ Transaction introuvable dans la base: $transactionId\n", FILE_APPEND);
                 return new Response('Transaction not found', 404);
             }
 
+            file_put_contents($logFile, "✅ Transaction trouvée - ID: {$onlinePayment->getId()}, Type: {$onlinePayment->getPaymentType()}, Statut actuel: {$onlinePayment->getStatus()}\n", FILE_APPEND);
+
             // Stocker les données de notification
             $onlinePayment->setNotificationData(json_encode($data));
+
+            file_put_contents($logFile, "\n📞 VÉRIFICATION AUPRÈS DE CINETPAY API\n", FILE_APPEND);
 
             // Vérifier le statut auprès de CinetPay (double vérification)
             try {
                 $status = $cinetpay->checkTransactionStatus($transactionId);
                 $onlinePayment->setCinetpayResponse(json_encode($status));
+                file_put_contents($logFile, "✅ Réponse CinetPay reçue:\n", FILE_APPEND);
+                file_put_contents($logFile, print_r($status, true) . "\n", FILE_APPEND);
             } catch (\Exception $e) {
-                file_put_contents($logFile, date('Y-m-d H:i:s') . " - Erreur vérification CinetPay: " . $e->getMessage() . "\n", FILE_APPEND);
+                file_put_contents($logFile, "⚠️  Erreur vérification CinetPay API: " . $e->getMessage() . "\n", FILE_APPEND);
+                file_put_contents($logFile, "   Utilisation des données de notification uniquement\n", FILE_APPEND);
                 // Continuer avec les données de notification
                 $status = null;
             }
@@ -359,14 +425,30 @@ class OnlinePaymentController extends AbstractController
             $isSuccess = ($status && $status['code'] == '00' && $status['message'] == 'SUCCES')
                       || (isset($data['cpm_error_message']) && strtoupper($data['cpm_error_message']) === 'SUCCES');
 
+            file_put_contents($logFile, "\n💰 STATUT DU PAIEMENT:\n", FILE_APPEND);
+            file_put_contents($logFile, "  cpm_error_message: " . ($data['cpm_error_message'] ?? 'N/A') . "\n", FILE_APPEND);
+            file_put_contents($logFile, "  API status code: " . ($status['code'] ?? 'N/A') . "\n", FILE_APPEND);
+            file_put_contents($logFile, "  API message: " . ($status['message'] ?? 'N/A') . "\n", FILE_APPEND);
+            file_put_contents($logFile, "  => Paiement réussi: " . ($isSuccess ? 'OUI ✅' : 'NON ❌') . "\n", FILE_APPEND);
+
             if ($isSuccess) {
+                file_put_contents($logFile, "\n✅ TRAITEMENT DU PAIEMENT RÉUSSI\n", FILE_APPEND);
+
                 $paymentMethod = $data['payment_method'] ?? ($status['data']['payment_method'] ?? 'ONLINE');
                 $onlinePayment->markAsCompleted($paymentMethod);
 
+                file_put_contents($logFile, "Méthode de paiement: $paymentMethod\n", FILE_APPEND);
+
                 // Traiter selon le type
                 if ($onlinePayment->getPaymentType() === 'rent' && $onlinePayment->getPayment()) {
+                    file_put_contents($logFile, "\n💰 TYPE: PAIEMENT DE LOYER\n", FILE_APPEND);
+
                     // 💰 Paiement de loyer
                     $payment = $onlinePayment->getPayment();
+
+                    file_put_contents($logFile, "  Payment ID: {$payment->getId()}\n", FILE_APPEND);
+                    file_put_contents($logFile, "  Montant: {$payment->getAmount()} FCFA\n", FILE_APPEND);
+
                     $payment->markAsPaid(
                         new \DateTime($data['cpm_trans_date']),
                         'Paiement en ligne - ' . $paymentMethod,
@@ -384,9 +466,12 @@ class OnlinePaymentController extends AbstractController
                     // Enregistrer en comptabilité
                     $accountingService->createEntryFromPayment($payment);
 
-                    file_put_contents($logFile, date('Y-m-d H:i:s') . " - ✅ Loyer payé: Payment #{$payment->getId()}\n", FILE_APPEND);
+                    file_put_contents($logFile, "  ✅ Loyer payé - Payment #{$payment->getId()} marqué comme payé\n", FILE_APPEND);
+                    file_put_contents($logFile, "  ✅ Écriture comptable créée\n", FILE_APPEND);
 
                 } elseif ($onlinePayment->getPaymentType() === 'advance') {
+                    file_put_contents($logFile, "\n💰 TYPE: ACOMPTE\n", FILE_APPEND);
+
                     // 💰 Acompte
                     $advance = $advanceService->createAdvancePayment(
                         $onlinePayment->getLease(),
@@ -408,32 +493,50 @@ class OnlinePaymentController extends AbstractController
                     // Appliquer automatiquement aux paiements en attente
                     $results = $advanceService->applyAdvanceToAllPendingPayments($onlinePayment->getLease());
 
-                    file_put_contents($logFile, date('Y-m-d H:i:s') . " - ✅ Acompte créé: AdvancePayment #{$advance->getId()}\n", FILE_APPEND);
-                    file_put_contents($logFile, date('Y-m-d H:i:s') . " - 💰 Paiements soldés: {$results['payments_fully_paid']}\n", FILE_APPEND);
+                    file_put_contents($logFile, "  ✅ Acompte créé - AdvancePayment #{$advance->getId()}\n", FILE_APPEND);
+                    file_put_contents($logFile, "  💰 Paiements soldés: {$results['payments_fully_paid']}\n", FILE_APPEND);
+                    file_put_contents($logFile, "  💵 Montant appliqué: {$results['total_amount_applied']} FCFA\n", FILE_APPEND);
                 }
 
                 $em->flush();
 
+                file_put_contents($logFile, "\n💾 Données sauvegardées en base\n", FILE_APPEND);
+
                 // Envoyer SMS de confirmation si activé
                 if ($settingsService->get('orange_sms_enabled', false)) {
+                    file_put_contents($logFile, "\n📱 ENVOI SMS DE CONFIRMATION\n", FILE_APPEND);
                     $this->sendPaymentConfirmationSms($onlinePayment, $orangeSmsService, $logFile);
                 }
 
-                file_put_contents($logFile, date('Y-m-d H:i:s') . " - ✅ SUCCESS: Transaction $transactionId traitée\n", FILE_APPEND);
+                file_put_contents($logFile, "\n" . str_repeat('=', 80) . "\n", FILE_APPEND);
+                file_put_contents($logFile, "✅ ✅ ✅ SUCCÈS: Transaction $transactionId traitée avec succès\n", FILE_APPEND);
+                file_put_contents($logFile, str_repeat('=', 80) . "\n\n", FILE_APPEND);
+
                 return new Response('OK', 200);
 
             } else {
+                file_put_contents($logFile, "\n❌ TRAITEMENT DU PAIEMENT ÉCHOUÉ\n", FILE_APPEND);
+
                 // ❌ Paiement échoué
                 $onlinePayment->markAsFailed();
                 $em->flush();
 
-                file_put_contents($logFile, date('Y-m-d H:i:s') . " - ❌ FAILED: Transaction $transactionId échouée\n", FILE_APPEND);
+                file_put_contents($logFile, "\n" . str_repeat('=', 80) . "\n", FILE_APPEND);
+                file_put_contents($logFile, "❌ ÉCHEC: Transaction $transactionId échouée ou refusée\n", FILE_APPEND);
+                file_put_contents($logFile, str_repeat('=', 80) . "\n\n", FILE_APPEND);
+
                 return new Response('Payment failed', 200);
             }
 
         } catch (\Exception $e) {
-            file_put_contents($logFile, date('Y-m-d H:i:s') . " - ❌ EXCEPTION: " . $e->getMessage() . "\n", FILE_APPEND);
-            file_put_contents($logFile, $e->getTraceAsString() . "\n", FILE_APPEND);
+            file_put_contents($logFile, "\n" . str_repeat('=', 80) . "\n", FILE_APPEND);
+            file_put_contents($logFile, "❌ ❌ ❌ EXCEPTION CRITIQUE\n", FILE_APPEND);
+            file_put_contents($logFile, str_repeat('=', 80) . "\n", FILE_APPEND);
+            file_put_contents($logFile, "Message: " . $e->getMessage() . "\n", FILE_APPEND);
+            file_put_contents($logFile, "Fichier: " . $e->getFile() . ":" . $e->getLine() . "\n", FILE_APPEND);
+            file_put_contents($logFile, "\nStack trace:\n" . $e->getTraceAsString() . "\n", FILE_APPEND);
+            file_put_contents($logFile, str_repeat('=', 80) . "\n\n", FILE_APPEND);
+
             return new Response('Error: ' . $e->getMessage(), 500);
         }
     }
