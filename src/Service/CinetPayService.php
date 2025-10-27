@@ -134,12 +134,24 @@ class CinetPayService
             $data = array_merge($data, $this->customer);
         }
 
+        // 🔍 Logger les données envoyées à CinetPay
+        error_log("=== CINETPAY INIT PAYMENT ===");
+        error_log("Transaction ID: " . $this->transaction_id);
+        error_log("Amount: " . $this->amount);
+        error_log("Notify URL: " . $this->notify_url);
+        error_log("Return URL: " . $this->return_url);
+        error_log("Full data sent: " . json_encode($data));
+
         $response = $this->postJson($this->endpoint, $data);
 
+        error_log("CinetPay Response: " . json_encode($response));
+
         if (isset($response['data']['payment_url']) && filter_var($response['data']['payment_url'], FILTER_VALIDATE_URL)) {
+            error_log("✅ Payment URL generated: " . $response['data']['payment_url']);
             return $response['data']['payment_url'];
         }
 
+        error_log("❌ Error generating payment URL: " . json_encode($response));
         throw new Exception('Erreur CinetPay: ' . json_encode($response));
     }
 

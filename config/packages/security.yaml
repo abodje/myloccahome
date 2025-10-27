@@ -61,6 +61,10 @@ security:
         - { path: ^/register, roles: PUBLIC_ACCESS }
         - { path: ^/inscription, roles: PUBLIC_ACCESS }
 
+        # ⚠️ IMPORTANT : Webhook CinetPay - doit être accessible publiquement (sans authentification)
+        - { path: ^/paiement-en-ligne/notification, roles: PUBLIC_ACCESS }
+        - { path: ^/paiement-en-ligne/retour, roles: PUBLIC_ACCESS }
+
         # Routes d'administration - uniquement pour les admins
         - { path: ^/admin, roles: ROLE_ADMIN }
 
