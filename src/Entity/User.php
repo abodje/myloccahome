@@ -75,11 +75,16 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\OneToOne(targetEntity: Owner::class, mappedBy: 'user', cascade: ['persist'])]
     private ?Owner $owner = null;
 
+    // Consentements de l'utilisateur (RGPD)
+    #[ORM\Column(type: Types::JSON, nullable: true)]
+    private ?array $consents = [];
+
     public function __construct()
     {
         $this->createdAt = new \DateTime();
         $this->isActive = true;
         $this->roles = ['ROLE_USER'];
+        $this->consents = [];
     }
 
     public function getId(): ?int
@@ -359,6 +364,39 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setCompany(?Company $company): static
     {
         $this->company = $company;
+        return $this;
+    }
+
+    public function getConsents(): ?array
+    {
+        return $this->consents ?? [];
+    }
+
+    public function setConsents(?array $consents): static
+    {
+        $this->consents = $consents;
+        return $this;
+    }
+
+    public function hasConsent(string $consentType): bool
+    {
+        return isset($this->consents[$consentType]) && $this->consents[$consentType] === true;
+    }
+
+    public function setConsent(string $consentType, bool $value): static
+    {
+        if ($this->consents === null) {
+            $this->consents = [];
+        }
+        $this->consents[$consentType] = $value;
+        return $this;
+    }
+
+    public function removeConsent(string $consentType): static
+    {
+        if (isset($this->consents[$consentType])) {
+            unset($this->consents[$consentType]);
+        }
         return $this;
     }
 }

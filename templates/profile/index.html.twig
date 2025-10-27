@@ -15,25 +15,25 @@
         <div class="card-header">
             <ul class="nav nav-tabs card-header-tabs" id="profileTabs" role="tablist">
                 <li class="nav-item" role="presentation">
-                    <button class="nav-link active" id="credentials-tab" data-bs-toggle="tab"
+                    <button class="nav-link {{ active_tab is not defined or active_tab == 'credentials' ? 'active' : '' }}" id="credentials-tab" data-bs-toggle="tab"
                             data-bs-target="#credentials" type="button" role="tab">
                         Mes identifiants
                     </button>
                 </li>
                 <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="information-tab" data-bs-toggle="tab"
+                    <button class="nav-link {{ active_tab is defined and active_tab == 'information' ? 'active' : '' }}" id="information-tab" data-bs-toggle="tab"
                             data-bs-target="#information" type="button" role="tab">
                         Mes informations
                     </button>
                 </li>
                 <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="payment-tab" data-bs-toggle="tab"
+                    <button class="nav-link {{ active_tab is defined and active_tab == 'payment' ? 'active' : '' }}" id="payment-tab" data-bs-toggle="tab"
                             data-bs-target="#payment" type="button" role="tab">
                         Mon mode de paiement
                     </button>
                 </li>
                 <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="privacy-tab" data-bs-toggle="tab"
+                    <button class="nav-link {{ active_tab is defined and active_tab == 'privacy' ? 'active' : '' }}" id="privacy-tab" data-bs-toggle="tab"
                             data-bs-target="#privacy" type="button" role="tab">
                         Confidentialité
                     </button>
@@ -44,7 +44,7 @@
         <div class="card-body">
             <div class="tab-content" id="profileTabsContent">
                 <!-- Onglet Identifiants -->
-                <div class="tab-pane fade show active" id="credentials" role="tabpanel">
+                <div class="tab-pane fade {{ active_tab is not defined or active_tab == 'credentials' ? 'show active' : '' }}" id="credentials" role="tabpanel">
                     <h6 class="mb-4">Identifiants de connexion</h6>
 
                     <div class="row">
@@ -74,10 +74,17 @@
                 </div>
 
                 <!-- Onglet Informations -->
-                <div class="tab-pane fade" id="information" role="tabpanel">
+                <div class="tab-pane fade {{ active_tab is defined and active_tab == 'information' ? 'show active' : '' }}" id="information" role="tabpanel">
                     <h6 class="mb-4">Mes informations personnelles</h6>
 
                     <form action="{{ path('app_profile_information') }}" method="POST">
+                        <!-- Champs cachés pour les informations de base -->
+                        <input type="hidden" name="firstName" value="{{ user.firstName }}">
+                        <input type="hidden" name="lastName" value="{{ user.lastName }}">
+                        <input type="hidden" name="address" value="{{ user.address }}">
+                        <input type="hidden" name="city" value="{{ user.city }}">
+                        <input type="hidden" name="postalCode" value="{{ user.postalCode }}">
+
                         <div class="card bg-primary text-white mb-4">
                             <div class="card-body">
                                 <h6 class="card-title">{{ user.fullName }}</h6>
@@ -98,7 +105,7 @@
                                             <option>🇫🇷 FR</option>
                                         </select>
                                         <input type="tel" name="mobilePhone" class="form-control"
-                                               value="{{ user.phone ?? '' }}" readonly id="mobilePhone">
+                                               value="{{ user.mobilePhone ?? '' }}" readonly id="mobilePhone">
                                     </div>
                                 </div>
                             </div>
@@ -158,7 +165,7 @@
                 </div>
 
                 <!-- Onglet Mode de paiement -->
-                <div class="tab-pane fade" id="payment" role="tabpanel">
+                <div class="tab-pane fade {{ active_tab is defined and active_tab == 'payment' ? 'show active' : '' }}" id="payment" role="tabpanel">
                     <h6 class="mb-4">Mon mode de paiement</h6>
 
                     <div class="alert alert-info">
@@ -201,7 +208,7 @@
                 </div>
 
                 <!-- Onglet Confidentialité -->
-                <div class="tab-pane fade" id="privacy" role="tabpanel">
+                <div class="tab-pane fade {{ active_tab is defined and active_tab == 'privacy' ? 'show active' : '' }}" id="privacy" role="tabpanel">
                     <h6 class="mb-4">Confidentialité des données</h6>
 
                     <div class="card">

@@ -36,11 +36,13 @@ class ProfileController extends AbstractController
                 $user->setEmail($newEmail);
                 $entityManager->flush();
                 $this->addFlash('success', 'Adresse e-mail mise à jour avec succès.');
+                return $this->redirectToRoute('app_profile_credentials');
             }
         }
 
-        return $this->render('profile/credentials.html.twig', [
+        return $this->render('profile/index.html.twig', [
             'user' => $user,
+            'active_tab' => 'credentials',
         ]);
     }
 
@@ -53,7 +55,7 @@ class ProfileController extends AbstractController
             // Traitement du formulaire d'informations personnelles
             $user->setFirstName($request->request->get('firstName', $user->getFirstName()));
             $user->setLastName($request->request->get('lastName', $user->getLastName()));
-            $user->setPhone($request->request->get('phone', $user->getPhone()));
+            $user->setMobilePhone($request->request->get('mobilePhone', $user->getMobilePhone()));
             $user->setAddress($request->request->get('address', $user->getAddress()));
             $user->setCity($request->request->get('city', $user->getCity()));
             $user->setPostalCode($request->request->get('postalCode', $user->getPostalCode()));
@@ -64,10 +66,12 @@ class ProfileController extends AbstractController
 
             $entityManager->flush();
             $this->addFlash('success', 'Informations personnelles mises à jour avec succès.');
+            return $this->redirectToRoute('app_profile_information');
         }
 
-        return $this->render('profile/information.html.twig', [
+        return $this->render('profile/index.html.twig', [
             'user' => $user,
+            'active_tab' => 'information',
         ]);
     }
 
@@ -80,26 +84,40 @@ class ProfileController extends AbstractController
             // Note: User n'a pas de champ preferredPaymentMethod
             // Cette fonctionnalité devrait être gérée via Tenant ou une autre entité
             $this->addFlash('info', 'Cette fonctionnalité sera bientôt disponible.');
+            return $this->redirectToRoute('app_profile_payment_method');
         }
 
-        return $this->render('profile/payment_method.html.twig', [
+        return $this->render('profile/index.html.twig', [
             'user' => $user,
+            'active_tab' => 'payment',
         ]);
     }
 
     #[Route('/confidentialite', name: 'app_profile_privacy', methods: ['GET', 'POST'])]
-    public function privacy(Request $request): Response
+    public function privacy(Request $request, EntityManagerInterface $entityManager): Response
     {
+        /** @var \App\Entity\User $user */
         $user = $this->getUser();
 
         if ($request->isMethod('POST')) {
-            // Note: User n'a pas de champ consentSettings
-            // Cette fonctionnalité devrait être gérée via une table séparée
-            $this->addFlash('info', 'Paramètres de confidentialité enregistrés.');
+            // Récupérer les consentements depuis le formulaire
+            $fonciaConsent = $request->request->has('foncia_communications');
+            $partnerConsent = $request->request->has('partner_communications');
+
+            // Mettre à jour les consentements
+            $user->setConsent('foncia_communications', $fonciaConsent);
+            $user->setConsent('partner_communications', $partnerConsent);
+
+            // Sauvegarder en base de données
+            $entityManager->flush();
+
+            $this->addFlash('success', 'Vos préférences de confidentialité ont été enregistrées.');
+            return $this->redirectToRoute('app_profile_privacy');
         }
 
-        return $this->render('profile/privacy.html.twig', [
+        return $this->render('profile/index.html.twig', [
             'user' => $user,
+            'active_tab' => 'privacy',
         ]);
     }
 
