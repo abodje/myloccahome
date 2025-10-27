@@ -11,6 +11,13 @@ parameters:
     app.documents_encryption_key: '%env(APP_DOCUMENTS_ENCRYPTION_KEY)%'
     app.legacy_documents_encryption_key: '%env(APP_LEGACY_DOCUMENTS_ENCRYPTION_KEY)%'
 
+    # Configuration cPanel API
+    cpanel.host: '%env(CPANEL_HOST)%'
+    cpanel.username: '%env(CPANEL_USERNAME)%'
+    cpanel.token: '%env(CPANEL_API_TOKEN)%'
+    cpanel.port: '%env(int:CPANEL_PORT)%'
+    cpanel.demo_domain: '%env(CPANEL_DEMO_DOMAIN)%'
+
 services:
     # default configuration for services in *this* file
     _defaults:
@@ -28,6 +35,14 @@ services:
     App\Service\ContractGenerationService:
         arguments:
             $documentsDirectory: '%documents_directory%'
+
+    # Service cPanel API pour gestion des environnements de démo
+    App\Service\CpanelApiService:
+        arguments:
+            $cpanelHost: '%cpanel.host%'
+            $cpanelUsername: '%cpanel.username%'
+            $cpanelToken: '%cpanel.token%'
+            $cpanelPort: '%cpanel.port%'
 
     # Enregistrement du processeur d'environnement pour Orange SMS
     App\Service\OrangeSmsEnvironmentVariableProcessor:

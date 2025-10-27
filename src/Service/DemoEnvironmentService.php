@@ -24,8 +24,10 @@ class DemoEnvironmentService
     private SluggerInterface $slugger;
     private RequestStack $requestStack;
     private LoggerInterface $logger;
+    private ?CpanelApiService $cpanelService;
     private string $demoBaseUrl;
     private string $demoDataDir;
+    private bool $cpanelEnabled;
 
     public function __construct(
         EntityManagerInterface $entityManager,
@@ -33,7 +35,8 @@ class DemoEnvironmentService
         ParameterBagInterface $params,
         SluggerInterface $slugger,
         RequestStack $requestStack,
-        LoggerInterface $logger
+        LoggerInterface $logger,
+        ?CpanelApiService $cpanelService = null
     ) {
         $this->entityManager = $entityManager;
         $this->filesystem = $filesystem;
@@ -41,6 +44,8 @@ class DemoEnvironmentService
         $this->slugger = $slugger;
         $this->requestStack = $requestStack;
         $this->logger = $logger;
+        $this->cpanelService = $cpanelService;
+        $this->cpanelEnabled = $cpanelService !== null && !empty($_ENV['CPANEL_API_TOKEN'] ?? '');
         $this->demoBaseUrl = $this->getCurrentDomain();
         $this->demoDataDir = $this->params->get('kernel.project_dir') . '/demo_data';
 
@@ -124,6 +129,22 @@ class DemoEnvironmentService
             $subdomain = $this->generateSubdomain($user);
             $demoUrl = "https://{$subdomain}.{$this->demoBaseUrl}";
 
+            // Étape 0: Créer l'infrastructure cPanel si activé
+            $cpanelData = null;
+            if ($this->cpanelEnabled) {
+                $this->logger->info("🔧 Création de l'infrastructure cPanel pour le sous-domaine: {$subdomain}");
+
+                $cpanelResult = $this->cpanelService->createDemoEnvironment($subdomain);
+
+                if (!$cpanelResult['success']) {
+                    $this->logger->error("❌ Échec création cPanel: " . $cpanelResult['message']);
+                    throw new \Exception("Erreur cPanel: " . $cpanelResult['message']);
+                }
+
+                $cpanelData = $cpanelResult;
+                $this->logger->info("✅ Infrastructure cPanel créée avec succès");
+            }
+
             // 1. Créer l'organisation de démo
             $organization = $this->createDemoOrganization($user, $subdomain);
 
@@ -142,6 +163,15 @@ class DemoEnvironmentService
             // Valider la transaction
             $this->entityManager->commit();
 
+            $resultMessage = "Environnement de démo créé avec succès !";
+            if ($cpanelData) {
+                $resultMessage .= "\n\n📁 Sous-domaine: {$cpanelData['subdomain']}" .
+                    "\n🗄️ Base de données: {$cpanelData['database']}" .
+                    "\n👤 Utilisateur DB: {$cpanelData['db_user']}" .
+                    "\n🔑 Mot de passe: {$cpanelData['db_password']}";
+            }
+            $resultMessage .= "\n\n🌐 Accédez à votre démo : {$demoUrl}";
+
             return [
                 'success' => true,
                 'subdomain' => $subdomain,
@@ -149,7 +179,8 @@ class DemoEnvironmentService
                 'organization' => $organization,
                 'company' => $company,
                 'demo_data' => $demoData,
-                'message' => "Environnement de démo créé avec succès ! Accédez à votre démo : {$demoUrl}"
+                'cpanel_data' => $cpanelData,
+                'message' => $resultMessage
             ];
 
         } catch (\Exception $e) {
@@ -925,6 +956,20 @@ EOF;
                     'error' => 'Démo non trouvée',
                     'message' => 'L\'environnement de démo n\'existe pas'
                 ];
+            }
+
+            // 0. Supprimer l'infrastructure cPanel si activé
+            if ($this->cpanelEnabled) {
+                $this->logger->info("🗑️ Suppression de l'infrastructure cPanel pour: {$subdomain}");
+
+                $cpanelResult = $this->cpanelService->deleteDemoEnvironment($subdomain);
+
+                if (!$cpanelResult['success']) {
+                    $this->logger->warning("⚠️ Avertissement lors de la suppression cPanel: " . $cpanelResult['message']);
+                    // On continue même si la suppression cPanel échoue
+                } else {
+                    $this->logger->info("✅ Infrastructure cPanel supprimée avec succès");
+                }
             }
 
             // 1. Supprimer les données de la base

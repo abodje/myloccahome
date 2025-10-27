@@ -108,9 +108,25 @@
                         <li>Configuration Apache/Nginx</li>
                         <li>Variables d'environnement</li>
                         <li>Certificat SSL (si activé)</li>
+                        {% if app.request.server.get('CPANEL_API_TOKEN') %}
+                        <li><span class="badge bg-success">cPanel</span> Base de données MySQL</li>
+                        <li><span class="badge bg-success">cPanel</span> Utilisateur DB dédié</li>
+                        {% endif %}
                     </ul>
 
                     <hr>
+
+                    {% if app.request.server.get('CPANEL_API_TOKEN') %}
+                    <div class="alert alert-success small">
+                        <i class="bi bi-check-circle me-2"></i>
+                        <strong>cPanel activé :</strong> L'infrastructure sera provisionnée automatiquement.
+                    </div>
+                    {% else %}
+                    <div class="alert alert-warning small">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        <strong>cPanel désactivé :</strong> Configurez <code>CPANEL_API_TOKEN</code> pour activer l'automatisation.
+                    </div>
+                    {% endif %}
 
                     <div class="alert alert-info">
                         <i class="bi bi-lightbulb me-2"></i>
