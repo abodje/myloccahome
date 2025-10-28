@@ -1,0 +1,171 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Import CSV - Biens et Locataires{% endblock %}
+
+{% block body %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0">
+                        <i class="bi bi-file-earmark-arrow-up"></i>
+                        Import CSV - Biens et Locataires
+                    </h4>
+                    <a href="{{ path('app_admin_dashboard') }}" class="btn btn-light btn-sm">
+                        <i class="bi bi-arrow-left"></i> Retour
+                    </a>
+                </div>
+
+                <div class="card-body">
+                    <!-- Instructions -->
+                    <div class="alert alert-info">
+                        <h5><i class="bi bi-info-circle"></i> Comment ça marche ?</h5>
+                        <ol class="mb-0">
+                            <li>Téléchargez le <strong>template CSV</strong> ou l'<strong>exemple avec données</strong></li>
+                            <li>Remplissez le fichier avec vos données (biens, locataires, baux, loyers)</li>
+                            <li>Uploadez le fichier ci-dessous</li>
+                            <li>L'import créera automatiquement les comptes utilisateurs pour les locataires</li>
+                        </ol>
+                    </div>
+
+                    <!-- Téléchargements -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="card h-100">
+                                <div class="card-body text-center">
+                                    <i class="bi bi-file-earmark-text text-primary" style="font-size: 3rem;"></i>
+                                    <h5 class="card-title mt-3">Template CSV Vide</h5>
+                                    <p class="card-text text-muted">Fichier avec uniquement les en-têtes de colonnes</p>
+                                    <a href="{{ path('admin_import_template') }}" class="btn btn-primary">
+                                        <i class="bi bi-download"></i> Télécharger le Template
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card h-100">
+                                <div class="card-body text-center">
+                                    <i class="bi bi-file-earmark-check text-success" style="font-size: 3rem;"></i>
+                                    <h5 class="card-title mt-3">Exemple avec Données</h5>
+                                    <p class="card-text text-muted">Fichier avec 3 exemples pré-remplis</p>
+                                    <a href="{{ path('admin_import_example') }}" class="btn btn-success">
+                                        <i class="bi bi-download"></i> Télécharger l'Exemple
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Colonnes requises -->
+                    <div class="accordion mb-4" id="accordionColumns">
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseColumns">
+                                    <i class="bi bi-table"></i>&nbsp; Colonnes du fichier CSV
+                                </button>
+                            </h2>
+                            <div id="collapseColumns" class="accordion-collapse collapse" data-bs-parent="#accordionColumns">
+                                <div class="accordion-body">
+                                    <div class="row">
+                                        <div class="col-md-4">
+                                            <h6 class="text-primary"><i class="bi bi-building"></i> Bien Immobilier</h6>
+                                            <ul class="list-unstyled small">
+                                                <li><strong>adresse_bien</strong> <span class="badge bg-danger">Requis</span></li>
+                                                <li><strong>ville_bien</strong></li>
+                                                <li><strong>code_postal_bien</strong></li>
+                                                <li><strong>type_bien</strong> (Appartement/Maison/Studio...)</li>
+                                                <li><strong>nb_pieces</strong></li>
+                                                <li><strong>surface</strong> (en m²)</li>
+                                                <li><strong>loyer_mensuel</strong> <span class="badge bg-danger">Requis</span></li>
+                                                <li><strong>charges</strong></li>
+                                                <li><strong>statut_bien</strong> (Loué/Disponible...)</li>
+                                            </ul>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <h6 class="text-success"><i class="bi bi-person"></i> Locataire</h6>
+                                            <ul class="list-unstyled small">
+                                                <li><strong>prenom_locataire</strong> <span class="badge bg-danger">Requis</span></li>
+                                                <li><strong>nom_locataire</strong> <span class="badge bg-danger">Requis</span></li>
+                                                <li><strong>email_locataire</strong> <span class="badge bg-danger">Requis</span></li>
+                                                <li><strong>telephone_locataire</strong></li>
+                                                <li><strong>adresse_locataire</strong></li>
+                                                <li><strong>ville_locataire</strong></li>
+                                                <li><strong>code_postal_locataire</strong></li>
+                                            </ul>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <h6 class="text-warning"><i class="bi bi-file-text"></i> Bail & Paiements</h6>
+                                            <ul class="list-unstyled small">
+                                                <li><strong>date_debut_bail</strong> <span class="badge bg-danger">Requis</span></li>
+                                                <li><strong>date_fin_bail</strong></li>
+                                                <li><strong>depot_garantie</strong></li>
+                                                <li><strong>statut_bail</strong> (Actif/Terminé...)</li>
+                                                <li><strong>date_premier_paiement</strong></li>
+                                                <li><strong>nb_echeances</strong> (12 par défaut)</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+
+                                    <div class="alert alert-warning mt-3 mb-0">
+                                        <strong><i class="bi bi-exclamation-triangle"></i> Important :</strong>
+                                        <ul class="mb-0 small">
+                                            <li>Les dates doivent être au format : <code>YYYY-MM-DD</code> ou <code>DD/MM/YYYY</code></li>
+                                            <li>Les emails doivent être uniques et valides</li>
+                                            <li>Un compte utilisateur sera créé automatiquement pour chaque locataire</li>
+                                            <li>Mot de passe temporaire : <code>locataire + 4 derniers chiffres du téléphone</code></li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Formulaire d'upload -->
+                    <div class="card">
+                        <div class="card-header bg-light">
+                            <h5 class="mb-0"><i class="bi bi-cloud-upload"></i> Upload du fichier CSV</h5>
+                        </div>
+                        <div class="card-body">
+                            <form method="post" action="{{ path('admin_import_process') }}" enctype="multipart/form-data">
+                                <div class="mb-3">
+                                    <label for="csv_file" class="form-label">Sélectionnez votre fichier CSV</label>
+                                    <input type="file" class="form-control" id="csv_file" name="csv_file" accept=".csv,.txt" required>
+                                    <div class="form-text">Formats acceptés : CSV (.csv), Texte (.txt)</div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="delimiter" class="form-label">Délimiteur de colonnes</label>
+                                    <select class="form-select" id="delimiter" name="delimiter">
+                                        <option value="comma" selected>Virgule (,)</option>
+                                        <option value="semicolon">Point-virgule (;)</option>
+                                        <option value="tab">Tabulation</option>
+                                    </select>
+                                    <div class="form-text">Excel France utilise souvent le point-virgule (;)</div>
+                                </div>
+
+                                <div class="d-grid gap-2">
+                                    <button type="submit" class="btn btn-primary btn-lg">
+                                        <i class="bi bi-upload"></i> Lancer l'import
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Conseils -->
+                    <div class="alert alert-secondary mt-4">
+                        <h6><i class="bi bi-lightbulb"></i> Conseils</h6>
+                        <ul class="mb-0 small">
+                            <li>Testez d'abord avec quelques lignes avant d'importer l'ensemble de vos données</li>
+                            <li>Vérifiez que votre fichier est encodé en UTF-8 pour éviter les problèmes d'accents</li>
+                            <li>Les doublons (même adresse, même email) ne seront pas créés deux fois</li>
+                            <li>Un rapport détaillé vous sera fourni après l'import</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

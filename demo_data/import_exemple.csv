@@ -1,0 +1,6 @@
+adresse_bien,ville_bien,code_postal_bien,type_bien,nb_pieces,surface,loyer_mensuel,charges,statut_bien,prenom_locataire,nom_locataire,email_locataire,telephone_locataire,adresse_locataire,ville_locataire,code_postal_locataire,date_debut_bail,date_fin_bail,depot_garantie,statut_bail,date_premier_paiement,nb_echeances
+15 Rue de la Paix,Paris,75002,Appartement,3,65.5,1200,100,Loué,Jean,Dupont,jean.dupont@example.com,+33612345678,15 Rue de la Paix,Paris,75002,2024-01-01,2025-12-31,2400,Actif,2024-01-01,12
+28 Avenue des Champs,Lyon,69001,Studio,1,25,600,50,Loué,Marie,Martin,marie.martin@example.com,+33623456789,28 Avenue des Champs,Lyon,69001,2024-03-01,,1200,Actif,2024-03-01,12
+42 Boulevard Victor Hugo,Marseille,13001,Appartement,4,85,1500,120,Loué,Pierre,Durand,pierre.durand@example.com,+33634567890,42 Boulevard Victor Hugo,Marseille,13001,2023-09-01,2025-08-31,3000,Actif,2023-09-01,24
+8 Impasse du Soleil,Toulouse,31000,Maison,5,120,1800,150,Loué,Sophie,Bernard,sophie.bernard@example.com,+33645678901,8 Impasse du Soleil,Toulouse,31000,2024-06-01,2026-05-31,3600,Actif,2024-06-01,12
+33 Rue des Lilas,Nice,06000,Appartement,2,45,900,80,Loué,Luc,Petit,luc.petit@example.com,+33656789012,33 Rue des Lilas,Nice,06000,2024-02-15,,1800,Actif,2024-02-15,12

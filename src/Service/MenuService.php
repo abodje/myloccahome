@@ -237,6 +237,15 @@ class MenuService
                 'roles' => ['ROLE_ADMIN', 'ROLE_SUPER_ADMIN'],
                 'order' => 103.7,
             ],
+            'admin_import' => [
+                'label' => '📂 Import CSV',
+                'icon' => 'bi-file-earmark-arrow-up',
+                'route' => 'admin_import_index',
+                'roles' => ['ROLE_ADMIN', 'ROLE_SUPER_ADMIN'],
+                'order' => 103.8,
+                'badge' => 'new',
+                'badge_type' => 'success',
+            ],
             'admin_email_templates' => [
                 'label' => 'Templates emails',
                 'icon' => 'bi-envelope',

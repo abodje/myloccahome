@@ -1,0 +1,172 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Résultat de l'Import{% endblock %}
+
+{% block body %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-{{ result.success ? 'success' : 'warning' }} text-white d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0">
+                        <i class="bi bi-{{ result.success ? 'check-circle' : 'exclamation-triangle' }}"></i>
+                        Résultat de l'Import CSV
+                    </h4>
+                    <a href="{{ path('admin_import_index') }}" class="btn btn-light btn-sm">
+                        <i class="bi bi-arrow-left"></i> Retour
+                    </a>
+                </div>
+
+                <div class="card-body">
+                    <!-- Statistiques globales -->
+                    <div class="row mb-4">
+                        <div class="col-md-3">
+                            <div class="card bg-primary text-white">
+                                <div class="card-body">
+                                    <h6 class="text-uppercase mb-2">Biens Immobiliers</h6>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <p class="mb-0 small">Créés: <strong>{{ result.stats.properties.created }}</strong></p>
+                                            <p class="mb-0 small">Mis à jour: <strong>{{ result.stats.properties.updated }}</strong></p>
+                                            <p class="mb-0 small text-danger">Erreurs: <strong>{{ result.stats.properties.errors }}</strong></p>
+                                        </div>
+                                        <i class="bi bi-building" style="font-size: 2.5rem; opacity: 0.3;"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-3">
+                            <div class="card bg-success text-white">
+                                <div class="card-body">
+                                    <h6 class="text-uppercase mb-2">Locataires</h6>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <p class="mb-0 small">Créés: <strong>{{ result.stats.tenants.created }}</strong></p>
+                                            <p class="mb-0 small">Mis à jour: <strong>{{ result.stats.tenants.updated }}</strong></p>
+                                            <p class="mb-0 small text-danger">Erreurs: <strong>{{ result.stats.tenants.errors }}</strong></p>
+                                        </div>
+                                        <i class="bi bi-people" style="font-size: 2.5rem; opacity: 0.3;"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-3">
+                            <div class="card bg-warning text-white">
+                                <div class="card-body">
+                                    <h6 class="text-uppercase mb-2">Baux</h6>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <p class="mb-0 small">Créés: <strong>{{ result.stats.leases.created }}</strong></p>
+                                            <p class="mb-0 small">Mis à jour: <strong>{{ result.stats.leases.updated }}</strong></p>
+                                            <p class="mb-0 small text-danger">Erreurs: <strong>{{ result.stats.leases.errors }}</strong></p>
+                                        </div>
+                                        <i class="bi bi-file-text" style="font-size: 2.5rem; opacity: 0.3;"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-3">
+                            <div class="card bg-info text-white">
+                                <div class="card-body">
+                                    <h6 class="text-uppercase mb-2">Paiements</h6>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <p class="mb-0 small">Créés: <strong>{{ result.stats.payments.created }}</strong></p>
+                                            <p class="mb-0 small">Mis à jour: <strong>{{ result.stats.payments.updated }}</strong></p>
+                                            <p class="mb-0 small text-danger">Erreurs: <strong>{{ result.stats.payments.errors }}</strong></p>
+                                        </div>
+                                        <i class="bi bi-cash-stack" style="font-size: 2.5rem; opacity: 0.3;"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Résumé global -->
+                    {% if result.success %}
+                        <div class="alert alert-success">
+                            <h5><i class="bi bi-check-circle"></i> Import réussi !</h5>
+                            <p class="mb-0">
+                                Tous les éléments ont été importés avec succès. Vous pouvez maintenant consulter vos biens, locataires et baux dans les sections correspondantes.
+                            </p>
+                        </div>
+                    {% else %}
+                        <div class="alert alert-warning">
+                            <h5><i class="bi bi-exclamation-triangle"></i> Import terminé avec des erreurs</h5>
+                            <p class="mb-0">
+                                Certains éléments n'ont pas pu être importés. Consultez les détails ci-dessous pour corriger les problèmes.
+                            </p>
+                        </div>
+                    {% endif %}
+
+                    <!-- Erreurs -->
+                    {% if result.errors|length > 0 %}
+                        <div class="card mb-4">
+                            <div class="card-header bg-danger text-white">
+                                <h5 class="mb-0"><i class="bi bi-x-circle"></i> Erreurs ({{ result.errors|length }})</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="alert alert-light mb-0">
+                                    <ul class="mb-0">
+                                        {% for error in result.errors %}
+                                            <li><code>{{ error }}</code></li>
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    {% endif %}
+
+                    <!-- Avertissements -->
+                    {% if result.warnings|length > 0 %}
+                        <div class="card mb-4">
+                            <div class="card-header bg-warning text-white">
+                                <h5 class="mb-0"><i class="bi bi-exclamation-triangle"></i> Avertissements ({{ result.warnings|length }})</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="alert alert-light mb-0">
+                                    <ul class="mb-0">
+                                        {% for warning in result.warnings %}
+                                            <li><code>{{ warning }}</code></li>
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    {% endif %}
+
+                    <!-- Actions -->
+                    <div class="d-flex gap-2 justify-content-center">
+                        <a href="{{ path('admin_import_index') }}" class="btn btn-primary">
+                            <i class="bi bi-upload"></i> Nouvel Import
+                        </a>
+                        <a href="{{ path('app_property_index') }}" class="btn btn-outline-primary">
+                            <i class="bi bi-building"></i> Voir les Biens
+                        </a>
+                        <a href="{{ path('app_tenant_index') }}" class="btn btn-outline-success">
+                            <i class="bi bi-people"></i> Voir les Locataires
+                        </a>
+                        <a href="{{ path('app_lease_index') }}" class="btn btn-outline-warning">
+                            <i class="bi bi-file-text"></i> Voir les Baux
+                        </a>
+                    </div>
+
+                    <!-- Informations supplémentaires -->
+                    <div class="alert alert-info mt-4">
+                        <h6><i class="bi bi-info-circle"></i> Informations Importantes</h6>
+                        <ul class="mb-0 small">
+                            <li>Les comptes utilisateurs ont été créés automatiquement pour les nouveaux locataires</li>
+                            <li>Mot de passe temporaire : <code>locataire + 4 derniers chiffres du téléphone</code></li>
+                            <li>Les locataires doivent changer leur mot de passe lors de la première connexion</li>
+                            <li>Les échéanciers de paiement ont été générés automatiquement selon les paramètres du bail</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

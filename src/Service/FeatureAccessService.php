@@ -170,4 +170,120 @@ class FeatureAccessService
             'sso',
         ];
     }
+
+    /**
+     * Vérifie si un utilisateur a accès à une fonctionnalité
+     */
+    public function userHasAccess($user, string $feature): bool
+    {
+        if (!$user || !method_exists($user, 'getOrganization')) {
+            return false;
+        }
+
+        $organization = $user->getOrganization();
+        if (!$organization) {
+            return false;
+        }
+
+        return $this->hasAccess($organization, $feature);
+    }
+
+    /**
+     * Retourne le label d'une fonctionnalité
+     */
+    public function getFeatureLabel(string $feature): string
+    {
+        $labels = [
+            'dashboard' => 'Tableau de bord',
+            'properties_management' => 'Gestion des biens',
+            'tenants_management' => 'Gestion des locataires',
+            'lease_management' => 'Gestion des baux',
+            'payment_tracking' => 'Suivi des paiements',
+            'documents' => 'Gestion documentaire',
+            'maintenance_requests' => 'Demandes de maintenance',
+            'accounting' => 'Comptabilité',
+            'reports' => 'Rapports standards',
+            'advanced_reports' => 'Rapports avancés',
+            'api_access' => 'Accès API',
+            'custom_branding' => 'Personnalisation de marque',
+            'priority_support' => 'Support prioritaire',
+            'multi_company' => 'Multi-sociétés',
+            'environment_management' => 'Gestion des environnements',
+            'advanced_analytics' => 'Analyses avancées',
+            'white_label' => 'Marque blanche',
+            'sso' => 'Authentification unique (SSO)',
+        ];
+
+        return $labels[$feature] ?? ucfirst(str_replace('_', ' ', $feature));
+    }
+
+    /**
+     * Retourne l'icône Bootstrap d'une fonctionnalité
+     */
+    public function getFeatureIcon(string $feature): string
+    {
+        $icons = [
+            'dashboard' => 'bi-speedometer2',
+            'properties_management' => 'bi-building',
+            'tenants_management' => 'bi-people',
+            'lease_management' => 'bi-file-text',
+            'payment_tracking' => 'bi-cash-coin',
+            'documents' => 'bi-folder',
+            'maintenance_requests' => 'bi-tools',
+            'accounting' => 'bi-calculator',
+            'reports' => 'bi-graph-up',
+            'advanced_reports' => 'bi-pie-chart',
+            'api_access' => 'bi-code-slash',
+            'custom_branding' => 'bi-palette',
+            'priority_support' => 'bi-headset',
+            'multi_company' => 'bi-building-gear',
+            'environment_management' => 'bi-server',
+            'advanced_analytics' => 'bi-bar-chart',
+            'white_label' => 'bi-tag',
+            'sso' => 'bi-key',
+        ];
+
+        return $icons[$feature] ?? 'bi-check-circle';
+    }
+
+    /**
+     * Retourne le message de blocage pour une fonctionnalité
+     */
+    public function getFeatureBlockMessage(string $feature, Organization $organization): string
+    {
+        $featureLabel = $this->getFeatureLabel($feature);
+        $requiredPlan = $this->getRequiredPlan($feature);
+
+        return "La fonctionnalité « {$featureLabel} » nécessite le plan {$requiredPlan}. " .
+               "Veuillez mettre à niveau votre abonnement pour y accéder.";
+    }
+
+    /**
+     * Retourne le plan minimum requis pour une fonctionnalité
+     */
+    public function getRequiredPlan(string $feature): string
+    {
+        $requirements = [
+            'dashboard' => 'Freemium',
+            'properties_management' => 'Freemium',
+            'tenants_management' => 'Freemium',
+            'lease_management' => 'Basic',
+            'payment_tracking' => 'Basic',
+            'documents' => 'Basic',
+            'maintenance_requests' => 'Professional',
+            'accounting' => 'Professional',
+            'reports' => 'Professional',
+            'advanced_reports' => 'Enterprise',
+            'api_access' => 'Enterprise',
+            'custom_branding' => 'Enterprise',
+            'priority_support' => 'Enterprise',
+            'multi_company' => 'Enterprise',
+            'environment_management' => 'Enterprise',
+            'advanced_analytics' => 'Enterprise',
+            'white_label' => 'Enterprise',
+            'sso' => 'Enterprise',
+        ];
+
+        return $requirements[$feature] ?? 'Professional';
+    }
 }
