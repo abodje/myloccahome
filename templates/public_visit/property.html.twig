@@ -1,0 +1,227 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ property.fullAddress }} - Réserver une visite{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <div class="row">
+        {% if app.user %}
+            <div class="col-md-2 sidebar p-3">
+                {% include '_partials/sidebar.html.twig' %}
+            </div>
+        {% endif %}
+
+        <div class="col-md-{{ app.user ? '10' : '12' }} main-content p-4">
+            <div class="container">
+                <!-- Breadcrumb -->
+                <nav aria-label="breadcrumb" class="mb-4">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item">
+                            <a href="{{ path('app_public_visits_index') }}">Propriétés</a>
+                        </li>
+                        <li class="breadcrumb-item active">{{ property.propertyType }}</li>
+                    </ol>
+                </nav>
+
+                <div class="row">
+                    <!-- Détails de la propriété -->
+                    <div class="col-lg-7">
+                        <div class="card shadow-sm mb-4">
+                            {% if property.photos and property.photos|length > 0 %}
+                                <img src="{{ asset('uploads/properties/' ~ property.photos[0]) }}"
+                                     class="card-img-top"
+                                     alt="{{ property.fullAddress }}"
+                                     style="max-height: 400px; object-fit: cover;">
+                            {% else %}
+                                <div class="bg-light d-flex align-items-center justify-content-center"
+                                     style="height: 300px;">
+                                    <i class="bi bi-house-door text-muted" style="font-size: 5rem;"></i>
+                                </div>
+                            {% endif %}
+
+                            <div class="card-body">
+                                <h2 class="card-title mb-3">
+                                    {{ property.propertyType }}
+                                </h2>
+
+                                <div class="mb-4">
+                                    <h4 class="text-primary mb-0">
+                                        {{ (property.monthlyRent ?? 0)|number_format(0, ',', ' ') }} FCFA
+                                    </h4>
+                                    <small class="text-muted">Loyer mensuel</small>
+                                </div>
+
+                                <p class="text-muted mb-3">
+                                    <i class="bi bi-geo-alt-fill"></i> {{ property.fullAddress }}
+                                </p>
+
+                                <div class="row g-3 mb-4">
+                                    <div class="col-6 col-md-3">
+                                        <div class="text-center p-3 bg-light rounded">
+                                            <i class="bi bi-door-open text-primary fs-4"></i>
+                                            <div class="fw-bold mt-2">{{ property.numberOfRooms ?? 0 }}</div>
+                                            <small class="text-muted">Pièces</small>
+                                        </div>
+                                    </div>
+                                    <div class="col-6 col-md-3">
+                                        <div class="text-center p-3 bg-light rounded">
+                                            <i class="bi bi-arrows-fullscreen text-primary fs-4"></i>
+                                            <div class="fw-bold mt-2">{{ property.size ?? 0 }}</div>
+                                            <small class="text-muted">m²</small>
+                                        </div>
+                                    </div>
+                                    {% if property.numberOfBedrooms %}
+                                        <div class="col-6 col-md-3">
+                                            <div class="text-center p-3 bg-light rounded">
+                                                <i class="bi bi-moon-stars text-primary fs-4"></i>
+                                                <div class="fw-bold mt-2">{{ property.numberOfBedrooms }}</div>
+                                                <small class="text-muted">Chambres</small>
+                                            </div>
+                                        </div>
+                                    {% endif %}
+                                    {% if property.numberOfBathrooms %}
+                                        <div class="col-6 col-md-3">
+                                            <div class="text-center p-3 bg-light rounded">
+                                                <i class="bi bi-droplet text-primary fs-4"></i>
+                                                <div class="fw-bold mt-2">{{ property.numberOfBathrooms }}</div>
+                                                <small class="text-muted">Salles de bain</small>
+                                            </div>
+                                        </div>
+                                    {% endif %}
+                                </div>
+
+                                {% if property.description %}
+                                    <h5 class="mb-3">Description</h5>
+                                    <p class="text-muted">{{ property.description }}</p>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Créneaux disponibles -->
+                        {% if availableSlots|length > 0 %}
+                            <div class="card shadow-sm">
+                                <div class="card-header bg-primary text-white">
+                                    <h5 class="mb-0">
+                                        <i class="bi bi-calendar-event"></i> Créneaux de visite disponibles
+                                    </h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row g-2">
+                                        {% for slot in availableSlots %}
+                                            <div class="col-md-6">
+                                                <div class="border rounded p-3 {{ slot.isAvailable ? 'bg-light' : 'bg-secondary text-white' }}">
+                                                    <div class="d-flex justify-content-between align-items-center">
+                                                        <div>
+                                                            <i class="bi bi-calendar3"></i>
+                                                            {{ slot.startTime|date('d/m/Y') }}
+                                                            <br>
+                                                            <i class="bi bi-clock"></i>
+                                                            {{ slot.startTime|date('H:i') }} - {{ slot.endTime|date('H:i') }}
+                                                        </div>
+                                                        <div class="text-end">
+                                                            {% if slot.isAvailable %}
+                                                                <span class="badge bg-success">
+                                                                    {{ slot.availableSlots }} place(s)
+                                                                </span>
+                                                            {% else %}
+                                                                <span class="badge bg-danger">Complet</span>
+                                                            {% endif %}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Formulaire de réservation -->
+                    <div class="col-lg-5">
+                        <div class="card shadow-sm sticky-top" style="top: 20px;">
+                            <div class="card-header bg-success text-white">
+                                <h5 class="mb-0">
+                                    <i class="bi bi-calendar-check"></i> Réserver une visite
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                {{ form_start(form, {'attr': {'class': 'needs-validation'}}) }}
+
+                                <div class="mb-3">
+                                    {{ form_label(form.visitSlot, 'Choisir un créneau *', {'label_attr': {'class': 'form-label fw-bold'}}) }}
+                                    {{ form_widget(form.visitSlot, {'attr': {'class': 'form-select'}}) }}
+                                    {{ form_errors(form.visitSlot) }}
+                                    {% if availableSlots|length == 0 %}
+                                        <div class="alert alert-warning mt-2">
+                                            <i class="bi bi-exclamation-triangle"></i>
+                                            Aucun créneau disponible pour le moment.
+                                        </div>
+                                    {% endif %}
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        {{ form_label(form.firstName, 'Prénom *', {'label_attr': {'class': 'form-label'}}) }}
+                                        {{ form_widget(form.firstName, {'attr': {'class': 'form-control', 'placeholder': 'Votre prénom'}}) }}
+                                        {{ form_errors(form.firstName) }}
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        {{ form_label(form.lastName, 'Nom *', {'label_attr': {'class': 'form-label'}}) }}
+                                        {{ form_widget(form.lastName, {'attr': {'class': 'form-control', 'placeholder': 'Votre nom'}}) }}
+                                        {{ form_errors(form.lastName) }}
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    {{ form_label(form.email, 'Email *', {'label_attr': {'class': 'form-label'}}) }}
+                                    {{ form_widget(form.email, {'attr': {'class': 'form-control', 'placeholder': 'votre@email.com'}}) }}
+                                    {{ form_errors(form.email) }}
+                                </div>
+
+                                <div class="mb-3">
+                                    {{ form_label(form.phone, 'Téléphone *', {'label_attr': {'class': 'form-label'}}) }}
+                                    {{ form_widget(form.phone, {'attr': {'class': 'form-control', 'placeholder': '+225 XX XX XX XX XX'}}) }}
+                                    {{ form_errors(form.phone) }}
+                                </div>
+
+                                <div class="mb-3">
+                                    {{ form_label(form.message, 'Message (optionnel)', {'label_attr': {'class': 'form-label'}}) }}
+                                    {{ form_widget(form.message, {'attr': {'class': 'form-control', 'rows': 3, 'placeholder': 'Questions ou informations complémentaires...'}}) }}
+                                    {{ form_errors(form.message) }}
+                                </div>
+
+                                <div class="d-grid">
+                                    <button type="submit" class="btn btn-success btn-lg" {{ availableSlots|length == 0 ? 'disabled' : '' }}>
+                                        <i class="bi bi-check-circle"></i> Confirmer la réservation
+                                    </button>
+                                </div>
+
+                                {{ form_end(form) }}
+
+                                <div class="mt-3 text-center">
+                                    <small class="text-muted">
+                                        <i class="bi bi-info-circle"></i>
+                                        Vous recevrez une confirmation par email et SMS
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Bouton candidature -->
+                        <div class="card shadow-sm mt-3">
+                            <div class="card-body text-center">
+                                <h6 class="mb-3">Intéressé par cette propriété ?</h6>
+                                <a href="{{ path('app_public_application', {id: property.id}) }}"
+                                   class="btn btn-primary w-100">
+                                    <i class="bi bi-file-earmark-text"></i> Déposer une candidature
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

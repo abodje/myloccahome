@@ -1,0 +1,208 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Liste des Réservations de Visites{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-2 sidebar p-3">
+            {% include '_partials/sidebar.html.twig' %}
+        </div>
+
+        <div class="col-md-10 main-content p-4">
+            <nav aria-label="breadcrumb" class="mb-3">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item">
+                        <a href="{{ path('app_admin_visits_index') }}">
+                            <i class="bi bi-house-door"></i> Dashboard Visites
+                        </a>
+                    </li>
+                    <li class="breadcrumb-item active">Réservations</li>
+                </ol>
+            </nav>
+
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h1 class="h2 mb-2">
+                        <i class="bi bi-people"></i> Réservations de Visites
+                    </h1>
+                    <p class="text-muted">Gérez toutes les réservations de visites</p>
+                </div>
+            </div>
+
+            {% if visits|length == 0 %}
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle"></i>
+                    Aucune réservation de visite pour le moment.
+                </div>
+            {% else %}
+                <div class="card">
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Date & Heure</th>
+                                        <th>Propriété</th>
+                                        <th>Visiteur</th>
+                                        <th>Contact</th>
+                                        <th>Statut</th>
+                                        <th>Créé le</th>
+                                        <th class="text-end">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for visit in visits %}
+                                        <tr>
+                                            <td>
+                                                <code>#{{ visit.id }}</code>
+                                            </td>
+                                            <td>
+                                                <i class="bi bi-calendar"></i>
+                                                {{ visit.visitSlot.startTime|date('d/m/Y') }}<br>
+                                                <small class="text-muted">
+                                                    <i class="bi bi-clock"></i>
+                                                    {{ visit.visitSlot.startTime|date('H:i') }} -
+                                                    {{ visit.visitSlot.endTime|date('H:i') }}
+                                                </small>
+                                            </td>
+                                            <td>
+                                                <strong>{{ visit.visitSlot.property.propertyType }}</strong><br>
+                                                <small class="text-muted">
+                                                    {{ visit.visitSlot.property.fullAddress|slice(0, 40) }}{% if visit.visitSlot.property.fullAddress|length > 40 %}...{% endif %}
+                                                </small>
+                                            </td>
+                                            <td>
+                                                <strong>{{ visit.firstName }} {{ visit.lastName }}</strong>
+                                                {% if visit.numberOfVisitors > 1 %}
+                                                    <br>
+                                                    <small class="text-muted">
+                                                        <i class="bi bi-people-fill"></i> {{ visit.numberOfVisitors }} personnes
+                                                    </small>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                <small>
+                                                    <i class="bi bi-envelope"></i> {{ visit.email }}<br>
+                                                    <i class="bi bi-telephone"></i> {{ visit.phone }}
+                                                </small>
+                                            </td>
+                                            <td>
+                                                {% if visit.status == 'confirmed' %}
+                                                    <span class="badge bg-success">
+                                                        <i class="bi bi-check-circle"></i> Confirmé
+                                                    </span>
+                                                {% elseif visit.status == 'pending' %}
+                                                    <span class="badge bg-warning text-dark">
+                                                        <i class="bi bi-clock"></i> En attente
+                                                    </span>
+                                                {% elseif visit.status == 'cancelled' %}
+                                                    <span class="badge bg-danger">
+                                                        <i class="bi bi-x-circle"></i> Annulé
+                                                    </span>
+                                                {% elseif visit.status == 'completed' %}
+                                                    <span class="badge bg-info">
+                                                        <i class="bi bi-check-all"></i> Complété
+                                                    </span>
+                                                {% else %}
+                                                    <span class="badge bg-secondary">{{ visit.status }}</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                <small class="text-muted">
+                                                    {{ visit.createdAt|date('d/m/Y H:i') }}
+                                                </small>
+                                            </td>
+                                            <td class="text-end">
+                                                <div class="btn-group btn-group-sm">
+                                                    <a href="{{ path('app_admin_visit_show', {id: visit.id}) }}"
+                                                       class="btn btn-outline-primary"
+                                                       title="Voir les détails">
+                                                        <i class="bi bi-eye"></i>
+                                                    </a>
+                                                    {% if visit.status == 'pending' %}
+                                                        <form action="{{ path('app_admin_visit_confirm', {id: visit.id}) }}"
+                                                              method="post"
+                                                              style="display: inline;">
+                                                            <button type="submit"
+                                                                    class="btn btn-outline-success"
+                                                                    title="Confirmer"
+                                                                    onclick="return confirm('Confirmer cette visite ?')">
+                                                                <i class="bi bi-check"></i>
+                                                            </button>
+                                                        </form>
+                                                    {% endif %}
+                                                    {% if visit.status == 'confirmed' %}
+                                                        <form action="{{ path('app_admin_visit_complete', {id: visit.id}) }}"
+                                                              method="post"
+                                                              style="display: inline;">
+                                                            <button type="submit"
+                                                                    class="btn btn-outline-info"
+                                                                    title="Marquer comme complété"
+                                                                    onclick="return confirm('Marquer cette visite comme complétée ?')">
+                                                                <i class="bi bi-check-all"></i>
+                                                            </button>
+                                                        </form>
+                                                    {% endif %}
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="card-footer text-muted">
+                        Total : <strong>{{ visits|length }}</strong> réservation(s)
+                    </div>
+                </div>
+
+                <!-- Statistiques rapides -->
+                <div class="row g-3 mt-3">
+                    <div class="col-md-3">
+                        <div class="card border-warning">
+                            <div class="card-body text-center">
+                                <h3 class="text-warning mb-0">
+                                    {{ visits|filter(v => v.status == 'pending')|length }}
+                                </h3>
+                                <small class="text-muted">En attente</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card border-success">
+                            <div class="card-body text-center">
+                                <h3 class="text-success mb-0">
+                                    {{ visits|filter(v => v.status == 'confirmed')|length }}
+                                </h3>
+                                <small class="text-muted">Confirmées</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card border-danger">
+                            <div class="card-body text-center">
+                                <h3 class="text-danger mb-0">
+                                    {{ visits|filter(v => v.status == 'cancelled')|length }}
+                                </h3>
+                                <small class="text-muted">Annulées</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card border-info">
+                            <div class="card-body text-center">
+                                <h3 class="text-info mb-0">
+                                    {{ visits|filter(v => v.status == 'completed')|length }}
+                                </h3>
+                                <small class="text-muted">Complétées</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -54,6 +54,16 @@ class MenuService
                 'order' => 3,
                 'required_feature' => 'properties_management',
             ],
+            'public_visits' => [
+                'label' => 'Trouver un logement',
+                'icon' => 'bi-house-heart',
+                'route' => 'app_public_visits_index',
+                'roles' => ['IS_AUTHENTICATED_ANONYMOUSLY', 'ROLE_USER', 'ROLE_TENANT', 'ROLE_MANAGER', 'ROLE_ADMIN', 'ROLE_SUPER_ADMIN'],
+                'order' => 3.2,
+                'badge' => 'new',
+                'badge_type' => 'success',
+                'required_feature' => 'visit_management',
+            ],
             'owners' => [
                 'label' => 'Propriétaires',
                 'icon' => 'bi-person-badge',
@@ -123,6 +133,38 @@ class MenuService
                 'route' => 'app_calendar_index',
                 'roles' => ['ROLE_USER', 'ROLE_TENANT', 'ROLE_MANAGER', 'ROLE_ADMIN', 'ROLE_SUPER_ADMIN'],
                 'order' => 9.3,
+            ],
+            'visits_management' => [
+                'label' => 'Gestion des Visites',
+                'icon' => 'bi-calendar-check',
+                'route' => 'app_admin_visits_index',
+                'roles' => ['ROLE_MANAGER', 'ROLE_ADMIN', 'ROLE_SUPER_ADMIN'],
+                'order' => 9.35,
+                'badge' => 'new',
+                'badge_type' => 'success',
+                'required_feature' => 'visit_management',
+                'submenu' => [
+                    'visits_dashboard' => [
+                        'label' => 'Tableau de bord',
+                        'route' => 'app_admin_visits_index',
+                        'roles' => ['ROLE_MANAGER', 'ROLE_ADMIN', 'ROLE_SUPER_ADMIN'],
+                    ],
+                    'visits_slots' => [
+                        'label' => 'Créneaux de visite',
+                        'route' => 'app_admin_visit_slots',
+                        'roles' => ['ROLE_MANAGER', 'ROLE_ADMIN', 'ROLE_SUPER_ADMIN'],
+                    ],
+                    'visits_reservations' => [
+                        'label' => 'Réservations',
+                        'route' => 'app_admin_visits_list',
+                        'roles' => ['ROLE_MANAGER', 'ROLE_ADMIN', 'ROLE_SUPER_ADMIN'],
+                    ],
+                    'visits_applications' => [
+                        'label' => 'Candidatures & Scoring',
+                        'route' => 'app_admin_applications_list',
+                        'roles' => ['ROLE_MANAGER', 'ROLE_ADMIN', 'ROLE_SUPER_ADMIN'],
+                    ],
+                ],
             ],
             'demo_create_user' => [
                 'label' => '🚀 Créer une démo',

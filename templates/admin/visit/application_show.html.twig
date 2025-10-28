@@ -1,0 +1,344 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Candidature de {{ application.firstName }} {{ application.lastName }}{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-2 sidebar p-3">
+            {% include '_partials/sidebar.html.twig' %}
+        </div>
+
+        <div class="col-md-10 main-content p-4">
+            <nav aria-label="breadcrumb" class="mb-4">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item">
+                        <a href="{{ path('app_admin_visits_index') }}">Visites</a>
+                    </li>
+                    <li class="breadcrumb-item">
+                        <a href="{{ path('app_admin_applications_list') }}">Candidatures</a>
+                    </li>
+                    <li class="breadcrumb-item active">{{ application.firstName }} {{ application.lastName }}</li>
+                </ol>
+            </nav>
+
+            <div class="row">
+                <!-- Colonne principale -->
+                <div class="col-lg-8">
+                    <!-- Informations candidat -->
+                    <div class="card shadow-sm mb-4">
+                        <div class="card-header bg-primary text-white">
+                            <h5 class="mb-0">
+                                <i class="bi bi-person-badge"></i> Informations du candidat
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <strong><i class="bi bi-person"></i> Nom complet :</strong><br>
+                                    {{ application.firstName }} {{ application.lastName }}
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <strong><i class="bi bi-calendar"></i> Date de naissance :</strong><br>
+                                    {{ application.birthDate|date('d/m/Y') }}
+                                    <small class="text-muted">({{ 'now'|date('Y') - application.birthDate|date('Y') }} ans)</small>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <strong><i class="bi bi-envelope"></i> Email :</strong><br>
+                                    <a href="mailto:{{ application.email }}">{{ application.email }}</a>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <strong><i class="bi bi-telephone"></i> Téléphone :</strong><br>
+                                    <a href="tel:{{ application.phone }}">{{ application.phone }}</a>
+                                </div>
+                                <div class="col-12">
+                                    <strong><i class="bi bi-geo-alt"></i> Adresse actuelle :</strong><br>
+                                    {{ application.currentAddress ?? 'Non renseignée' }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Situation professionnelle -->
+                    <div class="card shadow-sm mb-4">
+                        <div class="card-header bg-info text-white">
+                            <h5 class="mb-0">
+                                <i class="bi bi-briefcase"></i> Situation professionnelle
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <strong>Statut :</strong><br>
+                                    <span class="badge bg-{{ application.employmentStatus == 'cdi' ? 'success' : 'info' }} fs-6">
+                                        {{ application.employmentStatus|upper }}
+                                    </span>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <strong>Revenus mensuels :</strong><br>
+                                    <span class="fs-5 text-primary">{{ application.monthlyIncome|number_format(0, ',', ' ') }} FCFA</span>
+                                </div>
+                                {% if application.employer %}
+                                    <div class="col-md-6 mb-3">
+                                        <strong>Employeur :</strong><br>
+                                        {{ application.employer }}
+                                    </div>
+                                {% endif %}
+                                {% if application.jobTitle %}
+                                    <div class="col-md-6 mb-3">
+                                        <strong>Poste :</strong><br>
+                                        {{ application.jobTitle }}
+                                    </div>
+                                {% endif %}
+                                {% if application.contractType %}
+                                    <div class="col-12">
+                                        <strong>Type de contrat :</strong>
+                                        <span class="badge bg-secondary">{{ application.contractType|upper }}</span>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Garant -->
+                    {% if application.hasGuarantor %}
+                        <div class="card shadow-sm mb-4">
+                            <div class="card-header bg-success text-white">
+                                <h5 class="mb-0">
+                                    <i class="bi bi-shield-check"></i> Garant
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-4 mb-3">
+                                        <strong>Nom :</strong><br>
+                                        {{ application.guarantorName ?? 'Non renseigné' }}
+                                    </div>
+                                    <div class="col-md-4 mb-3">
+                                        <strong>Relation :</strong><br>
+                                        {{ application.guarantorRelation ?? 'Non renseignée' }}
+                                    </div>
+                                    <div class="col-md-4 mb-3">
+                                        <strong>Revenus :</strong><br>
+                                        {{ application.guarantorIncome ? (application.guarantorIncome|number_format(0, ',', ' ') ~ ' FCFA') : 'Non renseignés' }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endif %}
+
+                    <!-- Composition du foyer -->
+                    <div class="card shadow-sm mb-4">
+                        <div class="card-header">
+                            <h5 class="mb-0">
+                                <i class="bi bi-people"></i> Composition du foyer
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <strong>Occupants :</strong><br>
+                                    <i class="bi bi-people-fill"></i> {{ application.numberOfOccupants }}
+                                </div>
+                                <div class="col-md-4">
+                                    <strong>Enfants :</strong><br>
+                                    <i class="bi bi-person"></i> {{ application.numberOfChildren }}
+                                </div>
+                                <div class="col-md-4">
+                                    <strong>Animaux :</strong><br>
+                                    {% if application.hasPets %}
+                                        <i class="bi bi-check-circle text-success"></i> Oui
+                                        {% if application.petDetails %}
+                                            <br><small class="text-muted">{{ application.petDetails }}</small>
+                                        {% endif %}
+                                    {% else %}
+                                        <i class="bi bi-x-circle text-danger"></i> Non
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Projet locatif -->
+                    <div class="card shadow-sm mb-4">
+                        <div class="card-header">
+                            <h5 class="mb-0">
+                                <i class="bi bi-calendar-event"></i> Projet locatif
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <strong>Date d'entrée souhaitée :</strong><br>
+                                    {{ application.desiredMoveInDate|date('d/m/Y') }}
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <strong>Durée de bail souhaitée :</strong><br>
+                                    {{ application.desiredLeaseDuration ?? 'Non renseignée' }} mois
+                                </div>
+                            </div>
+                            {% if application.additionalInfo %}
+                                <div>
+                                    <strong>Informations complémentaires :</strong><br>
+                                    <p class="text-muted mb-0">{{ application.additionalInfo }}</p>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Colonne droite - Score et actions -->
+                <div class="col-lg-4">
+                    <!-- Score -->
+                    {% if application.score %}
+                        <div class="card shadow-sm mb-4 border-primary">
+                            <div class="card-header bg-primary text-white text-center">
+                                <h5 class="mb-0">Score de candidature</h5>
+                            </div>
+                            <div class="card-body text-center">
+                                <h1 class="display-1 mb-0
+                                    {% if application.score >= 80 %}text-success
+                                    {% elseif application.score >= 60 %}text-warning
+                                    {% else %}text-danger{% endif %}">
+                                    {{ application.score|number_format(0) }}
+                                </h1>
+                                <p class="text-muted mb-3">/100</p>
+
+                                {% if application.scoreDetails.grade %}
+                                    <span class="badge bg-primary fs-4 px-4 py-2 mb-3">{{ application.scoreDetails.grade }}</span>
+                                {% endif %}
+
+                                {% if application.scoreDetails.recommendation %}
+                                    <div class="alert alert-light mb-0">
+                                        <small>{{ application.scoreDetails.recommendation }}</small>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Détails du scoring -->
+                        <div class="card shadow-sm mb-4">
+                            <div class="card-header">
+                                <h6 class="mb-0">Détails de l'évaluation</h6>
+                            </div>
+                            <div class="card-body">
+                                {% if application.scoreDetails.criteria %}
+                                    {% for criterion, detail in application.scoreDetails.criteria %}
+                                        <div class="mb-3">
+                                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                                <strong class="text-capitalize">{{ criterion }}</strong>
+                                                <span class="badge bg-secondary">
+                                                    {{ detail.score|number_format(1) }}/{{ detail.max_points }}
+                                                </span>
+                                            </div>
+                                            <div class="progress" style="height: 20px;">
+                                                {% set percentage = (detail.score / detail.max_points * 100) %}
+                                                <div class="progress-bar {{ percentage >= 80 ? 'bg-success' : (percentage >= 50 ? 'bg-warning' : 'bg-danger') }}"
+                                                     style="width: {{ percentage }}%">
+                                                </div>
+                                            </div>
+                                            {% if detail.comment %}
+                                                <small class="text-muted">{{ detail.comment }}</small>
+                                            {% endif %}
+                                        </div>
+                                    {% endfor %}
+                                {% endif %}
+                            </div>
+                        </div>
+                    {% endif %}
+
+                    <!-- Propriété concernée -->
+                    <div class="card shadow-sm mb-4">
+                        <div class="card-header">
+                            <h6 class="mb-0">
+                                <i class="bi bi-house-door"></i> Propriété
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <strong>{{ application.property.propertyType }}</strong><br>
+                            <small class="text-muted">
+                                <i class="bi bi-geo-alt"></i> {{ application.property.fullAddress }}
+                            </small>
+                            <hr>
+                            <div class="d-flex justify-content-between">
+                                <span>Loyer mensuel :</span>
+                                <strong>{{ application.property.monthlyRent|number_format(0, ',', ' ') }} FCFA</strong>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <span>Ratio revenus/loyer :</span>
+                                {% set ratio = application.property.monthlyRent > 0 ? (application.monthlyIncome / application.property.monthlyRent) : 0 %}
+                                <strong class="{{ ratio >= 3 ? 'text-success' : (ratio >= 2.5 ? 'text-warning' : 'text-danger') }}">
+                                    {{ ratio|number_format(1) }}x
+                                </strong>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Statut et actions -->
+                    <div class="card shadow-sm mb-4">
+                        <div class="card-header">
+                            <h6 class="mb-0">Actions</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <strong>Statut actuel :</strong><br>
+                                {% if application.status == 'pending' %}
+                                    <span class="badge bg-warning">En attente</span>
+                                {% elseif application.status == 'under_review' %}
+                                    <span class="badge bg-info">En révision</span>
+                                {% elseif application.status == 'approved' %}
+                                    <span class="badge bg-success">Approuvé</span>
+                                {% elseif application.status == 'rejected' %}
+                                    <span class="badge bg-danger">Rejeté</span>
+                                {% endif %}
+                            </div>
+
+                            {% if application.status not in ['approved', 'rejected'] %}
+                                <div class="d-grid gap-2">
+                                    <form method="post" action="{{ path('app_admin_application_approve', {id: application.id}) }}">
+                                        <button type="submit" class="btn btn-success w-100">
+                                            <i class="bi bi-check-circle"></i> Approuver
+                                        </button>
+                                    </form>
+                                    <form method="post" action="{{ path('app_admin_application_reject', {id: application.id}) }}">
+                                        <button type="submit" class="btn btn-danger w-100">
+                                            <i class="bi bi-x-circle"></i> Rejeter
+                                        </button>
+                                    </form>
+                                </div>
+                            {% endif %}
+
+                            <hr>
+
+                            <div class="d-grid">
+                                <form method="post" action="{{ path('app_admin_application_rescore', {id: application.id}) }}">
+                                    <button type="submit" class="btn btn-outline-primary w-100">
+                                        <i class="bi bi-arrow-clockwise"></i> Recalculer le score
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Date de candidature -->
+                    <div class="card shadow-sm">
+                        <div class="card-body">
+                            <small class="text-muted">
+                                <i class="bi bi-clock"></i> Candidature déposée le<br>
+                                {{ application.createdAt|date('d/m/Y à H:i') }}
+                            </small>
+                            {% if application.reviewedAt %}
+                                <hr class="my-2">
+                                <small class="text-muted">
+                                    <i class="bi bi-eye"></i> Examinée le<br>
+                                    {{ application.reviewedAt|date('d/m/Y à H:i') }}
+                                </small>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

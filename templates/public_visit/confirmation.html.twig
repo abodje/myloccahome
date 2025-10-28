@@ -1,0 +1,104 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Visite confirmée{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <div class="row">
+        {% if app.user %}
+            <div class="col-md-2 sidebar p-3">
+                {% include '_partials/sidebar.html.twig' %}
+            </div>
+        {% endif %}
+
+        <div class="col-md-{{ app.user ? '10' : '12' }} main-content p-4">
+            <div class="container">
+                <div class="row justify-content-center">
+                    <div class="col-lg-8">
+                        <div class="card shadow-lg border-0 mt-5">
+                            <div class="card-body text-center p-5">
+                                <div class="mb-4">
+                                    <i class="bi bi-check-circle-fill text-success" style="font-size: 5rem;"></i>
+                                </div>
+
+                                <h2 class="mb-3">Visite confirmée !</h2>
+
+                                <p class="lead text-muted mb-4">
+                                    Votre réservation a bien été enregistrée.
+                                </p>
+
+                                <div class="card bg-light mb-4">
+                                    <div class="card-body">
+                                        <h5 class="card-title mb-3">Détails de votre visite</h5>
+
+                                        <div class="row text-start">
+                                            <div class="col-md-6 mb-3">
+                                                <strong><i class="bi bi-person"></i> Visiteur</strong><br>
+                                                {{ visit.firstName }} {{ visit.lastName }}
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <strong><i class="bi bi-envelope"></i> Email</strong><br>
+                                                {{ visit.email }}
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <strong><i class="bi bi-telephone"></i> Téléphone</strong><br>
+                                                {{ visit.phone }}
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <strong><i class="bi bi-calendar-event"></i> Date & Heure</strong><br>
+                                                {{ visit.visitSlot.startTime|date('d/m/Y à H:i') }}
+                                            </div>
+                                        </div>
+
+                                        <hr>
+
+                                        <div class="text-start">
+                                            <strong><i class="bi bi-house-door"></i> Propriété</strong><br>
+                                            {{ visit.visitSlot.property.propertyType }}<br>
+                                            <small class="text-muted">
+                                                <i class="bi bi-geo-alt"></i> {{ visit.visitSlot.property.fullAddress }}
+                                            </small>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="alert alert-info">
+                                    <i class="bi bi-info-circle"></i>
+                                    <strong>Prochaines étapes :</strong>
+                                    <ul class="text-start mb-0 mt-2">
+                                        <li>Vous allez recevoir un email de confirmation avec tous les détails</li>
+                                        <li>Un SMS de rappel vous sera envoyé la veille de votre visite</li>
+                                        <li>En cas d'empêchement, vous pouvez annuler votre visite</li>
+                                    </ul>
+                                </div>
+
+                                                                <div class="d-grid gap-2 d-md-flex justify-content-md-center mt-4">
+                                    <a href="{{ path('app_public_application', {id: visit.visitSlot.property.id}) }}"
+                                       class="btn btn-primary btn-lg">
+                                        <i class="bi bi-file-earmark-text"></i> Déposer ma candidature
+                                    </a>
+                                    <a href="{{ path('app_public_visits_index') }}"
+                                       class="btn btn-outline-secondary btn-lg">
+                                        <i class="bi bi-arrow-left"></i> Retour aux propriétés
+                                    </a>
+                                </div>
+
+                                {% if visit.confirmationToken %}
+                                    <div class="mt-4">
+                                        <small class="text-muted">
+                                            <a href="{{ path('app_public_visits_cancel', {token: visit.confirmationToken}) }}"
+                                               class="text-danger">
+                                                <i class="bi bi-x-circle"></i> Annuler cette visite
+                                            </a>
+                                        </small>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

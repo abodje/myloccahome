@@ -1,0 +1,132 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Gestion des créneaux de visite{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-2 sidebar p-3">
+            {% include '_partials/sidebar.html.twig' %}
+        </div>
+
+        <div class="col-md-10 main-content p-4">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h1 class="h2 mb-2">
+                        <i class="bi bi-calendar3"></i> Créneaux de visite
+                    </h1>
+                    <p class="text-muted">Gérez les créneaux horaires disponibles pour les visites</p>
+                </div>
+                <div>
+                    <a href="{{ path('app_admin_visits_index') }}" class="btn btn-outline-secondary me-2">
+                        <i class="bi bi-arrow-left"></i> Retour
+                    </a>
+                    <a href="{{ path('app_admin_visit_slot_new') }}" class="btn btn-primary">
+                        <i class="bi bi-plus-circle"></i> Nouveau créneau
+                    </a>
+                </div>
+            </div>
+
+            {% if slots|length == 0 %}
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle"></i>
+                    Aucun créneau de visite n'a été créé pour le moment.
+                    <a href="{{ path('app_admin_visit_slot_new') }}" class="alert-link">Créer un créneau</a>
+                </div>
+            {% else %}
+                <div class="card shadow-sm">
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Date & Heure</th>
+                                        <th>Propriété</th>
+                                        <th>Capacité</th>
+                                        <th>Réservations</th>
+                                        <th>Statut</th>
+                                        <th class="text-end">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for slot in slots %}
+                                        <tr class="{{ slot.status == 'cancelled' ? 'table-secondary' : '' }}">
+                                            <td>
+                                                <i class="bi bi-calendar"></i>
+                                                <strong>{{ slot.startTime|date('d/m/Y') }}</strong><br>
+                                                <small class="text-muted">
+                                                    <i class="bi bi-clock"></i>
+                                                    {{ slot.startTime|date('H:i') }} - {{ slot.endTime|date('H:i') }}
+                                                </small>
+                                            </td>
+                                            <td>
+                                                <strong>{{ slot.property.propertyType }}</strong><br>
+                                                <small class="text-muted">{{ slot.property.fullAddress|slice(0, 40) }}...</small>
+                                            </td>
+                                            <td>
+                                                <i class="bi bi-people"></i> {{ slot.maxVisitors }}
+                                            </td>
+                                            <td>
+                                                <div class="progress" style="height: 25px;">
+                                                    {% set percentage = slot.maxVisitors > 0 ? (slot.currentVisitors / slot.maxVisitors * 100) : 0 %}
+                                                    <div class="progress-bar {{ percentage >= 100 ? 'bg-danger' : (percentage >= 75 ? 'bg-warning' : 'bg-success') }}"
+                                                         style="width: {{ percentage }}%">
+                                                        {{ slot.currentVisitors }}/{{ slot.maxVisitors }}
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                {% if slot.status == 'available' %}
+                                                    <span class="badge bg-success">Disponible</span>
+                                                {% elseif slot.status == 'full' %}
+                                                    <span class="badge bg-danger">Complet</span>
+                                                {% elseif slot.status == 'cancelled' %}
+                                                    <span class="badge bg-secondary">Annulé</span>
+                                                {% else %}
+                                                    <span class="badge bg-secondary">{{ slot.status }}</span>
+                                                {% endif %}
+                                            </td>
+                                            <td class="text-end">
+                                                <a href="{{ path('app_admin_visit_slot_edit', {id: slot.id}) }}"
+                                                   class="btn btn-sm btn-outline-primary"
+                                                   title="Modifier">
+                                                    <i class="bi bi-pencil"></i>
+                                                </a>
+                                                <button type="button"
+                                                        class="btn btn-sm btn-outline-danger"
+                                                        onclick="confirmDelete({{ slot.id }})"
+                                                        title="Supprimer">
+                                                    <i class="bi bi-trash"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+function confirmDelete(slotId) {
+    if (confirm('Êtes-vous sûr de vouloir supprimer ce créneau ? Toutes les réservations associées seront également supprimées.')) {
+        fetch('{{ path('app_admin_visit_slot_delete', {id: '__ID__'}) }}'.replace('__ID__', slotId), {
+            method: 'DELETE',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        }).then(response => {
+            if (response.ok) {
+                location.reload();
+            } else {
+                alert('Erreur lors de la suppression');
+            }
+        });
+    }
+}
+</script>
+{% endblock %}

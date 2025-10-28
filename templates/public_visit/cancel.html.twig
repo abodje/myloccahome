@@ -1,0 +1,122 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Annulation de visite{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <div class="row">
+        {% if app.user %}
+            <div class="col-md-2 sidebar p-3">
+                {% include '_partials/sidebar.html.twig' %}
+            </div>
+        {% endif %}
+
+        <div class="col-md-{{ app.user ? '10' : '12' }} main-content p-4">
+            <div class="container">
+                <div class="row justify-content-center">
+                    <div class="col-lg-7">
+                        {% if visit %}
+                            {% if visit.status == 'cancelled' %}
+                                <!-- Visite déjà annulée -->
+                                <div class="card shadow-sm border-0 mt-5">
+                                    <div class="card-body text-center p-5">
+                                        <div class="mb-4">
+                                            <i class="bi bi-info-circle text-info" style="font-size: 5rem;"></i>
+                                        </div>
+                                        <h2 class="mb-3">Visite déjà annulée</h2>
+                                        <p class="text-muted">Cette visite a déjà été annulée le {{ visit.cancelledAt|date('d/m/Y à H:i') }}.</p>
+                                        <a href="{{ path('public_visit_index') }}" class="btn btn-primary mt-3">
+                                            <i class="bi bi-arrow-left"></i> Retour aux propriétés
+                                        </a>
+                                    </div>
+                                </div>
+                            {% else %}
+                                <!-- Formulaire d'annulation -->
+                                <div class="card shadow-sm mt-5">
+                                    <div class="card-header bg-danger text-white">
+                                        <h4 class="mb-0">
+                                            <i class="bi bi-x-circle"></i> Annuler ma visite
+                                        </h4>
+                                    </div>
+                                    <div class="card-body p-4">
+                                        <div class="alert alert-warning">
+                                            <i class="bi bi-exclamation-triangle"></i>
+                                            <strong>Attention :</strong> Vous êtes sur le point d'annuler votre visite.
+                                        </div>
+
+                                        <div class="card bg-light mb-4">
+                                            <div class="card-body">
+                                                <h6 class="card-title">Détails de la visite</h6>
+                                                <p class="mb-1">
+                                                    <strong>Visiteur :</strong> {{ visit.firstName }} {{ visit.lastName }}
+                                                </p>
+                                                <p class="mb-1">
+                                                    <strong>Date :</strong> {{ visit.visitSlot.startTime|date('d/m/Y à H:i') }}
+                                                </p>
+                                                <p class="mb-0">
+                                                    <strong>Propriété :</strong> {{ visit.visitSlot.property.propertyType }}<br>
+                                                    <small class="text-muted">
+                                                        <i class="bi bi-geo-alt"></i> {{ visit.visitSlot.property.fullAddress }}
+                                                    </small>
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        <form method="post">
+                                            <div class="mb-3">
+                                                <label for="reason" class="form-label">
+                                                    <strong>Motif d'annulation</strong> <small class="text-muted">(optionnel)</small>
+                                                </label>
+                                                <textarea class="form-control"
+                                                          id="reason"
+                                                          name="reason"
+                                                          rows="3"
+                                                          placeholder="Pourquoi annulez-vous cette visite ?"></textarea>
+                                            </div>
+
+                                            <div class="d-grid gap-2">
+                                                <button type="submit" class="btn btn-danger btn-lg">
+                                                    <i class="bi bi-x-circle"></i> Confirmer l'annulation
+                                                </button>
+                                                <a href="{{ path('public_visit_index') }}"
+                                                   class="btn btn-outline-secondary">
+                                                    <i class="bi bi-arrow-left"></i> Ne pas annuler
+                                                </a>
+                                            </div>
+
+                                            <input type="hidden" name="token" value="{{ visit.confirmationToken }}">
+                                        </form>
+
+                                        <div class="mt-4 text-center">
+                                            <small class="text-muted">
+                                                <i class="bi bi-info-circle"></i>
+                                                En cas de problème, contactez-nous directement.
+                                            </small>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endif %}
+                        {% else %}
+                            <!-- Token invalide -->
+                            <div class="card shadow-sm border-0 mt-5">
+                                <div class="card-body text-center p-5">
+                                    <div class="mb-4">
+                                        <i class="bi bi-exclamation-triangle text-warning" style="font-size: 5rem;"></i>
+                                    </div>
+                                    <h2 class="mb-3">Lien invalide</h2>
+                                    <p class="text-muted">
+                                        Ce lien d'annulation n'est plus valide ou a déjà été utilisé.
+                                    </p>
+                                    <a href="{{ path('public_visit_index') }}" class="btn btn-primary mt-3">
+                                        <i class="bi bi-arrow-left"></i> Retour aux propriétés
+                                    </a>
+                                </div>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

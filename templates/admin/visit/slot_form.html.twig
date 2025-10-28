@@ -1,0 +1,95 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ slot.id ? 'Modifier' : 'Créer' }} un créneau de visite{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-2 sidebar p-3">
+            {% include '_partials/sidebar.html.twig' %}
+        </div>
+
+        <div class="col-md-10 main-content p-4">
+            <div class="row justify-content-center">
+                <div class="col-lg-8">
+                    <nav aria-label="breadcrumb" class="mb-4">
+                        <ol class="breadcrumb">
+                            <li class="breadcrumb-item">
+                                <a href="{{ path('app_admin_visits_index') }}">Visites</a>
+                            </li>
+                            <li class="breadcrumb-item">
+                                <a href="{{ path('app_admin_visit_slots') }}">Créneaux</a>
+                            </li>
+                            <li class="breadcrumb-item active">{{ slot.id ? 'Modifier' : 'Créer' }}</li>
+                        </ol>
+                    </nav>
+
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-primary text-white">
+                            <h4 class="mb-0">
+                                <i class="bi bi-calendar-plus"></i> {{ slot.id ? 'Modifier' : 'Créer' }} un créneau de visite
+                            </h4>
+                        </div>
+                        <div class="card-body">
+                            {{ form_start(form) }}
+
+                            <div class="mb-3">
+                                {{ form_label(form.property, 'Propriété *', {'label_attr': {'class': 'form-label fw-bold'}}) }}
+                                {{ form_widget(form.property, {'attr': {'class': 'form-select'}}) }}
+                                {{ form_errors(form.property) }}
+                                <small class="form-text text-muted">
+                                    <i class="bi bi-info-circle"></i> Sélectionnez la propriété à faire visiter
+                                </small>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    {{ form_label(form.startTime, 'Date et heure de début *', {'label_attr': {'class': 'form-label fw-bold'}}) }}
+                                    {{ form_widget(form.startTime, {'attr': {'class': 'form-control'}}) }}
+                                    {{ form_errors(form.startTime) }}
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    {{ form_label(form.endTime, 'Date et heure de fin *', {'label_attr': {'class': 'form-label fw-bold'}}) }}
+                                    {{ form_widget(form.endTime, {'attr': {'class': 'form-control'}}) }}
+                                    {{ form_errors(form.endTime) }}
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    {{ form_label(form.maxVisitors, 'Nombre de visiteurs max *', {'label_attr': {'class': 'form-label fw-bold'}}) }}
+                                    {{ form_widget(form.maxVisitors, {'attr': {'class': 'form-control', 'min': 1, 'max': 10}}) }}
+                                    {{ form_errors(form.maxVisitors) }}
+                                    <small class="form-text text-muted">Entre 1 et 10 visiteurs</small>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    {{ form_label(form.status, 'Statut', {'label_attr': {'class': 'form-label fw-bold'}}) }}
+                                    {{ form_widget(form.status, {'attr': {'class': 'form-select'}}) }}
+                                    {{ form_errors(form.status) }}
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                {{ form_label(form.notes, 'Notes (optionnel)', {'label_attr': {'class': 'form-label fw-bold'}}) }}
+                                {{ form_widget(form.notes, {'attr': {'class': 'form-control', 'rows': 3, 'placeholder': 'Informations supplémentaires...'}}) }}
+                                {{ form_errors(form.notes) }}
+                            </div>
+
+                            <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+                                <a href="{{ path('app_admin_visit_slots') }}" class="btn btn-outline-secondary">
+                                    <i class="bi bi-x"></i> Annuler
+                                </a>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="bi bi-check-circle"></i> {{ slot.id ? 'Modifier' : 'Créer' }}
+                                </button>
+                            </div>
+
+                            {{ form_end(form) }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,272 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Déposer une candidature{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <div class="row">
+        {% if app.user %}
+            <div class="col-md-2 sidebar p-3">
+                {% include '_partials/sidebar.html.twig' %}
+            </div>
+        {% endif %}
+
+        <div class="col-md-{{ app.user ? '10' : '12' }} main-content p-4">
+            <div class="container">
+                <nav aria-label="breadcrumb" class="mb-4">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item">
+                            <a href="{{ path('app_public_visits_index') }}">Propriétés</a>
+                        </li>
+                        <li class="breadcrumb-item">
+                            <a href="{{ path('app_public_visits_property', {id: property.id}) }}">{{ property.propertyType }}</a>
+                        </li>
+                        <li class="breadcrumb-item active">Candidature</li>
+                    </ol>
+                </nav>
+
+                <div class="row">
+                    <div class="col-lg-8 mx-auto">
+                        <div class="card shadow-sm">
+                            <div class="card-header bg-primary text-white">
+                                <h4 class="mb-0">
+                                    <i class="bi bi-file-earmark-text"></i> Formulaire de candidature locataire
+                                </h4>
+                            </div>
+                            <div class="card-body">
+                                <div class="alert alert-info mb-4">
+                                    <i class="bi bi-info-circle"></i>
+                                    <strong>Candidature pour :</strong> {{ property.propertyType }}<br>
+                                    <small class="text-muted">
+                                        <i class="bi bi-geo-alt"></i> {{ property.fullAddress }} -
+                                        <strong>{{ (property.monthlyRent ?? 0)|number_format(0, ',', ' ') }} FCFA/mois</strong>
+                                    </small>
+                                </div>
+
+                                {{ form_start(form, {'attr': {'class': 'needs-validation'}}) }}
+
+                                <!-- Informations personnelles -->
+                                <h5 class="border-bottom pb-2 mb-3">
+                                    <i class="bi bi-person-badge"></i> Informations personnelles
+                                </h5>
+
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        {{ form_label(form.firstName) }}
+                                        {{ form_widget(form.firstName, {'attr': {'class': 'form-control'}}) }}
+                                        {{ form_errors(form.firstName) }}
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        {{ form_label(form.lastName) }}
+                                        {{ form_widget(form.lastName, {'attr': {'class': 'form-control'}}) }}
+                                        {{ form_errors(form.lastName) }}
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-4 mb-3">
+                                        {{ form_label(form.birthDate) }}
+                                        {{ form_widget(form.birthDate, {'attr': {'class': 'form-control'}}) }}
+                                        {{ form_errors(form.birthDate) }}
+                                    </div>
+                                    <div class="col-md-4 mb-3">
+                                        {{ form_label(form.email) }}
+                                        {{ form_widget(form.email, {'attr': {'class': 'form-control'}}) }}
+                                        {{ form_errors(form.email) }}
+                                    </div>
+                                    <div class="col-md-4 mb-3">
+                                        {{ form_label(form.phone) }}
+                                        {{ form_widget(form.phone, {'attr': {'class': 'form-control'}}) }}
+                                        {{ form_errors(form.phone) }}
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    {{ form_label(form.currentAddress) }}
+                                    {{ form_widget(form.currentAddress, {'attr': {'class': 'form-control', 'rows': 2}}) }}
+                                    {{ form_errors(form.currentAddress) }}
+                                </div>
+
+                                <!-- Situation professionnelle -->
+                                <h5 class="border-bottom pb-2 mb-3 mt-4">
+                                    <i class="bi bi-briefcase"></i> Situation professionnelle
+                                </h5>
+
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        {{ form_label(form.employmentStatus) }}
+                                        {{ form_widget(form.employmentStatus, {'attr': {'class': 'form-select'}}) }}
+                                        {{ form_errors(form.employmentStatus) }}
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        {{ form_label(form.monthlyIncome) }}
+                                        {{ form_widget(form.monthlyIncome, {'attr': {'class': 'form-control'}}) }}
+                                        {{ form_errors(form.monthlyIncome) }}
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-4 mb-3">
+                                        {{ form_label(form.employer) }}
+                                        {{ form_widget(form.employer, {'attr': {'class': 'form-control'}}) }}
+                                        {{ form_errors(form.employer) }}
+                                    </div>
+                                    <div class="col-md-4 mb-3">
+                                        {{ form_label(form.jobTitle) }}
+                                        {{ form_widget(form.jobTitle, {'attr': {'class': 'form-control'}}) }}
+                                        {{ form_errors(form.jobTitle) }}
+                                    </div>
+                                    <div class="col-md-4 mb-3">
+                                        {{ form_label(form.contractType) }}
+                                        {{ form_widget(form.contractType, {'attr': {'class': 'form-select'}}) }}
+                                        {{ form_errors(form.contractType) }}
+                                    </div>
+                                </div>
+
+                                <!-- Garant -->
+                                <h5 class="border-bottom pb-2 mb-3 mt-4">
+                                    <i class="bi bi-shield-check"></i> Garant
+                                </h5>
+
+                                <div class="mb-3">
+                                    <div class="form-check">
+                                        {{ form_widget(form.hasGuarantor, {'attr': {'class': 'form-check-input'}}) }}
+                                        {{ form_label(form.hasGuarantor, null, {'label_attr': {'class': 'form-check-label'}}) }}
+                                    </div>
+                                    {{ form_errors(form.hasGuarantor) }}
+                                </div>
+
+                                <div class="row" id="guarantor-fields">
+                                    <div class="col-md-4 mb-3">
+                                        {{ form_label(form.guarantorName) }}
+                                        {{ form_widget(form.guarantorName, {'attr': {'class': 'form-control'}}) }}
+                                        {{ form_errors(form.guarantorName) }}
+                                    </div>
+                                    <div class="col-md-4 mb-3">
+                                        {{ form_label(form.guarantorRelation) }}
+                                        {{ form_widget(form.guarantorRelation, {'attr': {'class': 'form-control'}}) }}
+                                        {{ form_errors(form.guarantorRelation) }}
+                                    </div>
+                                    <div class="col-md-4 mb-3">
+                                        {{ form_label(form.guarantorIncome) }}
+                                        {{ form_widget(form.guarantorIncome, {'attr': {'class': 'form-control'}}) }}
+                                        {{ form_errors(form.guarantorIncome) }}
+                                    </div>
+                                </div>
+
+                                <!-- Composition du foyer -->
+                                <h5 class="border-bottom pb-2 mb-3 mt-4">
+                                    <i class="bi bi-people"></i> Composition du foyer
+                                </h5>
+
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        {{ form_label(form.numberOfOccupants) }}
+                                        {{ form_widget(form.numberOfOccupants, {'attr': {'class': 'form-control', 'min': 1}}) }}
+                                        {{ form_errors(form.numberOfOccupants) }}
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        {{ form_label(form.numberOfChildren) }}
+                                        {{ form_widget(form.numberOfChildren, {'attr': {'class': 'form-control', 'min': 0}}) }}
+                                        {{ form_errors(form.numberOfChildren) }}
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <div class="form-check">
+                                        {{ form_widget(form.hasPets, {'attr': {'class': 'form-check-input'}}) }}
+                                        {{ form_label(form.hasPets, null, {'label_attr': {'class': 'form-check-label'}}) }}
+                                    </div>
+                                    {{ form_errors(form.hasPets) }}
+                                </div>
+
+                                <div class="mb-3" id="pet-details-field">
+                                    {{ form_label(form.petDetails) }}
+                                    {{ form_widget(form.petDetails, {'attr': {'class': 'form-control'}}) }}
+                                    {{ form_errors(form.petDetails) }}
+                                </div>
+
+                                <!-- Projet locatif -->
+                                <h5 class="border-bottom pb-2 mb-3 mt-4">
+                                    <i class="bi bi-calendar-event"></i> Projet locatif
+                                </h5>
+
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        {{ form_label(form.desiredMoveInDate) }}
+                                        {{ form_widget(form.desiredMoveInDate, {'attr': {'class': 'form-control'}}) }}
+                                        {{ form_errors(form.desiredMoveInDate) }}
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        {{ form_label(form.desiredLeaseDuration) }}
+                                        {{ form_widget(form.desiredLeaseDuration, {'attr': {'class': 'form-control', 'min': 6}}) }}
+                                        {{ form_errors(form.desiredLeaseDuration) }}
+                                    </div>
+                                </div>
+
+                                <div class="mb-4">
+                                    {{ form_label(form.additionalInfo) }}
+                                    {{ form_widget(form.additionalInfo, {'attr': {'class': 'form-control', 'rows': 4}}) }}
+                                    {{ form_errors(form.additionalInfo) }}
+                                </div>
+
+                                <div class="alert alert-warning">
+                                    <i class="bi bi-exclamation-triangle"></i>
+                                    <strong>Information importante :</strong>
+                                    Votre candidature sera automatiquement évaluée selon plusieurs critères
+                                    (revenus, emploi, garant, composition du foyer). Un score vous sera attribué
+                                    et le propriétaire sera notifié de votre candidature.
+                                </div>
+
+                                <div class="d-grid gap-2">
+                                    <button type="submit" class="btn btn-primary btn-lg">
+                                        <i class="bi bi-send"></i> Soumettre ma candidature
+                                    </button>
+                                    <a href="{{ path('app_public_visits_property', {id: property.id}) }}"
+                                       class="btn btn-outline-secondary">
+                                        <i class="bi bi-arrow-left"></i> Retour
+                                    </a>
+                                </div>                                {{ form_end(form) }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Toggle des champs garant
+document.addEventListener('DOMContentLoaded', function() {
+    const hasGuarantorCheckbox = document.getElementById('tenant_application_form_hasGuarantor');
+    const guarantorFields = document.getElementById('guarantor-fields');
+
+    function toggleGuarantorFields() {
+        if (hasGuarantorCheckbox && guarantorFields) {
+            guarantorFields.style.display = hasGuarantorCheckbox.checked ? 'flex' : 'none';
+        }
+    }
+
+    if (hasGuarantorCheckbox) {
+        hasGuarantorCheckbox.addEventListener('change', toggleGuarantorFields);
+        toggleGuarantorFields();
+    }
+
+    // Toggle des détails animaux
+    const hasPetsCheckbox = document.getElementById('tenant_application_form_hasPets');
+    const petDetailsField = document.getElementById('pet-details-field');
+
+    function togglePetDetails() {
+        if (hasPetsCheckbox && petDetailsField) {
+            petDetailsField.style.display = hasPetsCheckbox.checked ? 'block' : 'none';
+        }
+    }
+
+    if (hasPetsCheckbox) {
+        hasPetsCheckbox.addEventListener('change', togglePetDetails);
+        togglePetDetails();
+    }
+});
+</script>
+{% endblock %}

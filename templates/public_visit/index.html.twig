@@ -1,0 +1,113 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Propriétés Disponibles - Visites{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <div class="row">
+        <!-- Sidebar (si connecté) -->
+        {% if app.user %}
+            <div class="col-md-2 sidebar p-3">
+                {% include '_partials/sidebar.html.twig' %}
+            </div>
+        {% endif %}
+
+        <!-- Main Content -->
+        <div class="col-md-{{ app.user ? '10' : '12' }} main-content p-4">
+            <div class="container">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div>
+                        <h1 class="h2 mb-2">
+                            <i class="bi bi-house-door"></i> Propriétés Disponibles à la Location
+                        </h1>
+                        <p class="text-muted">Réservez une visite et déposez votre candidature en ligne</p>
+                    </div>
+                </div>
+
+                {% if properties|length == 0 %}
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle"></i>
+                        Aucune propriété disponible pour le moment. Revenez plus tard !
+                    </div>
+                {% else %}
+                    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+                        {% for property in properties %}
+                            <div class="col">
+                                <div class="card h-100 shadow-sm hover-card">
+                                    {% if property.photos and property.photos|length > 0 %}
+                                        <img src="{{ asset('uploads/properties/' ~ property.photos[0]) }}"
+                                             class="card-img-top"
+                                             alt="{{ property.fullAddress }}"
+                                             style="height: 200px; object-fit: cover;">
+                                    {% else %}
+                                        <div class="bg-light d-flex align-items-center justify-content-center"
+                                             style="height: 200px;">
+                                            <i class="bi bi-house-door text-muted" style="font-size: 4rem;"></i>
+                                        </div>
+                                    {% endif %}
+
+                                    <div class="card-body">
+                                        <h5 class="card-title">
+                                            {{ property.propertyType }}
+                                        </h5>
+                                        <p class="card-text text-muted mb-2">
+                                            <i class="bi bi-geo-alt"></i> {{ property.fullAddress }}
+                                        </p>
+
+                                        <div class="mb-3">
+                                            <span class="badge bg-primary me-2">
+                                                <i class="bi bi-door-open"></i>
+                                                {{ property.numberOfRooms ?? 0 }} pièce(s)
+                                            </span>
+                                            <span class="badge bg-info">
+                                                <i class="bi bi-arrows-fullscreen"></i>
+                                                {{ property.size ?? 0 }} m²
+                                            </span>
+                                        </div>
+
+                                        <div class="d-flex justify-content-between align-items-center mb-3">
+                                            <div>
+                                                <h4 class="text-primary mb-0">
+                                                    {{ (property.monthlyRent ?? 0)|number_format(0, ',', ' ') }} FCFA
+                                                </h4>
+                                                <small class="text-muted">par mois</small>
+                                            </div>
+                                            {% if property.status == 'Libre' %}
+                                                <span class="badge bg-success">Disponible</span>
+                                            {% endif %}
+                                        </div>
+
+                                        {% if property.description %}
+                                            <p class="card-text small text-muted">
+                                                {{ property.description|length > 100 ? property.description|slice(0, 100) ~ '...' : property.description }}
+                                            </p>
+                                        {% endif %}
+                                    </div>
+
+                                    <div class="card-footer bg-white border-0 pt-0">
+                                        <a href="{{ path('app_public_visits_property', {id: property.id}) }}"
+                                           class="btn btn-primary w-100">
+                                            <i class="bi bi-calendar-check"></i> Réserver une visite
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.hover-card {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.hover-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+}
+</style>
+{% endblock %}

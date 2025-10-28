@@ -1,0 +1,261 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Détails de la Visite #{{ visit.id }}{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-2 sidebar p-3">
+            {% include '_partials/sidebar.html.twig' %}
+        </div>
+
+        <div class="col-md-10 main-content p-4">
+            <nav aria-label="breadcrumb" class="mb-3">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item">
+                        <a href="{{ path('app_admin_visits_index') }}">
+                            <i class="bi bi-house-door"></i> Dashboard Visites
+                        </a>
+                    </li>
+                    <li class="breadcrumb-item">
+                        <a href="{{ path('app_admin_visits_list') }}">Réservations</a>
+                    </li>
+                    <li class="breadcrumb-item active">Visite #{{ visit.id }}</li>
+                </ol>
+            </nav>
+
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h1 class="h2 mb-2">
+                        <i class="bi bi-calendar-event"></i> Détails de la Visite
+                    </h1>
+                    {% if visit.status == 'confirmed' %}
+                        <span class="badge bg-success fs-6">
+                            <i class="bi bi-check-circle"></i> Confirmé
+                        </span>
+                    {% elseif visit.status == 'pending' %}
+                        <span class="badge bg-warning text-dark fs-6">
+                            <i class="bi bi-clock"></i> En attente
+                        </span>
+                    {% elseif visit.status == 'cancelled' %}
+                        <span class="badge bg-danger fs-6">
+                            <i class="bi bi-x-circle"></i> Annulé
+                        </span>
+                    {% elseif visit.status == 'completed' %}
+                        <span class="badge bg-info fs-6">
+                            <i class="bi bi-check-all"></i> Complété
+                        </span>
+                    {% endif %}
+                </div>
+                <div>
+                    <a href="{{ path('app_admin_visits_list') }}" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left"></i> Retour à la liste
+                    </a>
+                </div>
+            </div>
+
+            <div class="row">
+                <!-- Informations de la visite -->
+                <div class="col-md-6">
+                    <div class="card mb-4">
+                        <div class="card-header bg-primary text-white">
+                            <h5 class="mb-0">
+                                <i class="bi bi-calendar-check"></i> Informations de la visite
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <table class="table table-borderless">
+                                <tr>
+                                    <th width="40%">Date :</th>
+                                    <td>
+                                        <strong>{{ visit.visitSlot.startTime|date('d/m/Y') }}</strong>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th>Horaire :</th>
+                                    <td>
+                                        {{ visit.visitSlot.startTime|date('H:i') }} - {{ visit.visitSlot.endTime|date('H:i') }}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th>Nombre de visiteurs :</th>
+                                    <td>
+                                        <i class="bi bi-people-fill"></i> {{ visit.numberOfVisitors }} personne(s)
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th>Réservé le :</th>
+                                    <td>{{ visit.createdAt|date('d/m/Y H:i') }}</td>
+                                </tr>
+                                {% if visit.confirmedAt %}
+                                    <tr>
+                                        <th>Confirmé le :</th>
+                                        <td>{{ visit.confirmedAt|date('d/m/Y H:i') }}</td>
+                                    </tr>
+                                {% endif %}
+                            </table>
+
+                            {% if visit.message %}
+                                <div class="alert alert-info mt-3">
+                                    <strong><i class="bi bi-chat-quote"></i> Message du visiteur :</strong>
+                                    <p class="mb-0 mt-2">{{ visit.message }}</p>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Informations du visiteur -->
+                <div class="col-md-6">
+                    <div class="card mb-4">
+                        <div class="card-header bg-info text-white">
+                            <h5 class="mb-0">
+                                <i class="bi bi-person"></i> Informations du visiteur
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <table class="table table-borderless">
+                                <tr>
+                                    <th width="40%">Nom complet :</th>
+                                    <td>
+                                        <strong>{{ visit.firstName }} {{ visit.lastName }}</strong>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th>Email :</th>
+                                    <td>
+                                        <a href="mailto:{{ visit.email }}">
+                                            <i class="bi bi-envelope"></i> {{ visit.email }}
+                                        </a>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th>Téléphone :</th>
+                                    <td>
+                                        <a href="tel:{{ visit.phone }}">
+                                            <i class="bi bi-telephone"></i> {{ visit.phone }}
+                                        </a>
+                                    </td>
+                                </tr>
+                            </table>
+
+                            <div class="mt-3">
+                                <strong>Notifications envoyées :</strong>
+                                <div class="mt-2">
+                                    {% if visit.emailSent %}
+                                        <span class="badge bg-success">
+                                            <i class="bi bi-envelope-check"></i> Email envoyé
+                                        </span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">
+                                            <i class="bi bi-envelope-x"></i> Email non envoyé
+                                        </span>
+                                    {% endif %}
+
+                                    {% if visit.smsSent %}
+                                        <span class="badge bg-success">
+                                            <i class="bi bi-phone-vibrate"></i> SMS envoyé
+                                        </span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">
+                                            <i class="bi bi-phone"></i> SMS non envoyé
+                                        </span>
+                                    {% endif %}
+
+                                    {% if visit.reminderSent %}
+                                        <span class="badge bg-success">
+                                            <i class="bi bi-bell-fill"></i> Rappel envoyé
+                                        </span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Informations de la propriété -->
+            <div class="card mb-4">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-building"></i> Propriété concernée
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <h5>{{ visit.visitSlot.property.propertyType }}</h5>
+                            <p class="text-muted mb-2">
+                                <i class="bi bi-geo-alt"></i> {{ visit.visitSlot.property.fullAddress }}
+                            </p>
+                            <p>
+                                <strong>Loyer :</strong>
+                                {{ visit.visitSlot.property.rent|number_format(0, ',', ' ') }} FCFA/mois
+                            </p>
+                            {% if visit.visitSlot.property.description %}
+                                <p class="mb-0">{{ visit.visitSlot.property.description|slice(0, 200) }}...</p>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <a href="{{ path('app_property_show', {id: visit.visitSlot.property.id}) }}"
+                               class="btn btn-outline-primary"
+                               target="_blank">
+                                <i class="bi bi-eye"></i> Voir la propriété
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="card">
+                <div class="card-header bg-warning">
+                    <h5 class="mb-0">
+                        <i class="bi bi-gear"></i> Actions
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if visit.status == 'pending' %}
+                        <form action="{{ path('app_admin_visit_confirm', {id: visit.id}) }}"
+                              method="post"
+                              style="display: inline;">
+                            <button type="submit"
+                                    class="btn btn-success"
+                                    onclick="return confirm('Confirmer cette visite ?')">
+                                <i class="bi bi-check-circle"></i> Confirmer la visite
+                            </button>
+                        </form>
+                    {% endif %}
+
+                    {% if visit.status == 'confirmed' %}
+                        <form action="{{ path('app_admin_visit_complete', {id: visit.id}) }}"
+                              method="post"
+                              style="display: inline;">
+                            <button type="submit"
+                                    class="btn btn-info"
+                                    onclick="return confirm('Marquer cette visite comme effectuée ?')">
+                                <i class="bi bi-check-all"></i> Marquer comme effectuée
+                            </button>
+                        </form>
+                    {% endif %}
+
+                    {% if visit.status in ['pending', 'confirmed'] %}
+                        <button class="btn btn-secondary"
+                                onclick="alert('Fonctionnalité d\'envoi d\'email à venir')">
+                            <i class="bi bi-envelope"></i> Envoyer un email
+                        </button>
+                        <button class="btn btn-secondary"
+                                onclick="alert('Fonctionnalité d\'envoi de SMS à venir')">
+                            <i class="bi bi-phone"></i> Envoyer un SMS
+                        </button>
+                    {% endif %}
+
+                    <a href="{{ path('app_admin_visits_list') }}" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left"></i> Retour à la liste
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,172 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Candidatures locataires{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-2 sidebar p-3">
+            {% include '_partials/sidebar.html.twig' %}
+        </div>
+
+        <div class="col-md-10 main-content p-4">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h1 class="h2 mb-2">
+                        <i class="bi bi-file-earmark-person"></i> Candidatures Locataires
+                    </h1>
+                    <p class="text-muted">Examinez les dossiers de candidature avec scoring automatique</p>
+                </div>
+                <a href="{{ path('app_admin_visits_index') }}" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left"></i> Retour
+                </a>
+            </div>
+
+            <!-- Filtres -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-body">
+                    <form method="get" class="row g-3">
+                        <div class="col-md-3">
+                            <select name="status" class="form-select">
+                                <option value="">Tous les statuts</option>
+                                <option value="pending" {{ app.request.get('status') == 'pending' ? 'selected' : '' }}>En attente</option>
+                                <option value="under_review" {{ app.request.get('status') == 'under_review' ? 'selected' : '' }}>En révision</option>
+                                <option value="approved" {{ app.request.get('status') == 'approved' ? 'selected' : '' }}>Approuvé</option>
+                                <option value="rejected" {{ app.request.get('status') == 'rejected' ? 'selected' : '' }}>Rejeté</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <select name="property" class="form-select">
+                                <option value="">Toutes les propriétés</option>
+                                {% for property in properties %}
+                                    <option value="{{ property.id }}" {{ app.request.get('property') == property.id ? 'selected' : '' }}>
+                                        {{ property.fullAddress|slice(0, 40) }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <button type="submit" class="btn btn-primary w-100">
+                                <i class="bi bi-funnel"></i> Filtrer
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            {% if applications|length == 0 %}
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle"></i>
+                    Aucune candidature trouvée.
+                </div>
+            {% else %}
+                <div class="card shadow-sm">
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Score</th>
+                                        <th>Candidat</th>
+                                        <th>Propriété</th>
+                                        <th>Revenus / Loyer</th>
+                                        <th>Situation</th>
+                                        <th>Date</th>
+                                        <th>Statut</th>
+                                        <th class="text-end">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for application in applications %}
+                                        <tr>
+                                            <td>
+                                                {% if application.score %}
+                                                    <div class="text-center">
+                                                        <h4 class="mb-0
+                                                            {% if application.score >= 80 %}text-success
+                                                            {% elseif application.score >= 60 %}text-warning
+                                                            {% else %}text-danger{% endif %}">
+                                                            {{ application.score|number_format(0) }}
+                                                        </h4>
+                                                        <small class="text-muted">/100</small>
+                                                        {% if application.scoreDetails.grade %}
+                                                            <br><span class="badge bg-primary">{{ application.scoreDetails.grade }}</span>
+                                                        {% endif %}
+                                                    </div>
+                                                {% else %}
+                                                    <span class="text-muted">-</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                <strong>{{ application.firstName }} {{ application.lastName }}</strong><br>
+                                                <small class="text-muted">
+                                                    <i class="bi bi-envelope"></i> {{ application.email }}<br>
+                                                    <i class="bi bi-telephone"></i> {{ application.phone }}
+                                                </small>
+                                            </td>
+                                            <td>
+                                                <strong>{{ application.property.propertyType }}</strong><br>
+                                                <small class="text-muted">{{ application.property.fullAddress|slice(0, 30) }}...</small>
+                                            </td>
+                                            <td>
+                                                <strong>{{ application.monthlyIncome|number_format(0, ',', ' ') }} FCFA</strong><br>
+                                                <small class="text-muted">
+                                                    Loyer: {{ application.property.monthlyRent|number_format(0, ',', ' ') }} FCFA<br>
+                                                    {% set ratio = application.property.monthlyRent > 0 ? (application.monthlyIncome / application.property.monthlyRent) : 0 %}
+                                                    Ratio:
+                                                    <span class="{{ ratio >= 3 ? 'text-success' : (ratio >= 2.5 ? 'text-warning' : 'text-danger') }}">
+                                                        {{ ratio|number_format(1) }}x
+                                                    </span>
+                                                </small>
+                                            </td>
+                                            <td>
+                                                <span class="badge
+                                                    {% if application.employmentStatus == 'cdi' %}bg-success
+                                                    {% elseif application.employmentStatus == 'cdd' %}bg-info
+                                                    {% elseif application.employmentStatus == 'student' %}bg-primary
+                                                    {% else %}bg-secondary{% endif %}">
+                                                    {{ application.employmentStatus|upper }}
+                                                </span>
+                                                {% if application.hasGuarantor %}
+                                                    <br><small class="text-success"><i class="bi bi-shield-check"></i> Garant</small>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                <small class="text-muted">
+                                                    {{ application.createdAt|date('d/m/Y') }}<br>
+                                                    {{ application.createdAt|date('H:i') }}
+                                                </small>
+                                            </td>
+                                            <td>
+                                                {% if application.status == 'pending' %}
+                                                    <span class="badge bg-warning">En attente</span>
+                                                {% elseif application.status == 'under_review' %}
+                                                    <span class="badge bg-info">En révision</span>
+                                                {% elseif application.status == 'approved' %}
+                                                    <span class="badge bg-success">Approuvé</span>
+                                                {% elseif application.status == 'rejected' %}
+                                                    <span class="badge bg-danger">Rejeté</span>
+                                                {% elseif application.status == 'withdrawn' %}
+                                                    <span class="badge bg-secondary">Retiré</span>
+                                                {% else %}
+                                                    <span class="badge bg-secondary">{{ application.status }}</span>
+                                                {% endif %}
+                                            </td>
+                                            <td class="text-end">
+                                                <a href="{{ path('app_admin_application_show', {id: application.id}) }}"
+                                                   class="btn btn-sm btn-outline-primary">
+                                                    <i class="bi bi-eye"></i> Voir
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
