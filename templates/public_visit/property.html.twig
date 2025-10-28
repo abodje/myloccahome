@@ -59,31 +59,31 @@
                                     <div class="col-6 col-md-3">
                                         <div class="text-center p-3 bg-light rounded">
                                             <i class="bi bi-door-open text-primary fs-4"></i>
-                                            <div class="fw-bold mt-2">{{ property.numberOfRooms ?? 0 }}</div>
+                                            <div class="fw-bold mt-2">{{ property.rooms ?? 0 }}</div>
                                             <small class="text-muted">Pièces</small>
                                         </div>
                                     </div>
                                     <div class="col-6 col-md-3">
                                         <div class="text-center p-3 bg-light rounded">
                                             <i class="bi bi-arrows-fullscreen text-primary fs-4"></i>
-                                            <div class="fw-bold mt-2">{{ property.size ?? 0 }}</div>
+                                            <div class="fw-bold mt-2">{{ property.surface ?? 0 }}</div>
                                             <small class="text-muted">m²</small>
                                         </div>
                                     </div>
-                                    {% if property.numberOfBedrooms %}
+                                    {% if property.bedrooms %}
                                         <div class="col-6 col-md-3">
                                             <div class="text-center p-3 bg-light rounded">
                                                 <i class="bi bi-moon-stars text-primary fs-4"></i>
-                                                <div class="fw-bold mt-2">{{ property.numberOfBedrooms }}</div>
+                                                <div class="fw-bold mt-2">{{ property.bedrooms }}</div>
                                                 <small class="text-muted">Chambres</small>
                                             </div>
                                         </div>
                                     {% endif %}
-                                    {% if property.numberOfBathrooms %}
+                                    {% if property.bathrooms %}
                                         <div class="col-6 col-md-3">
                                             <div class="text-center p-3 bg-light rounded">
                                                 <i class="bi bi-droplet text-primary fs-4"></i>
-                                                <div class="fw-bold mt-2">{{ property.numberOfBathrooms }}</div>
+                                                <div class="fw-bold mt-2">{{ property.bathrooms }}</div>
                                                 <small class="text-muted">Salles de bain</small>
                                             </div>
                                         </div>

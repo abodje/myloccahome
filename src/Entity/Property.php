@@ -145,6 +145,9 @@ class Property
     #[ORM\Column(type: Types::TEXT, nullable: true)]
     private ?string $notes = null; // Notes internes
 
+    #[ORM\Column(type: Types::JSON, nullable: true)]
+    private ?array $photos = null; // Photos de la propriété
+
     #[ORM\Column(type: Types::DECIMAL, precision: 10, scale: 2, nullable: true)]
     private ?string $purchasePrice = null; // Prix d'achat
 
@@ -833,6 +836,38 @@ class Property
     public function setNotes(?string $notes): static
     {
         $this->notes = $notes;
+        return $this;
+    }
+
+    public function getPhotos(): ?array
+    {
+        return $this->photos;
+    }
+
+    public function setPhotos(?array $photos): static
+    {
+        $this->photos = $photos;
+        return $this;
+    }
+
+    public function addPhoto(string $photo): static
+    {
+        if (!in_array($photo, $this->photos ?? [])) {
+            $photos = $this->photos ?? [];
+            $photos[] = $photo;
+            $this->photos = $photos;
+        }
+        return $this;
+    }
+
+    public function removePhoto(string $photo): static
+    {
+        $photos = $this->photos ?? [];
+        $key = array_search($photo, $photos);
+        if ($key !== false) {
+            unset($photos[$key]);
+            $this->photos = array_values($photos);
+        }
         return $this;
     }
 
