@@ -98,7 +98,7 @@
                         </div>
 
                         <!-- Créneaux disponibles -->
-                        {% if availableSlots|length > 0 %}
+                        {% if available_slots|length > 0 %}
                             <div class="card shadow-sm">
                                 <div class="card-header bg-primary text-white">
                                     <h5 class="mb-0">
@@ -107,7 +107,7 @@
                                 </div>
                                 <div class="card-body">
                                     <div class="row g-2">
-                                        {% for slot in availableSlots %}
+                                        {% for slot in available_slots %}
                                             <div class="col-md-6">
                                                 <div class="border rounded p-3 {{ slot.isAvailable ? 'bg-light' : 'bg-secondary text-white' }}">
                                                     <div class="d-flex justify-content-between align-items-center">
@@ -152,7 +152,7 @@
                                     {{ form_label(form.visitSlot, 'Choisir un créneau *', {'label_attr': {'class': 'form-label fw-bold'}}) }}
                                     {{ form_widget(form.visitSlot, {'attr': {'class': 'form-select'}}) }}
                                     {{ form_errors(form.visitSlot) }}
-                                    {% if availableSlots|length == 0 %}
+                                    {% if available_slots|length == 0 %}
                                         <div class="alert alert-warning mt-2">
                                             <i class="bi bi-exclamation-triangle"></i>
                                             Aucun créneau disponible pour le moment.
@@ -192,7 +192,7 @@
                                 </div>
 
                                 <div class="d-grid">
-                                    <button type="submit" class="btn btn-success btn-lg" {{ availableSlots|length == 0 ? 'disabled' : '' }}>
+                                    <button type="submit" class="btn btn-success btn-lg" {{ available_slots|length == 0 ? 'disabled' : '' }}>
                                         <i class="bi bi-check-circle"></i> Confirmer la réservation
                                     </button>
                                 </div>

@@ -52,9 +52,13 @@ class VisitController extends AbstractController
             return;
         }
 
-        // Vérifier que l'organisation a la feature "visit_management"
+        // Vérifier que l'organisation existe et a la feature "visit_management"
         $organization = $user->getOrganization();
-        if (!$organization || !$organization->hasFeature('visit_management')) {
+        if (!$organization) {
+            throw $this->createAccessDeniedException('Aucune organisation associée à votre compte.');
+        }
+
+        if (!$organization->hasFeature('visit_management')) {
             throw $this->createAccessDeniedException('Cette fonctionnalité n\'est pas activée pour votre organisation.');
         }
     }
@@ -72,6 +76,11 @@ class VisitController extends AbstractController
         $this->checkVisitManagementAccess();
 
         $organization = $this->getUser()->getOrganization();
+
+        if (!$organization) {
+            $this->addFlash('error', 'Aucune organisation associée à votre compte. Veuillez contacter l\'administrateur.');
+            return $this->redirectToRoute('app_dashboard');
+        }
 
         // Statistiques
         $upcomingVisits = $visitRepository->createQueryBuilder('v')
@@ -108,6 +117,11 @@ class VisitController extends AbstractController
 
         $organization = $this->getUser()->getOrganization();
 
+        if (!$organization) {
+            $this->addFlash('error', 'Aucune organisation associée à votre compte.');
+            return $this->redirectToRoute('app_admin_visits_index');
+        }
+
         $slots = $visitSlotRepository->findUpcomingForOrganization($organization->getId(), 50);
 
         return $this->render('admin/visit/slots.html.twig', [
@@ -124,8 +138,15 @@ class VisitController extends AbstractController
     {
         $this->checkVisitManagementAccess();
 
+        $organization = $this->getUser()->getOrganization();
+
+        if (!$organization) {
+            $this->addFlash('error', 'Aucune organisation associée à votre compte.');
+            return $this->redirectToRoute('app_admin_visits_index');
+        }
+
         $slot = new VisitSlot();
-        $slot->setOrganization($this->getUser()->getOrganization());
+        $slot->setOrganization($organization);
 
         $form = $this->createForm(VisitSlotType::class, $slot);
         $form->handleRequest($request);
@@ -203,6 +224,11 @@ class VisitController extends AbstractController
 
         $organization = $this->getUser()->getOrganization();
 
+        if (!$organization) {
+            $this->addFlash('error', 'Aucune organisation associée à votre compte.');
+            return $this->redirectToRoute('app_admin_visits_index');
+        }
+
         $visits = $visitRepository->createQueryBuilder('v')
             ->join('v.visitSlot', 'vs')
             ->where('vs.organization = :org')
@@ -268,11 +294,27 @@ class VisitController extends AbstractController
      */
     #[Route('/candidatures', name: 'app_admin_applications_list', methods: ['GET'])]
     #[IsGranted('ROLE_MANAGER')]
-    public function applicationsList(TenantApplicationRepository $applicationRepository): Response
-    {
+    public function applicationsList(
+        TenantApplicationRepository $applicationRepository,
+        EntityManagerInterface $em
+    ): Response {
         $this->checkVisitManagementAccess();
 
         $organization = $this->getUser()->getOrganization();
+
+        if (!$organization) {
+            $this->addFlash('error', 'Aucune organisation associée à votre compte.');
+            return $this->redirectToRoute('app_admin_visits_index');
+        }
+
+        // Récupérer toutes les propriétés pour le filtre
+        $properties = $em->getRepository(\App\Entity\Property::class)
+            ->createQueryBuilder('p')
+            ->where('p.organization = :org')
+            ->setParameter('org', $organization)
+            ->orderBy('p.address', 'ASC')
+            ->getQuery()
+            ->getResult();
 
         $applications = $applicationRepository->createQueryBuilder('ta')
             ->where('ta.organization = :org')
@@ -283,7 +325,8 @@ class VisitController extends AbstractController
             ->getResult();
 
         return $this->render('admin/visit/applications_list.html.twig', [
-            'applications' => $applications
+            'applications' => $applications,
+            'properties' => $properties
         ]);
     }
 
