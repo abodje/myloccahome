@@ -36,6 +36,10 @@ services:
         arguments:
             $documentsDirectory: '%documents_directory%'
 
+    App\Service\NotificationService:
+        arguments:
+            $documentsDirectory: '%documents_directory%'
+
     # Service pour gérer les dumps de base de données
     App\Service\DatabaseDumpService:
         arguments:

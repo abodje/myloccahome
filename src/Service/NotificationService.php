@@ -22,7 +22,8 @@ class NotificationService
         private LoggerInterface $logger,
         private MailerInterface $mailer,
         private EntityManagerInterface $entityManager,
-        private SmtpConfigurationService $smtpConfigurationService
+        private SmtpConfigurationService $smtpConfigurationService,
+        private string $documentsDirectory
     ) {
     }
 
@@ -479,8 +480,29 @@ class NotificationService
 
         // Ajouter la quittance en pièce jointe si le fichier existe
         $filePath = $this->getDocumentFilePath($receipt);
-        if ($filePath && file_exists($filePath)) {
-            $email->attachFromPath($filePath, 'quittance-' . $payment->getPaidDate()->format('Y-m') . '.pdf');
+
+        if ($filePath) {
+            if (file_exists($filePath)) {
+                $email->attachFromPath($filePath, 'quittance-' . $payment->getPaidDate()->format('Y-m') . '.pdf');
+                $this->logger->info('📎 Pièce jointe ajoutée à l\'email', [
+                    'file_path' => $filePath,
+                    'file_size' => filesize($filePath),
+                    'email_to' => $emailAddress
+                ]);
+            } else {
+                $this->logger->warning('⚠️ Fichier de quittance introuvable', [
+                    'file_path' => $filePath,
+                    'document_id' => $receipt->getId(),
+                    'document_filename' => $receipt->getFileName(),
+                    'email_to' => $emailAddress
+                ]);
+            }
+        } else {
+            $this->logger->warning('⚠️ Chemin de fichier de quittance vide', [
+                'document_id' => $receipt->getId(),
+                'document_filename' => $receipt->getFileName(),
+                'email_to' => $emailAddress
+            ]);
         }
 
         // Utiliser le mailer SMTP personnalisé
@@ -603,8 +625,8 @@ class NotificationService
             return null;
         }
 
-        $uploadDir = 'uploads/documents/';
-        return $uploadDir . $document->getFileName();
+        // Utiliser le chemin absolu du répertoire des documents
+        return $this->documentsDirectory . '/' . $document->getFileName();
     }
 
     /**
