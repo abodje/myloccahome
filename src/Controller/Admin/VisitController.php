@@ -33,9 +33,23 @@ class VisitController extends AbstractController
     {
         $user = $this->getUser();
 
-        // Vérifier que l'utilisateur est ADMIN ou MANAGER
-        if (!in_array('ROLE_ADMIN', $user->getRoles()) && !in_array('ROLE_MANAGER', $user->getRoles())) {
+        // Vérifier que l'utilisateur est ADMIN, MANAGER ou SUPER_ADMIN
+        $allowedRoles = ['ROLE_ADMIN', 'ROLE_MANAGER', 'ROLE_SUPER_ADMIN'];
+        $hasRole = false;
+        foreach ($allowedRoles as $role) {
+            if (in_array($role, $user->getRoles())) {
+                $hasRole = true;
+                break;
+            }
+        }
+
+        if (!$hasRole) {
             throw $this->createAccessDeniedException('Accès refusé : vous devez être administrateur ou gestionnaire.');
+        }
+
+        // SUPER_ADMIN a accès à tout, pas besoin de vérifier la feature
+        if (in_array('ROLE_SUPER_ADMIN', $user->getRoles())) {
+            return;
         }
 
         // Vérifier que l'organisation a la feature "visit_management"
