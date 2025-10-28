@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background-color: #6c757d;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            border-radius: 5px 5px 0 0;
+        }
+        .content {
+            background-color: #f8f9fa;
+            padding: 30px;
+            border: 1px solid #dee2e6;
+        }
+        .details {
+            background-color: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-left: 4px solid #6c757d;
+        }
+        .footer {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+            font-size: 0.9em;
+        }
+        .info-box {
+            background-color: #d1ecf1;
+            border: 1px solid #17a2b8;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Information sur votre candidature</h1>
+    </div>
+
+    <div class="content">
+        <p>Bonjour {{ application.firstName }} {{ application.lastName }},</p>
+
+        <p>Nous vous remercions pour l'intérêt que vous avez porté au logement situé à <strong>{{ application.property.fullAddress }}</strong>.</p>
+
+        <p>Après examen approfondi de votre dossier, nous avons le regret de vous informer que nous ne pouvons pas donner une suite favorable à votre candidature pour ce bien immobilier.</p>
+
+        <div class="details">
+            <h3>🏠 Bien concerné</h3>
+            <p><strong>Adresse :</strong> {{ application.property.fullAddress }}</p>
+            <p><strong>Référence candidature :</strong> #{{ application.id }}</p>
+        </div>
+
+        <div class="info-box">
+            <p><strong>💡 Ne vous découragez pas !</strong></p>
+            <p>Cette décision ne remet pas en cause la qualité de votre profil. D'autres opportunités correspondant mieux à votre situation peuvent être disponibles.</p>
+        </div>
+
+        <p><strong>Nos suggestions :</strong></p>
+        <ul>
+            <li>Consultez régulièrement notre plateforme pour découvrir de nouvelles offres</li>
+            <li>N'hésitez pas à soumettre votre candidature pour d'autres biens</li>
+            <li>Contactez-nous pour obtenir des conseils personnalisés</li>
+        </ul>
+
+        <p>Nous restons à votre disposition pour toute question ou pour vous accompagner dans votre recherche de logement :</p>
+
+        <p>
+            📧 Email : contact@mylocca.com<br>
+            📱 Téléphone : +225 XX XX XX XX XX
+        </p>
+
+        <p>Nous vous souhaitons bonne chance dans votre recherche de logement.</p>
+
+        <p>Cordialement,<br><strong>L'équipe MyLocca</strong></p>
+    </div>
+
+    <div class="footer">
+        <p>© {{ 'now'|date('Y') }} MyLocca - Tous droits réservés</p>
+    </div>
+</body>
+</html>

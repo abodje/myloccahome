@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background-color: #0d6efd;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            border-radius: 5px 5px 0 0;
+        }
+        .content {
+            background-color: #f8f9fa;
+            padding: 30px;
+            border: 1px solid #dee2e6;
+        }
+        .score-badge {
+            background-color: white;
+            padding: 20px;
+            margin: 20px 0;
+            border: 3px solid #0d6efd;
+            border-radius: 10px;
+            text-align: center;
+        }
+        .score-badge h2 {
+            color: #0d6efd;
+            font-size: 2.5em;
+            margin: 10px 0;
+        }
+        .details {
+            background-color: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-left: 4px solid #0d6efd;
+        }
+        .details h3 {
+            margin-top: 0;
+            color: #0d6efd;
+        }
+        .info-row {
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .info-row:last-child {
+            border-bottom: none;
+        }
+        .label {
+            font-weight: bold;
+            color: #666;
+        }
+        .footer {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+            font-size: 0.9em;
+        }
+        .alert-info {
+            background-color: #d1ecf1;
+            border: 1px solid #0c5460;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🆕 Nouvelle Candidature Locataire</h1>
+    </div>
+
+    <div class="content">
+        <p>Bonjour,</p>
+
+        <p>Une nouvelle candidature a été soumise pour l'une de vos propriétés.</p>
+
+        <div class="score-badge">
+            <p style="margin: 0; color: #666;">Score de la candidature</p>
+            <h2>{{ application.score }}/100</h2>
+        </div>
+
+        <div class="details">
+            <h3>👤 Informations du candidat</h3>
+            <div class="info-row">
+                <span class="label">Nom complet :</span> {{ application.firstName }} {{ application.lastName }}
+            </div>
+            <div class="info-row">
+                <span class="label">Email :</span> {{ application.email }}
+            </div>
+            <div class="info-row">
+                <span class="label">Téléphone :</span> {{ application.phone }}
+            </div>
+            <div class="info-row">
+                <span class="label">Date de naissance :</span> {{ application.birthDate|date('d/m/Y') }}
+            </div>
+        </div>
+
+        <div class="details">
+            <h3>🏠 Propriété concernée</h3>
+            <div class="info-row">
+                <span class="label">Adresse :</span> {{ application.property.fullAddress }}
+            </div>
+            <div class="info-row">
+                <span class="label">Surface :</span> {{ application.property.surface }} m²
+            </div>
+            <div class="info-row">
+                <span class="label">Pièces :</span> {{ application.property.rooms }}
+            </div>
+        </div>
+
+        <div class="details">
+            <h3>💼 Profil professionnel</h3>
+            <div class="info-row">
+                <span class="label">Situation :</span> {{ application.employmentStatus }}
+            </div>
+            <div class="info-row">
+                <span class="label">Revenus mensuels :</span> {{ application.monthlyIncome|number_format(0, ',', ' ') }} FCFA
+            </div>
+            {% if application.currentEmployer %}
+            <div class="info-row">
+                <span class="label">Employeur :</span> {{ application.currentEmployer }}
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="details">
+            <h3>👨‍👩‍👧‍👦 Informations complémentaires</h3>
+            <div class="info-row">
+                <span class="label">Composition du foyer :</span> {{ application.householdSize }} personne(s)
+            </div>
+            <div class="info-row">
+                <span class="label">Garant :</span> {% if application.guarantorName %}Oui - {{ application.guarantorName }}{% else %}Non{% endif %}
+            </div>
+            {% if application.previousLandlordName %}
+            <div class="info-row">
+                <span class="label">Ancien propriétaire :</span> {{ application.previousLandlordName }}
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="alert-info">
+            <strong>🔍 Action requise :</strong>
+            <p style="margin: 10px 0;">Veuillez examiner cette candidature dans votre espace d'administration pour :</p>
+            <ul style="margin: 10px 0;">
+                <li>Consulter le détail du scoring</li>
+                <li>Vérifier les documents fournis</li>
+                <li>Approuver ou rejeter la candidature</li>
+            </ul>
+        </div>
+
+        <div style="text-align: center; margin: 30px 0;">
+            <a href="{{ url('app_admin_application_detail', {id: application.id}) }}"
+               style="display: inline-block; padding: 12px 30px; background-color: #0d6efd; color: white; text-decoration: none; border-radius: 5px;">
+                Voir la candidature
+            </a>
+        </div>
+
+        <p>Cordialement,<br><strong>Système MyLocca</strong></p>
+    </div>
+
+    <div class="footer">
+        <p>© {{ 'now'|date('Y') }} MyLocca - Tous droits réservés</p>
+        <p>Email automatique - Ne pas répondre</p>
+    </div>
+</body>
+</html>

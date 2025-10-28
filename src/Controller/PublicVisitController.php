@@ -61,8 +61,14 @@ class PublicVisitController extends AbstractController
         // Récupérer les créneaux disponibles
         $availableSlots = $visitSlotRepository->findAvailableForProperty($property->getId());
 
+        // Debug: vérifier combien de créneaux sont trouvés
+        $this->logger->info('Créneaux trouvés pour la propriété', [
+            'property_id' => $property->getId(),
+            'slots_count' => count($availableSlots)
+        ]);
+
         if (empty($availableSlots)) {
-            $this->addFlash('warning', 'Aucun créneau de visite n\'est disponible pour cette propriété.');
+            $this->addFlash('warning', 'Aucun créneau de visite n\'est disponible pour cette propriété. Veuillez contacter l\'administrateur.');
         }
 
         // Formulaire de réservation
@@ -223,6 +229,17 @@ class PublicVisitController extends AbstractController
 
             $this->entityManager->flush();
 
+            // Envoyer les notifications d'annulation
+            try {
+                $this->notificationService->sendVisitCancellationEmail($visit);
+                $this->notificationService->sendVisitCancellationSms($visit);
+            } catch (\Exception $e) {
+                $this->logger->error('Erreur envoi notification annulation', [
+                    'visit_id' => $visit->getId(),
+                    'error' => $e->getMessage()
+                ]);
+            }
+
             $this->addFlash('success', 'Votre visite a été annulée.');
             return $this->redirectToRoute('app_public_visits_index');
         }
@@ -235,17 +252,31 @@ class PublicVisitController extends AbstractController
     private function sendVisitConfirmationEmail(Visit $visit): void
     {
         try {
-            // TODO: Créer le template email de confirmation de visite
-            $this->logger->info('Email de confirmation de visite envoyé', [
-                'visit_id' => $visit->getId(),
-                'email' => $visit->getEmail()
-            ]);
+            // Envoyer l'email de confirmation
+            $emailSent = $this->notificationService->sendVisitConfirmationEmail($visit);
 
-            $visit->setEmailSent(true);
+            // Envoyer le SMS de confirmation (si configuré)
+            $smsSent = $this->notificationService->sendVisitConfirmationSms($visit);
+
+            if ($emailSent) {
+                $this->logger->info('Email de confirmation de visite envoyé', [
+                    'visit_id' => $visit->getId(),
+                    'email' => $visit->getEmail()
+                ]);
+                $visit->setEmailSent(true);
+            }
+
+            if ($smsSent) {
+                $this->logger->info('SMS de confirmation de visite envoyé', [
+                    'visit_id' => $visit->getId(),
+                    'phone' => $visit->getPhone()
+                ]);
+            }
+
             $this->entityManager->flush();
 
         } catch (\Exception $e) {
-            $this->logger->error('Erreur envoi email confirmation visite', [
+            $this->logger->error('Erreur envoi notification confirmation visite', [
                 'error' => $e->getMessage(),
                 'visit_id' => $visit->getId()
             ]);
@@ -255,12 +286,43 @@ class PublicVisitController extends AbstractController
     private function notifyNewApplication(TenantApplication $application): void
     {
         try {
-            // TODO: Notifier le gestionnaire de la nouvelle candidature
-            $this->logger->info('Nouvelle candidature reçue', [
-                'application_id' => $application->getId(),
-                'property_id' => $application->getProperty()->getId(),
-                'score' => $application->getScore()
-            ]);
+            // Notifier le candidat de la réception de sa candidature
+            $candidateSent = $this->notificationService->sendApplicationReceivedEmail($application);
+
+            if ($candidateSent) {
+                $this->logger->info('Email confirmation candidature envoyé au candidat', [
+                    'application_id' => $application->getId(),
+                    'email' => $application->getEmail()
+                ]);
+            }
+
+            // Récupérer l'email de l'administrateur/gestionnaire
+            $organization = $application->getOrganization();
+            $adminEmail = null;
+
+            // Essayer de récupérer l'email depuis l'organisation
+            if ($organization && $organization->getEmail()) {
+                $adminEmail = $organization->getEmail();
+            } else {
+                // Email par défaut (à configurer dans les paramètres)
+                $adminEmail = $this->getParameter('admin_notification_email') ?? 'admin@mylocca.com';
+            }
+
+            // Notifier l'administrateur de la nouvelle candidature
+            if ($adminEmail) {
+                $adminSent = $this->notificationService->sendNewApplicationNotificationEmail(
+                    $application,
+                    $adminEmail
+                );
+
+                if ($adminSent) {
+                    $this->logger->info('Email notification admin envoyé', [
+                        'application_id' => $application->getId(),
+                        'admin_email' => $adminEmail,
+                        'score' => $application->getScore()
+                    ]);
+                }
+            }
 
         } catch (\Exception $e) {
             $this->logger->error('Erreur notification nouvelle candidature', [

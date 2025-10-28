@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background-color: #ffc107;
+            color: #000;
+            padding: 20px;
+            text-align: center;
+            border-radius: 5px 5px 0 0;
+        }
+        .content {
+            background-color: #f8f9fa;
+            padding: 30px;
+            border: 1px solid #dee2e6;
+        }
+        .details {
+            background-color: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-left: 4px solid #ffc107;
+        }
+        .details h3 {
+            margin-top: 0;
+            color: #ffc107;
+        }
+        .info-row {
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .info-row:last-child {
+            border-bottom: none;
+        }
+        .label {
+            font-weight: bold;
+            color: #666;
+        }
+        .footer {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+            font-size: 0.9em;
+        }
+        .button {
+            display: inline-block;
+            padding: 12px 30px;
+            background-color: #ffc107;
+            color: #000;
+            text-decoration: none;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-weight: bold;
+        }
+        .alert-big {
+            background-color: #fff3cd;
+            border: 2px solid #ffc107;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 5px;
+            text-align: center;
+            font-size: 1.2em;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>⏰ Rappel : Visite Demain !</h1>
+    </div>
+
+    <div class="content">
+        <p>Bonjour {{ visit.firstName }} {{ visit.lastName }},</p>
+
+        <div class="alert-big">
+            <strong>🗓️ Votre visite est prévue demain</strong><br>
+            {{ visit.visitSlot.startTime|date('d/m/Y') }} à {{ visit.visitSlot.startTime|date('H:i') }}
+        </div>
+
+        <div class="details">
+            <h3>📍 Lieu de rendez-vous</h3>
+            <div class="info-row">
+                <span class="label">Adresse :</span> {{ visit.visitSlot.property.fullAddress }}
+            </div>
+            <div class="info-row">
+                <span class="label">Heure :</span> {{ visit.visitSlot.startTime|date('H:i') }} - {{ visit.visitSlot.endTime|date('H:i') }}
+            </div>
+            <div class="info-row">
+                <span class="label">Référence :</span> #{{ visit.id }}
+            </div>
+        </div>
+
+        <p><strong>📋 Checklist avant la visite :</strong></p>
+        <ul>
+            <li>✓ Vérifiez l'adresse exacte sur Google Maps</li>
+            <li>✓ Prévoyez votre temps de trajet</li>
+            <li>✓ Préparez vos questions</li>
+            <li>✓ Apportez une pièce d'identité</li>
+            <li>✓ Chargez votre téléphone pour prendre des photos</li>
+        </ul>
+
+        <p><strong>💡 Conseils pour la visite :</strong></p>
+        <ul>
+            <li>Vérifiez l'état général du logement</li>
+            <li>Testez les équipements (eau, électricité, portes, fenêtres)</li>
+            <li>Renseignez-vous sur les charges incluses</li>
+            <li>Posez des questions sur le quartier</li>
+            <li>Demandez les modalités de location</li>
+        </ul>
+
+        <div style="text-align: center; margin: 30px 0;">
+            <a href="{{ url('app_public_visit_detail', {id: visit.id}) }}" class="button">
+                Voir les détails
+            </a>
+        </div>
+
+        <p>
+            <strong>En cas d'empêchement :</strong><br>
+            Si vous ne pouvez pas vous rendre à cette visite, merci de nous prévenir dès que possible
+            en répondant à cet email ou en nous appelant.
+        </p>
+
+        <p>
+            📧 Email : contact@mylocca.com<br>
+            📱 Téléphone : +225 XX XX XX XX XX
+        </p>
+
+        <p>Nous avons hâte de vous rencontrer demain !<br><strong>L'équipe MyLocca</strong></p>
+    </div>
+
+    <div class="footer">
+        <p>© {{ 'now'|date('Y') }} MyLocca - Tous droits réservés</p>
+    </div>
+</body>
+</html>

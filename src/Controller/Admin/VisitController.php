@@ -10,7 +10,9 @@ use App\Repository\TenantApplicationRepository;
 use App\Repository\VisitRepository;
 use App\Repository\VisitSlotRepository;
 use App\Service\ApplicationScoringService;
+use App\Service\NotificationService;
 use Doctrine\ORM\EntityManagerInterface;
+use Psr\Log\LoggerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -22,7 +24,9 @@ class VisitController extends AbstractController
 {
     public function __construct(
         private EntityManagerInterface $entityManager,
-        private ApplicationScoringService $scoringService
+        private ApplicationScoringService $scoringService,
+        private NotificationService $notificationService,
+        private LoggerInterface $logger
     ) {
     }
 
@@ -366,7 +370,27 @@ class VisitController extends AbstractController
 
         $this->entityManager->flush();
 
-        $this->addFlash('success', 'Candidature approuvée.');
+        // Envoyer l'email d'approbation au candidat
+        try {
+            $emailSent = $this->notificationService->sendApplicationApprovedEmail($application);
+
+            if ($emailSent) {
+                $this->logger->info('Email approbation candidature envoyé', [
+                    'application_id' => $application->getId(),
+                    'email' => $application->getEmail()
+                ]);
+                $this->addFlash('success', 'Candidature approuvée et candidat notifié par email.');
+            } else {
+                $this->addFlash('success', 'Candidature approuvée (erreur lors de l\'envoi de l\'email).');
+            }
+        } catch (\Exception $e) {
+            $this->logger->error('Erreur envoi email approbation', [
+                'application_id' => $application->getId(),
+                'error' => $e->getMessage()
+            ]);
+            $this->addFlash('success', 'Candidature approuvée (erreur lors de l\'envoi de l\'email).');
+        }
+
         return $this->redirectToRoute('app_admin_application_show', ['id' => $application->getId()]);
     }
 
@@ -386,7 +410,27 @@ class VisitController extends AbstractController
 
         $this->entityManager->flush();
 
-        $this->addFlash('success', 'Candidature rejetée.');
+        // Envoyer l'email de rejet au candidat
+        try {
+            $emailSent = $this->notificationService->sendApplicationRejectedEmail($application);
+
+            if ($emailSent) {
+                $this->logger->info('Email rejet candidature envoyé', [
+                    'application_id' => $application->getId(),
+                    'email' => $application->getEmail()
+                ]);
+                $this->addFlash('success', 'Candidature rejetée et candidat notifié par email.');
+            } else {
+                $this->addFlash('success', 'Candidature rejetée (erreur lors de l\'envoi de l\'email).');
+            }
+        } catch (\Exception $e) {
+            $this->logger->error('Erreur envoi email rejet', [
+                'application_id' => $application->getId(),
+                'error' => $e->getMessage()
+            ]);
+            $this->addFlash('success', 'Candidature rejetée (erreur lors de l\'envoi de l\'email).');
+        }
+
         return $this->redirectToRoute('app_admin_application_show', ['id' => $application->getId()]);
     }
 

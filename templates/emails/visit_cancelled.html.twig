@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background-color: #dc3545;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            border-radius: 5px 5px 0 0;
+        }
+        .content {
+            background-color: #f8f9fa;
+            padding: 30px;
+            border: 1px solid #dee2e6;
+        }
+        .details {
+            background-color: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-left: 4px solid #dc3545;
+        }
+        .footer {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+            font-size: 0.9em;
+        }
+        .alert {
+            background-color: #f8d7da;
+            border: 1px solid #dc3545;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>❌ Annulation de visite</h1>
+    </div>
+
+    <div class="content">
+        <p>Bonjour {{ visit.firstName }} {{ visit.lastName }},</p>
+
+        <div class="alert">
+            <p><strong>Nous vous informons que votre visite a été annulée.</strong></p>
+        </div>
+
+        <div class="details">
+            <h3>📅 Visite annulée</h3>
+            <div class="info-row">
+                <p><strong>Date prévue :</strong> {{ visit.visitSlot.startTime|date('d/m/Y') }}</p>
+                <p><strong>Heure prévue :</strong> {{ visit.visitSlot.startTime|date('H:i') }}</p>
+                <p><strong>Adresse :</strong> {{ visit.visitSlot.property.fullAddress }}</p>
+                <p><strong>Référence :</strong> #{{ visit.id }}</p>
+            </div>
+        </div>
+
+        <p>Si vous souhaitez reprogrammer une visite pour ce bien ou un autre, n'hésitez pas à consulter nos créneaux disponibles en ligne.</p>
+
+        <p>
+            Pour toute question, contactez-nous :<br>
+            📧 Email : contact@mylocca.com<br>
+            📱 Téléphone : +225 XX XX XX XX XX
+        </p>
+
+        <p>Cordialement,<br><strong>L'équipe MyLocca</strong></p>
+    </div>
+
+    <div class="footer">
+        <p>© {{ 'now'|date('Y') }} MyLocca - Tous droits réservés</p>
+    </div>
+</body>
+</html>

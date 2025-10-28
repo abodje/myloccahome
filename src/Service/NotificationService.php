@@ -760,4 +760,559 @@ class NotificationService
             <p>" . $this->getFromName() . "</p>
         ";
     }
+
+    // ========================================================================
+    // MÉTHODES POUR LA GESTION DES VISITES
+    // ========================================================================
+
+    /**
+     * Envoie un SMS de confirmation de visite
+     */
+    public function sendVisitConfirmationSms(\App\Entity\Visit $visit): bool
+    {
+        $phone = $visit->getPhone();
+        $slot = $visit->getVisitSlot();
+        $property = $slot->getProperty();
+
+        $message = sprintf(
+            'MyLocca - Visite confirmée le %s à %s pour %s. Réf: #%s',
+            $slot->getStartTime()->format('d/m/Y'),
+            $slot->getStartTime()->format('H:i'),
+            $property->getFullAddress(),
+            $visit->getId()
+        );
+
+        return $this->sendSmsNotification($phone, $message);
+    }
+
+    /**
+     * Envoie un SMS de rappel de visite (J-1)
+     */
+    public function sendVisitReminderSms(\App\Entity\Visit $visit): bool
+    {
+        $phone = $visit->getPhone();
+        $slot = $visit->getVisitSlot();
+        $property = $slot->getProperty();
+
+        $message = sprintf(
+            'MyLocca - Rappel: Votre visite est demain %s à %s pour %s. À bientôt!',
+            $slot->getStartTime()->format('d/m/Y'),
+            $slot->getStartTime()->format('H:i'),
+            $property->getFullAddress()
+        );
+
+        return $this->sendSmsNotification($phone, $message);
+    }
+
+    /**
+     * Envoie un SMS d'annulation de visite
+     */
+    public function sendVisitCancellationSms(\App\Entity\Visit $visit): bool
+    {
+        $phone = $visit->getPhone();
+        $slot = $visit->getVisitSlot();
+
+        $message = sprintf(
+            'MyLocca - Votre visite du %s à %s a été annulée. Contactez-nous pour reprogrammer.',
+            $slot->getStartTime()->format('d/m/Y'),
+            $slot->getStartTime()->format('H:i')
+        );
+
+        return $this->sendSmsNotification($phone, $message);
+    }
+
+    /**
+     * Envoie un email de confirmation de visite
+     */
+    public function sendVisitConfirmationEmail(\App\Entity\Visit $visit): bool
+    {
+        try {
+            $email = (new Email())
+                ->from($this->getFromEmail())
+                ->to($visit->getEmail())
+                ->subject('Confirmation de votre réservation de visite - MyLocca')
+                ->html($this->getVisitConfirmationEmailTemplate($visit));
+
+            // Utiliser le mailer SMTP personnalisé
+            $customMailer = $this->smtpConfigurationService->createCustomMailer();
+            $customMailer->send($email);
+
+            $this->logger->info('Email confirmation visite envoyé', [
+                'visit_id' => $visit->getId(),
+                'email' => $visit->getEmail()
+            ]);
+
+            return true;
+        } catch (\Exception $e) {
+            $this->logger->error('Erreur envoi email confirmation visite', [
+                'visit_id' => $visit->getId(),
+                'error' => $e->getMessage()
+            ]);
+            return false;
+        }
+    }
+
+    /**
+     * Envoie un email de rappel de visite (J-1)
+     */
+    public function sendVisitReminderEmail(\App\Entity\Visit $visit): bool
+    {
+        try {
+            $email = (new Email())
+                ->from($this->getFromEmail())
+                ->to($visit->getEmail())
+                ->subject('Rappel : Votre visite est demain ! - MyLocca')
+                ->html($this->getVisitReminderEmailTemplate($visit));
+
+            // Utiliser le mailer SMTP personnalisé
+            $customMailer = $this->smtpConfigurationService->createCustomMailer();
+            $customMailer->send($email);
+
+            $this->logger->info('Email rappel visite envoyé', [
+                'visit_id' => $visit->getId(),
+                'email' => $visit->getEmail()
+            ]);
+
+            return true;
+        } catch (\Exception $e) {
+            $this->logger->error('Erreur envoi email rappel visite', [
+                'visit_id' => $visit->getId(),
+                'error' => $e->getMessage()
+            ]);
+            return false;
+        }
+    }
+
+    /**
+     * Envoie un email d'annulation de visite
+     */
+    public function sendVisitCancellationEmail(\App\Entity\Visit $visit): bool
+    {
+        try {
+            $email = (new Email())
+                ->from($this->getFromEmail())
+                ->to($visit->getEmail())
+                ->subject('Annulation de votre visite - MyLocca')
+                ->html($this->getVisitCancellationEmailTemplate($visit));
+
+            // Utiliser le mailer SMTP personnalisé
+            $customMailer = $this->smtpConfigurationService->createCustomMailer();
+            $customMailer->send($email);
+
+            $this->logger->info('Email annulation visite envoyé', [
+                'visit_id' => $visit->getId(),
+                'email' => $visit->getEmail()
+            ]);
+
+            return true;
+        } catch (\Exception $e) {
+            $this->logger->error('Erreur envoi email annulation visite', [
+                'visit_id' => $visit->getId(),
+                'error' => $e->getMessage()
+            ]);
+            return false;
+        }
+    }
+
+    /**
+     * Envoie un email de confirmation de candidature au candidat
+     */
+    public function sendApplicationReceivedEmail(\App\Entity\TenantApplication $application): bool
+    {
+        try {
+            $email = (new Email())
+                ->from($this->getFromEmail())
+                ->to($application->getEmail())
+                ->subject('Candidature reçue - MyLocca')
+                ->html($this->getApplicationReceivedEmailTemplate($application));
+
+            // Utiliser le mailer SMTP personnalisé
+            $customMailer = $this->smtpConfigurationService->createCustomMailer();
+            $customMailer->send($email);
+
+            $this->logger->info('Email confirmation candidature envoyé', [
+                'application_id' => $application->getId(),
+                'email' => $application->getEmail()
+            ]);
+
+            return true;
+        } catch (\Exception $e) {
+            $this->logger->error('Erreur envoi email confirmation candidature', [
+                'application_id' => $application->getId(),
+                'error' => $e->getMessage()
+            ]);
+            return false;
+        }
+    }
+
+    /**
+     * Envoie un email de notification à l'admin pour une nouvelle candidature
+     */
+    public function sendNewApplicationNotificationEmail(\App\Entity\TenantApplication $application, string $adminEmail): bool
+    {
+        try {
+            $email = (new Email())
+                ->from($this->getFromEmail())
+                ->to($adminEmail)
+                ->subject('Nouvelle candidature locataire - Score: ' . $application->getScore() . '/100')
+                ->html($this->getNewApplicationAdminEmailTemplate($application));
+
+            // Utiliser le mailer SMTP personnalisé
+            $customMailer = $this->smtpConfigurationService->createCustomMailer();
+            $customMailer->send($email);
+
+            $this->logger->info('Email notification admin candidature envoyé', [
+                'application_id' => $application->getId(),
+                'admin_email' => $adminEmail
+            ]);
+
+            return true;
+        } catch (\Exception $e) {
+            $this->logger->error('Erreur envoi email notification admin', [
+                'application_id' => $application->getId(),
+                'error' => $e->getMessage()
+            ]);
+            return false;
+        }
+    }
+
+    /**
+     * Envoie un email d'approbation de candidature
+     */
+    public function sendApplicationApprovedEmail(\App\Entity\TenantApplication $application): bool
+    {
+        try {
+            $email = (new Email())
+                ->from($this->getFromEmail())
+                ->to($application->getEmail())
+                ->subject('✅ Candidature approuvée - MyLocca')
+                ->html($this->getApplicationApprovedEmailTemplate($application));
+
+            // Utiliser le mailer SMTP personnalisé
+            $customMailer = $this->smtpConfigurationService->createCustomMailer();
+            $customMailer->send($email);
+
+            $this->logger->info('Email approbation candidature envoyé', [
+                'application_id' => $application->getId(),
+                'email' => $application->getEmail()
+            ]);
+
+            return true;
+        } catch (\Exception $e) {
+            $this->logger->error('Erreur envoi email approbation', [
+                'application_id' => $application->getId(),
+                'error' => $e->getMessage()
+            ]);
+            return false;
+        }
+    }
+
+    /**
+     * Envoie un email de rejet de candidature
+     */
+    public function sendApplicationRejectedEmail(\App\Entity\TenantApplication $application): bool
+    {
+        try {
+            $email = (new Email())
+                ->from($this->getFromEmail())
+                ->to($application->getEmail())
+                ->subject('Information sur votre candidature - MyLocca')
+                ->html($this->getApplicationRejectedEmailTemplate($application));
+
+            // Utiliser le mailer SMTP personnalisé
+            $customMailer = $this->smtpConfigurationService->createCustomMailer();
+            $customMailer->send($email);
+
+            $this->logger->info('Email rejet candidature envoyé', [
+                'application_id' => $application->getId(),
+                'email' => $application->getEmail()
+            ]);
+
+            return true;
+        } catch (\Exception $e) {
+            $this->logger->error('Erreur envoi email rejet', [
+                'application_id' => $application->getId(),
+                'error' => $e->getMessage()
+            ]);
+            return false;
+        }
+    }
+
+    /**
+     * Template email pour confirmation de visite
+     */
+    private function getVisitConfirmationEmailTemplate(\App\Entity\Visit $visit): string
+    {
+        $slot = $visit->getVisitSlot();
+        $property = $slot->getProperty();
+
+        return "
+            <div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;'>
+                <div style='background-color: #0d6efd; color: white; padding: 20px; text-align: center;'>
+                    <h1>✅ Visite Confirmée</h1>
+                </div>
+
+                <div style='background-color: #f8f9fa; padding: 30px;'>
+                    <p>Bonjour {$visit->getFirstName()} {$visit->getLastName()},</p>
+
+                    <p>Votre réservation de visite a été confirmée avec succès !</p>
+
+                    <div style='background-color: white; padding: 20px; margin: 20px 0; border-left: 4px solid #0d6efd;'>
+                        <h3 style='color: #0d6efd; margin-top: 0;'>📍 Détails de la propriété</h3>
+                        <p><strong>Adresse :</strong> {$property->getFullAddress()}</p>
+                        <p><strong>Surface :</strong> {$property->getSurface()} m²</p>
+                        <p><strong>Pièces :</strong> {$property->getRooms()}</p>
+                    </div>
+
+                    <div style='background-color: white; padding: 20px; margin: 20px 0; border-left: 4px solid #0d6efd;'>
+                        <h3 style='color: #0d6efd; margin-top: 0;'>📅 Date et heure</h3>
+                        <p><strong>Date :</strong> {$slot->getStartTime()->format('d/m/Y')}</p>
+                        <p><strong>Heure :</strong> {$slot->getStartTime()->format('H:i')} - {$slot->getEndTime()->format('H:i')}</p>
+                        <p><strong>Référence :</strong> #{$visit->getId()}</p>
+                    </div>
+
+                    <div style='background-color: #fff3cd; padding: 15px; margin: 20px 0; border-radius: 5px;'>
+                        <p><strong>⏰ Rappel :</strong> Nous vous enverrons un rappel la veille de votre visite.</p>
+                    </div>
+
+                    <p>À très bientôt !<br><strong>L'équipe {$this->getFromName()}</strong></p>
+                </div>
+
+                <div style='text-align: center; padding: 20px; color: #666; font-size: 0.9em;'>
+                    <p>© " . date('Y') . " {$this->getFromName()} - Tous droits réservés</p>
+                </div>
+            </div>
+        ";
+    }
+
+    /**
+     * Template email pour rappel de visite
+     */
+    private function getVisitReminderEmailTemplate(\App\Entity\Visit $visit): string
+    {
+        $slot = $visit->getVisitSlot();
+        $property = $slot->getProperty();
+
+        return "
+            <div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;'>
+                <div style='background-color: #ffc107; color: #000; padding: 20px; text-align: center;'>
+                    <h1>⏰ Rappel : Visite Demain !</h1>
+                </div>
+
+                <div style='background-color: #f8f9fa; padding: 30px;'>
+                    <p>Bonjour {$visit->getFirstName()} {$visit->getLastName()},</p>
+
+                    <div style='background-color: #fff3cd; border: 2px solid #ffc107; padding: 20px; margin: 20px 0; text-align: center; font-size: 1.2em;'>
+                        <strong>🗓️ Votre visite est prévue demain</strong><br>
+                        {$slot->getStartTime()->format('d/m/Y')} à {$slot->getStartTime()->format('H:i')}
+                    </div>
+
+                    <div style='background-color: white; padding: 20px; margin: 20px 0;'>
+                        <h3>📍 Lieu de rendez-vous</h3>
+                        <p><strong>Adresse :</strong> {$property->getFullAddress()}</p>
+                        <p><strong>Heure :</strong> {$slot->getStartTime()->format('H:i')} - {$slot->getEndTime()->format('H:i')}</p>
+                    </div>
+
+                    <p><strong>📋 Conseils pour la visite :</strong></p>
+                    <ul>
+                        <li>Vérifiez l'état général du logement</li>
+                        <li>Testez les équipements</li>
+                        <li>Préparez vos questions</li>
+                    </ul>
+
+                    <p>À demain !<br><strong>L'équipe {$this->getFromName()}</strong></p>
+                </div>
+
+                <div style='text-align: center; padding: 20px; color: #666; font-size: 0.9em;'>
+                    <p>© " . date('Y') . " {$this->getFromName()}</p>
+                </div>
+            </div>
+        ";
+    }
+
+    /**
+     * Template email pour annulation de visite
+     */
+    private function getVisitCancellationEmailTemplate(\App\Entity\Visit $visit): string
+    {
+        $slot = $visit->getVisitSlot();
+
+        return "
+            <div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;'>
+                <div style='background-color: #dc3545; color: white; padding: 20px; text-align: center;'>
+                    <h1>❌ Annulation de visite</h1>
+                </div>
+
+                <div style='background-color: #f8f9fa; padding: 30px;'>
+                    <p>Bonjour {$visit->getFirstName()} {$visit->getLastName()},</p>
+
+                    <p>Nous vous informons que votre visite prévue le <strong>{$slot->getStartTime()->format('d/m/Y')} à {$slot->getStartTime()->format('H:i')}</strong> a été annulée.</p>
+
+                    <p>Si vous souhaitez reprogrammer une visite, n'hésitez pas à nous contacter.</p>
+
+                    <p>📧 Email : {$this->getFromEmail()}</p>
+
+                    <p>Cordialement,<br><strong>L'équipe {$this->getFromName()}</strong></p>
+                </div>
+            </div>
+        ";
+    }
+
+    /**
+     * Template email pour confirmation de candidature (candidat)
+     */
+    private function getApplicationReceivedEmailTemplate(\App\Entity\TenantApplication $application): string
+    {
+        $property = $application->getProperty();
+
+        return "
+            <div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;'>
+                <div style='background-color: #28a745; color: white; padding: 20px; text-align: center;'>
+                    <h1>✅ Candidature Reçue</h1>
+                </div>
+
+                <div style='background-color: #f8f9fa; padding: 30px;'>
+                    <p>Bonjour {$application->getFirstName()} {$application->getLastName()},</p>
+
+                    <p>Nous avons bien reçu votre candidature pour le logement situé à <strong>{$property->getFullAddress()}</strong>.</p>
+
+                    <div style='background-color: white; padding: 20px; margin: 20px 0;'>
+                        <h3>📋 Votre candidature</h3>
+                        <p><strong>Référence :</strong> #{$application->getId()}</p>
+                        <p><strong>Statut :</strong> En cours d'examen</p>
+                        <p><strong>Date de soumission :</strong> {$application->getCreatedAt()->format('d/m/Y')}</p>
+                    </div>
+
+                    <p>Notre équipe va examiner votre dossier et vous contactera prochainement.</p>
+
+                    <p>Cordialement,<br><strong>L'équipe {$this->getFromName()}</strong></p>
+                </div>
+            </div>
+        ";
+    }
+
+    /**
+     * Template email pour notification admin (nouvelle candidature)
+     */
+    private function getNewApplicationAdminEmailTemplate(\App\Entity\TenantApplication $application): string
+    {
+        $property = $application->getProperty();
+
+        return "
+            <div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;'>
+                <div style='background-color: #0d6efd; color: white; padding: 20px; text-align: center;'>
+                    <h1>🆕 Nouvelle Candidature Locataire</h1>
+                </div>
+
+                <div style='background-color: #f8f9fa; padding: 30px;'>
+                    <h2>Score : {$application->getScore()}/100</h2>
+
+                    <div style='background-color: white; padding: 20px; margin: 20px 0;'>
+                        <h3>👤 Candidat</h3>
+                        <p><strong>Nom :</strong> {$application->getFirstName()} {$application->getLastName()}</p>
+                        <p><strong>Email :</strong> {$application->getEmail()}</p>
+                        <p><strong>Téléphone :</strong> {$application->getPhone()}</p>
+                        <p><strong>Profession :</strong> {$application->getEmploymentStatus()}</p>
+                    </div>
+
+                    <div style='background-color: white; padding: 20px; margin: 20px 0;'>
+                        <h3>🏠 Propriété</h3>
+                        <p><strong>Adresse :</strong> {$property->getFullAddress()}</p>
+                    </div>
+
+                    <div style='background-color: white; padding: 20px; margin: 20px 0;'>
+                        <h3>💰 Informations financières</h3>
+                        <p><strong>Revenus mensuels :</strong> " . number_format($application->getMonthlyIncome(), 0, ',', ' ') . " FCFA</p>
+                        <p><strong>Garant :</strong> " . ($application->getGuarantorName() ? 'Oui' : 'Non') . "</p>
+                    </div>                    <p style='background-color: #d1ecf1; padding: 15px; border-radius: 5px;'>
+                        <strong>ℹ️ Action requise :</strong> Veuillez examiner cette candidature dans votre espace d'administration.
+                    </p>
+                </div>
+            </div>
+        ";
+    }
+
+    /**
+     * Template email pour approbation de candidature
+     */
+    private function getApplicationApprovedEmailTemplate(\App\Entity\TenantApplication $application): string
+    {
+        $property = $application->getProperty();
+
+        return "
+            <div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;'>
+                <div style='background-color: #28a745; color: white; padding: 20px; text-align: center;'>
+                    <h1>🎉 Félicitations !</h1>
+                </div>
+
+                <div style='background-color: #f8f9fa; padding: 30px;'>
+                    <p>Bonjour {$application->getFirstName()} {$application->getLastName()},</p>
+
+                    <div style='background-color: #d4edda; border: 2px solid #28a745; padding: 20px; margin: 20px 0; border-radius: 10px; text-align: center;'>
+                        <h2 style='color: #28a745; margin: 0;'>✅ Votre candidature a été approuvée !</h2>
+                    </div>
+
+                    <p>Nous sommes ravis de vous informer que votre candidature pour le logement situé à <strong>{$property->getFullAddress()}</strong> a été acceptée.</p>
+
+                    <div style='background-color: white; padding: 20px; margin: 20px 0;'>
+                        <h3>🏠 Votre futur logement</h3>
+                        <p><strong>Adresse :</strong> {$property->getFullAddress()}</p>
+                        <p><strong>Surface :</strong> {$property->getSurface()} m²</p>
+                        <p><strong>Pièces :</strong> {$property->getRooms()}</p>
+                    </div>
+
+                    <div style='background-color: white; padding: 20px; margin: 20px 0;'>
+                        <h3>📋 Prochaines étapes</h3>
+                        <ol>
+                            <li><strong>Prise de contact :</strong> Notre équipe vous contactera sous 48h</li>
+                            <li><strong>Documents à préparer :</strong> Pièce d'identité, justificatifs de revenus, RIB</li>
+                            <li><strong>Signature du bail :</strong> Nous conviendrons d'une date ensemble</li>
+                        </ol>
+                    </div>
+
+                    <p>Bienvenue chez {$this->getFromName()} !<br><strong>L'équipe {$this->getFromName()}</strong></p>
+                </div>
+            </div>
+        ";
+    }
+
+    /**
+     * Template email pour rejet de candidature
+     */
+    private function getApplicationRejectedEmailTemplate(\App\Entity\TenantApplication $application): string
+    {
+        $property = $application->getProperty();
+
+        return "
+            <div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;'>
+                <div style='background-color: #6c757d; color: white; padding: 20px; text-align: center;'>
+                    <h1>Information sur votre candidature</h1>
+                </div>
+
+                <div style='background-color: #f8f9fa; padding: 30px;'>
+                    <p>Bonjour {$application->getFirstName()} {$application->getLastName()},</p>
+
+                    <p>Nous vous remercions pour l'intérêt que vous avez porté au logement situé à <strong>{$property->getFullAddress()}</strong>.</p>
+
+                    <p>Après examen approfondi de votre dossier, nous avons le regret de vous informer que nous ne pouvons pas donner une suite favorable à votre candidature pour ce bien immobilier.</p>
+
+                    <div style='background-color: #d1ecf1; border: 1px solid #17a2b8; padding: 15px; margin: 20px 0; border-radius: 5px;'>
+                        <p><strong>💡 Ne vous découragez pas !</strong></p>
+                        <p>Cette décision ne remet pas en cause la qualité de votre profil. D'autres opportunités peuvent être disponibles.</p>
+                    </div>
+
+                    <p><strong>Nos suggestions :</strong></p>
+                    <ul>
+                        <li>Consultez régulièrement notre plateforme pour découvrir de nouvelles offres</li>
+                        <li>N'hésitez pas à soumettre votre candidature pour d'autres biens</li>
+                        <li>Contactez-nous pour obtenir des conseils personnalisés</li>
+                    </ul>
+
+                    <p>Nous vous souhaitons bonne chance dans votre recherche de logement.</p>
+
+                    <p>Cordialement,<br><strong>L'équipe {$this->getFromName()}</strong></p>
+                </div>
+            </div>
+        ";
+    }
 }
