@@ -218,7 +218,7 @@ class TenantApiController extends AbstractController
             $dashboard['property'] = [
                 'id' => $property->getId(),
                 'reference' => $property->getId(),
-                'name' => $property->getName() ?? 'N/A',
+                'name' => $property->getFullAddress(),
                 'address' => $property->getAddress(),
                 'city' => $property->getCity(),
                 'postalCode' => $property->getPostalCode(),
@@ -664,7 +664,7 @@ class TenantApiController extends AbstractController
             'property' => [
                 'id' => $property->getId(),
                 'reference' => sprintf('N°%s', $property->getId()),
-                'name' => $property->getName() ?? 'N/A',
+                'name' => $property->getFullAddress(),
                 'address' => $property->getAddress(),
                 'city' => $property->getCity(),
                 'postalCode' => $property->getPostalCode(),

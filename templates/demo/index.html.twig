@@ -133,10 +133,10 @@
                     {% if properties|length > 0 %}
                         {% for property in properties %}
                             <div class="border-bottom pb-2 mb-2">
-                                <h6 class="mb-1">{{ property.name }}</h6>
-                                <small class="text-muted">{{ property.address }}</small>
+                                <h6 class="mb-1">{{ property.address }}, {{ property.city }}</h6>
+                                <small class="text-muted">{{ property.propertyType }}</small>
                                 <div class="mt-1">
-                                    <span class="badge bg-secondary">{{ property.type }}</span>
+                                    <span class="badge bg-secondary">{{ property.propertyType }}</span>
                                     <span class="badge bg-info">{{ property.status }}</span>
                                 </div>
                             </div>
