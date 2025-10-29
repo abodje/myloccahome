@@ -32,6 +32,30 @@ class TenantApiController extends AbstractController
     }
 
     /**
+     * Point d'entrée de l'API - Informations sur l'API
+     * GET /api/tenant
+     */
+    #[Route('/', name: 'index', methods: ['GET'])]
+    public function index(): JsonResponse
+    {
+        return $this->json([
+            'success' => true,
+            'message' => 'API Tenant MyLocca',
+            'version' => '1.0.0',
+            'endpoints' => [
+                'login' => 'POST /api/tenant/login',
+                'dashboard' => 'GET /api/tenant/dashboard',
+                'profile' => 'GET /api/tenant/profile',
+                'payments' => 'GET /api/tenant/payments',
+                'requests' => 'GET /api/tenant/requests',
+                'documents' => 'GET /api/tenant/documents',
+                'property' => 'GET /api/tenant/property',
+                'accounting' => 'GET /api/tenant/accounting'
+            ]
+        ]);
+    }
+
+    /**
      * Authentification du locataire
      * POST /api/tenant/login
      */
@@ -54,10 +78,26 @@ class TenantApiController extends AbstractController
         $user = $this->entityManager->getRepository(User::class)
             ->findOneBy(['email' => $email]);
 
-        if (!$user || !password_verify($password, $user->getPassword())) {
+        if (!$user) {
             return $this->json([
                 'success' => false,
-                'message' => 'Identifiants invalides'
+                'message' => 'Aucun compte trouvé avec cet email'
+            ], Response::HTTP_UNAUTHORIZED);
+        }
+
+        // Vérifier l'état actif de l'utilisateur
+        if (!$user->isActive()) {
+            return $this->json([
+                'success' => false,
+                'message' => 'Ce compte est désactivé'
+            ], Response::HTTP_UNAUTHORIZED);
+        }
+
+        // Vérifier le mot de passe
+        if (!password_verify($password, $user->getPassword())) {
+            return $this->json([
+                'success' => false,
+                'message' => 'Mot de passe incorrect'
             ], Response::HTTP_UNAUTHORIZED);
         }
 
@@ -65,7 +105,7 @@ class TenantApiController extends AbstractController
         if (!in_array('ROLE_TENANT', $user->getRoles())) {
             return $this->json([
                 'success' => false,
-                'message' => 'Accès réservé aux locataires'
+                'message' => 'Accès réservé aux locataires. Votre compte n\'a pas les permissions nécessaires.'
             ], Response::HTTP_FORBIDDEN);
         }
 
@@ -75,7 +115,7 @@ class TenantApiController extends AbstractController
         if (!$tenant) {
             return $this->json([
                 'success' => false,
-                'message' => 'Profil locataire introuvable'
+                'message' => 'Profil locataire introuvable. Contactez votre administrateur.'
             ], Response::HTTP_NOT_FOUND);
         }
 

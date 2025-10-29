@@ -269,6 +269,7 @@ class DashboardController extends AbstractController
             return $this->render('dashboard/tenant.html.twig', [
                 'stats' => [
                     'properties' => ['total' => 0],
+                    'leases' => ['active' => 0, 'expiring_soon' => 0],
                     'payments' => ['pending' => 0, 'overdue' => 0],
                     'maintenance' => ['pending' => 0, 'urgent' => 0],
                     'accounting' => ['balance' => 0, 'monthly_credits' => 0, 'monthly_debits' => 0],
