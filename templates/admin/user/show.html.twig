@@ -247,8 +247,12 @@
                                             <p><strong>ID :</strong> {{ user.tenant.id }}</p>
                                             <p><strong>Email :</strong> {{ user.tenant.email }}</p>
                                             <p><strong>Statut :</strong>
-                                                {% if user.tenant.isActive %}
-                                                    <span class="badge bg-success">Actif</span>
+                                                {% if user.tenant.status %}
+                                                    {% if user.tenant.status == 'active' or user.tenant.status == 'ACTIVE' %}
+                                                        <span class="badge bg-success">{{ user.tenant.status|title }}</span>
+                                                    {% else %}
+                                                        <span class="badge bg-secondary">{{ user.tenant.status|title }}</span>
+                                                    {% endif %}
                                                 {% else %}
                                                     <span class="badge bg-danger">Inactif</span>
                                                 {% endif %}
@@ -261,11 +265,11 @@
                                             <h6>Profil Propriétaire</h6>
                                             <p><strong>ID :</strong> {{ user.owner.id }}</p>
                                             <p><strong>Email :</strong> {{ user.owner.email }}</p>
-                                            <p><strong>Statut :</strong>
-                                                {% if user.owner.isActive %}
-                                                    <span class="badge bg-success">Actif</span>
+                                            <p><strong>Type :</strong>
+                                                {% if user.owner.ownerType %}
+                                                    <span class="badge bg-info">{{ user.owner.ownerType }}</span>
                                                 {% else %}
-                                                    <span class="badge bg-danger">Inactif</span>
+                                                    <span class="text-muted">Non renseigné</span>
                                                 {% endif %}
                                             </p>
                                         </div>
