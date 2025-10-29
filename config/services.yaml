@@ -38,6 +38,7 @@ services:
 
     App\Service\NotificationService:
         arguments:
+            $texter: null
             $documentsDirectory: '%documents_directory%'
 
     # Service pour gérer les dumps de base de données
@@ -56,6 +57,11 @@ services:
     # Enregistrement du processeur d'environnement pour Orange SMS
     App\Service\OrangeSmsEnvironmentVariableProcessor:
         tags: ['container.env_var_processor']
+
+    # Service JWT pour authentification API
+    App\Service\JwtService:
+        arguments:
+            $appSecret: '%env(APP_SECRET)%'
 
     # EventListener pour la mise à jour automatique du statut des propriétés
     App\EventListener\PropertyStatusListener:

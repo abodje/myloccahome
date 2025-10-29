@@ -4,6 +4,8 @@ namespace App\Form;
 
 use App\Entity\Property;
 use App\Entity\Owner;
+use App\Entity\User;
+use App\Repository\UserRepository;
 use Symfony\Bridge\Doctrine\Form\Type\EntityType;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
@@ -94,6 +96,21 @@ class PropertyType extends AbstractType
                 'placeholder' => 'Sélectionner un propriétaire',
                 'required' => false,
                 'attr' => ['class' => 'form-select']
+            ])
+            ->add('managers', EntityType::class, [
+                'class' => User::class,
+                'query_builder' => function (UserRepository $er) {
+                    return $er->createQueryBuilder('u')
+                        ->where('u.roles LIKE :role')
+                        ->setParameter('role', '%"ROLE_MANAGER"%')
+                        ->orderBy('u.firstName', 'ASC');
+                },
+                'choice_label' => 'fullName',
+                'multiple' => true,
+                'expanded' => true, // Affiche des cases à cocher
+                'label' => 'Gestionnaires',
+                'required' => false,
+                'attr' => ['class' => 'form-check-group'] // Classe pour le style
             ])
 
             // === INFORMATIONS GÉOGRAPHIQUES ===

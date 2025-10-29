@@ -80,7 +80,13 @@ class AuthService extends ChangeNotifier {
     if (!_isAuthenticated || _token == null) {
       throw Exception('Non authentifié');
     }
-    return _apiService.get(endpoint, token: _token, email: userEmail);
+    try {
+      return await _apiService.get(endpoint, token: _token);
+    } on UnauthorizedException {
+      // Token expiré ou invalide - déconnecter l'utilisateur
+      await logout();
+      rethrow;
+    }
   }
 
   Future<Map<String, dynamic>> post(
@@ -97,6 +103,12 @@ class AuthService extends ChangeNotifier {
     if (!_isAuthenticated || _token == null) {
       throw Exception('Non authentifié');
     }
-    return _apiService.put(endpoint, data, token: _token, email: userEmail);
+    try {
+      return await _apiService.put(endpoint, data, token: _token);
+    } on UnauthorizedException {
+      // Token expiré ou invalide - déconnecter l'utilisateur
+      await logout();
+      rethrow;
+    }
   }
 }

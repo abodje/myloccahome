@@ -1,0 +1,387 @@
+{
+  "info": {
+    "name": "MyLocca - Tenant API",
+    "_postman_id": "f3c7ad2b-7c1a-4a9a-8f2f-tenant-api",
+    "description": "Collection Postman pour l'API Locataire (Tenant) de MyLocca. Utilise JWT (Authorization: Bearer {{token}}).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8000"
+    },
+    {
+      "key": "token",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "Index - API info",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/tenant",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "tenant"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Auth - Login (JWT)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"password\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/tenant/login",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "tenant",
+            "login"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Dashboard",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          },
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/tenant/dashboard",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "tenant",
+            "dashboard"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Profile - Get",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          },
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/tenant/profile",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "tenant",
+            "profile"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Profile - Update",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"phone\": \"+33123456789\",\n  \"address\": \"10 rue Exemple\",\n  \"city\": \"Paris\",\n  \"postalCode\": \"75000\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/tenant/profile",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "tenant",
+            "profile"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Payments - List",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          },
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/tenant/payments",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "tenant",
+            "payments"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Payments - Details",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          },
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/tenant/payments/1",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "tenant",
+            "payments",
+            "1"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Requests - List",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          },
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/tenant/requests",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "tenant",
+            "requests"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Requests - Create",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"title\": \"Fuite d'eau\",\n  \"category\": \"Plomberie\",\n  \"description\": \"Fuite sous l'évier\",\n  \"priority\": \"Haute\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/tenant/requests",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "tenant",
+            "requests"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Documents - List",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          },
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/tenant/documents",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "tenant",
+            "documents"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Documents - Download",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          },
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/tenant/documents/1/download",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "tenant",
+            "documents",
+            "1",
+            "download"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Property",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          },
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/tenant/property",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "tenant",
+            "property"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Accounting",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          },
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/tenant/accounting",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "tenant",
+            "accounting"
+          ]
+        }
+      }
+    }
+  ]
+}
+
+

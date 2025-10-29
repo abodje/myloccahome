@@ -80,7 +80,7 @@ class ContractGenerationService
                  ->setTenant($lease->getTenant())
                  ->setProperty($lease->getProperty())
                  ->setDescription('Contrat de bail généré automatiquement après paiement de la caution')
-                 ->setUploadDate(new \DateTime())
+                 ->setCreatedAt(new \DateTime())
                  ->setIsOfficial(true);
 
         $this->entityManager->persist($document);

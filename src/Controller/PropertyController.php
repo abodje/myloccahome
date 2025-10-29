@@ -26,7 +26,10 @@ class PropertyController extends AbstractController
         $type = $request->query->get('type');
 
         // Filtrer les propriétés selon le rôle de l'utilisateur
-        if ($user && in_array('ROLE_TENANT', $user->getRoles())) {
+        if ($user && in_array('ROLE_SUPER_ADMIN', $user->getRoles())) {
+            // Super admin voit TOUTES les propriétés sans filtre
+            $properties = $propertyRepository->findWithFilters($search, $status, $type);
+        } elseif ($user && in_array('ROLE_TENANT', $user->getRoles())) {
             // Si l'utilisateur est un locataire, ne montrer que les propriétés qu'il loue
             $tenant = $user->getTenant();
             if ($tenant) {
@@ -94,7 +97,7 @@ class PropertyController extends AbstractController
                 }
             }
         } else {
-            // Pour les admins, filtrer par ORGANIZATION uniquement
+            // Pour les admins normaux, filtrer par ORGANIZATION uniquement
             if ($user && method_exists($user, 'getOrganization') && $user->getOrganization()) {
                 $organization = $user->getOrganization();
                 $properties = $propertyRepository->createQueryBuilder('p')
@@ -104,7 +107,7 @@ class PropertyController extends AbstractController
                     ->getQuery()
                     ->getResult();
             } else {
-                // Fallback si pas d'organization
+                // Fallback si pas d'organization : toutes les propriétés
                 $properties = $propertyRepository->findWithFilters($search, $status, $type);
             }
         }

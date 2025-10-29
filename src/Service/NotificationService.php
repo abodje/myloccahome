@@ -17,7 +17,7 @@ use App\Entity\Document;
 class NotificationService
 {
     public function __construct(
-        private TexterInterface $texter,
+        private ?TexterInterface $texter,
         private SettingsService $settingsService,
         private LoggerInterface $logger,
         private MailerInterface $mailer,
@@ -33,6 +33,15 @@ class NotificationService
     public function sendSmsNotification(string $phoneNumber, string $message, string $senderName = null): bool
     {
         try {
+            // Vérifier si le service Texter est disponible
+            if (!$this->texter) {
+                $this->logger->warning('Service Texter non disponible, SMS non envoyé', [
+                    'phone' => $phoneNumber,
+                    'message' => $message
+                ]);
+                return false;
+            }
+
             // Vérifier si Orange SMS est configuré et activé
             if (!$this->isOrangeSmsConfigured()) {
                 $this->logger->warning('Orange SMS non configuré, SMS non envoyé', [

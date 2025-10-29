@@ -8,6 +8,7 @@ use App\Repository\LeaseRepository;
 use App\Repository\PaymentRepository;
 use App\Repository\PropertyRepository;
 use App\Repository\TenantRepository;
+use App\Service\JwtService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -27,7 +28,8 @@ class TenantApiController extends AbstractController
         private TenantRepository $tenantRepository,
         private LeaseRepository $leaseRepository,
         private PaymentRepository $paymentRepository,
-        private PropertyRepository $propertyRepository
+        private PropertyRepository $propertyRepository,
+        private JwtService $jwtService
     ) {
     }
 
@@ -119,12 +121,19 @@ class TenantApiController extends AbstractController
             ], Response::HTTP_NOT_FOUND);
         }
 
-        // Générer un token (à améliorer avec JWT)
-        $token = base64_encode($user->getEmail() . ':' . time());
+        // Générer un token JWT sécurisé
+        $token = $this->jwtService->generateToken([
+            'user_id' => $user->getId(),
+            'email' => $user->getEmail(),
+            'tenant_id' => $tenant->getId(),
+            'roles' => $user->getRoles()
+        ]);
 
         return $this->json([
             'success' => true,
             'token' => $token,
+            'token_type' => 'Bearer',
+            'expires_in' => 86400, // 24 heures
             'user' => [
                 'id' => $user->getId(),
                 'email' => $user->getEmail(),
@@ -149,15 +158,12 @@ class TenantApiController extends AbstractController
     #[Route('/dashboard', name: 'dashboard', methods: ['GET'])]
     public function dashboard(Request $request): JsonResponse
     {
-        // Récupérer le locataire authentifié (temporaire - améliorer avec JWT)
-        $email = $request->headers->get('X-User-Email');
-        $tenant = $this->tenantRepository->findOneBy(['email' => $email]);
-
+        $tenant = $this->getAuthenticatedTenant($request);
         if (!$tenant) {
             return $this->json([
                 'success' => false,
-                'message' => 'Locataire non trouvé'
-            ], Response::HTTP_NOT_FOUND);
+                'message' => 'Non autorisé - Token invalide ou expiré'
+            ], Response::HTTP_UNAUTHORIZED);
         }
 
         // Récupérer le bail actif
@@ -228,15 +234,18 @@ class TenantApiController extends AbstractController
             ];
 
             // Gestionnaire
-            if ($property->getOwner()) {
-                $owner = $property->getOwner();
+            $managers = $property->getManagers();
+            if (!$managers->isEmpty()) {
+                // On prend le premier manager de la liste comme contact principal
+                $mainManager = $managers->first();
+
                 $dashboard['manager'] = [
-                    'name' => $owner->getFirstName() . ' ' . $owner->getLastName(),
-                    'company' => $property->getOrganization()?->getName() ?? 'Foncia',
+                    'name' => $mainManager->getFullName(),
+                    'company' => $property->getOrganization()?->getName(),
                     'address' => $property->getOrganization()?->getAddress(),
                     'city' => $property->getOrganization()?->getCity(),
-                    'phone' => $property->getOrganization()?->getPhone(),
-                    'email' => $property->getOrganization()?->getEmail()
+                    'phone' => $mainManager->getPhone() ?? $property->getOrganization()?->getPhone(),
+                    'email' => $mainManager->getEmail() ?? $property->getOrganization()?->getEmail()
                 ];
             }
         }
@@ -251,14 +260,12 @@ class TenantApiController extends AbstractController
     #[Route('/profile', name: 'profile', methods: ['GET'])]
     public function profile(Request $request): JsonResponse
     {
-        $email = $request->headers->get('X-User-Email');
-        $tenant = $this->tenantRepository->findOneBy(['email' => $email]);
-
+        $tenant = $this->getAuthenticatedTenant($request);
         if (!$tenant) {
             return $this->json([
                 'success' => false,
-                'message' => 'Locataire non trouvé'
-            ], Response::HTTP_NOT_FOUND);
+                'message' => 'Non autorisé - Token invalide ou expiré'
+            ], Response::HTTP_UNAUTHORIZED);
         }
 
         return $this->json([
@@ -272,10 +279,7 @@ class TenantApiController extends AbstractController
                 'address' => $tenant->getAddress(),
                 'city' => $tenant->getCity(),
                 'postalCode' => $tenant->getPostalCode(),
-                'birthDate' => $tenant->getBirthDate()?->format('d/m/Y'),
-                'nationality' => $tenant->getNationality(),
-                'identityType' => $tenant->getIdentityType(),
-                'identityNumber' => $tenant->getIdentityNumber()
+                'birthDate' => $tenant->getBirthDate()?->format('d/m/Y')
             ]
         ]);
     }
@@ -287,14 +291,12 @@ class TenantApiController extends AbstractController
     #[Route('/profile', name: 'profile_update', methods: ['PUT'])]
     public function updateProfile(Request $request): JsonResponse
     {
-        $email = $request->headers->get('X-User-Email');
-        $tenant = $this->tenantRepository->findOneBy(['email' => $email]);
-
+        $tenant = $this->getAuthenticatedTenant($request);
         if (!$tenant) {
             return $this->json([
                 'success' => false,
-                'message' => 'Locataire non trouvé'
-            ], Response::HTTP_NOT_FOUND);
+                'message' => 'Non autorisé - Token invalide ou expiré'
+            ], Response::HTTP_UNAUTHORIZED);
         }
 
         $data = json_decode($request->getContent(), true);
@@ -319,14 +321,12 @@ class TenantApiController extends AbstractController
     #[Route('/payments', name: 'payments', methods: ['GET'])]
     public function payments(Request $request): JsonResponse
     {
-        $email = $request->headers->get('X-User-Email');
-        $tenant = $this->tenantRepository->findOneBy(['email' => $email]);
-
+        $tenant = $this->getAuthenticatedTenant($request);
         if (!$tenant) {
             return $this->json([
                 'success' => false,
-                'message' => 'Locataire non trouvé'
-            ], Response::HTTP_NOT_FOUND);
+                'message' => 'Non autorisé - Token invalide ou expiré'
+            ], Response::HTTP_UNAUTHORIZED);
         }
 
         // Récupérer tous les baux du locataire
@@ -390,14 +390,12 @@ class TenantApiController extends AbstractController
     #[Route('/payments/{id}', name: 'payment_show', methods: ['GET'])]
     public function paymentDetails(int $id, Request $request): JsonResponse
     {
-        $email = $request->headers->get('X-User-Email');
-        $tenant = $this->tenantRepository->findOneBy(['email' => $email]);
-
+        $tenant = $this->getAuthenticatedTenant($request);
         if (!$tenant) {
             return $this->json([
                 'success' => false,
-                'message' => 'Locataire non trouvé'
-            ], Response::HTTP_NOT_FOUND);
+                'message' => 'Non autorisé - Token invalide ou expiré'
+            ], Response::HTTP_UNAUTHORIZED);
         }
 
         $payment = $this->paymentRepository->find($id);
@@ -438,14 +436,12 @@ class TenantApiController extends AbstractController
     #[Route('/requests', name: 'requests', methods: ['GET'])]
     public function requests(Request $request): JsonResponse
     {
-        $email = $request->headers->get('X-User-Email');
-        $tenant = $this->tenantRepository->findOneBy(['email' => $email]);
-
+        $tenant = $this->getAuthenticatedTenant($request);
         if (!$tenant) {
             return $this->json([
                 'success' => false,
-                'message' => 'Locataire non trouvé'
-            ], Response::HTTP_NOT_FOUND);
+                'message' => 'Non autorisé - Token invalide ou expiré'
+            ], Response::HTTP_UNAUTHORIZED);
         }
 
         // Récupérer les demandes de maintenance
@@ -501,14 +497,12 @@ class TenantApiController extends AbstractController
     #[Route('/requests', name: 'request_create', methods: ['POST'])]
     public function createRequest(Request $request): JsonResponse
     {
-        $email = $request->headers->get('X-User-Email');
-        $tenant = $this->tenantRepository->findOneBy(['email' => $email]);
-
+        $tenant = $this->getAuthenticatedTenant($request);
         if (!$tenant) {
             return $this->json([
                 'success' => false,
-                'message' => 'Locataire non trouvé'
-            ], Response::HTTP_NOT_FOUND);
+                'message' => 'Non autorisé - Token invalide ou expiré'
+            ], Response::HTTP_UNAUTHORIZED);
         }
 
         $data = json_decode($request->getContent(), true);
@@ -559,14 +553,12 @@ class TenantApiController extends AbstractController
     #[Route('/documents', name: 'documents', methods: ['GET'])]
     public function documents(Request $request): JsonResponse
     {
-        $email = $request->headers->get('X-User-Email');
-        $tenant = $this->tenantRepository->findOneBy(['email' => $email]);
-
+        $tenant = $this->getAuthenticatedTenant($request);
         if (!$tenant) {
             return $this->json([
                 'success' => false,
-                'message' => 'Locataire non trouvé'
-            ], Response::HTTP_NOT_FOUND);
+                'message' => 'Non autorisé - Token invalide ou expiré'
+            ], Response::HTTP_UNAUTHORIZED);
         }
 
         // Récupérer les documents liés au locataire
@@ -576,7 +568,7 @@ class TenantApiController extends AbstractController
             ->leftJoin('d.tenant', 't')
             ->where('t.id = :tenantId')
             ->setParameter('tenantId', $tenant->getId())
-            ->orderBy('d.uploadDate', 'DESC')
+            ->orderBy('d.createdAt', 'DESC')
             ->getQuery()
             ->getResult();
 
@@ -588,7 +580,7 @@ class TenantApiController extends AbstractController
                 'type' => $doc->getType(),
                 'fileName' => $doc->getFileName(),
                 'fileSize' => $doc->getFileSize(),
-                'uploadDate' => $doc->getUploadDate()->format('d/m/Y H:i'),
+                'uploadDate' => $doc->getCreatedAt()->format('d/m/Y H:i'),
                 'description' => $doc->getDescription(),
                 'downloadUrl' => $this->generateUrl('api_tenant_document_download', ['id' => $doc->getId()], true)
             ];
@@ -608,14 +600,12 @@ class TenantApiController extends AbstractController
     #[Route('/documents/{id}/download', name: 'document_download', methods: ['GET'])]
     public function downloadDocument(int $id, Request $request): Response
     {
-        $email = $request->headers->get('X-User-Email');
-        $tenant = $this->tenantRepository->findOneBy(['email' => $email]);
-
+        $tenant = $this->getAuthenticatedTenant($request);
         if (!$tenant) {
             return $this->json([
                 'success' => false,
-                'message' => 'Locataire non trouvé'
-            ], Response::HTTP_NOT_FOUND);
+                'message' => 'Non autorisé - Token invalide ou expiré'
+            ], Response::HTTP_UNAUTHORIZED);
         }
 
         $document = $this->entityManager->getRepository(\App\Entity\Document::class)->find($id);
@@ -646,14 +636,12 @@ class TenantApiController extends AbstractController
     #[Route('/property', name: 'property', methods: ['GET'])]
     public function property(Request $request): JsonResponse
     {
-        $email = $request->headers->get('X-User-Email');
-        $tenant = $this->tenantRepository->findOneBy(['email' => $email]);
-
+        $tenant = $this->getAuthenticatedTenant($request);
         if (!$tenant) {
             return $this->json([
                 'success' => false,
-                'message' => 'Locataire non trouvé'
-            ], Response::HTTP_NOT_FOUND);
+                'message' => 'Non autorisé - Token invalide ou expiré'
+            ], Response::HTTP_UNAUTHORIZED);
         }
 
         $activeLease = $this->leaseRepository->findOneBy([
@@ -712,14 +700,12 @@ class TenantApiController extends AbstractController
     #[Route('/accounting', name: 'accounting', methods: ['GET'])]
     public function accounting(Request $request): JsonResponse
     {
-        $email = $request->headers->get('X-User-Email');
-        $tenant = $this->tenantRepository->findOneBy(['email' => $email]);
-
+        $tenant = $this->getAuthenticatedTenant($request);
         if (!$tenant) {
             return $this->json([
                 'success' => false,
-                'message' => 'Locataire non trouvé'
-            ], Response::HTTP_NOT_FOUND);
+                'message' => 'Non autorisé - Token invalide ou expiré'
+            ], Response::HTTP_UNAUTHORIZED);
         }
 
         $leases = $this->leaseRepository->findBy(['tenant' => $tenant]);
@@ -760,5 +746,29 @@ class TenantApiController extends AbstractController
                 'nextPaymentDate' => $nextPaymentDate?->format('d/m/Y')
             ]
         ]);
+    }
+
+    /**
+     * Méthode privée pour récupérer le locataire authentifié depuis le JWT
+     */
+    private function getAuthenticatedTenant(Request $request): ?Tenant
+    {
+        // Extraire le token du header Authorization
+        $authHeader = $request->headers->get('Authorization');
+        $token = $this->jwtService->extractTokenFromHeader($authHeader);
+
+        if (!$token) {
+            return null;
+        }
+
+        // Vérifier et décoder le token
+        $payload = $this->jwtService->verifyToken($token);
+
+        if (!$payload || !isset($payload['tenant_id'])) {
+            return null;
+        }
+
+        // Récupérer le locataire depuis la BDD
+        return $this->tenantRepository->find($payload['tenant_id']);
     }
 }

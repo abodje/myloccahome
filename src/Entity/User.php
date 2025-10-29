@@ -3,8 +3,11 @@
 namespace App\Entity;
 
 use App\Repository\UserRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
 
@@ -79,11 +82,15 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(type: Types::JSON, nullable: true)]
     private ?array $consents = [];
 
+    #[ORM\ManyToMany(targetEntity: Property::class, mappedBy: 'managers')]
+    private Collection $managedProperties;
+
     public function __construct()
     {
-        $this->createdAt = new \DateTime();
+        $this->createdAt = new \DateTimeImmutable();
         $this->isActive = true;
-        $this->roles = ['ROLE_USER'];
+        $this->organizations = new ArrayCollection();
+        $this->managedProperties = new ArrayCollection();
         $this->consents = [];
     }
 
@@ -397,6 +404,33 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         if (isset($this->consents[$consentType])) {
             unset($this->consents[$consentType]);
         }
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Property>
+     */
+    public function getManagedProperties(): Collection
+    {
+        return $this->managedProperties;
+    }
+
+    public function addManagedProperty(Property $property): static
+    {
+        if (!$this->managedProperties->contains($property)) {
+            $this->managedProperties->add($property);
+            $property->addManager($this);
+        }
+
+        return $this;
+    }
+
+    public function removeManagedProperty(Property $property): static
+    {
+        if ($this->managedProperties->removeElement($property)) {
+            $property->removeManager($this);
+        }
+
         return $this;
     }
 }

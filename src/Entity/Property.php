@@ -253,15 +253,22 @@ class Property
     /**
      * @var Collection<int, MaintenanceRequest>
      */
-    #[ORM\OneToMany(targetEntity: MaintenanceRequest::class, mappedBy: 'property')]
+    #[ORM\OneToMany(mappedBy: 'property', targetEntity: MaintenanceRequest::class)]
     private Collection $maintenanceRequests;
+
+    #[ORM\ManyToMany(targetEntity: User::class, inversedBy: 'managedProperties')]
+    private Collection $managers;
+
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $videoUrl = null;
 
     public function __construct()
     {
         $this->leases = new ArrayCollection();
+        $this->inventories = new ArrayCollection();
         $this->maintenanceRequests = new ArrayCollection();
+        $this->managers = new ArrayCollection();
         $this->createdAt = new \DateTime();
-        $this->status = 'Libre';
     }
 
     public function getId(): ?int
@@ -463,6 +470,41 @@ class Property
                 $maintenanceRequest->setProperty(null);
             }
         }
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, User>
+     */
+    public function getManagers(): Collection
+    {
+        return $this->managers;
+    }
+
+    public function addManager(User $manager): static
+    {
+        if (!$this->managers->contains($manager)) {
+            $this->managers->add($manager);
+        }
+
+        return $this;
+    }
+
+    public function removeManager(User $manager): static
+    {
+        $this->managers->removeElement($manager);
+
+        return $this;
+    }
+
+    public function getVideoUrl(): ?string
+    {
+        return $this->videoUrl;
+    }
+
+    public function setVideoUrl(?string $videoUrl): static
+    {
+        $this->videoUrl = $videoUrl;
         return $this;
     }
 

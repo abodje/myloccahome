@@ -1,0 +1,5 @@
+doctrine_fixtures:
+    services:
+        'doctrine.fixtures.purger.orm_purger_factory':
+            arguments:
+                - ['property_user'] # Tables to exclude

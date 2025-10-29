@@ -87,7 +87,6 @@ class ApiService {
   Future<Map<String, dynamic>> get(
     String endpoint, {
     String? token,
-    String? email,
   }) async {
     try {
       final headers = {
@@ -97,8 +96,6 @@ class ApiService {
 
       if (token != null) {
         headers['Authorization'] = 'Bearer $token';
-        // Utiliser l'email fourni ou extraire du token
-        headers['X-User-Email'] = email ?? _getEmailFromToken(token);
       }
 
       final response = await http.get(
@@ -116,7 +113,6 @@ class ApiService {
     String endpoint,
     Map<String, dynamic> data, {
     String? token,
-    String? email,
   }) async {
     try {
       final headers = {
@@ -126,7 +122,6 @@ class ApiService {
 
       if (token != null) {
         headers['Authorization'] = 'Bearer $token';
-        headers['X-User-Email'] = email ?? _getEmailFromToken(token);
       }
 
       final response = await http.put(
@@ -154,23 +149,25 @@ class ApiService {
     if (statusCode >= 200 && statusCode < 300) {
       return body;
     } else {
+      // Gérer les erreurs d'authentification spécifiquement
+      if (statusCode == 401) {
+        final errorMessage =
+            body['message'] ?? 'Session expirée. Veuillez vous reconnecter.';
+        throw UnauthorizedException(errorMessage);
+      }
+
       // Extraire le message d'erreur de l'API
       final errorMessage = body['message'] ?? 'Erreur serveur: $statusCode';
       throw Exception(errorMessage);
     }
   }
+}
 
-  String _getEmailFromToken(String token) {
-    // Décoder le token base64 (temporaire - à améliorer avec JWT)
-    try {
-      final decoded = utf8.decode(base64Decode(token));
-      final parts = decoded.split(':');
-      if (parts.isNotEmpty) {
-        return parts[0];
-      }
-    } catch (e) {
-      // Ignorer les erreurs de décodage
-    }
-    return '';
-  }
+/// Exception personnalisée pour les erreurs d'authentification
+class UnauthorizedException implements Exception {
+  final String message;
+  UnauthorizedException(this.message);
+
+  @override
+  String toString() => message;
 }
