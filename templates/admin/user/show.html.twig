@@ -9,6 +9,15 @@
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <h2>👤 {{ user.firstName }} {{ user.lastName }}</h2>
                 <div>
+                    {% if is_granted('ROLE_ADMIN') and app.user.id != user.id %}
+                        <form method="POST" action="{{ path('app_admin_user_reset_password', {id: user.id}) }}" class="d-inline"
+                              onsubmit="return confirm('Êtes-vous sûr de vouloir réinitialiser le mot de passe de {{ user.firstName }} {{ user.lastName }} ? Le nouveau mot de passe sera généré et affiché.');">
+                            <input type="hidden" name="_token" value="{{ csrf_token('reset_password_' ~ user.id) }}">
+                            <button type="submit" class="btn btn-info">
+                                <i class="bi bi-key"></i> Réinitialiser le mot de passe
+                            </button>
+                        </form>
+                    {% endif %}
                     <a href="{{ path('app_admin_user_edit', {id: user.id}) }}" class="btn btn-warning">
                         <i class="bi bi-pencil"></i> Modifier
                     </a>
@@ -17,6 +26,29 @@
                     </a>
                 </div>
             </div>
+
+            <!-- Messages flash -->
+            {% for flash_message in app.flashes('success') %}
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    <i class="bi bi-check-circle me-2"></i>
+                    <div>{{ flash_message|raw }}</div>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+            {% for flash_message in app.flashes('warning') %}
+                <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    <div>{{ flash_message|raw }}</div>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+            {% for flash_message in app.flashes('error') %}
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <i class="bi bi-exclamation-circle me-2"></i>
+                    <div>{{ flash_message|raw }}</div>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
 
             <div class="row">
                 <!-- Informations personnelles -->
@@ -192,10 +224,6 @@
                                             <span class="text-muted">Jamais connecté</span>
                                         {% endif %}
                                     </td>
-                                </tr>
-                                <tr>
-                                    <td><strong>Dernière mise à jour :</strong></td>
-                                    <td>{{ user.updatedAt|date('d/m/Y à H:i') }}</td>
                                 </tr>
                             </table>
                         </div>

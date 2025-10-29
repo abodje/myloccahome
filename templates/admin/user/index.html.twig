@@ -15,13 +15,24 @@
 
             <!-- Messages flash -->
             {% for flash_message in app.flashes('success') %}
-                <div class="alert alert-success" role="alert">
-                    {{ flash_message }}
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    <i class="bi bi-check-circle me-2"></i>
+                    <div>{{ flash_message|raw }}</div>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+            {% for flash_message in app.flashes('warning') %}
+                <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    <div>{{ flash_message|raw }}</div>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                 </div>
             {% endfor %}
             {% for flash_message in app.flashes('error') %}
-                <div class="alert alert-danger" role="alert">
-                    {{ flash_message }}
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <i class="bi bi-exclamation-circle me-2"></i>
+                    <div>{{ flash_message|raw }}</div>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                 </div>
             {% endfor %}
 
@@ -150,6 +161,16 @@
                                                        class="btn btn-outline-warning" title="Modifier">
                                                         <i class="bi bi-pencil"></i>
                                                     </a>
+                                                    {% if is_granted('ROLE_ADMIN') and app.user.id != user.id %}
+                                                        <form method="POST" action="{{ path('app_admin_user_reset_password', {id: user.id}) }}"
+                                                              class="d-inline"
+                                                              onsubmit="return confirm('Êtes-vous sûr de vouloir réinitialiser le mot de passe de {{ user.firstName }} {{ user.lastName }} ? Le nouveau mot de passe sera généré et affiché.');">
+                                                            <input type="hidden" name="_token" value="{{ csrf_token('reset_password_' ~ user.id) }}">
+                                                            <button type="submit" class="btn btn-outline-info" title="Réinitialiser le mot de passe">
+                                                                <i class="bi bi-key"></i>
+                                                            </button>
+                                                        </form>
+                                                    {% endif %}
                                                     {% if is_granted('ROLE_ALLOWED_TO_SWITCH') and app.user.id != user.id and 'ROLE_SUPER_ADMIN' not in user.roles %}
                                                         <a href="{{ path('app_admin_user_index', { _switch_user: user.email }) }}"
                                                            class="btn btn-outline-info" title="Impersonnaliser">

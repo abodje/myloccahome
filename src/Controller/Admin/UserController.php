@@ -15,6 +15,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 #[Route('/admin/utilisateurs')]
 class UserController extends AbstractController
@@ -180,5 +181,69 @@ class UserController extends AbstractController
         }
 
         return $this->redirectToRoute('app_admin_user_index');
+    }
+
+    #[Route('/{id}/reinitialiser-mot-de-passe', name: 'app_admin_user_reset_password', methods: ['POST'])]
+    #[IsGranted('ROLE_ADMIN')]
+    public function resetPassword(
+        Request $request,
+        User $user,
+        EntityManagerInterface $entityManager,
+        UserPasswordHasherInterface $passwordHasher
+    ): Response {
+        /** @var User $currentUser */
+        $currentUser = $this->getUser();
+
+        // Vérifier que l'utilisateur connecté est admin ou super admin
+        if (!in_array('ROLE_ADMIN', $currentUser->getRoles()) && !in_array('ROLE_SUPER_ADMIN', $currentUser->getRoles())) {
+            throw $this->createAccessDeniedException('Seuls les administrateurs peuvent réinitialiser les mots de passe.');
+        }
+
+        // Vérifier qu'on ne réinitialise pas son propre mot de passe (optionnel, mais recommandé)
+        if ($currentUser->getId() === $user->getId()) {
+            $this->addFlash('warning', 'Vous ne pouvez pas réinitialiser votre propre mot de passe depuis cette interface. Utilisez la fonctionnalité "Mot de passe oublié".');
+            return $this->redirectToRoute('app_admin_user_show', ['id' => $user->getId()]);
+        }
+
+        // Vérifier les permissions selon l'organisation (sauf pour super admin)
+        if (!in_array('ROLE_SUPER_ADMIN', $currentUser->getRoles())) {
+            // Admin normal ne peut réinitialiser que les comptes de son organisation
+            if ($currentUser->getCompany()) {
+                // Admin avec société : seulement utilisateurs de sa société
+                if ($user->getCompany() && $user->getCompany()->getId() !== $currentUser->getCompany()->getId()) {
+                    throw $this->createAccessDeniedException('Vous ne pouvez réinitialiser que les mots de passe des utilisateurs de votre société.');
+                }
+            } elseif ($currentUser->getOrganization()) {
+                // Admin sans société : seulement utilisateurs de son organisation
+                if ($user->getOrganization() && $user->getOrganization()->getId() !== $currentUser->getOrganization()->getId()) {
+                    throw $this->createAccessDeniedException('Vous ne pouvez réinitialiser que les mots de passe des utilisateurs de votre organisation.');
+                }
+            }
+        }
+
+        // Vérifier le token CSRF
+        if (!$this->isCsrfTokenValid('reset_password_'.$user->getId(), $request->request->get('_token'))) {
+            throw $this->createAccessDeniedException('Token CSRF invalide.');
+        }
+
+        // Générer un nouveau mot de passe aléatoire sécurisé
+        $newPassword = bin2hex(random_bytes(8)); // 16 caractères hexadécimaux
+        $hashedPassword = $passwordHasher->hashPassword($user, $newPassword);
+        $user->setPassword($hashedPassword);
+
+        $entityManager->flush();
+
+        // Afficher le nouveau mot de passe dans un message flash (à communiquer à l'utilisateur)
+        $this->addFlash('success', sprintf(
+            'Le mot de passe de %s %s a été réinitialisé avec succès. Nouveau mot de passe : %s (à communiquer à l\'utilisateur)',
+            $user->getFirstName(),
+            $user->getLastName(),
+            $newPassword
+        ));
+
+        // Optionnel : Envoyer un email avec le nouveau mot de passe
+        // TODO: Intégrer un service d'email pour notifier l'utilisateur
+
+        return $this->redirectToRoute('app_admin_user_show', ['id' => $user->getId()]);
     }
 }
