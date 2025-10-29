@@ -675,9 +675,9 @@ class TenantApiController extends AbstractController
                 'bathrooms' => $property->getBathrooms(),
                 'surface' => $property->getSurface(),
                 'floor' => $property->getFloor(),
-                'hasElevator' => $property->isHasElevator(),
-                'hasParking' => $property->isHasParking(),
-                'hasGarden' => $property->isHasGarden(),
+                'hasElevator' => $property->isElevator() ?? false,
+                'hasParking' => $property->isHasParking() ?? false,
+                'hasGarden' => ($property->getGardenSurface() ?? 0) > 0,
                 'description' => $property->getDescription(),
                 'photos' => $property->getPhotos() ?? []
             ],
