@@ -4,6 +4,7 @@ namespace App\Controller\Api;
 
 use App\Entity\Tenant;
 use App\Entity\User;
+use App\Repository\AccountingEntryRepository;
 use App\Repository\LeaseRepository;
 use App\Repository\PaymentRepository;
 use App\Repository\PropertyRepository;
@@ -29,6 +30,7 @@ class TenantApiController extends AbstractController
         private LeaseRepository $leaseRepository,
         private PaymentRepository $paymentRepository,
         private PropertyRepository $propertyRepository,
+        private AccountingEntryRepository $accountingEntryRepository,
         private JwtService $jwtService
     ) {
     }
@@ -195,7 +197,12 @@ class TenantApiController extends AbstractController
         if ($activeLease) {
             $property = $activeLease->getProperty();
 
-            // Calculer les soldes
+            // Calculer les soldes en utilisant le même système que les contrôleurs web
+            // Utiliser AccountingEntryRepository pour inclure tous les types d'écritures
+            $tenantStats = $this->accountingEntryRepository->getTenantStatistics($tenant->getId());
+            $balance = $tenantStats['balance'] ?? 0.0;
+
+            // Calculer aussi à partir des paiements pour compatibilité et comparaison
             $payments = $this->paymentRepository->findBy(['lease' => $activeLease]);
             $totalDue = 0;
             $totalPaid = 0;
@@ -228,9 +235,14 @@ class TenantApiController extends AbstractController
                 'type' => $property->getPropertyType()
             ];
 
+            // Utiliser le balance du système comptable (cohérent avec les contrôleurs web)
+            // Balance négative = dette, positive = crédit
             $dashboard['balances'] = [
-                'soldAt' => $totalPaid - $totalDue, // Solde (négatif si dette)
-                'toPay' => max(0, $totalDue - $totalPaid) // Montant à payer
+                'soldAt' => $balance, // Solde comptable (négatif si dette, positif si crédit)
+                'toPay' => max(0, -$balance), // Montant à payer (seulement si solde négatif)
+                // Informations supplémentaires pour compatibilité
+                'totalPaid' => $totalPaid,
+                'totalDue' => $totalDue
             ];
 
             // Gestionnaire
@@ -370,13 +382,18 @@ class TenantApiController extends AbstractController
             }
         }
 
+        // Utiliser aussi le système comptable pour avoir le balance exact (cohérent avec les contrôleurs web)
+        $tenantStats = $this->accountingEntryRepository->getTenantStatistics($tenant->getId());
+        $balance = $tenantStats['balance'] ?? 0.0;
+
         return $this->json([
             'success' => true,
             'statistics' => [
                 'total' => $total,
                 'paid' => $paid,
                 'pending' => $pending,
-                'balance' => $paid - $total
+                'balance' => $balance, // Balance comptable (cohérent avec les contrôleurs web)
+                'balanceFromPayments' => $paid - $total // Balance calculée uniquement des paiements (pour référence)
             ],
             'payments' => $allPayments,
             'count' => count($allPayments)
@@ -708,8 +725,12 @@ class TenantApiController extends AbstractController
             ], Response::HTTP_UNAUTHORIZED);
         }
 
-        $leases = $this->leaseRepository->findBy(['tenant' => $tenant]);
+        // Utiliser le système comptable pour avoir les mêmes calculs que les contrôleurs web
+        $tenantStats = $this->accountingEntryRepository->getTenantStatistics($tenant->getId());
+        $balance = $tenantStats['balance'] ?? 0.0;
 
+        // Calculer aussi à partir des paiements pour les informations supplémentaires
+        $leases = $this->leaseRepository->findBy(['tenant' => $tenant]);
         $totalPaid = 0;
         $totalDue = 0;
         $lastPaymentDate = null;
@@ -738,12 +759,16 @@ class TenantApiController extends AbstractController
         return $this->json([
             'success' => true,
             'accounting' => [
-                'balance' => $totalPaid - $totalDue,
+                'balance' => $balance, // Solde comptable (cohérent avec les contrôleurs web)
                 'totalPaid' => $totalPaid,
                 'totalDue' => $totalDue,
-                'toPay' => max(0, $totalDue - $totalPaid),
+                'toPay' => max(0, -$balance), // Montant à payer si balance négative
                 'lastPaymentDate' => $lastPaymentDate?->format('d/m/Y'),
-                'nextPaymentDate' => $nextPaymentDate?->format('d/m/Y')
+                'nextPaymentDate' => $nextPaymentDate?->format('d/m/Y'),
+                'totalCredits' => $tenantStats['total_credits'] ?? 0,
+                'totalDebits' => $tenantStats['total_debits'] ?? 0,
+                'currentMonthCredits' => $tenantStats['current_month_credits'] ?? 0,
+                'currentMonthDebits' => $tenantStats['current_month_debits'] ?? 0
             ]
         ]);
     }
