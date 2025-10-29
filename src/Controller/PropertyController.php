@@ -3,11 +3,13 @@
 namespace App\Controller;
 
 use App\Entity\Property;
+use App\Event\ResourceQuotaCheckEvent;
 use App\Form\PropertyType;
 use App\Repository\PropertyRepository;
 use App\Repository\InventoryRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -214,8 +216,11 @@ class PropertyController extends AbstractController
     }
 
     #[Route('/nouveau', name: 'app_property_new', methods: ['GET', 'POST'])]
-    public function new(Request $request, EntityManagerInterface $entityManager): Response
-    {
+    public function new(
+        Request $request,
+        EntityManagerInterface $entityManager,
+        EventDispatcherInterface $eventDispatcher
+    ): Response {
         /** @var \App\Entity\User|null $user */
         $user = $this->getUser();
 
@@ -246,6 +251,26 @@ class PropertyController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
+            // Vérifier les quotas avant de créer via Event
+            if ($user && $user->getOrganization()) {
+                $quotaEvent = new ResourceQuotaCheckEvent(
+                    $user->getOrganization(),
+                    'properties',
+                    'app_property_index'
+                );
+
+                $eventDispatcher->dispatch($quotaEvent);
+
+                if (!$quotaEvent->isAllowed()) {
+                    // Ajouter les messages flash depuis l'event
+                    foreach ($quotaEvent->getFlashMessages() as $flashMessage) {
+                        $this->addFlash($flashMessage['type'], $flashMessage['message']);
+                    }
+
+                    return $this->redirectToRoute($quotaEvent->getRedirectRoute() ?? 'app_property_index');
+                }
+            }
+
             $entityManager->persist($property);
             $entityManager->flush();
 

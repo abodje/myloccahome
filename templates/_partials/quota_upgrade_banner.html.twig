@@ -1,0 +1,62 @@
+{% if upgrade_recommendation and upgrade_recommendation.has_reached_quota %}
+    <div class="alert alert-warning alert-dismissible fade show m-3 quota-upgrade-banner" role="alert" style="border-left: 4px solid #ffc107;">
+        <div class="d-flex align-items-center justify-content-between">
+            <div class="flex-grow-1">
+                <h6 class="mb-2">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                    Quota atteint - Upgrade recommandé
+                </h6>
+                <p class="mb-2">
+                    Vous avez atteint les limites de votre plan <strong>{{ upgrade_recommendation.current_plan.name }}</strong> :
+                </p>
+                <ul class="mb-2 small">
+                    {% for limitType, limitData in upgrade_recommendation.reached_limits %}
+                        <li>
+                            <strong>{{ limitData.type }}:</strong> 
+                            {{ limitData.current }} / {{ limitData.limit }} (limite atteinte)
+                        </li>
+                    {% endfor %}
+                </ul>
+                <p class="mb-0">
+                    <strong>Passez au plan {{ upgrade_recommendation.recommended_plan.name }}</strong> pour augmenter vos limites :
+                </p>
+                <ul class="mb-2 small">
+                    {% if upgrade_recommendation.recommended_plan.limits.max_properties %}
+                        <li><strong>Propriétés:</strong> {{ upgrade_recommendation.recommended_plan.limits.max_properties }} (au lieu de {{ upgrade_recommendation.current_plan.limits.max_properties ?? 'illimité' }})</li>
+                    {% else %}
+                        <li><strong>Propriétés:</strong> Illimité</li>
+                    {% endif %}
+                    {% if upgrade_recommendation.recommended_plan.limits.max_tenants %}
+                        <li><strong>Locataires:</strong> {{ upgrade_recommendation.recommended_plan.limits.max_tenants }} (au lieu de {{ upgrade_recommendation.current_plan.limits.max_tenants ?? 'illimité' }})</li>
+                    {% else %}
+                        <li><strong>Locataires:</strong> Illimité</li>
+                    {% endif %}
+                    {% if upgrade_recommendation.recommended_plan.limits.max_users %}
+                        <li><strong>Utilisateurs:</strong> {{ upgrade_recommendation.recommended_plan.limits.max_users }} (au lieu de {{ upgrade_recommendation.current_plan.limits.max_users ?? 'illimité' }})</li>
+                    {% else %}
+                        <li><strong>Utilisateurs:</strong> Illimité</li>
+                    {% endif %}
+                    {% if upgrade_recommendation.recommended_plan.limits.max_documents %}
+                        <li><strong>Documents:</strong> {{ upgrade_recommendation.recommended_plan.limits.max_documents }} (au lieu de {{ upgrade_recommendation.current_plan.limits.max_documents ?? 'illimité' }})</li>
+                    {% else %}
+                        <li><strong>Documents:</strong> Illimité</li>
+                    {% endif %}
+                </ul>
+                <div class="mt-3">
+                    <a href="{{ upgrade_recommendation.upgrade_url }}" class="btn btn-primary btn-sm me-2">
+                        <i class="bi bi-arrow-up-circle me-1"></i>
+                        Passer à {{ upgrade_recommendation.recommended_plan.name }}
+                    </a>
+                    <span class="text-muted small">
+                        {{ upgrade_recommendation.recommended_plan.monthly_price }} {{ upgrade_recommendation.recommended_plan.currency }}/mois
+                        {% if upgrade_recommendation.recommended_plan.yearly_price %}
+                            ou {{ upgrade_recommendation.recommended_plan.yearly_price }} {{ upgrade_recommendation.recommended_plan.currency }}/an
+                        {% endif %}
+                    </span>
+                </div>
+            </div>
+            <button type="button" class="btn-close ms-3" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    </div>
+{% endif %}
+

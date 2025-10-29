@@ -4,6 +4,7 @@ namespace App\Controller;
 
 use App\Entity\Tenant;
 use App\Entity\User;
+use App\Event\ResourceQuotaCheckEvent;
 use App\Form\TenantType;
 use App\Repository\TenantRepository;
 use App\Repository\LeaseRepository;
@@ -11,6 +12,7 @@ use App\Repository\PaymentRepository;
 use App\Repository\DocumentRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
@@ -19,6 +21,10 @@ use Symfony\Component\Routing\Attribute\Route;
 #[Route('/locataires')]
 class TenantController extends AbstractController
 {
+    public function __construct(
+        private EventDispatcherInterface $eventDispatcher
+    ) {
+    }
     #[Route('/', name: 'app_tenant_index', methods: ['GET'])]
     public function index(TenantRepository $tenantRepository, Request $request): Response
     {
@@ -106,6 +112,28 @@ class TenantController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
+            // Vérifier les quotas avant de créer via Event
+            /** @var \App\Entity\User|null $currentUser */
+            $currentUser = $this->getUser();
+            if ($currentUser && $currentUser->getOrganization()) {
+                $quotaEvent = new ResourceQuotaCheckEvent(
+                    $currentUser->getOrganization(),
+                    'tenants',
+                    'app_tenant_index'
+                );
+                
+                $this->eventDispatcher->dispatch($quotaEvent);
+
+                if (!$quotaEvent->isAllowed()) {
+                    // Ajouter les messages flash depuis l'event
+                    foreach ($quotaEvent->getFlashMessages() as $flashMessage) {
+                        $this->addFlash($flashMessage['type'], $flashMessage['message']);
+                    }
+
+                    return $this->redirectToRoute($quotaEvent->getRedirectRoute() ?? 'app_tenant_index');
+                }
+            }
+            
             $entityManager->persist($tenant);
 
             // Créer un compte User si demandé

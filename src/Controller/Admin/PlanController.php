@@ -105,10 +105,10 @@ class PlanController extends AbstractController
     #[Route('/{id}/toggle-popular', name: 'toggle_popular', methods: ['POST'], requirements: ['id' => '\d+'])]
     public function togglePopular(Plan $plan): Response
     {
-        $plan->setIsPopular(!$plan->getIsPopular());
+        $plan->setIsPopular(!$plan->isPopular());
         $this->entityManager->flush();
 
-        $status = $plan->getIsPopular() ? 'marqué comme populaire' : 'retiré des plans populaires';
+        $status = $plan->isPopular() ? 'marqué comme populaire' : 'retiré des plans populaires';
         $this->addFlash('success', "Plan {$status} avec succès.");
 
         return $this->redirectToRoute('app_admin_plan_index');

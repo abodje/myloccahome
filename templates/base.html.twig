@@ -206,6 +206,12 @@
                         {% endfor %}
                     {% endfor %}
 
+                    <!-- Bannière d'upgrade de quota -->
+                    {% if app.user and app.user.organization %}
+                        {% set upgrade_recommendation = quota_upgrade_recommendation() %}
+                        {% include '_partials/quota_upgrade_banner.html.twig' %}
+                    {% endif %}
+
                     <!-- Page content -->
                     <div class="p-3">
                         {% block body %}{% endblock %}

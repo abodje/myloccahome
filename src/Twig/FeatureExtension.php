@@ -3,6 +3,7 @@
 namespace App\Twig;
 
 use App\Service\FeatureAccessService;
+use App\Service\QuotaUpgradeService;
 use Symfony\Bundle\SecurityBundle\Security;
 use Twig\Extension\AbstractExtension;
 use Twig\TwigFunction;
@@ -11,6 +12,7 @@ class FeatureExtension extends AbstractExtension
 {
     public function __construct(
         private FeatureAccessService $featureAccessService,
+        private QuotaUpgradeService $quotaUpgradeService,
         private Security $security
     ) {
     }
@@ -23,6 +25,7 @@ class FeatureExtension extends AbstractExtension
             new TwigFunction('feature_icon', [$this, 'getFeatureIcon']),
             new TwigFunction('feature_block_message', [$this, 'getFeatureBlockMessage']),
             new TwigFunction('required_plan', [$this, 'getRequiredPlan']),
+            new TwigFunction('quota_upgrade_recommendation', [$this, 'getQuotaUpgradeRecommendation']),
         ];
     }
 
@@ -56,6 +59,20 @@ class FeatureExtension extends AbstractExtension
     public function getRequiredPlan(string $feature): string
     {
         return $this->featureAccessService->getRequiredPlan($feature);
+    }
+
+    /**
+     * Retourne la recommandation d'upgrade si un quota est atteint
+     */
+    public function getQuotaUpgradeRecommendation(): ?array
+    {
+        $user = $this->security->getUser();
+        
+        if (!$user || !method_exists($user, 'getOrganization') || !$user->getOrganization()) {
+            return null;
+        }
+
+        return $this->quotaUpgradeService->getUpgradeRecommendation($user->getOrganization());
     }
 }
 
