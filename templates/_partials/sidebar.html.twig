@@ -64,6 +64,15 @@
                     </a>
                 {% endif %}
             {% endfor %}
+
+            {% if is_granted('ROLE_PREVIOUS_ADMIN') %}
+                <div class="nav-item mt-4">
+                    <a class="nav-link btn btn-outline-warning text-warning" href="{{ path(app.request.attributes.get('_route')|default('dashboard'), app.request.attributes.get('_route_params')|merge({_switch_user: '_exit'})) }}">
+                        <i class="bi bi-person-badge me-2"></i>
+                        Quitter l'impersonnalisation
+                    </a>
+                </div>
+            {% endif %}
         </nav>
     </div>
 </div>
