@@ -9,11 +9,11 @@ class ApiService {
   // Pour APPAREIL PHYSIQUE, décommentez la ligne ci-dessous
   // et remplacez 192.168.1.54 par VOTRE IP LOCALE (voir ipconfig)
   // ============================================
-  // static const String baseUrlOverride = 'http://192.168.1.54:8000/api/tenant';
+  // static const String baseUrlOverride = 'http://192.168.1.54:8000'; // Changed to just the base URL
 
   // Configuration automatique selon la plateforme
   static String get baseUrl {
-    return 'https://app.lokapro.tech/api/tenant';
+    return 'https://app.lokapro.tech'; // Changed to just the base URL
   }
 
   Future<Map<String, dynamic>> post(

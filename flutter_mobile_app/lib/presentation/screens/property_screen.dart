@@ -169,10 +169,7 @@ class _PropertyScreenState extends State<PropertyScreen> {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => PropertyDetailScreen(
-                propertyData: _propertyData!,
-                leaseData: _leaseData,
-              ),
+              builder: (context) => PropertyDetailScreen(), // Removed const keyword
             ),
           );
         },

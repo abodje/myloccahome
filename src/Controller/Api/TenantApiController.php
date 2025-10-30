@@ -795,6 +795,9 @@ class TenantApiController extends AbstractController
             ], Response::HTTP_UNAUTHORIZED);
         }
 
+        $includeEntries = (string) $request->query->get('entries', '0') === '1';
+        $entriesLimit = max(1, min(100, (int) ($request->query->get('entriesLimit', 20))));
+
         // Utiliser le système comptable pour avoir les mêmes calculs que les contrôleurs web
         $tenantStats = $this->accountingEntryRepository->getTenantStatistics($tenant->getId());
         $balance = $tenantStats['balance'] ?? 0.0;
@@ -826,7 +829,7 @@ class TenantApiController extends AbstractController
             }
         }
 
-        return $this->json([
+        $response = [
             'success' => true,
             'accounting' => [
                 'balance' => $balance, // Solde comptable (cohérent avec les contrôleurs web)
@@ -840,7 +843,29 @@ class TenantApiController extends AbstractController
                 'currentMonthCredits' => $tenantStats['current_month_credits'] ?? 0,
                 'currentMonthDebits' => $tenantStats['current_month_debits'] ?? 0
             ]
-        ]);
+        ];
+
+        if ($includeEntries) {
+            $entries = $this->accountingEntryRepository->findByTenantWithFilters($tenant->getId());
+            $entries = array_slice($entries, 0, $entriesLimit);
+            $response['entries'] = array_map(function ($e) {
+                /** @var \App\Entity\AccountingEntry $e */
+                return [
+                    'id' => $e->getId(),
+                    'date' => $e->getEntryDate()?->format('Y-m-d'),
+                    'type' => $e->getType(),
+                    'category' => $e->getCategory(),
+                    'amount' => (float) $e->getAmount(),
+                    'signedAmount' => method_exists($e, 'getSignedAmount') ? (float) $e->getSignedAmount() : ($e->getType() === 'CREDIT' ? (float)$e->getAmount() : -(float)$e->getAmount()),
+                    'runningBalance' => method_exists($e, 'getRunningBalance') ? (float) $e->getRunningBalance() : null,
+                    'reference' => $e->getReference(),
+                    'description' => $e->getDescription(),
+                ];
+            }, $entries);
+            $response['entriesLimit'] = $entriesLimit;
+        }
+
+        return $this->json($response);
     }
 
     /**

@@ -1,5 +1,7 @@
 import '../models/user_model.dart';
 import '../models/tenant_model.dart';
+import '../models/property_model.dart';
+import '../models/lease_model.dart';
 import 'auth_service.dart';
 
 class TenantDataService {
@@ -9,17 +11,17 @@ class TenantDataService {
 
   // Dashboard
   Future<Map<String, dynamic>> getDashboard() async {
-    return await _authService.get('/dashboard');
+    return await _authService.get('/api/tenant/dashboard');
   }
 
   // Paiements
   Future<Map<String, dynamic>> getPayments() async {
-    return await _authService.get('/payments');
+    return await _authService.get('/api/tenant/payments');
   }
 
   // Demandes
   Future<Map<String, dynamic>> getRequests() async {
-    return await _authService.get('/requests');
+    return await _authService.get('/api/tenant/requests');
   }
 
   // Créer une demande
@@ -29,7 +31,7 @@ class TenantDataService {
     String? description,
     String? priority,
   }) async {
-    return await _authService.post('/requests', {
+    return await _authService.post('/api/tenant/requests', {
       'title': title,
       'category': category,
       'description': description ?? '',
@@ -39,26 +41,35 @@ class TenantDataService {
 
   // Documents
   Future<Map<String, dynamic>> getDocuments() async {
-    return await _authService.get('/documents');
+    return await _authService.get('/api/tenant/documents');
   }
 
   // Propriété
   Future<Map<String, dynamic>> getProperty() async {
-    return await _authService.get('/property');
+    return await _authService.get('/api/tenant/property');
+  }
+
+  // Détail de la propriété
+  Future<Map<String, dynamic>> getPropertyDetails() async {
+    final response = await _authService.get('/api/tenant/property');
+    return {
+      'property': PropertyModel.fromJson(response['property']),
+      'lease': LeaseModel.fromJson(response['lease']),
+    };
   }
 
   // Comptabilité
   Future<Map<String, dynamic>> getAccounting() async {
-    return await _authService.get('/accounting');
+    return await _authService.get('/api/tenant/accounting');
   }
 
   // Profil
   Future<Map<String, dynamic>> getProfile() async {
-    return await _authService.get('/profile');
+    return await _authService.get('/api/tenant/profile');
   }
 
   // Mettre à jour le profil
   Future<Map<String, dynamic>> updateProfile(Map<String, dynamic> data) async {
-    return await _authService.put('/profile', data);
+    return await _authService.put('/api/tenant/profile', data);
   }
 }
