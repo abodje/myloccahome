@@ -40,7 +40,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
         _dashboardData = data;
         _isLoading = false;
       });
-    } catch (e) {
+    }
+    catch (e) {
       if (!mounted) return;
       setState(() {
         _error = e.toString();
@@ -54,19 +55,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final authService = Provider.of<AuthService>(context);
     final tenant = authService.tenant;
     final user = authService.user;
+    final currencySymbol = authService.settings?.localization.defaultCurrency ?? '€';
 
     final now = DateTime.now();
     final formattedDate =
         '${now.day.toString().padLeft(2, '0')}/${now.month.toString().padLeft(2, '0')}/${now.year}';
 
     return Scaffold(
-      // AppBar plus moderne et intégrée
       appBar: AppBar(
-        backgroundColor: AppTheme.backgroundGrey, // Fond de l'appbar comme le scaffold
-        foregroundColor: AppTheme.textDark, // Couleur des icônes et du titre
+        backgroundColor: AppTheme.primaryBlue, // Changed to primaryBlue
+        foregroundColor: Colors.white, // Changed to white
         elevation: 0,
         title: const Text('Tableau de bord'),
-        centerTitle: false, // Titre aligné à gauche
+        centerTitle: false,
         actions: [
           IconButton(
             icon: const Icon(Icons.chat_bubble_outline),
@@ -92,7 +93,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           const SizedBox(height: 16),
                           _buildTenantInfoCard(context, tenant, user),
                           const SizedBox(height: 16),
-                          _buildCardsRow(context, formattedDate),
+                          _buildCardsRow(context, formattedDate, currencySymbol),
                           const SizedBox(height: 24),
                           _buildRecentRequestsSection(context),
                           const SizedBox(height: 24),
@@ -186,7 +187,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  Widget _buildCardsRow(BuildContext context, String formattedDate) {
+  Widget _buildCardsRow(BuildContext context, String formattedDate, String currencySymbol) {
     final manager = _dashboardData!['manager'];
     final balances = _dashboardData!['balances'] ?? {};
 
@@ -260,7 +261,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    '${balances['soldAt'] ?? 0} €',
+                    '${balances['soldAt'] ?? 0} $currencySymbol',
                     style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                           color: AppTheme.primaryOrange,
                           fontWeight: FontWeight.bold,
@@ -269,7 +270,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   const SizedBox(height: 8),
                   Text('Solde à venir', style: Theme.of(context).textTheme.bodySmall),
                   Text(
-                    '${balances['toPay'] ?? 0} €',
+                    '${balances['toPay'] ?? 0} $currencySymbol',
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppTheme.primaryBlue),
                   ),
                   const SizedBox(height: 16),
@@ -323,7 +324,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Widget _buildRequestCard(BuildContext context, Map<String, dynamic> request) {
-    // Définir une couleur par statut pour la barre latérale
     final statusColor = request['status'] == 'CLOSED' ? Colors.grey : AppTheme.lightBlue;
 
     return Card(

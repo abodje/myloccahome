@@ -55,17 +55,20 @@ class _PaymentsScreenState extends State<PaymentsScreen> {
     }
   }
 
-  String _formatAmount(double amount) {
-    return amount.toStringAsFixed(2).replaceAll('.', ',');
+  String _formatAmount(double amount, String currencySymbol) {
+    return '${amount.toStringAsFixed(2).replaceAll('.', ',')} $currencySymbol';
   }
 
   @override
   Widget build(BuildContext context) {
+    final authService = Provider.of<AuthService>(context);
+    final currencySymbol = authService.settings?.localization.defaultCurrency ?? '€';
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Mes paiements'),
-        backgroundColor: AppTheme.backgroundGrey,
-        foregroundColor: AppTheme.textDark,
+        backgroundColor: AppTheme.primaryBlue,
+        foregroundColor: Colors.white,
         elevation: 0,
         centerTitle: false,
         actions: [
@@ -83,7 +86,7 @@ class _PaymentsScreenState extends State<PaymentsScreen> {
               ? _buildErrorView()
               : RefreshIndicator(
                   onRefresh: _loadPayments,
-                  child: _buildContent(),
+                  child: _buildContent(currencySymbol),
                 ),
     );
   }
@@ -104,20 +107,20 @@ class _PaymentsScreenState extends State<PaymentsScreen> {
     );
   }
 
-  Widget _buildContent() {
+  Widget _buildContent(String currencySymbol) {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        _buildBalanceCard(context),
+        _buildBalanceCard(context, currencySymbol),
         const SizedBox(height: 24),
-        _buildPaymentsHistory(context),
+        _buildPaymentsHistory(context, currencySymbol),
       ],
     );
   }
 
-  Widget _buildBalanceCard(BuildContext context) {
-    final balance = _statistics?['balance'] ?? 0.0;
-    final toPay = _statistics?['pending'] ?? 0.0;
+  Widget _buildBalanceCard(BuildContext context, String currencySymbol) {
+    final balance = double.tryParse(_statistics?['balance']?.toString() ?? '0') ?? 0.0;
+    final toPay = double.tryParse(_statistics?['pending']?.toString() ?? '0') ?? 0.0;
 
     return Card(
       elevation: 2,
@@ -133,7 +136,7 @@ class _PaymentsScreenState extends State<PaymentsScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              '${_formatAmount(balance)} €',
+              _formatAmount(balance, currencySymbol),
               style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                     color: AppTheme.primaryBlue,
                     fontWeight: FontWeight.bold,
@@ -146,7 +149,7 @@ class _PaymentsScreenState extends State<PaymentsScreen> {
             ),
             const SizedBox(height: 4),
             Text(
-              '${_formatAmount(toPay)} €',
+              _formatAmount(toPay, currencySymbol),
               style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                     color: AppTheme.textDark,
                     fontWeight: FontWeight.w600,
@@ -158,7 +161,7 @@ class _PaymentsScreenState extends State<PaymentsScreen> {
     );
   }
 
-  Widget _buildPaymentsHistory(BuildContext context) {
+  Widget _buildPaymentsHistory(BuildContext context, String currencySymbol) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -186,14 +189,14 @@ class _PaymentsScreenState extends State<PaymentsScreen> {
             physics: const NeverScrollableScrollPhysics(),
             itemCount: _payments.length,
             itemBuilder: (context, index) {
-              return _buildPaymentItem(context, _payments[index]);
+              return _buildPaymentItem(context, _payments[index], currencySymbol);
             },
           ),
       ],
     );
   }
 
-  Widget _buildPaymentItem(BuildContext context, PaymentModel payment) {
+  Widget _buildPaymentItem(BuildContext context, PaymentModel payment, String currencySymbol) {
     return Card(
       elevation: 2,
       shadowColor: Colors.black.withOpacity(0.05),
@@ -230,7 +233,7 @@ class _PaymentsScreenState extends State<PaymentsScreen> {
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 Text(
-                  '${_formatAmount(payment.amount)} €',
+                  _formatAmount(payment.amount, currencySymbol),
                   style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 4),

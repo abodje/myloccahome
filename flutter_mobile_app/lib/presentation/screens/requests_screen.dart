@@ -69,15 +69,15 @@ class _RequestsScreenState extends State<RequestsScreen> with SingleTickerProvid
     return Scaffold(
       appBar: AppBar(
         title: const Text('Mes demandes'),
-        backgroundColor: AppTheme.backgroundGrey,
-        foregroundColor: AppTheme.textDark,
+        backgroundColor: AppTheme.primaryBlue,
+        foregroundColor: Colors.white,
         elevation: 0,
         centerTitle: false,
         bottom: TabBar(
           controller: _tabController,
-          labelColor: AppTheme.primaryBlue,
-          unselectedLabelColor: AppTheme.textLight,
-          indicatorColor: AppTheme.primaryBlue,
+          labelColor: Colors.white,
+          unselectedLabelColor: Colors.white70,
+          indicatorColor: AppTheme.primaryOrange,
           indicatorWeight: 3,
           labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
           unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.normal, fontSize: 16),

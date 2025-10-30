@@ -16,8 +16,8 @@ class PropertyDetailScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text('Détail du lot'),
-        backgroundColor: AppTheme.backgroundGrey,
-        foregroundColor: AppTheme.textDark,
+        backgroundColor: AppTheme.primaryBlue,
+        foregroundColor: Colors.white,
         elevation: 0,
       ),
       backgroundColor: AppTheme.backgroundGrey,

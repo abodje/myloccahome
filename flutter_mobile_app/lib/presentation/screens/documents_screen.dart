@@ -70,8 +70,8 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Mes documents'),
-        backgroundColor: AppTheme.backgroundGrey,
-        foregroundColor: AppTheme.textDark,
+        backgroundColor: AppTheme.primaryBlue,
+        foregroundColor: Colors.white,
         elevation: 0,
         centerTitle: false,
       ),

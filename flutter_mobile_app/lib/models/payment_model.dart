@@ -25,7 +25,7 @@ class PaymentModel {
     return PaymentModel(
       id: json['id'] ?? 0,
       type: json['type'] ?? '',
-      amount: (json['amount'] ?? 0).toDouble(),
+      amount: double.tryParse(json['amount']?.toString() ?? '0') ?? 0.0,
       dueDate: json['dueDate'] ?? '',
       paidDate: json['paidDate'],
       status: json['status'] ?? '',

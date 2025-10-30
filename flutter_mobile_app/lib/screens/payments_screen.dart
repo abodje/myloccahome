@@ -164,7 +164,7 @@ class _PaymentsScreenState extends State<PaymentsScreen> {
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
-                  'En attente du prélèvement automatique',
+                  'En attente de paiement',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: AppTheme.primaryBlue,
                       ),
@@ -251,7 +251,7 @@ class _PaymentsScreenState extends State<PaymentsScreen> {
                   if (payment.paidDate != null) ...[
                     const SizedBox(height: 4),
                     Text(
-                      'Prélèvement le ${payment.paidDate}',
+                      'Payé le ${payment.paidDate}',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                             color: AppTheme.textLight,
                           ),

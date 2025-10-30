@@ -222,6 +222,17 @@ class TenantController extends AbstractController
 
         if ($form->isSubmitted() && $form->isValid()) {
             $tenant->setUpdatedAt(new \DateTime());
+
+            // Si un gestionnaire est sélectionné, lier au bien du bail actif
+            $assignManager = $form->get('assignManager')->getData();
+            if ($assignManager) {
+                $currentLease = $tenant->getCurrentLease();
+                if ($currentLease && $currentLease->getProperty()) {
+                    $property = $currentLease->getProperty();
+                    $property->addManager($assignManager);
+                }
+            }
+
             $entityManager->flush();
 
             $this->addFlash('success', 'Le locataire a été modifié avec succès.');

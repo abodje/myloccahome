@@ -291,10 +291,39 @@ class PropertyController extends AbstractController
         $currentLease = $property->getCurrentLease();
         $leases = $property->getLeases();
 
+        // Déterminer le gestionnaire principal avec fallback organisation
+        $managerData = null;
+        $managers = $property->getManagers();
+        if ($managers && !$managers->isEmpty()) {
+            $mainManager = $managers->first();
+            $org = $property->getOrganization();
+            $managerData = [
+                'name' => method_exists($mainManager, 'getFullName') ? $mainManager->getFullName() : null,
+                'company' => $org?->getName(),
+                'address' => $org?->getAddress(),
+                'city' => $org?->getCity(),
+                'phone' => method_exists($mainManager, 'getPhone') && $mainManager->getPhone() ? $mainManager->getPhone() : ($org?->getPhone()),
+                'email' => method_exists($mainManager, 'getEmail') && $mainManager->getEmail() ? $mainManager->getEmail() : ($org?->getEmail()),
+            ];
+        } else {
+            $org = $property->getOrganization();
+            if ($org) {
+                $managerData = [
+                    'name' => $org->getName() ?? 'Gestion',
+                    'company' => $org->getName(),
+                    'address' => $org->getAddress(),
+                    'city' => $org->getCity(),
+                    'phone' => $org->getPhone(),
+                    'email' => $org->getEmail(),
+                ];
+            }
+        }
+
         return $this->render('property/show.html.twig', [
             'property' => $property,
             'current_lease' => $currentLease,
             'leases' => $leases,
+            'manager' => $managerData,
         ]);
     }
 

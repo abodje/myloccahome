@@ -18,9 +18,11 @@ use Symfony\Component\Form\Extension\Core\Type\TextareaType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
+use Symfony\Bundle\SecurityBundle\Security;
 
 class PropertyType extends AbstractType
 {
+    public function __construct(private Security $security) {}
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
         $builder
@@ -99,18 +101,25 @@ class PropertyType extends AbstractType
             ])
             ->add('managers', EntityType::class, [
                 'class' => User::class,
-                'query_builder' => function (UserRepository $er) {
-                    return $er->createQueryBuilder('u')
+                'label' => 'Gestionnaires du bien',
+                'multiple' => true,
+                'required' => false,
+                'choice_label' => function (User $u) {
+                    return trim(($u->getLastName() ?? '') . ' ' . ($u->getFirstName() ?? '')) ?: $u->getEmail();
+                },
+                'query_builder' => function (UserRepository $ur) {
+                    $user = $this->security->getUser();
+                    return $ur->createQueryBuilder('u')
                         ->where('u.roles LIKE :role')
                         ->setParameter('role', '%"ROLE_MANAGER"%')
-                        ->orderBy('u.firstName', 'ASC');
+                        ->andWhere(':org IS NULL OR u.organization = :org')
+                        ->andWhere(':comp IS NULL OR u.company = :comp')
+                        ->setParameter('org', method_exists($user, 'getOrganization') ? $user->getOrganization() : null)
+                        ->setParameter('comp', method_exists($user, 'getCompany') ? $user->getCompany() : null)
+                        ->orderBy('u.lastName', 'ASC')
+                        ->addOrderBy('u.firstName', 'ASC');
                 },
-                'choice_label' => 'fullName',
-                'multiple' => true,
-                'expanded' => true, // Affiche des cases à cocher
-                'label' => 'Gestionnaires',
-                'required' => false,
-                'attr' => ['class' => 'form-check-group'] // Classe pour le style
+                'attr' => ['class' => 'form-select', 'data-placeholder' => 'Sélectionner un ou plusieurs gestionnaires'],
             ])
 
             // === INFORMATIONS GÉOGRAPHIQUES ===

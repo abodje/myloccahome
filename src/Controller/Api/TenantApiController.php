@@ -264,6 +264,19 @@ class TenantApiController extends AbstractController
                     'phone' => $mainManager->getPhone() ?? $property->getOrganization()?->getPhone(),
                     'email' => $mainManager->getEmail() ?? $property->getOrganization()?->getEmail()
                 ];
+            } else {
+                // Fallback: utiliser les coordonnées de l'organisation si pas de gestionnaire assigné
+                $org = $property->getOrganization();
+                if ($org) {
+                    $dashboard['manager'] = [
+                        'name' => $org->getName() ?? 'Gestion',
+                        'company' => $org->getName(),
+                        'address' => $org->getAddress(),
+                        'city' => $org->getCity(),
+                        'phone' => $org->getPhone(),
+                        'email' => $org->getEmail(),
+                    ];
+                }
             }
         }
 
@@ -775,6 +788,76 @@ class TenantApiController extends AbstractController
                 'currentMonthCredits' => $tenantStats['current_month_credits'] ?? 0,
                 'currentMonthDebits' => $tenantStats['current_month_debits'] ?? 0
             ]
+        ]);
+    }
+
+    /**
+     * Écritures comptables détaillées du locataire (paginées)
+     * GET /api/tenant/accounting/entries
+     * Query params: page, perPage, type, category, year, month
+     */
+    #[Route('/accounting/entries', name: 'accounting_entries', methods: ['GET'])]
+    public function accountingEntries(Request $request): JsonResponse
+    {
+        $tenant = $this->getAuthenticatedTenant($request);
+        if (!$tenant) {
+            return $this->json([
+                'success' => false,
+                'message' => 'Non autorisé - Token invalide ou expiré'
+            ], Response::HTTP_UNAUTHORIZED);
+        }
+
+        $page = max(1, (int) $request->query->get('page', 1));
+        $perPage = min(100, max(1, (int) $request->query->get('perPage', 20)));
+        $type = $request->query->get('type'); // CREDIT|DEBIT|null
+        $category = $request->query->get('category');
+        $year = $request->query->get('year') !== null ? (int) $request->query->get('year') : null;
+        $month = $request->query->get('month') !== null ? (int) $request->query->get('month') : null;
+
+        $entries = $this->accountingEntryRepository->findByTenantWithFilters(
+            $tenant->getId(),
+            $type ?: null,
+            $category ?: null,
+            $year,
+            $month
+        );
+
+        $total = count($entries);
+        $totalPages = (int) ceil($total / $perPage);
+        $offset = ($page - 1) * $perPage;
+        $paged = array_slice($entries, $offset, $perPage);
+
+        $items = array_map(function ($e) {
+            /** @var \App\Entity\AccountingEntry $e */
+            return [
+                'id' => $e->getId(),
+                'date' => $e->getEntryDate()?->format('Y-m-d'),
+                'type' => $e->getType(), // CREDIT|DEBIT
+                'category' => $e->getCategory(),
+                'amount' => (float) $e->getAmount(),
+                'signedAmount' => method_exists($e, 'getSignedAmount') ? (float) $e->getSignedAmount() : ($e->getType() === 'CREDIT' ? (float)$e->getAmount() : -(float)$e->getAmount()),
+                'runningBalance' => method_exists($e, 'getRunningBalance') ? (float) $e->getRunningBalance() : null,
+                'reference' => $e->getReference(),
+                'description' => $e->getDescription(),
+                'notes' => method_exists($e, 'getNotes') ? $e->getNotes() : null,
+            ];
+        }, $paged);
+
+        return $this->json([
+            'success' => true,
+            'pagination' => [
+                'page' => $page,
+                'perPage' => $perPage,
+                'total' => $total,
+                'totalPages' => $totalPages,
+            ],
+            'filters' => [
+                'type' => $type,
+                'category' => $category,
+                'year' => $year,
+                'month' => $month,
+            ],
+            'entries' => $items,
         ]);
     }
 

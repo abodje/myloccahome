@@ -105,11 +105,8 @@ class AuthService extends ChangeNotifier {
     _settings = null;
     _isAuthenticated = false;
 
-    // Clear all related keys from SharedPreferences
-    await _prefs.remove(_tokenKey);
-    await _prefs.remove(_userKey);
-    await _prefs.remove(_tenantKey);
-    await _prefs.remove(_settingsKey);
+    // Clear all SharedPreferences data
+    await _prefs.clear();
 
     notifyListeners();
   }

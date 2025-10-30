@@ -57,8 +57,8 @@ class _PropertyScreenState extends State<PropertyScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Mes biens'),
-        backgroundColor: AppTheme.backgroundGrey,
-        foregroundColor: AppTheme.textDark,
+        backgroundColor: AppTheme.primaryBlue,
+        foregroundColor: Colors.white,
         elevation: 0,
         centerTitle: false,
       ),
