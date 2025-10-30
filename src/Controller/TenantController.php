@@ -121,7 +121,7 @@ class TenantController extends AbstractController
                     'tenants',
                     'app_tenant_index'
                 );
-                
+
                 $this->eventDispatcher->dispatch($quotaEvent);
 
                 if (!$quotaEvent->isAllowed()) {
@@ -133,7 +133,7 @@ class TenantController extends AbstractController
                     return $this->redirectToRoute($quotaEvent->getRedirectRoute() ?? 'app_tenant_index');
                 }
             }
-            
+
             $entityManager->persist($tenant);
 
             // Créer un compte User si demandé
@@ -222,17 +222,6 @@ class TenantController extends AbstractController
 
         if ($form->isSubmitted() && $form->isValid()) {
             $tenant->setUpdatedAt(new \DateTime());
-
-            // Si un gestionnaire est sélectionné, lier au bien du bail actif
-            $assignManager = $form->get('assignManager')->getData();
-            if ($assignManager) {
-                $currentLease = $tenant->getCurrentLease();
-                if ($currentLease && $currentLease->getProperty()) {
-                    $property = $currentLease->getProperty();
-                    $property->addManager($assignManager);
-                }
-            }
-
             $entityManager->flush();
 
             $this->addFlash('success', 'Le locataire a été modifié avec succès.');
