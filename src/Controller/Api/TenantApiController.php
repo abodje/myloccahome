@@ -151,7 +151,8 @@ class TenantApiController extends AbstractController
                 'lastName' => $tenant->getLastName(),
                 'email' => $tenant->getEmail(),
                 'phone' => $tenant->getPhone()
-            ]
+            ],
+            'settings' => $this->buildMobileSettings(),
         ]);
     }
 
@@ -782,6 +783,17 @@ class TenantApiController extends AbstractController
     #[Route('/settings', name: 'settings', methods: ['GET'])]
     public function settings(): JsonResponse
     {
+        return $this->json([
+            'success' => true,
+            'settings' => $this->buildMobileSettings(),
+        ]);
+    }
+
+    /**
+     * Construit la structure des paramètres mobiles exposés à l'app Flutter
+     */
+    private function buildMobileSettings(): array
+    {
         // Organisation / branding
         $org = [
             'name' => $this->settingsService->get('company_name', 'LOKAPRO Gestion'),
@@ -854,15 +866,14 @@ class TenantApiController extends AbstractController
             'version' => '1.0.0',
         ];
 
-        return $this->json([
-            'success' => true,
+        return [
             'organization' => $org,
             'localization' => $localization,
             'payments' => $payments,
             'gateways' => $gateways,
             'features' => $features,
             'app' => $app,
-        ]);
+        ];
     }
 
     /**

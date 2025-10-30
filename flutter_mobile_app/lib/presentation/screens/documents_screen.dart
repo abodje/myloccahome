@@ -123,7 +123,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
         crossAxisCount: 2,
         crossAxisSpacing: 16,
         mainAxisSpacing: 16,
-        childAspectRatio: 0.9, // Adjust aspect ratio for better layout
+        childAspectRatio: 0.8, // Make cards taller than they are wide
       ),
       itemCount: categoryList.length,
       itemBuilder: (context, index) {
