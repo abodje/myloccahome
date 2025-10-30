@@ -5,6 +5,7 @@ import '../../services/tenant_data_service.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/app_drawer.dart';
 import '../../models/document_model.dart';
+import './document_list_by_category_screen.dart'; // Import the new screen
 
 class DocumentsScreen extends StatefulWidget {
   const DocumentsScreen({Key? key}) : super(key: key);
@@ -143,7 +144,15 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
       shadowColor: Colors.black.withOpacity(0.05),
       child: InkWell(
         onTap: () {
-          // TODO: Navigate to document list for this category
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => DocumentListByCategoryScreen(
+                category: category,
+                documents: documents,
+              ),
+            ),
+          );
         },
         borderRadius: BorderRadius.circular(12),
         child: Padding(
@@ -204,9 +213,11 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
       case 'Assurance':
         return _CategoryStyle(icon: Icons.shield_outlined, color: AppTheme.primaryBlue);
       case 'Avis d\'échéance':
-        return _CategoryStyle(icon: Icons.receipt_long_outlined, color: AppTheme.primaryOrange);
+        return _CategoryStyle(icon: Icons.event_note_outlined, color: Colors.teal.shade500);
       case 'Bail':
         return _CategoryStyle(icon: Icons.description_outlined, color: Colors.green.shade600);
+      case 'Contrat de location':
+        return _CategoryStyle(icon: Icons.article_outlined, color: AppTheme.primaryBlue);
       case 'Diagnostics':
         return _CategoryStyle(icon: Icons.science_outlined, color: Colors.purple.shade400);
       default:

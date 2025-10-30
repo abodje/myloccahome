@@ -33,6 +33,9 @@ class AuthService extends ChangeNotifier {
   String? get token => _token;
   bool get isAuthenticated => _isAuthenticated;
 
+  // Public getter for ApiService
+  ApiService get apiService => _apiService;
+
   Future<void> _loadAuthData() async {
     _token = _prefs.getString(_tokenKey);
 
@@ -67,10 +70,13 @@ class AuthService extends ChangeNotifier {
 
   Future<bool> login(String email, String password) async {
     try {
-      final response = await _apiService.post('/api/tenant/login', {
-        'email': email,
-        'password': password,
-      });
+      final response = await _apiService.post(
+        '/api/tenant/login',
+        {
+          'email': email,
+          'password': password,
+        },
+      );
 
       if (response['success'] == true) {
         // Parse and store data
@@ -128,7 +134,18 @@ class AuthService extends ChangeNotifier {
     String endpoint,
     Map<String, dynamic> data,
   ) async {
-    return _apiService.post(endpoint, data);
+    if (!_isAuthenticated || _token == null) {
+      // Handle login separately as it doesn't require a token
+      if (endpoint != '/api/tenant/login') {
+        throw Exception('Not authenticated');
+      }
+    }
+    try {
+      return await _apiService.post(endpoint, data, token: _token);
+    } on UnauthorizedException {
+      await logout();
+      rethrow;
+    }
   }
 
   Future<Map<String, dynamic>> put(

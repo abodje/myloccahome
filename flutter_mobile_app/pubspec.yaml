@@ -32,6 +32,9 @@ dependencies:
   intl: ^0.18.1
   cinetpay: ^1.0.8
 
+  # Lancement d'URL
+  url_launcher: ^6.2.1
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

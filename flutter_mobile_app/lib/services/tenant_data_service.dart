@@ -20,6 +20,11 @@ class TenantDataService {
     return await _authService.get('/api/tenant/payments');
   }
 
+  Future<String> initiatePayment(int paymentId) async {
+    final response = await _authService.post('/api/tenant/payments/$paymentId/pay', {});
+    return response['transaction']['paymentUrl'];
+  }
+
   // Demandes
   Future<Map<String, dynamic>> getRequests() async {
     return await _authService.get('/api/tenant/requests');

@@ -1,5 +1,7 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../services/auth_service.dart';
 import '../../services/tenant_data_service.dart';
 import '../../theme/app_theme.dart';
@@ -280,15 +282,56 @@ class _PaymentsScreenState extends State<PaymentsScreen> {
             ),
             TextButton(
               child: const Text('Payer'),
-              onPressed: () {
-                // TODO: Implement payment logic
-                Navigator.of(context).pop();
+              onPressed: () async {
+                Navigator.of(context).pop(); // Close the dialog
+                _handlePayment(payment.id);
               },
             ),
           ],
         );
       },
     );
+  }
+
+  Future<void> _handlePayment(int paymentId) async {
+    final authService = Provider.of<AuthService>(context, listen: false);
+    final dataService = TenantDataService(authService);
+
+    // Show a loading indicator
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return const Center(child: CircularProgressIndicator());
+      },
+    );
+
+    try {
+      final paymentUrl = await dataService.initiatePayment(paymentId);
+      final uri = Uri.parse(paymentUrl);
+      if (kDebugMode) {
+        print('Attempting to launch URL: $uri');
+      }
+      // Try external application first
+      bool launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
+      if (!launched) {
+        // Fallback to in-app browser view (Custom Tabs / SFSafariViewController)
+        launched = await launchUrl(uri, mode: LaunchMode.inAppBrowserView);
+      }
+      if (!launched) {
+        throw Exception('Impossible d\'ouvrir l\'URL de paiement');
+      }
+    } catch (e, s) {
+      if (kDebugMode) {
+        print('Erreur lors du lancement de l\'URL: $e');
+        print(s);
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Erreur lors de l\'ouverture de la page de paiement: $e')),
+      );
+    } finally {
+      if (mounted) Navigator.of(context).pop(); // Close the loading indicator
+    }
   }
 
   Widget _buildStatusBadge(BuildContext context, PaymentModel payment) {

@@ -749,10 +749,20 @@ class TenantApiController extends AbstractController
     {
         $tenant = $this->getAuthenticatedTenant($request);
         if (!$tenant) {
-            return $this->json([
-                'success' => false,
-                'message' => 'Non autorisé - Token invalide ou expiré'
-            ], Response::HTTP_UNAUTHORIZED);
+            // Fallback: accepter le token via query string ?token=...
+            $queryToken = $request->query->get('token');
+            if ($queryToken) {
+                $payload = $this->jwtService->verifyToken($queryToken);
+                if ($payload && isset($payload['tenant_id'])) {
+                    $tenant = $this->tenantRepository->find($payload['tenant_id']);
+                }
+            }
+            if (!$tenant) {
+                return $this->json([
+                    'success' => false,
+                    'message' => 'Non autorisé - Token invalide ou expiré'
+                ], Response::HTTP_UNAUTHORIZED);
+            }
         }
 
         $document = $this->entityManager->getRepository(\App\Entity\Document::class)->find($id);
@@ -764,16 +774,24 @@ class TenantApiController extends AbstractController
             ], Response::HTTP_NOT_FOUND);
         }
 
-        // TODO: Implémenter le téléchargement réel du fichier
-        return $this->json([
-            'success' => true,
-            'message' => 'Téléchargement disponible',
-            'document' => [
-                'id' => $document->getId(),
-                'name' => $document->getName(),
-                'fileName' => $document->getFileName()
-            ]
-        ]);
+        // Chemin physique du fichier
+        $filePath = $this->getParameter('kernel.project_dir') . '/public/uploads/documents/' . $document->getFileName();
+        if (!file_exists($filePath)) {
+            return $this->json([
+                'success' => false,
+                'message' => 'Fichier introuvable sur le serveur'
+            ], Response::HTTP_NOT_FOUND);
+        }
+
+        // Réponse binaire avec en-têtes de téléchargement
+        $response = new Response();
+        $mimeType = $document->getMimeType() ?: 'application/octet-stream';
+        $downloadName = $document->getOriginalFileName() ?: ($document->getName() ?: ('document_' . $document->getId())) ;
+        $response->headers->set('Content-Type', $mimeType);
+        $response->headers->set('Content-Disposition', sprintf('attachment; filename="%s"', addslashes($downloadName)));
+        $response->headers->set('Content-Length', (string) filesize($filePath));
+        $response->setContent(file_get_contents($filePath));
+        return $response;
     }
 
     /**

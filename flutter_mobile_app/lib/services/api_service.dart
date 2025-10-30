@@ -18,14 +18,26 @@ class ApiService {
 
   Future<Map<String, dynamic>> post(
     String endpoint,
-    Map<String, dynamic> data,
-  ) async {
+    Map<String, dynamic> data, {
+    String? token,
+  }) async {
     try {
       final url = Uri.parse('$baseUrl$endpoint');
 
+      final headers = {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      };
+
+      if (token != null) {
+        headers['Authorization'] = 'Bearer $token';
+      }
+
       // Debug: Afficher les données envoyées (sans le mot de passe)
       final debugData = Map<String, dynamic>.from(data);
-      debugData['password'] = '***';
+      if (debugData.containsKey('password')) {
+        debugData['password'] = '***';
+      }
       if (kDebugMode) {
         debugPrint('📤 POST $url');
         debugPrint('📦 Data: ${jsonEncode(debugData)}');
@@ -33,10 +45,7 @@ class ApiService {
 
       final response = await http.post(
         url,
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
+        headers: headers,
         body: jsonEncode(data),
       );
 
