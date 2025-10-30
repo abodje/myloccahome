@@ -105,6 +105,28 @@
                 </div>
             </div>
 
+            <!-- Affectations -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="bi bi-people me-2"></i>
+                        Affectations
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="mb-3">
+                                {{ form_label(form.managers) }}
+                                {{ form_widget(form.managers) }}
+                                {{ form_errors(form.managers) }}
+                                <div class="form-text">Sélectionnez un ou plusieurs gestionnaires en charge de ce bien.</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Informations géographiques -->
             <div class="card mb-4">
                 <div class="card-header">
@@ -627,6 +649,7 @@
                 </div>
             </div>
 
+            {{ form_rest(form) }}
             {{ form_end(form) }}
         </div>
     </div>
