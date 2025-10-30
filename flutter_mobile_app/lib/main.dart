@@ -5,14 +5,14 @@ import 'package:go_router/go_router.dart';
 import 'services/auth_service.dart';
 import 'services/api_service.dart';
 import 'theme/app_theme.dart';
-import 'screens/login_screen.dart';
-import 'screens/dashboard_screen.dart';
-import 'screens/documents_screen.dart';
-import 'screens/payments_screen.dart';
-import 'screens/requests_screen.dart';
-import 'screens/property_screen.dart';
-import 'screens/profile_screen.dart';
-import 'screens/accounting_screen.dart';
+import 'presentation/screens/login_screen.dart';
+import 'presentation/screens/dashboard_screen.dart';
+import 'presentation/screens/documents_screen.dart';
+import 'presentation/screens/payments_screen.dart';
+import 'presentation/screens/requests_screen.dart';
+import 'presentation/screens/property_screen.dart';
+import 'presentation/screens/profile_screen.dart';
+import 'presentation/screens/accounting_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();

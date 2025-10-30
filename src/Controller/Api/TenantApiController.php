@@ -10,6 +10,7 @@ use App\Repository\PaymentRepository;
 use App\Repository\PropertyRepository;
 use App\Repository\TenantRepository;
 use App\Service\JwtService;
+use App\Service\SettingsService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -31,7 +32,8 @@ class TenantApiController extends AbstractController
         private PaymentRepository $paymentRepository,
         private PropertyRepository $propertyRepository,
         private AccountingEntryRepository $accountingEntryRepository,
-        private JwtService $jwtService
+        private JwtService $jwtService,
+        private SettingsService $settingsService
     ) {
     }
 
@@ -770,6 +772,96 @@ class TenantApiController extends AbstractController
                 'currentMonthCredits' => $tenantStats['current_month_credits'] ?? 0,
                 'currentMonthDebits' => $tenantStats['current_month_debits'] ?? 0
             ]
+        ]);
+    }
+
+    /**
+     * Paramètres/infos globales de l'application organisation (branding)
+     * GET /api/tenant/settings
+     */
+    #[Route('/settings', name: 'settings', methods: ['GET'])]
+    public function settings(): JsonResponse
+    {
+        // Organisation / branding
+        $org = [
+            'name' => $this->settingsService->get('company_name', 'LOKAPRO Gestion'),
+            'logo' => $this->settingsService->get('app_logo', ''),
+            'address' => $this->settingsService->get('company_address', ''),
+            'city' => $this->settingsService->get('company_city', ''),
+            'postalCode' => $this->settingsService->get('company_postal_code', ''),
+            'country' => $this->settingsService->get('company_country', ''),
+            'phone' => $this->settingsService->get('company_phone', ''),
+            'email' => $this->settingsService->get('company_email', ''),
+            'website' => $this->settingsService->get('company_website', ''),
+            'support' => [
+                'email' => $this->settingsService->get('support_email', $this->settingsService->get('company_email', '')),
+                'phone' => $this->settingsService->get('support_phone', $this->settingsService->get('company_phone', '')),
+            ],
+            'legal' => [
+                'termsUrl' => $this->settingsService->get('terms_url', ''),
+                'privacyUrl' => $this->settingsService->get('privacy_url', ''),
+            ],
+        ];
+
+        // Localisation / devise / formats
+        $localization = [
+            'defaultCurrency' => $this->settingsService->get('default_currency', 'EUR'),
+            'cinetpayCurrency' => $this->settingsService->get('cinetpay_currency', 'XOF'),
+            'dateFormat' => $this->settingsService->get('date_format', 'd/m/Y'),
+            'timeFormat' => $this->settingsService->get('time_format', 'H:i'),
+            'timezone' => $this->settingsService->get('timezone', 'Europe/Paris'),
+            'locale' => $this->settingsService->get('locale', 'fr_FR'),
+            'decimalSeparator' => $this->settingsService->get('decimal_separator', ','),
+            'thousandsSeparator' => $this->settingsService->get('thousands_separator', ' '),
+        ];
+
+        // Paiements
+        $payments = [
+            'defaultRentDueDay' => $this->settingsService->get('default_rent_due_day', 1),
+            'lateFeeRate' => (float) $this->settingsService->get('late_fee_rate', 5.0),
+            'autoGenerateRent' => (bool) $this->settingsService->get('auto_generate_rent', true),
+            'paymentReminderDays' => (int) $this->settingsService->get('payment_reminder_days', 7),
+            'allowPartialPayments' => (bool) $this->settingsService->get('allow_partial_payments', false),
+            'minimumPaymentAmount' => (float) $this->settingsService->get('minimum_payment_amount', 10),
+            'allowAdvancePayments' => (bool) $this->settingsService->get('allow_advance_payments', true),
+            'minimumAdvanceAmount' => (float) $this->settingsService->get('minimum_advance_amount', 50),
+        ];
+
+        // Passerelles de paiement (CinetPay)
+        $gateways = [
+            'cinetpay' => [
+                'enabled' => (bool) $this->settingsService->get('cinetpay_enabled', true),
+                'environment' => $this->settingsService->get('cinetpay_environment', 'test'),
+                'currency' => $this->settingsService->get('cinetpay_currency', 'XOF'),
+                'channels' => $this->settingsService->get('cinetpay_channels', 'ALL'),
+                'siteId' => $this->settingsService->get('cinetpay_site_id', ''),
+            ],
+        ];
+
+        // Fonctionnalités
+        $features = [
+            'urgentMaintenanceNotification' => (bool) $this->settingsService->get('urgent_notification', true),
+            'autoAssignMaintenance' => (bool) $this->settingsService->get('auto_assign_maintenance', false),
+            'emailNotifications' => (bool) $this->settingsService->get('email_notifications', true),
+            'registrationEnabled' => (bool) $this->settingsService->get('registration_enabled', true),
+        ];
+
+        // Application
+        $app = [
+            'name' => $this->settingsService->get('app_name', 'LOKAPRO'),
+            'description' => $this->settingsService->get('app_description', 'Logiciel de gestion locative professionnel'),
+            'maintenanceMode' => (bool) $this->settingsService->get('maintenance_mode', false),
+            'version' => '1.0.0',
+        ];
+
+        return $this->json([
+            'success' => true,
+            'organization' => $org,
+            'localization' => $localization,
+            'payments' => $payments,
+            'gateways' => $gateways,
+            'features' => $features,
+            'app' => $app,
         ]);
     }
 

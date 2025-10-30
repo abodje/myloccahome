@@ -4,21 +4,7 @@ import 'package:flutter/foundation.dart';
 class NetworkHelper {
   /// Détermine l'URL de base selon la plateforme
   static String getBaseUrl() {
-    // En mode debug, on peut détecter automatiquement
-    if (kDebugMode) {
-      // Pour Android émulateur
-      if (Platform.isAndroid) {
-        // Retourner 10.0.2.2 pour l'émulateur Android (localhost de la machine hôte)
-        return 'http://10.0.2.2:8000/api/tenant';
-      }
-      // Pour iOS simulateur, localhost fonctionne
-      if (Platform.isIOS) {
-        return 'http://localhost:8000/api/tenant';
-      }
-    }
-
-    // Par défaut (ou pour appareils physiques, à configurer manuellement)
-    return 'http://localhost:8000/api/tenant';
+    return 'https://app.lokapro.tech/api/tenant';
   }
 
   /// Vérifie la connectivité réseau

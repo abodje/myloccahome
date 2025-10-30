@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:flutter/foundation.dart';
 
@@ -14,28 +13,7 @@ class ApiService {
 
   // Configuration automatique selon la plateforme
   static String get baseUrl {
-    // Si une URL personnalisée est définie (pour appareil physique), l'utiliser
-    // Décommentez la ligne ci-dessus si vous testez sur un appareil physique
-
-    if (kIsWeb) {
-      return 'http://localhost:8000/api/tenant';
-    }
-
-    // Pour Android émulateur
-    if (Platform.isAndroid) {
-      // 10.0.2.2 est l'adresse spéciale pour accéder à localhost de la machine hôte
-      // C'est automatique, mais si vous utilisez un appareil physique, décommentez
-      // la baseUrlOverride ci-dessus et mettez votre IP locale
-      return 'http://192.168.1.54:8000/api/tenant';
-    }
-
-    // Pour iOS simulateur, localhost fonctionne
-    if (Platform.isIOS) {
-      return 'http://192.168.1.54:8000/api/tenant';
-    }
-
-    // Par défaut (Linux, Windows desktop, etc.)
-    return 'http://192.168.1.54:8000/api/tenant';
+    return 'https://app.lokapro.tech/api/tenant';
   }
 
   Future<Map<String, dynamic>> post(
