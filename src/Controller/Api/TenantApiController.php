@@ -12,6 +12,9 @@ use App\Repository\TenantRepository;
 use App\Service\JwtService;
 use App\Service\SettingsService;
 use App\Service\CurrencyService;
+use App\Service\CinetPayService;
+use App\Entity\OnlinePayment;
+use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -462,6 +465,115 @@ class TenantApiController extends AbstractController
                 ]
             ]
         ]);
+    }
+
+    /**
+     * Initier le paiement d'un loyer (CinetPay) - JSON
+     * POST /api/tenant/payments/{id}/pay
+     */
+    #[Route('/payments/{id}/pay', name: 'payment_pay', methods: ['POST'])]
+    public function payRent(int $id, Request $request, CinetPayService $cinetpay): JsonResponse
+    {
+        $tenant = $this->getAuthenticatedTenant($request);
+        if (!$tenant) {
+            return $this->json([
+                'success' => false,
+                'message' => 'Non autorisé - Token invalide ou expiré'
+            ], Response::HTTP_UNAUTHORIZED);
+        }
+
+        $payment = $this->paymentRepository->find($id);
+        if (!$payment || $payment->getLease()?->getTenant()?->getId() !== $tenant->getId()) {
+            return $this->json([
+                'success' => false,
+                'message' => 'Paiement introuvable'
+            ], Response::HTTP_NOT_FOUND);
+        }
+
+        if ($payment->getStatus() === 'Payé') {
+            return $this->json([
+                'success' => false,
+                'message' => 'Ce loyer a déjà été payé'
+            ], Response::HTTP_BAD_REQUEST);
+        }
+
+        try {
+            $transactionId = 'RENT-' . $payment->getId() . '-' . uniqid();
+            $paymentMethod = (string) $request->query->get('method', 'mobile_money');
+
+            // Créer l'enregistrement de transaction
+            $onlinePayment = new OnlinePayment();
+            $onlinePayment->setTransactionId($transactionId);
+            $onlinePayment->setPaymentType('rent');
+            $onlinePayment->setPaymentMethod($paymentMethod);
+            $onlinePayment->setCurrency('XOF');
+            $onlinePayment->setProvider('CinetPay');
+            $onlinePayment->setStatus('pending');
+            $onlinePayment->setLease($payment->getLease());
+            $onlinePayment->setPayment($payment);
+            $onlinePayment->setAmount($payment->getAmount());
+            $onlinePayment->setCustomerName($tenant->getFullName());
+            $onlinePayment->setCustomerPhone($tenant->getPhone());
+            $onlinePayment->setCustomerEmail($tenant->getEmail());
+
+            // URLs CinetPay
+            $notifyUrl = $this->generateUrl('app_online_payment_notify', [], UrlGeneratorInterface::ABSOLUTE_URL);
+            $returnUrl = $this->generateUrl('app_online_payment_return', ['transactionId' => $transactionId], UrlGeneratorInterface::ABSOLUTE_URL);
+
+            // Paramétrer CinetPay
+            $cinetpay
+                ->setTransactionId($transactionId)
+                ->setAmount((int) $payment->getAmount())
+                ->setDescription("Paiement loyer - Bail #{$payment->getLease()->getId()}")
+                ->setNotifyUrl($notifyUrl)
+                ->setReturnUrl($returnUrl)
+                ->setCustomer([
+                    'customer_name' => $tenant->getLastName() ?? 'Locataire',
+                    'customer_surname' => $tenant->getFirstName() ?? '',
+                    'customer_phone_number' => $tenant->getPhone() ?? '22500000000',
+                    'customer_email' => $tenant->getEmail() ?? 'noreply@app.lokapro.tech',
+                    'customer_address' => $tenant->getAddress() ?? 'Adresse',
+                    'customer_city' => $tenant->getCity() ?? 'Ville',
+                    'customer_country' => 'CI',
+                    'customer_state' => 'AB',
+                    'customer_zip_code' => $tenant->getPostalCode() ?? '00000',
+                ])
+                ->setMetadata([
+                    'payment_id' => $payment->getId(),
+                    'lease_id' => $payment->getLease()->getId(),
+                    'type' => 'rent',
+                ]);
+
+            $paymentUrl = $cinetpay->initPayment();
+
+            $onlinePayment->setPaymentUrl($paymentUrl);
+            $this->entityManager->persist($onlinePayment);
+            $this->entityManager->flush();
+
+            return $this->json([
+                'success' => true,
+                'payment' => [
+                    'id' => $payment->getId(),
+                    'amount' => (float) $payment->getAmount(),
+                    'dueDate' => $payment->getDueDate()?->format('Y-m-d'),
+                    'status' => $payment->getStatus(),
+                ],
+                'transaction' => [
+                    'id' => $transactionId,
+                    'provider' => 'CinetPay',
+                    'method' => $paymentMethod,
+                    'notifyUrl' => $notifyUrl,
+                    'returnUrl' => $returnUrl,
+                    'paymentUrl' => $paymentUrl,
+                ]
+            ]);
+        } catch (\Exception $e) {
+            return $this->json([
+                'success' => false,
+                'message' => 'Erreur lors de l\'initialisation du paiement',
+                'error' => $e->getMessage(),
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
     }
 
     /**

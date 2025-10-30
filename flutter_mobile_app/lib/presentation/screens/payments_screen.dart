@@ -203,46 +203,91 @@ class _PaymentsScreenState extends State<PaymentsScreen> {
       margin: const EdgeInsets.only(bottom: 12),
       child: Padding(
         padding: const EdgeInsets.all(16),
-        child: Row(
+        child: Column(
           children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    payment.dueDate,
-                    style: Theme.of(context).textTheme.bodySmall,
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    payment.type,
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
-                  ),
-                  if (payment.paidDate != null) ...[
-                    const SizedBox(height: 4),
-                    Text(
-                      'Prélèvement le ${payment.paidDate}',
-                      style: Theme.of(context).textTheme.bodySmall,
-                    ),
-                  ],
-                ],
-              ),
-            ),
-            const SizedBox(width: 16),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
+            Row(
               children: [
-                Text(
-                  _formatAmount(payment.amount, currencySymbol),
-                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        payment.dueDate,
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        payment.type,
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
+                      ),
+                      if (payment.paidDate != null) ...[
+                        const SizedBox(height: 4),
+                        Text(
+                          'Prélèvement le ${payment.paidDate}',
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
+                      ],
+                    ],
+                  ),
                 ),
-                const SizedBox(height: 4),
-                _buildStatusBadge(context, payment),
+                const SizedBox(width: 16),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(
+                      _formatAmount(payment.amount, currencySymbol),
+                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 4),
+                    _buildStatusBadge(context, payment),
+                  ],
+                ),
               ],
             ),
+            if (!payment.isValidated && !payment.isError) ...[
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () => _showPaymentDialog(context, payment, currencySymbol),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppTheme.primaryOrange,
+                    foregroundColor: Colors.white,
+                  ),
+                  child: const Text('PAYER'),
+                ),
+              ),
+            ],
           ],
         ),
       ),
+    );
+  }
+
+  void _showPaymentDialog(BuildContext context, PaymentModel payment, String currencySymbol) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Confirmer le paiement'),
+          content: Text('Voulez-vous vraiment payer ${payment.type} d\'un montant de ${_formatAmount(payment.amount, currencySymbol)} ?'),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Annuler'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+            TextButton(
+              child: const Text('Payer'),
+              onPressed: () {
+                // TODO: Implement payment logic
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
     );
   }
 

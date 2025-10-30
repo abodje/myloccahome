@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../models/dashboard_model.dart';
 import '../../services/auth_service.dart';
@@ -268,7 +269,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   SizedBox(
                     width: double.infinity,
                     child: OutlinedButton(
-                      onPressed: () {},
+                      onPressed: () => context.go('/accounting'),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: AppTheme.primaryOrange,
                         side: BorderSide(color: AppTheme.primaryOrange.withOpacity(0.5)),

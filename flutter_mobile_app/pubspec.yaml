@@ -30,6 +30,7 @@ dependencies:
 
   # Internationalization (pour les dates et les nombres)
   intl: ^0.18.1
+  cinetpay: ^1.0.8
 
 dev_dependencies:
   flutter_test:
