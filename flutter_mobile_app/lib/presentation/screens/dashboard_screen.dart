@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../models/dashboard_model.dart';
 import '../../services/auth_service.dart';
 import '../../services/tenant_data_service.dart';
 import '../../theme/app_theme.dart';
@@ -13,7 +14,7 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
-  Map<String, dynamic>? _dashboardData;
+  DashboardModel? _dashboardData;
   bool _isLoading = true;
   String? _error;
 
@@ -37,11 +38,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
       final data = await dataService.getDashboard();
       if (!mounted) return;
       setState(() {
-        _dashboardData = data;
+        _dashboardData = DashboardModel.fromJson(data);
         _isLoading = false;
       });
-    }
-    catch (e) {
+    } catch (e) {
       if (!mounted) return;
       setState(() {
         _error = e.toString();
@@ -53,8 +53,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
   @override
   Widget build(BuildContext context) {
     final authService = Provider.of<AuthService>(context);
-    final tenant = authService.tenant;
-    final user = authService.user;
     final currencySymbol = authService.settings?.localization.defaultCurrency ?? '€';
 
     final now = DateTime.now();
@@ -63,8 +61,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: AppTheme.primaryBlue, // Changed to primaryBlue
-        foregroundColor: Colors.white, // Changed to white
+        backgroundColor: AppTheme.primaryBlue,
+        foregroundColor: Colors.white,
         elevation: 0,
         title: const Text('Tableau de bord'),
         centerTitle: false,
@@ -76,9 +74,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ],
       ),
       drawer: const AppDrawer(),
+      backgroundColor: AppTheme.backgroundGrey,
       body: _isLoading
           ? const Center(child: CircularProgressIndicator(color: AppTheme.primaryBlue))
-          : _error != null
+          : _error != null || _dashboardData == null
               ? _buildErrorView()
               : RefreshIndicator(
                   onRefresh: _loadDashboard,
@@ -91,11 +90,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           const SizedBox(height: 16),
-                          _buildTenantInfoCard(context, tenant, user),
+                          _buildTenantInfoCard(context, _dashboardData!),
                           const SizedBox(height: 16),
-                          _buildCardsRow(context, formattedDate, currencySymbol),
+                          _buildCardsRow(context, formattedDate, currencySymbol, _dashboardData!),
                           const SizedBox(height: 24),
-                          _buildRecentRequestsSection(context),
+                          // _buildRecentRequestsSection(context), // This needs to be adapted if recentRequests is part of the new model
                           const SizedBox(height: 24),
                         ],
                       ),
@@ -121,8 +120,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  Widget _buildTenantInfoCard(BuildContext context, dynamic tenant, dynamic user) {
-    final property = _dashboardData!['property'];
+  Widget _buildTenantInfoCard(BuildContext context, DashboardModel data) {
+    final tenant = data.tenant;
+    final property = data.property;
     return Card(
       elevation: 2,
       shadowColor: Colors.black.withOpacity(0.05),
@@ -132,18 +132,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              tenant?.fullName ?? user?.fullName ?? 'Locataire',
+              tenant.fullName,
               style: Theme.of(context).textTheme.headlineSmall,
             ),
             const SizedBox(height: 8),
-            Text(
-              'Compte N°${_dashboardData!['tenant']?['accountNumber'] ?? tenant?.id ?? user?.id ?? ''}',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppTheme.textLight),
-            ),
-            Text(
-              'Client N°${_dashboardData!['tenant']?['clientNumber'] ?? tenant?.id.toString().padLeft(10, '0') ?? ''}',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppTheme.textLight),
-            ),
+            if (tenant.id != null) ...[
+              Text(
+                'Compte N°${tenant.id}',
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppTheme.textLight),
+              ),
+            ],
             if (property != null) ...[
               const Divider(height: 32),
               Row(
@@ -153,14 +151,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Immeuble N°${property['id'] ?? property['reference'] ?? ''}',
+                          'Immeuble N°${property.reference}',
                           style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppTheme.textLight),
                         ),
                         const SizedBox(height: 4),
-                        if (property['name'] != null && property['name'] != 'N/A')
-                          Text(property['name'], style: Theme.of(context).textTheme.bodyMedium),
+                        Text(property.name, style: Theme.of(context).textTheme.bodyMedium),
                         Text(
-                          property['fullAddress'] ?? '${property['address'] ?? ''}, ${property['postalCode'] ?? ''} ${property['city'] ?? ''}',
+                          property.fullAddress,
                           style: Theme.of(context).textTheme.bodyMedium,
                         ),
                         const SizedBox(height: 8),
@@ -187,9 +184,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  Widget _buildCardsRow(BuildContext context, String formattedDate, String currencySymbol) {
-    final manager = _dashboardData!['manager'];
-    final balances = _dashboardData!['balances'] ?? {};
+  Widget _buildCardsRow(BuildContext context, String formattedDate, String currencySymbol, DashboardModel data) {
+    final manager = data.manager;
+    final balances = data.balances;
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -228,14 +225,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   const SizedBox(height: 12),
                   if (manager != null) ...[
                     Text(
-                      manager['name'] ?? 'N/A',
+                      manager.name,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(manager['company'] ?? '', style: Theme.of(context).textTheme.bodySmall),
-                    Text(
-                      manager['address'] != null ? '${manager['address']}, ${manager['city'] ?? ''}' : manager['city'] ?? '',
-                      style: Theme.of(context).textTheme.bodySmall,
                     ),
                   ] else
                     Text('Non renseigné', style: Theme.of(context).textTheme.bodySmall),
@@ -261,7 +252,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    '${balances['soldAt'] ?? 0} $currencySymbol',
+                    '${balances.soldAt.toStringAsFixed(2)} $currencySymbol',
                     style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                           color: AppTheme.primaryOrange,
                           fontWeight: FontWeight.bold,
@@ -270,7 +261,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   const SizedBox(height: 8),
                   Text('Solde à venir', style: Theme.of(context).textTheme.bodySmall),
                   Text(
-                    '${balances['toPay'] ?? 0} $currencySymbol',
+                    '${balances.toPay.toStringAsFixed(2)} $currencySymbol',
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppTheme.primaryBlue),
                   ),
                   const SizedBox(height: 16),
@@ -291,96 +282,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
         ),
       ],
-    );
-  }
-
-  Widget _buildRecentRequestsSection(BuildContext context) {
-    final requestsList = _dashboardData!['recentRequests'] ?? [];
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'MES DERNIÈRES DEMANDES',
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                color: AppTheme.primaryBlue,
-                fontWeight: FontWeight.bold,
-              ),
-        ),
-        const SizedBox(height: 16),
-        if (requestsList.isEmpty)
-          Center(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 32.0),
-              child: Text(
-                'Aucune demande récente',
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppTheme.textLight),
-              ),
-            ),
-          )
-        else
-          ...requestsList.take(3).map((req) => _buildRequestCard(context, req)),
-      ],
-    );
-  }
-
-  Widget _buildRequestCard(BuildContext context, Map<String, dynamic> request) {
-    final statusColor = request['status'] == 'CLOSED' ? Colors.grey : AppTheme.lightBlue;
-
-    return Card(
-      elevation: 2,
-      shadowColor: Colors.black.withOpacity(0.05),
-      margin: const EdgeInsets.only(bottom: 12),
-      child: IntrinsicHeight(
-        child: Row(
-          children: [
-            Container(
-              width: 5,
-              decoration: BoxDecoration(
-                color: statusColor,
-                borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(12),
-                  bottomLeft: Radius.circular(12),
-                ),
-              ),
-            ),
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      request['title'] ?? 'Demande',
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      request['category'] ?? '',
-                      style: Theme.of(context).textTheme.bodySmall,
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          'N° ${request['reference'] ?? ''}',
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppTheme.primaryBlue),
-                        ),
-                        Text(
-                          'Créée le ${request['reportedDate'] ?? ''}',
-                          style: Theme.of(context).textTheme.bodySmall,
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 }
