@@ -257,9 +257,16 @@ class AccountingEntryRepository extends ServiceEntityRepository
     public function findByTenantWithFilters(int $tenantId, ?string $type = null, ?string $category = null, ?int $year = null, ?int $month = null): array
     {
         $qb = $this->createQueryBuilder('ae')
-            ->where('ae.description LIKE :tenantPattern OR ae.reference LIKE :tenantRefPattern')
-            ->setParameter('tenantPattern', '%locataire%' . $tenantId . '%')
-            ->setParameter('tenantRefPattern', '%TENANT-' . $tenantId . '%');
+            // Chemin 1: via paiement -> bail -> locataire
+            ->leftJoin('ae.payment', 'p')
+            ->leftJoin('p.lease', 'l')
+            ->leftJoin('l.tenant', 't')
+            // Chemin 2: via propriété -> baux -> locataire
+            ->leftJoin('ae.property', 'prop')
+            ->leftJoin('prop.leases', 'pl')
+            ->leftJoin('pl.tenant', 't2')
+            ->andWhere('(t.id = :tenantId OR t2.id = :tenantId)')
+            ->setParameter('tenantId', $tenantId);
 
         if ($type) {
             $qb->andWhere('ae.type = :type')
