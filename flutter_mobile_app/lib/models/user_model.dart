@@ -13,15 +13,28 @@ class UserModel {
     required this.roles,
   });
 
+  // Helper getter to easily get the full name
+  String get fullName => '$firstName $lastName';
+
+  // Factory constructor to create a UserModel from a JSON object
   factory UserModel.fromJson(Map<String, dynamic> json) {
     return UserModel(
-      id: json['id'] ?? 0,
-      email: json['email'] ?? '',
-      firstName: json['firstName'] ?? '',
-      lastName: json['lastName'] ?? '',
-      roles: List<String>.from(json['roles'] ?? []),
+      id: json['id'] as int,
+      email: json['email'] as String,
+      firstName: json['firstName'] as String,
+      lastName: json['lastName'] as String,
+      roles: List<String>.from(json['roles'] as List),
     );
   }
 
-  String get fullName => '$firstName $lastName';
+  // Method to convert a UserModel instance to a JSON object
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'email': email,
+      'firstName': firstName,
+      'lastName': lastName,
+      'roles': roles,
+    };
+  }
 }

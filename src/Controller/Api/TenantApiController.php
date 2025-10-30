@@ -11,6 +11,7 @@ use App\Repository\PropertyRepository;
 use App\Repository\TenantRepository;
 use App\Service\JwtService;
 use App\Service\SettingsService;
+use App\Service\CurrencyService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -33,7 +34,8 @@ class TenantApiController extends AbstractController
         private PropertyRepository $propertyRepository,
         private AccountingEntryRepository $accountingEntryRepository,
         private JwtService $jwtService,
-        private SettingsService $settingsService
+        private SettingsService $settingsService,
+        private CurrencyService $currencyService
     ) {
     }
 
@@ -816,15 +818,16 @@ class TenantApiController extends AbstractController
         ];
 
         // Localisation / devise / formats
+        $locFromService = $this->currencyService->getLocalizationSettings();
         $localization = [
-            'defaultCurrency' => $this->settingsService->get('default_currency', 'EUR'),
+            'defaultCurrency' => $locFromService['default_currency'] ?? $this->settingsService->get('default_currency', 'XOF'),
             'cinetpayCurrency' => $this->settingsService->get('cinetpay_currency', 'XOF'),
-            'dateFormat' => $this->settingsService->get('date_format', 'd/m/Y'),
-            'timeFormat' => $this->settingsService->get('time_format', 'H:i'),
-            'timezone' => $this->settingsService->get('timezone', 'Europe/Paris'),
-            'locale' => $this->settingsService->get('locale', 'fr_FR'),
-            'decimalSeparator' => $this->settingsService->get('decimal_separator', ','),
-            'thousandsSeparator' => $this->settingsService->get('thousands_separator', ' '),
+            'dateFormat' => $locFromService['date_format'] ?? $this->settingsService->get('date_format', 'd/m/Y'),
+            'timeFormat' => $locFromService['time_format'] ?? $this->settingsService->get('time_format', 'H:i'),
+            'timezone' => $locFromService['timezone'] ?? $this->settingsService->get('timezone', 'Europe/Paris'),
+            'locale' => $locFromService['locale'] ?? $this->settingsService->get('locale', 'fr_FR'),
+            'decimalSeparator' => $locFromService['decimal_separator'] ?? $this->settingsService->get('decimal_separator', ','),
+            'thousandsSeparator' => $locFromService['thousands_separator'] ?? $this->settingsService->get('thousands_separator', ' '),
         ];
 
         // Paiements

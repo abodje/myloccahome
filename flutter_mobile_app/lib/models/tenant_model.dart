@@ -13,15 +13,28 @@ class TenantModel {
     this.phone,
   });
 
+  // Helper getter to easily get the full name
+  String get fullName => '$firstName $lastName';
+
+  // Factory constructor to create a TenantModel from a JSON object
   factory TenantModel.fromJson(Map<String, dynamic> json) {
     return TenantModel(
-      id: json['id'] ?? 0,
-      firstName: json['firstName'] ?? '',
-      lastName: json['lastName'] ?? '',
-      email: json['email'] ?? '',
-      phone: json['phone'],
+      id: json['id'] as int,
+      firstName: json['firstName'] as String,
+      lastName: json['lastName'] as String,
+      email: json['email'] as String,
+      phone: json['phone'] as String?,
     );
   }
 
-  String get fullName => '$firstName $lastName';
+  // Method to convert a TenantModel instance to a JSON object
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'firstName': firstName,
+      'lastName': lastName,
+      'email': email,
+      'phone': phone,
+    };
+  }
 }
