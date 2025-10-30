@@ -1,3 +1,4 @@
+import '../models/accounting_model.dart';
 import '../models/user_model.dart';
 import '../models/tenant_model.dart';
 import '../models/property_model.dart';
@@ -59,8 +60,9 @@ class TenantDataService {
   }
 
   // Comptabilité
-  Future<Map<String, dynamic>> getAccounting() async {
-    return await _authService.get('/api/tenant/accounting');
+  Future<AccountingDataModel> getAccounting() async {
+    final response = await _authService.get('/api/tenant/accounting?entries=1&entriesLimit=20');
+    return AccountingDataModel.fromJson(response);
   }
 
   // Profil

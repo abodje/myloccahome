@@ -28,6 +28,9 @@ dependencies:
   # JSON serialization
   json_annotation: ^4.8.1
 
+  # Internationalization (pour les dates et les nombres)
+  intl: ^0.18.1
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

@@ -850,13 +850,21 @@ class TenantApiController extends AbstractController
             $entries = array_slice($entries, 0, $entriesLimit);
             $response['entries'] = array_map(function ($e) {
                 /** @var \App\Entity\AccountingEntry $e */
+                $type = $e->getType();
+                // Normalisation d'affichage: LOYER_ATTENDU et LOYER en DEBIT côté locataire si marqués en CREDIT
+                $cat = strtoupper((string)$e->getCategory());
+                if (($cat === 'LOYER_ATTENDU' || $cat === 'LOYER') && strtoupper((string)$type) === 'CREDIT') {
+                    $type = 'DEBIT';
+                }
+                $amount = (float) $e->getAmount();
+                $signed = ($type === 'CREDIT') ? $amount : -$amount;
                 return [
                     'id' => $e->getId(),
                     'date' => $e->getEntryDate()?->format('Y-m-d'),
-                    'type' => $e->getType(),
+                    'type' => $type,
                     'category' => $e->getCategory(),
-                    'amount' => (float) $e->getAmount(),
-                    'signedAmount' => method_exists($e, 'getSignedAmount') ? (float) $e->getSignedAmount() : ($e->getType() === 'CREDIT' ? (float)$e->getAmount() : -(float)$e->getAmount()),
+                    'amount' => $amount,
+                    'signedAmount' => $signed,
                     'runningBalance' => method_exists($e, 'getRunningBalance') ? (float) $e->getRunningBalance() : null,
                     'reference' => $e->getReference(),
                     'description' => $e->getDescription(),
@@ -906,13 +914,20 @@ class TenantApiController extends AbstractController
 
         $items = array_map(function ($e) {
             /** @var \App\Entity\AccountingEntry $e */
+            $type = $e->getType();
+            $cat = strtoupper((string)$e->getCategory());
+            if (($cat === 'LOYER_ATTENDU' || $cat === 'LOYER') && strtoupper((string)$type) === 'CREDIT') {
+                $type = 'DEBIT';
+            }
+            $amount = (float) $e->getAmount();
+            $signed = ($type === 'CREDIT') ? $amount : -$amount;
             return [
                 'id' => $e->getId(),
                 'date' => $e->getEntryDate()?->format('Y-m-d'),
-                'type' => $e->getType(), // CREDIT|DEBIT
+                'type' => $type, // CREDIT|DEBIT
                 'category' => $e->getCategory(),
-                'amount' => (float) $e->getAmount(),
-                'signedAmount' => method_exists($e, 'getSignedAmount') ? (float) $e->getSignedAmount() : ($e->getType() === 'CREDIT' ? (float)$e->getAmount() : -(float)$e->getAmount()),
+                'amount' => $amount,
+                'signedAmount' => $signed,
                 'runningBalance' => method_exists($e, 'getRunningBalance') ? (float) $e->getRunningBalance() : null,
                 'reference' => $e->getReference(),
                 'description' => $e->getDescription(),

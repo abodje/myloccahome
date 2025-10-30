@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/date_symbol_data_local.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:go_router/go_router.dart';
@@ -14,17 +15,49 @@ import 'presentation/screens/property_screen.dart';
 import 'presentation/screens/profile_screen.dart';
 import 'presentation/screens/accounting_screen.dart';
 
-void main() async {
+// Future pour l'initialisation des services
+final Future<AuthService> _initialization = _initServices();
+
+Future<AuthService> _initServices() async {
   WidgetsFlutterBinding.ensureInitialized();
-
-  // Initialiser les préférences partagées
+  await initializeDateFormatting('fr_FR', null);
   final prefs = await SharedPreferences.getInstance();
-
-  // Initialiser les services
   final apiService = ApiService();
-  final authService = AuthService(apiService, prefs);
+  return AuthService(apiService, prefs);
+}
 
-  runApp(MyApp(authService: authService));
+void main() {
+  runApp(const AppInitializer());
+}
+
+class AppInitializer extends StatelessWidget {
+  const AppInitializer({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<AuthService>(
+      future: _initialization,
+      builder: (context, snapshot) {
+        if (snapshot.hasData) {
+          return MyApp(authService: snapshot.data!);
+        } else if (snapshot.hasError) {
+          return MaterialApp(
+            home: Scaffold(
+              body: Center(
+                child: Text('Erreur d\'initialisation: ${snapshot.error}'),
+              ),
+            ),
+          );
+        } else {
+          return const MaterialApp(
+            home: Scaffold(
+              body: Center(child: CircularProgressIndicator()),
+            ),
+          );
+        }
+      },
+    );
+  }
 }
 
 class MyApp extends StatelessWidget {
@@ -37,7 +70,7 @@ class MyApp extends StatelessWidget {
     return ChangeNotifierProvider<AuthService>.value(
       value: authService,
       child: MaterialApp.router(
-        title: 'MyLocca - Locataire',
+        title: 'Lokapro - Locataire',
         debugShowCheckedModeBanner: false,
         theme: AppTheme.lightTheme,
         routerConfig: _router,
