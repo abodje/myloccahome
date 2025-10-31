@@ -47,7 +47,11 @@ class AccountingConfigController extends AbstractController
     public function new(Request $request): Response
     {
         $configuration = new AccountingConfiguration();
-        $form = $this->createForm(AccountingConfigurationType::class, $configuration);
+        $form = $this->createForm(AccountingConfigurationType::class, $configuration, [
+            'operationTypes' => $this->configService->getAvailableOperationTypes(),
+            'categories' => $this->configService->getAvailableCategories(),
+            'entryTypes' => $this->configService->getAvailableEntryTypes(),
+        ]);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
@@ -84,7 +88,11 @@ class AccountingConfigController extends AbstractController
     #[Route('/{id}/edit', name: 'edit', methods: ['GET', 'POST'])]
     public function edit(Request $request, AccountingConfiguration $configuration): Response
     {
-        $form = $this->createForm(AccountingConfigurationType::class, $configuration);
+        $form = $this->createForm(AccountingConfigurationType::class, $configuration, [
+            'operationTypes' => $this->configService->getAvailableOperationTypes(),
+            'categories' => $this->configService->getAvailableCategories(),
+            'entryTypes' => $this->configService->getAvailableEntryTypes(),
+        ]);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {

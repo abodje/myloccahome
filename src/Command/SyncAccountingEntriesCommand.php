@@ -73,6 +73,8 @@ class SyncAccountingEntriesCommand extends Command
                 $entry->setOwner($payment->getProperty()?->getOwner());
                 $entry->setPayment($payment);
                 $entry->setNotes('Généré automatiquement lors de la synchronisation');
+                $entry->setOrganization($payment->getOrganization());
+                $entry->setCompany($payment->getCompany());
 
                 $this->entityManager->persist($entry);
                 $createdEntries++;
@@ -106,6 +108,8 @@ class SyncAccountingEntriesCommand extends Command
                 $entry->setOwner($payment->getProperty()?->getOwner());
                 $entry->setPayment($payment);
                 $entry->setNotes('Généré automatiquement lors de la synchronisation');
+                $entry->setOrganization($payment->getOrganization());
+                $entry->setCompany($payment->getCompany());
 
                 $this->entityManager->persist($entry);
                 $createdEntries++;

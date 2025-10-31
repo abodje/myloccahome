@@ -547,7 +547,9 @@ class RentReceiptService
         }
 
         // Récupérer la configuration comptable pour les quittances
-        $config = $this->accountingConfigService->getConfigurationForOperation('QUITTANCE_LOYER');
+        $organizationId = $payment->getOrganization()?->getId();
+        $companyId = $payment->getCompany()?->getId();
+        $config = $this->accountingConfigService->getConfigurationForOperation('QUITTANCE_LOYER', $organizationId, $companyId);
 
         // Si aucune configuration n'est trouvée, utiliser les valeurs par défaut
         $entryType = $config?->getEntryType() ?? 'CREDIT';
@@ -589,7 +591,9 @@ class RentReceiptService
         }
 
         // Récupérer la configuration comptable pour les avis d'échéance
-        $config = $this->accountingConfigService->getConfigurationForOperation('AVIS_ECHEANCE');
+        $organizationId = $payment->getOrganization()?->getId();
+        $companyId = $payment->getCompany()?->getId();
+        $config = $this->accountingConfigService->getConfigurationForOperation('AVIS_ECHEANCE', $organizationId, $companyId);
 
         // Si aucune configuration n'est trouvée, utiliser les valeurs par défaut
         $entryType = $config?->getEntryType() ?? 'CREDIT';

@@ -25,24 +25,33 @@ class AccountingConfigService
     /**
      * Récupère la configuration pour un type d'opération
      */
-    public function getConfigurationForOperation(string $operationType): ?AccountingConfiguration
+    public function getConfigurationForOperation(string $operationType, ?int $organizationId = null, ?int $companyId = null): ?AccountingConfiguration
     {
+        if ($organizationId || $companyId) {
+            return $this->repository->findByOperationTypeAndOrganization($operationType, $organizationId, $companyId);
+        }
         return $this->repository->findByOperationType($operationType);
     }
 
     /**
      * Récupère toutes les configurations actives
      */
-    public function getAllActiveConfigurations(): array
+    public function getAllActiveConfigurations(?int $organizationId = null, ?int $companyId = null): array
     {
+        if ($organizationId || $companyId) {
+            return $this->repository->findActiveConfigurationsByOrganization($organizationId, $companyId);
+        }
         return $this->repository->findActiveConfigurations();
     }
 
     /**
      * Récupère les configurations par catégorie
      */
-    public function getConfigurationsByCategory(string $category): array
+    public function getConfigurationsByCategory(string $category, ?int $organizationId = null, ?int $companyId = null): array
     {
+        if ($organizationId || $companyId) {
+            return $this->repository->findByCategoryAndOrganization($category, $organizationId, $companyId);
+        }
         return $this->repository->findByCategory($category);
     }
 

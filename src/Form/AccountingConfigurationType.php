@@ -3,6 +3,9 @@
 namespace App\Form;
 
 use App\Entity\AccountingConfiguration;
+use App\Entity\Organization;
+use App\Entity\Company;
+use Symfony\Bridge\Doctrine\Form\Type\EntityType;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
@@ -16,6 +19,24 @@ class AccountingConfigurationType extends AbstractType
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
         $builder
+            ->add('organization', EntityType::class, [
+                'label' => 'Organisation',
+                'class' => Organization::class,
+                'choice_label' => 'name',
+                'required' => false,
+                'placeholder' => 'Toutes les organisations (général)',
+                'attr' => ['class' => 'form-select'],
+                'help' => 'Laisser vide pour une configuration globale'
+            ])
+            ->add('company', EntityType::class, [
+                'label' => 'Société',
+                'class' => Company::class,
+                'choice_label' => 'name',
+                'required' => false,
+                'placeholder' => 'Toutes les sociétés (général)',
+                'attr' => ['class' => 'form-select'],
+                'help' => 'Laisser vide pour une configuration globale'
+            ])
             ->add('operationType', ChoiceType::class, [
                 'label' => 'Type d\'opération',
                 'choices' => $options['operationTypes'],

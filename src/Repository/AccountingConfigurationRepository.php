@@ -71,4 +71,72 @@ class AccountingConfigurationRepository extends ServiceEntityRepository
             ->getQuery()
             ->getOneOrNullResult();
     }
+
+    /**
+     * Trouve une configuration par type d'opération et organisation
+     */
+    public function findByOperationTypeAndOrganization(string $operationType, ?int $organizationId = null, ?int $companyId = null): ?AccountingConfiguration
+    {
+        $qb = $this->createQueryBuilder('ac')
+            ->andWhere('ac.operationType = :operationType')
+            ->andWhere('ac.isActive = :active')
+            ->setParameter('operationType', $operationType)
+            ->setParameter('active', true);
+
+        if ($companyId) {
+            $qb->andWhere('ac.company = :companyId')
+               ->setParameter('companyId', $companyId);
+        } elseif ($organizationId) {
+            $qb->andWhere('ac.organization = :organizationId')
+               ->setParameter('organizationId', $organizationId);
+        }
+
+        return $qb->getQuery()->getOneOrNullResult();
+    }
+
+    /**
+     * Trouve toutes les configurations actives par organisation
+     */
+    public function findActiveConfigurationsByOrganization(?int $organizationId = null, ?int $companyId = null): array
+    {
+        $qb = $this->createQueryBuilder('ac')
+            ->andWhere('ac.isActive = :active')
+            ->setParameter('active', true);
+
+        if ($companyId) {
+            $qb->andWhere('ac.company = :companyId')
+               ->setParameter('companyId', $companyId);
+        } elseif ($organizationId) {
+            $qb->andWhere('ac.organization = :organizationId')
+               ->setParameter('organizationId', $organizationId);
+        }
+
+        return $qb->orderBy('ac.operationType', 'ASC')
+                  ->getQuery()
+                  ->getResult();
+    }
+
+    /**
+     * Trouve les configurations par catégorie et organisation
+     */
+    public function findByCategoryAndOrganization(string $category, ?int $organizationId = null, ?int $companyId = null): array
+    {
+        $qb = $this->createQueryBuilder('ac')
+            ->andWhere('ac.category = :category')
+            ->andWhere('ac.isActive = :active')
+            ->setParameter('category', $category)
+            ->setParameter('active', true);
+
+        if ($companyId) {
+            $qb->andWhere('ac.company = :companyId')
+               ->setParameter('companyId', $companyId);
+        } elseif ($organizationId) {
+            $qb->andWhere('ac.organization = :organizationId')
+               ->setParameter('organizationId', $organizationId);
+        }
+
+        return $qb->orderBy('ac.operationType', 'ASC')
+                  ->getQuery()
+                  ->getResult();
+    }
 }

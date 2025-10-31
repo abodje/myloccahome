@@ -75,6 +75,10 @@ class AccountingService
         $entry->setOwner($expense->getProperty()?->getOwner());
         $entry->setExpense($expense);
         $entry->setNotes($expense->getNotes());
+        
+        // Organisation et société
+        $entry->setOrganization($expense->getOrganization());
+        $entry->setCompany($expense->getCompany());
 
         $this->entityManager->persist($entry);
         $this->entityManager->flush();
@@ -262,11 +266,19 @@ class AccountingService
         $entry->setAmount((float) $advance->getAmount());
         $entry->setDescription(sprintf(
             'Acompte reçu - %s - Bail #%d',
-            $advance->getTenant()?->getFullName() ?? 'N/A',
+            $advance->getLease()?->getTenant()?->getFullName() ?? 'N/A',
             $advance->getLease()?->getId() ?? 0
         ));
         $entry->setEntryDate($advance->getPaidDate());
         $entry->setReference('ACOMPTE-' . $advance->getId());
+        
+        // Organisation et société depuis le bail
+        $lease = $advance->getLease();
+        if ($lease) {
+            $entry->setOrganization($lease->getOrganization());
+            $entry->setCompany($lease->getCompany());
+            $entry->setProperty($lease->getProperty());
+        }
 
         $this->entityManager->persist($entry);
         $this->entityManager->flush();
@@ -292,6 +304,11 @@ class AccountingService
         $entry->setEntryDate(new \DateTime());
         $entry->setReference('USE-ACOMPTE-' . $advance->getId() . '-' . $payment->getId());
         $entry->setPayment($payment);
+        
+        // Organisation et société depuis le paiement
+        $entry->setOrganization($payment->getOrganization());
+        $entry->setCompany($payment->getCompany());
+        $entry->setProperty($payment->getProperty());
 
         $this->entityManager->persist($entry);
         $this->entityManager->flush();
@@ -311,11 +328,19 @@ class AccountingService
         $entry->setDescription(sprintf(
             'Remboursement acompte #%d - %s%s',
             $advance->getId(),
-            $advance->getTenant()?->getFullName() ?? 'N/A',
+            $advance->getLease()?->getTenant()?->getFullName() ?? 'N/A',
             $reason ? " - Raison: $reason" : ''
         ));
         $entry->setEntryDate(new \DateTime());
         $entry->setReference('REFUND-ACOMPTE-' . $advance->getId());
+        
+        // Organisation et société depuis le bail
+        $lease = $advance->getLease();
+        if ($lease) {
+            $entry->setOrganization($lease->getOrganization());
+            $entry->setCompany($lease->getCompany());
+            $entry->setProperty($lease->getProperty());
+        }
 
         $this->entityManager->persist($entry);
         $this->entityManager->flush();
