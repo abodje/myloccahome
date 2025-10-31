@@ -6,6 +6,7 @@ use App\Entity\Property;
 use App\Entity\Owner;
 use App\Entity\User;
 use App\Repository\UserRepository;
+use App\Repository\OwnerRepository;
 use Symfony\Bridge\Doctrine\Form\Type\EntityType;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
@@ -22,7 +23,10 @@ use Symfony\Bundle\SecurityBundle\Security;
 
 class PropertyType extends AbstractType
 {
-    public function __construct(private Security $security) {}
+    public function __construct(
+        private Security $security,
+        private OwnerRepository $ownerRepository
+    ) {}
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
         $builder
@@ -97,6 +101,24 @@ class PropertyType extends AbstractType
                 'label' => 'Propriétaire',
                 'placeholder' => 'Sélectionner un propriétaire',
                 'required' => false,
+                'query_builder' => function (OwnerRepository $or) {
+                    $user = $this->security->getUser();
+                    $organization = $user && method_exists($user, 'getOrganization') ? $user->getOrganization() : null;
+                    $company = $user && method_exists($user, 'getCompany') ? $user->getCompany() : null;
+                    
+                    $qb = $or->createQueryBuilder('o');
+                    
+                    if ($company) {
+                        $qb->where('o.company = :company')
+                           ->setParameter('company', $company);
+                    } elseif ($organization) {
+                        $qb->where('o.organization = :organization')
+                           ->setParameter('organization', $organization);
+                    }
+                    
+                    return $qb->orderBy('o.lastName', 'ASC')
+                              ->addOrderBy('o.firstName', 'ASC');
+                },
                 'attr' => ['class' => 'form-select']
             ])
             ->add('managers', EntityType::class, [
