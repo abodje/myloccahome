@@ -108,14 +108,14 @@ class DashboardController extends AbstractController
         $currentMonth = new \DateTime('first day of this month');
         $nextMonth = new \DateTime('first day of next month');
 
-        $monthlyRevenue = $paymentRepo->getTotalRevenueByPeriod($currentMonth, $nextMonth);
-        $monthlyExpenses = $expenseRepo->getTotalExpensesByPeriod($currentMonth, $nextMonth);
+        $monthlyRevenue = $this->getTotalRevenueByPeriod($paymentRepo, $currentMonth, $nextMonth, $organization, $company);
+        $monthlyExpenses = $this->getTotalExpensesByPeriod($expenseRepo, $currentMonth, $nextMonth, $organization, $company);
 
         // Dernières activités
-        $recentPayments = $paymentRepo->findBy([], ['createdAt' => 'DESC'], 5);
-        $recentMaintenanceRequests = $maintenanceRepo->findBy([], ['createdAt' => 'DESC'], 5);
-        $urgentRequests = $maintenanceRepo->findUrgentPending();
-        $overduePayments = $paymentRepo->findOverdue();
+        $recentPayments = $this->getRecentPayments($paymentRepo, $organization, $company);
+        $recentMaintenanceRequests = $this->getRecentMaintenance($maintenanceRepo, $organization, $company);
+        $urgentRequests = $this->getUrgentRequests($maintenanceRepo, $organization, $company);
+        $overduePayments = $this->getOverduePayments($paymentRepo, $organization, $company);
 
         // 📊 NOUVELLES DONNÉES ANALYTIQUES
         try {
@@ -551,5 +551,137 @@ class DashboardController extends AbstractController
         }
 
         return $stats;
+    }
+
+    /**
+     * Récupère le total des revenus filtré par organisation/société
+     */
+    private function getTotalRevenueByPeriod($paymentRepo, \DateTime $startDate, \DateTime $endDate, $organization, $company): float
+    {
+        if ($company) {
+            $payments = $paymentRepo->createQueryBuilder('p')
+                ->where('p.paidDate BETWEEN :start AND :end')
+                ->andWhere('p.status = :status')
+                ->andWhere('p.company = :company')
+                ->setParameter('start', $startDate)
+                ->setParameter('end', $endDate)
+                ->setParameter('status', 'Payé')
+                ->setParameter('company', $company)
+                ->getQuery()
+                ->getResult();
+        } elseif ($organization) {
+            $payments = $paymentRepo->createQueryBuilder('p')
+                ->where('p.paidDate BETWEEN :start AND :end')
+                ->andWhere('p.status = :status')
+                ->andWhere('p.organization = :organization')
+                ->setParameter('start', $startDate)
+                ->setParameter('end', $endDate)
+                ->setParameter('status', 'Payé')
+                ->setParameter('organization', $organization)
+                ->getQuery()
+                ->getResult();
+        } else {
+            return $paymentRepo->getTotalRevenueByPeriod($startDate, $endDate);
+        }
+
+        return array_sum(array_map(fn($p) => $p->getAmount(), $payments));
+    }
+
+    /**
+     * Récupère le total des dépenses filtré par organisation/société
+     */
+    private function getTotalExpensesByPeriod($expenseRepo, \DateTime $startDate, \DateTime $endDate, $organization, $company): float
+    {
+        if ($company) {
+            $expenses = $expenseRepo->createQueryBuilder('e')
+                ->where('e.expenseDate BETWEEN :start AND :end')
+                ->andWhere('e.company = :company')
+                ->setParameter('start', $startDate)
+                ->setParameter('end', $endDate)
+                ->setParameter('company', $company)
+                ->getQuery()
+                ->getResult();
+        } elseif ($organization) {
+            $expenses = $expenseRepo->createQueryBuilder('e')
+                ->where('e.expenseDate BETWEEN :start AND :end')
+                ->andWhere('e.organization = :organization')
+                ->setParameter('start', $startDate)
+                ->setParameter('end', $endDate)
+                ->setParameter('organization', $organization)
+                ->getQuery()
+                ->getResult();
+        } else {
+            return $expenseRepo->getTotalExpensesByPeriod($startDate, $endDate);
+        }
+
+        return array_sum(array_map(fn($e) => $e->getAmount(), $expenses));
+    }
+
+    /**
+     * Récupère les paiements récents filtrés
+     */
+    private function getRecentPayments($paymentRepo, $organization, $company): array
+    {
+        $payments = $paymentRepo->findBy([], ['createdAt' => 'DESC'], 100);
+
+        // Filtrer selon organization/company
+        if ($company) {
+            $payments = array_filter($payments, fn($p) => $p->getCompany() === $company);
+        } elseif ($organization) {
+            $payments = array_filter($payments, fn($p) => $p->getOrganization() === $organization);
+        }
+
+        return array_slice($payments, 0, 5);
+    }
+
+    /**
+     * Récupère les demandes de maintenance récentes filtrées
+     */
+    private function getRecentMaintenance($maintenanceRepo, $organization, $company): array
+    {
+        $requests = $maintenanceRepo->findBy([], ['createdAt' => 'DESC'], 100);
+
+        // Filtrer selon organization/company
+        if ($company) {
+            $requests = array_filter($requests, fn($r) => $r->getCompany() === $company);
+        } elseif ($organization) {
+            $requests = array_filter($requests, fn($r) => $r->getOrganization() === $organization);
+        }
+
+        return array_slice($requests, 0, 5);
+    }
+
+    /**
+     * Récupère les demandes urgentes filtrées
+     */
+    private function getUrgentRequests($maintenanceRepo, $organization, $company): array
+    {
+        $requests = $maintenanceRepo->findUrgentPending();
+
+        // Filtrer selon organization/company
+        if ($company) {
+            return array_filter($requests, fn($r) => $r->getCompany() === $company);
+        } elseif ($organization) {
+            return array_filter($requests, fn($r) => $r->getOrganization() === $organization);
+        }
+
+        return $requests;
+    }
+
+    /**
+     * Récupère les paiements en retard filtrés
+     */
+    private function getOverduePayments($paymentRepo, $organization, $company): array
+    {
+        $payments = $paymentRepo->findOverdue();
+
+        // Filtrer selon organization/company
+        if ($company) {
+            return array_filter($payments, fn($p) => $p->getCompany() === $company);
+        } elseif ($organization) {
+            return array_filter($payments, fn($p) => $p->getOrganization() === $organization);
+        }
+
+        return $payments;
     }
 }
