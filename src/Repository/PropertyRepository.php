@@ -165,11 +165,50 @@ class PropertyRepository extends ServiceEntityRepository
     /**
      * Statistiques des propriétés
      */
-    public function getStatistics(): array
+    public function getStatistics(?int $organizationId = null, ?int $companyId = null): array
     {
         $total = $this->count([]);
         $available = count($this->findAvailable());
         $occupied = count($this->findOccupied());
+        
+        // Si on a des filtres organisation/société, calculer depuis les propriétés filtrées
+        if ($organizationId || $companyId) {
+            $qb = $this->createQueryBuilder('p');
+            
+            if ($companyId) {
+                $qb->where('p.company = :companyId')
+                   ->setParameter('companyId', $companyId);
+            } elseif ($organizationId) {
+                $qb->where('p.organization = :organizationId')
+                   ->setParameter('organizationId', $organizationId);
+            }
+            
+            $properties = $qb->getQuery()->getResult();
+            $total = count($properties);
+            
+            // Compter les disponibles et occupées parmi les propriétés filtrées
+            $available = 0;
+            $occupied = 0;
+            $now = new \DateTime();
+            
+            foreach ($properties as $property) {
+                $hasActiveLease = false;
+                foreach ($property->getLeases() as $lease) {
+                    if ($lease->getStatus() === 'Actif' && 
+                        $lease->getStartDate() <= $now &&
+                        ($lease->getEndDate() === null || $lease->getEndDate() >= $now)) {
+                        $hasActiveLease = true;
+                        break;
+                    }
+                }
+                
+                if ($hasActiveLease) {
+                    $occupied++;
+                } else {
+                    $available++;
+                }
+            }
+        }
 
         return [
             'total' => $total,

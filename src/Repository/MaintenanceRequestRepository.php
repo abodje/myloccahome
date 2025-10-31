@@ -179,16 +179,24 @@ class MaintenanceRequestRepository extends ServiceEntityRepository
     /**
      * Coût total des maintenances par période
      */
-    public function getTotalCostByPeriod(\DateTime $startDate, \DateTime $endDate): float
+    public function getTotalCostByPeriod(\DateTime $startDate, \DateTime $endDate, ?int $organizationId = null, ?int $companyId = null): float
     {
-        $result = $this->createQueryBuilder('mr')
+        $qb = $this->createQueryBuilder('mr')
             ->select('SUM(mr.actualCost)')
             ->where('mr.completedDate BETWEEN :start AND :end')
             ->andWhere('mr.actualCost IS NOT NULL')
             ->setParameter('start', $startDate)
-            ->setParameter('end', $endDate)
-            ->getQuery()
-            ->getSingleScalarResult();
+            ->setParameter('end', $endDate);
+
+        if ($companyId) {
+            $qb->andWhere('mr.company = :companyId')
+               ->setParameter('companyId', $companyId);
+        } elseif ($organizationId) {
+            $qb->andWhere('mr.organization = :organizationId')
+               ->setParameter('organizationId', $organizationId);
+        }
+
+        $result = $qb->getQuery()->getSingleScalarResult();
 
         return (float)($result ?? 0);
     }

@@ -1,6 +1,8 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'package:flutter_pdfview/flutter_pdfview.dart';
+import 'package:http/http.dart' as http;
+import 'package:path_provider/path_provider.dart';
 import '../../theme/app_theme.dart';
 
 class PdfViewerScreen extends StatefulWidget {
@@ -18,24 +20,37 @@ class PdfViewerScreen extends StatefulWidget {
 }
 
 class _PdfViewerScreenState extends State<PdfViewerScreen> {
-  late PdfViewerController _pdfViewerController;
+  String? _localFilePath;
+  bool _isLoading = true;
+  String? _error;
 
   @override
   void initState() {
     super.initState();
-    _pdfViewerController = PdfViewerController();
+    _loadPdf();
   }
 
-  Future<void> _downloadDocument() async {
-    final uri = Uri.parse(widget.documentUrl);
+  Future<void> _loadPdf() async {
     try {
-      if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
-        throw Exception('Impossible de lancer l\'URL: ${widget.documentUrl}');
+      final uri = Uri.parse(widget.documentUrl);
+      final response = await http.get(uri);
+
+      if (response.statusCode == 200) {
+        final dir = await getApplicationDocumentsDirectory();
+        final file = File('${dir.path}/${widget.documentTitle}.pdf');
+        await file.writeAsBytes(response.bodyBytes);
+        setState(() {
+          _localFilePath = file.path;
+          _isLoading = false;
+        });
+      } else {
+        throw Exception('Erreur de téléchargement: ${response.statusCode}');
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Erreur lors du téléchargement: $e')),
-      );
+      setState(() {
+        _error = e.toString();
+        _isLoading = false;
+      });
     }
   }
 
@@ -47,26 +62,29 @@ class _PdfViewerScreenState extends State<PdfViewerScreen> {
         backgroundColor: AppTheme.primaryBlue,
         foregroundColor: Colors.white,
         elevation: 0,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.download_outlined),
-            tooltip: 'Télécharger',
-            onPressed: _downloadDocument,
-          ),
-        ],
       ),
-      body: SfPdfViewer.network(
-        widget.documentUrl,
-        controller: _pdfViewerController,
-      ),
-      floatingActionButton: FloatingActionButton(
-        backgroundColor: AppTheme.primaryBlue,
-        onPressed: () {
-          _pdfViewerController.zoomLevel = _pdfViewerController.zoomLevel + 1.0;
-        },
-        tooltip: 'Zoom avant',
-        child: const Icon(Icons.zoom_in, color: Colors.white),
-      ),
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator(color: AppTheme.primaryBlue))
+          : _error != null
+              ? Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Text(
+                      'Erreur lors du chargement du PDF: $_error',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(color: Colors.red),
+                    ),
+                  ),
+                )
+              : _localFilePath != null
+                  ? PDFView(
+                      filePath: _localFilePath!,
+                      enableSwipe: true,
+                      swipeHorizontal: false,
+                      autoSpacing: false,
+                      pageFling: true,
+                    )
+                  : const Center(child: Text('Impossible de charger le PDF.')),
     );
   }
 }

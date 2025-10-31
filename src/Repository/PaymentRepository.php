@@ -58,16 +58,25 @@ class PaymentRepository extends ServiceEntityRepository
     /**
      * Trouve les paiements en retard
      */
-    public function findOverdue(): array
+    public function findOverdue(?int $organizationId = null, ?int $companyId = null): array
     {
-        return $this->createQueryBuilder('p')
+        $qb = $this->createQueryBuilder('p')
             ->where('p.dueDate < :now')
             ->andWhere('p.status != :status')
             ->setParameter('now', new \DateTime())
-            ->setParameter('status', 'Payé')
-            ->orderBy('p.dueDate', 'ASC')
-            ->getQuery()
-            ->getResult();
+            ->setParameter('status', 'Payé');
+
+        if ($companyId) {
+            $qb->andWhere('p.company = :companyId')
+               ->setParameter('companyId', $companyId);
+        } elseif ($organizationId) {
+            $qb->andWhere('p.organization = :organizationId')
+               ->setParameter('organizationId', $organizationId);
+        }
+
+        return $qb->orderBy('p.dueDate', 'ASC')
+                  ->getQuery()
+                  ->getResult();
     }
 
     /**
@@ -132,17 +141,25 @@ class PaymentRepository extends ServiceEntityRepository
     /**
      * Revenus totaux par période
      */
-    public function getTotalRevenueByPeriod(\DateTime $startDate, \DateTime $endDate): float
+    public function getTotalRevenueByPeriod(\DateTime $startDate, \DateTime $endDate, ?int $organizationId = null, ?int $companyId = null): float
     {
-        $result = $this->createQueryBuilder('p')
+        $qb = $this->createQueryBuilder('p')
             ->select('SUM(p.amount)')
             ->where('p.paidDate BETWEEN :start AND :end')
             ->andWhere('p.status = :status')
             ->setParameter('start', $startDate)
             ->setParameter('end', $endDate)
-            ->setParameter('status', 'Payé')
-            ->getQuery()
-            ->getSingleScalarResult();
+            ->setParameter('status', 'Payé');
+
+        if ($companyId) {
+            $qb->andWhere('p.company = :companyId')
+               ->setParameter('companyId', $companyId);
+        } elseif ($organizationId) {
+            $qb->andWhere('p.organization = :organizationId')
+               ->setParameter('organizationId', $organizationId);
+        }
+
+        $result = $qb->getQuery()->getSingleScalarResult();
 
         return (float)($result ?? 0);
     }

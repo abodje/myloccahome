@@ -17,7 +17,7 @@ class ReportService
     ) {
     }
 
-    public function generateMainReports(): array
+    public function generateMainReports(?int $organizationId = null, ?int $companyId = null): array
     {
         $currentMonthStart = new \DateTime('first day of this month');
         $currentMonthEnd = new \DateTime('last day of this month');
@@ -26,17 +26,17 @@ class ReportService
         $currentYearStart = new \DateTime('first day of January this year');
 
         // KPIs principaux
-        $monthlyRevenue = (float) $this->paymentRepository->getTotalRevenueByPeriod($currentMonthStart, $currentMonthEnd);
-        $lastMonthRevenue = (float) $this->paymentRepository->getTotalRevenueByPeriod($lastMonthStart, $lastMonthEnd);
-        $monthlyExpenses = (float) $this->maintenanceRepository->getTotalCostByPeriod($currentMonthStart, $currentMonthEnd);
-        $yearlyRevenue = (float) $this->paymentRepository->getTotalRevenueByPeriod($currentYearStart, new \DateTime());
+        $monthlyRevenue = (float) $this->paymentRepository->getTotalRevenueByPeriod($currentMonthStart, $currentMonthEnd, $organizationId, $companyId);
+        $lastMonthRevenue = (float) $this->paymentRepository->getTotalRevenueByPeriod($lastMonthStart, $lastMonthEnd, $organizationId, $companyId);
+        $monthlyExpenses = (float) $this->maintenanceRepository->getTotalCostByPeriod($currentMonthStart, $currentMonthEnd, $organizationId, $companyId);
+        $yearlyRevenue = (float) $this->paymentRepository->getTotalRevenueByPeriod($currentYearStart, new \DateTime(), $organizationId, $companyId);
 
         // Calculs de croissance et de rentabilité
         $revenueGrowth = ($lastMonthRevenue > 0) ? (($monthlyRevenue - $lastMonthRevenue) / $lastMonthRevenue) * 100 : 0;
         $netIncome = $monthlyRevenue - $monthlyExpenses;
 
         // Statistiques sur les biens et l'occupation
-        $propertyStats = $this->propertyRepository->getStatistics();
+        $propertyStats = $this->propertyRepository->getStatistics($organizationId, $companyId);
         $occupancyRate = $propertyStats['occupancy_rate'] ?? 0;
         $vacancyRate = 100 - $occupancyRate;
         $totalProperties = $propertyStats['total'] ?? 0;
@@ -44,11 +44,11 @@ class ReportService
         $vacantProperties = $propertyStats['available'] ?? 0;
 
         // Paiements en retard
-        $overduePayments = $this->paymentRepository->findOverdue();
+        $overduePayments = $this->paymentRepository->findOverdue($organizationId, $companyId);
         $totalOverdueAmount = array_reduce($overduePayments, fn($sum, $p) => $sum + $p->getAmount(), 0);
 
         // Baux arrivant à expiration (dans les 90 prochains jours)
-        $expiringLeases = $this->leaseRepository->findExpiringSoon(90);
+        $expiringLeases = $this->leaseRepository->findExpiringSoon(90, $organizationId, $companyId);
 
         return [
             'monthly_revenue' => $monthlyRevenue,
@@ -70,7 +70,7 @@ class ReportService
         ];
     }
 
-    public function getChartData(): array
+    public function getChartData(?int $organizationId = null, ?int $companyId = null): array
     {
         $labels = [];
         $revenueData = [];
@@ -83,8 +83,8 @@ class ReportService
             $monthEnd = (clone $date)->modify('last day of this month');
 
             $labels[] = $date->format('M Y');
-            $revenue = (float) $this->paymentRepository->getTotalRevenueByPeriod($monthStart, $monthEnd);
-            $expenses = (float) $this->maintenanceRepository->getTotalCostByPeriod($monthStart, $monthEnd);
+            $revenue = (float) $this->paymentRepository->getTotalRevenueByPeriod($monthStart, $monthEnd, $organizationId, $companyId);
+            $expenses = (float) $this->maintenanceRepository->getTotalCostByPeriod($monthStart, $monthEnd, $organizationId, $companyId);
 
             $revenueData[] = $revenue;
             $expensesData[] = $expenses;

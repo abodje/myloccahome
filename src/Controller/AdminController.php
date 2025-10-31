@@ -91,8 +91,13 @@ class AdminController extends AbstractController
         \App\Service\ReportService $reportService,
         CurrencyService $currencyService
     ): Response {
-        $reports = $reportService->generateMainReports();
-        $chartData = $reportService->getChartData();
+        /** @var \App\Entity\User|null $user */
+        $user = $this->getUser();
+        $organizationId = $user && method_exists($user, 'getOrganization') && $user->getOrganization() ? $user->getOrganization()->getId() : null;
+        $companyId = $user && method_exists($user, 'getCompany') && $user->getCompany() ? $user->getCompany()->getId() : null;
+
+        $reports = $reportService->generateMainReports($organizationId, $companyId);
+        $chartData = $reportService->getChartData($organizationId, $companyId);
         $activeCurrency = $currencyService->getActiveCurrency();
 
         return $this->render('admin/reports.html.twig', [

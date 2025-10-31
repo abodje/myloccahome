@@ -19,22 +19,31 @@ class LeaseRepository extends ServiceEntityRepository
     /**
      * Trouve les contrats qui expirent bientôt
      */
-    public function findExpiringSoon(int $days = 60): array
+    public function findExpiringSoon(int $days = 60, ?int $organizationId = null, ?int $companyId = null): array
     {
         $date = new \DateTime();
         $date->modify("+{$days} days");
 
-        return $this->createQueryBuilder('l')
+        $qb = $this->createQueryBuilder('l')
             ->where('l.endDate IS NOT NULL')
             ->andWhere('l.endDate <= :date')
             ->andWhere('l.endDate > :now')
             ->andWhere('l.status = :status')
             ->setParameter('date', $date)
             ->setParameter('now', new \DateTime())
-            ->setParameter('status', 'Actif')
-            ->orderBy('l.endDate', 'ASC')
-            ->getQuery()
-            ->getResult();
+            ->setParameter('status', 'Actif');
+
+        if ($companyId) {
+            $qb->andWhere('l.company = :companyId')
+               ->setParameter('companyId', $companyId);
+        } elseif ($organizationId) {
+            $qb->andWhere('l.organization = :organizationId')
+               ->setParameter('organizationId', $organizationId);
+        }
+
+        return $qb->orderBy('l.endDate', 'ASC')
+                  ->getQuery()
+                  ->getResult();
     }
 
     /**
