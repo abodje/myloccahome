@@ -19,6 +19,18 @@ class ExportController extends AbstractController
     ) {
     }
 
+    /**
+     * Récupère les IDs d'organisation et de société de l'utilisateur connecté
+     */
+    private function getUserContext(): array
+    {
+        $user = $this->getUser();
+        $organizationId = $user && method_exists($user, 'getOrganization') && $user->getOrganization() ? $user->getOrganization()->getId() : null;
+        $companyId = $user && method_exists($user, 'getCompany') && $user->getCompany() ? $user->getCompany()->getId() : null;
+        
+        return ['organizationId' => $organizationId, 'companyId' => $companyId];
+    }
+
     #[Route('/', name: 'app_admin_export_index', methods: ['GET'])]
     public function index(): Response
     {
@@ -33,9 +45,10 @@ class ExportController extends AbstractController
         $year = $request->query->get('year', date('Y'));
         $month = $request->query->get('month', date('n'));
         $format = $request->query->get('format', 'excel');
+        $context = $this->getUserContext();
 
         try {
-            $file = $this->exportService->generateFinancialReport($year, $month, $format);
+            $file = $this->exportService->generateFinancialReport($year, $month, $format, $context['organizationId'], $context['companyId']);
 
             return $this->file($file, "rapport-financier-{$year}-{$month}.{$format}", ResponseHeaderBag::DISPOSITION_ATTACHMENT);
         } catch (\Exception $e) {
@@ -51,9 +64,10 @@ class ExportController extends AbstractController
         $endDate = $request->query->get('end_date');
         $status = $request->query->get('status', 'all');
         $format = $request->query->get('format', 'excel');
+        $context = $this->getUserContext();
 
         try {
-            $file = $this->exportService->generatePaymentsExport($startDate, $endDate, $status, $format);
+            $file = $this->exportService->generatePaymentsExport($startDate, $endDate, $status, $format, $context['organizationId'], $context['companyId']);
 
             $filename = "paiements-" . ($startDate ?: 'tous') . "-" . ($endDate ?: date('Y-m-d')) . ".{$format}";
             return $this->file($file, $filename, ResponseHeaderBag::DISPOSITION_ATTACHMENT);
@@ -67,9 +81,10 @@ class ExportController extends AbstractController
     public function overdue(Request $request): Response
     {
         $format = $request->query->get('format', 'excel');
+        $context = $this->getUserContext();
 
         try {
-            $file = $this->exportService->generateOverduePaymentsExport($format);
+            $file = $this->exportService->generateOverduePaymentsExport($format, $context['organizationId'], $context['companyId']);
 
             return $this->file($file, "paiements-impayes-" . date('Y-m-d') . ".{$format}", ResponseHeaderBag::DISPOSITION_ATTACHMENT);
         } catch (\Exception $e) {
@@ -83,9 +98,10 @@ class ExportController extends AbstractController
     {
         $includeHistory = $request->query->get('include_history', false);
         $format = $request->query->get('format', 'excel');
+        $context = $this->getUserContext();
 
         try {
-            $file = $this->exportService->generateTenantsExport($includeHistory, $format);
+            $file = $this->exportService->generateTenantsExport($includeHistory, $format, $context['organizationId'], $context['companyId']);
 
             $filename = "locataires" . ($includeHistory ? "-avec-historique" : "") . "-" . date('Y-m-d') . ".{$format}";
             return $this->file($file, $filename, ResponseHeaderBag::DISPOSITION_ATTACHMENT);
@@ -100,9 +116,10 @@ class ExportController extends AbstractController
     {
         $includeInventory = $request->query->get('include_inventory', false);
         $format = $request->query->get('format', 'excel');
+        $context = $this->getUserContext();
 
         try {
-            $file = $this->exportService->generatePropertiesExport($includeInventory, $format);
+            $file = $this->exportService->generatePropertiesExport($includeInventory, $format, $context['organizationId'], $context['companyId']);
 
             $filename = "inventaire-biens" . ($includeInventory ? "-complet" : "") . "-" . date('Y-m-d') . ".{$format}";
             return $this->file($file, $filename, ResponseHeaderBag::DISPOSITION_ATTACHMENT);
@@ -117,9 +134,10 @@ class ExportController extends AbstractController
     {
         $status = $request->query->get('status', 'all');
         $format = $request->query->get('format', 'excel');
+        $context = $this->getUserContext();
 
         try {
-            $file = $this->exportService->generateLeasesExport($status, $format);
+            $file = $this->exportService->generateLeasesExport($status, $format, $context['organizationId'], $context['companyId']);
 
             $filename = "baux-" . ($status === 'all' ? 'tous' : $status) . "-" . date('Y-m-d') . ".{$format}";
             return $this->file($file, $filename, ResponseHeaderBag::DISPOSITION_ATTACHMENT);
@@ -134,9 +152,10 @@ class ExportController extends AbstractController
     {
         $year = $request->query->get('year', date('Y'));
         $format = $request->query->get('format', 'pdf');
+        $context = $this->getUserContext();
 
         try {
-            $file = $this->exportService->generateTaxDeclaration($year, $format);
+            $file = $this->exportService->generateTaxDeclaration($year, $format, $context['organizationId'], $context['companyId']);
 
             return $this->file($file, "declaration-fiscale-{$year}.{$format}", ResponseHeaderBag::DISPOSITION_ATTACHMENT);
         } catch (\Exception $e) {

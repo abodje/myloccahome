@@ -533,15 +533,67 @@ class DashboardController extends AbstractController
                 error_log("DashboardController - Super Admin: showing all data");
             }
 
-            // Autres statistiques (pour l'instant non filtrées, à améliorer selon les besoins)
-            $stats['tenants']['active'] = count($tenantRepo->findWithActiveLeases());
-            $stats['leases']['expiring_soon'] = count($leaseRepo->findExpiringSoon());
-            $stats['payments']['pending'] = $paymentRepo->count(['status' => 'En attente']);
-            $stats['payments']['overdue'] = count($paymentRepo->findOverdue());
-            $stats['payments']['monthly_income'] = $paymentRepo->getMonthlyIncome();
-            $stats['maintenance']['pending'] = $maintenanceRepo->count(['status' => 'Nouvelle']);
-            $stats['maintenance']['urgent'] = count($maintenanceRepo->findUrgentPending());
-            $stats['maintenance']['overdue'] = count($maintenanceRepo->findOverdue());
+            // Autres statistiques filtrées selon organization/company
+            if ($company) {
+                $tenants = $tenantRepo->findWithActiveLeases();
+                $stats['tenants']['active'] = count(array_filter($tenants, fn($t) => $t->getCompany() === $company));
+                
+                $leases = $leaseRepo->findExpiringSoon();
+                $stats['leases']['expiring_soon'] = count(array_filter($leases, fn($l) => $l->getCompany() === $company));
+                
+                $allPendingPayments = $paymentRepo->findBy(['status' => 'En attente']);
+                $stats['payments']['pending'] = count(array_filter($allPendingPayments, fn($p) => $p->getCompany() === $company));
+                
+                $stats['payments']['overdue'] = count($this->getOverduePayments($paymentRepo, $organization, $company));
+                
+                $monthlyIncomeAll = $paymentRepo->getMonthlyIncome();
+                $allPayments = $paymentRepo->findBy([], ['createdAt' => 'DESC'], 1000);
+                $companyPayments = array_filter($allPayments, fn($p) => $p->getCompany() === $company && $p->getStatus() === 'Payé');
+                $stats['payments']['monthly_income'] = array_sum(array_map(fn($p) => $p->getAmount(), $companyPayments));
+                
+                $allMaintenance = $maintenanceRepo->findBy(['status' => 'Nouvelle']);
+                $stats['maintenance']['pending'] = count(array_filter($allMaintenance, fn($m) => $m->getCompany() === $company));
+                
+                $stats['maintenance']['urgent'] = count($this->getUrgentRequests($maintenanceRepo, $organization, $company));
+                
+                $allOverdueMaintenance = $maintenanceRepo->findOverdue();
+                $stats['maintenance']['overdue'] = count(array_filter($allOverdueMaintenance, fn($m) => $m->getCompany() === $company));
+            } elseif ($organization) {
+                $tenants = $tenantRepo->findWithActiveLeases();
+                $stats['tenants']['active'] = count(array_filter($tenants, fn($t) => $t->getOrganization() === $organization));
+                
+                $leases = $leaseRepo->findExpiringSoon();
+                $stats['leases']['expiring_soon'] = count(array_filter($leases, fn($l) => $l->getOrganization() === $organization));
+                
+                $allPendingPayments = $paymentRepo->findBy(['status' => 'En attente']);
+                $stats['payments']['pending'] = count(array_filter($allPendingPayments, fn($p) => $p->getOrganization() === $organization));
+                
+                $stats['payments']['overdue'] = count($this->getOverduePayments($paymentRepo, $organization, $company));
+                
+                $monthlyIncomeAll = $paymentRepo->getMonthlyIncome();
+                $allPayments = $paymentRepo->findBy([], ['createdAt' => 'DESC'], 1000);
+                $orgPayments = array_filter($allPayments, fn($p) => $p->getOrganization() === $organization && $p->getStatus() === 'Payé');
+                $stats['payments']['monthly_income'] = array_sum(array_map(fn($p) => $p->getAmount(), $orgPayments));
+                
+                $allMaintenance = $maintenanceRepo->findBy(['status' => 'Nouvelle']);
+                $stats['maintenance']['pending'] = count(array_filter($allMaintenance, fn($m) => $m->getOrganization() === $organization));
+                
+                $stats['maintenance']['urgent'] = count($this->getUrgentRequests($maintenanceRepo, $organization, $company));
+                
+                $allOverdueMaintenance = $maintenanceRepo->findOverdue();
+                $stats['maintenance']['overdue'] = count(array_filter($allOverdueMaintenance, fn($m) => $m->getOrganization() === $organization));
+            } else {
+                // Super Admin sans organisation/société : toutes les données
+                $stats['tenants']['active'] = count($tenantRepo->findWithActiveLeases());
+                $stats['leases']['expiring_soon'] = count($leaseRepo->findExpiringSoon());
+                $stats['payments']['pending'] = $paymentRepo->count(['status' => 'En attente']);
+                $stats['payments']['overdue'] = count($paymentRepo->findOverdue());
+                $stats['payments']['monthly_income'] = $paymentRepo->getMonthlyIncome();
+                $stats['maintenance']['pending'] = $maintenanceRepo->count(['status' => 'Nouvelle']);
+                $stats['maintenance']['urgent'] = count($maintenanceRepo->findUrgentPending());
+                $stats['maintenance']['overdue'] = count($maintenanceRepo->findOverdue());
+            }
+            
             $stats['messages']['unread'] = count($conversationRepo->findWithUnreadMessages($user));
             $stats['messages']['total'] = count($conversationRepo->findByUser($user));
 

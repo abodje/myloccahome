@@ -139,20 +139,27 @@ class ExportService
         ];
     }
 
-    public function generateFinancialReport(int $year, int $month, string $format): string
+    public function generateFinancialReport(int $year, int $month, string $format, ?int $organizationId = null, ?int $companyId = null): string
     {
         $startDate = new \DateTime("{$year}-{$month}-01");
         $endDate = new \DateTime("{$year}-{$month}-" . $startDate->format('t'));
 
-        $payments = $this->entityManager->getRepository(Payment::class)
+        $qb = $this->entityManager->getRepository(Payment::class)
             ->createQueryBuilder('p')
             ->where('p.paidDate >= :startDate')
             ->andWhere('p.paidDate <= :endDate')
             ->setParameter('startDate', $startDate)
-            ->setParameter('endDate', $endDate)
-            ->getQuery()
-            ->getResult();
+            ->setParameter('endDate', $endDate);
 
+        if ($companyId) {
+            $qb->andWhere('p.company = :companyId')
+               ->setParameter('companyId', $companyId);
+        } elseif ($organizationId) {
+            $qb->andWhere('p.organization = :organizationId')
+               ->setParameter('organizationId', $organizationId);
+        }
+
+        $payments = $qb->getQuery()->getResult();
         $organizationId = $this->extractOrganizationId($payments);
 
         $data = [
@@ -171,7 +178,7 @@ class ExportService
         }
     }
 
-    public function generatePaymentsExport(?string $startDate, ?string $endDate, string $status, string $format): string
+    public function generatePaymentsExport(?string $startDate, ?string $endDate, string $status, string $format, ?int $organizationId = null, ?int $companyId = null): string
     {
         $qb = $this->entityManager->getRepository(Payment::class)->createQueryBuilder('p');
 
@@ -188,6 +195,14 @@ class ExportService
         if ($status !== 'all') {
             $qb->andWhere('p.status = :status')
                ->setParameter('status', $status);
+        }
+
+        if ($companyId) {
+            $qb->andWhere('p.company = :companyId')
+               ->setParameter('companyId', $companyId);
+        } elseif ($organizationId) {
+            $qb->andWhere('p.organization = :organizationId')
+               ->setParameter('organizationId', $organizationId);
         }
 
         $payments = $qb->orderBy('p.paidDate', 'DESC')->getQuery()->getResult();
@@ -212,17 +227,24 @@ class ExportService
         }
     }
 
-    public function generateOverduePaymentsExport(string $format): string
+    public function generateOverduePaymentsExport(string $format, ?int $organizationId = null, ?int $companyId = null): string
     {
-        $overduePayments = $this->entityManager->getRepository(Payment::class)
+        $qb = $this->entityManager->getRepository(Payment::class)
             ->createQueryBuilder('p')
             ->where('p.status != :status')
             ->andWhere('p.dueDate < :today')
             ->setParameter('status', 'Payé')
-            ->setParameter('today', new \DateTime())
-            ->orderBy('p.dueDate', 'ASC')
-            ->getQuery()
-            ->getResult();
+            ->setParameter('today', new \DateTime());
+
+        if ($companyId) {
+            $qb->andWhere('p.company = :companyId')
+               ->setParameter('companyId', $companyId);
+        } elseif ($organizationId) {
+            $qb->andWhere('p.organization = :organizationId')
+               ->setParameter('organizationId', $organizationId);
+        }
+
+        $overduePayments = $qb->orderBy('p.dueDate', 'ASC')->getQuery()->getResult();
 
         $organizationId = $this->extractOrganizationId($overduePayments);
 
@@ -240,15 +262,24 @@ class ExportService
         }
     }
 
-    public function generateTenantsExport(bool $includeHistory, string $format): string
+    public function generateTenantsExport(bool $includeHistory, string $format, ?int $organizationId = null, ?int $companyId = null): string
     {
-        $tenants = $this->entityManager->getRepository(Tenant::class)
+        $qb = $this->entityManager->getRepository(Tenant::class)
             ->createQueryBuilder('t')
             ->leftJoin('t.leases', 'l')
-            ->addSelect('l')
-            ->orderBy('t.lastName', 'ASC')
-            ->getQuery()
-            ->getResult();
+            ->addSelect('l');
+
+        if ($companyId) {
+            $qb->andWhere('t.company = :companyId')
+               ->setParameter('companyId', $companyId);
+        } elseif ($organizationId) {
+            $qb->andWhere('t.organization = :organizationId')
+               ->setParameter('organizationId', $organizationId);
+        }
+
+        $tenants = $qb->orderBy('t.lastName', 'ASC')
+                      ->getQuery()
+                      ->getResult();
 
         $data = [
             'title' => 'Liste Locataires',
@@ -263,16 +294,25 @@ class ExportService
         }
     }
 
-    public function generatePropertiesExport(bool $includeInventory, string $format): string
+    public function generatePropertiesExport(bool $includeInventory, string $format, ?int $organizationId = null, ?int $companyId = null): string
     {
-        $properties = $this->entityManager->getRepository(Property::class)
+        $qb = $this->entityManager->getRepository(Property::class)
             ->createQueryBuilder('p')
             ->leftJoin('p.leases', 'l')
             ->leftJoin('p.maintenanceRequests', 'mr')
-            ->addSelect('l', 'mr')
-            ->orderBy('p.address', 'ASC')
-            ->getQuery()
-            ->getResult();
+            ->addSelect('l', 'mr');
+
+        if ($companyId) {
+            $qb->andWhere('p.company = :companyId')
+               ->setParameter('companyId', $companyId);
+        } elseif ($organizationId) {
+            $qb->andWhere('p.organization = :organizationId')
+               ->setParameter('organizationId', $organizationId);
+        }
+
+        $properties = $qb->orderBy('p.address', 'ASC')
+                         ->getQuery()
+                         ->getResult();
 
         $data = [
             'title' => 'Inventaire Biens',
@@ -287,13 +327,21 @@ class ExportService
         }
     }
 
-    public function generateLeasesExport(string $status, string $format): string
+    public function generateLeasesExport(string $status, string $format, ?int $organizationId = null, ?int $companyId = null): string
     {
         $qb = $this->entityManager->getRepository(Lease::class)->createQueryBuilder('l');
 
         if ($status !== 'all') {
             $qb->andWhere('l.status = :status')
                ->setParameter('status', $status);
+        }
+
+        if ($companyId) {
+            $qb->andWhere('l.company = :companyId')
+               ->setParameter('companyId', $companyId);
+        } elseif ($organizationId) {
+            $qb->andWhere('l.organization = :organizationId')
+               ->setParameter('organizationId', $organizationId);
         }
 
         $leases = $qb->leftJoin('l.tenant', 't')
@@ -316,21 +364,29 @@ class ExportService
         }
     }
 
-    public function generateTaxDeclaration(int $year, string $format): string
+    public function generateTaxDeclaration(int $year, string $format, ?int $organizationId = null, ?int $companyId = null): string
     {
         $startDate = new \DateTime("{$year}-01-01");
         $endDate = new \DateTime("{$year}-12-31");
 
-        $payments = $this->entityManager->getRepository(Payment::class)
+        $qb = $this->entityManager->getRepository(Payment::class)
             ->createQueryBuilder('p')
             ->where('p.paidDate >= :startDate')
             ->andWhere('p.paidDate <= :endDate')
             ->andWhere('p.status = :status')
             ->setParameter('startDate', $startDate)
             ->setParameter('endDate', $endDate)
-            ->setParameter('status', 'Payé')
-            ->getQuery()
-            ->getResult();
+            ->setParameter('status', 'Payé');
+
+        if ($companyId) {
+            $qb->andWhere('p.company = :companyId')
+               ->setParameter('companyId', $companyId);
+        } elseif ($organizationId) {
+            $qb->andWhere('p.organization = :organizationId')
+               ->setParameter('organizationId', $organizationId);
+        }
+
+        $payments = $qb->getQuery()->getResult();
 
         $totalRevenue = array_sum(array_map(fn($p) => $p->getAmount(), $payments));
         $organizationId = $this->extractOrganizationId($payments);
