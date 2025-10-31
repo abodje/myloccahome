@@ -170,6 +170,26 @@ class AccountingConfigService
                 'reference' => 'CAUTION-ENC-',
                 'category' => 'CAUTION',
                 'notes' => 'Configuration pour les cautions encaissées'
+            ],
+            [
+                'operationType' => 'QUITTANCE_LOYER',
+                'accountNumber' => '706000',
+                'accountLabel' => 'Produits - Quittances de loyer',
+                'entryType' => 'CREDIT',
+                'description' => 'Quittance de loyer générée',
+                'reference' => 'QUITTANCE-',
+                'category' => 'LOYER',
+                'notes' => 'Configuration pour les quittances de loyer'
+            ],
+            [
+                'operationType' => 'AVIS_ECHEANCE',
+                'accountNumber' => '411000',
+                'accountLabel' => 'Clients - Avis d\'échéance',
+                'entryType' => 'CREDIT',
+                'description' => 'Avis d\'échéance généré',
+                'reference' => 'AVIS-',
+                'category' => 'LOYER',
+                'notes' => 'Configuration pour les avis d\'échéance'
             ]
         ];
 
@@ -240,7 +260,9 @@ class AccountingConfigService
             'CAUTION_RESTITUEE' => 'Caution restituée',
             'CAUTION_ENCAISSEE' => 'Caution encaissée',
             'LOYER_IMPAYE' => 'Loyer impayé',
-            'FRAIS_RECUPERATION' => 'Frais de récupération'
+            'FRAIS_RECUPERATION' => 'Frais de récupération',
+            'QUITTANCE_LOYER' => 'Quittance de loyer',
+            'AVIS_ECHEANCE' => 'Avis d\'échéance'
         ];
     }
 

@@ -25,7 +25,8 @@ class RentReceiptService
         private DocumentRepository $documentRepository,
         private AccountingEntryRepository $accountingRepository,
         private SettingsService $settingsService,
-        private ParameterBagInterface $params
+        private ParameterBagInterface $params,
+        private AccountingConfigService $accountingConfigService
     ) {
     }
 
@@ -545,14 +546,23 @@ class RentReceiptService
             return;
         }
 
+        // Récupérer la configuration comptable pour les quittances
+        $config = $this->accountingConfigService->getConfigurationForOperation('QUITTANCE_LOYER');
+
+        // Si aucune configuration n'est trouvée, utiliser les valeurs par défaut
+        $entryType = $config?->getEntryType() ?? 'CREDIT';
+        $category = $config?->getCategory() ?? 'LOYER';
+        $description = $config?->getDescription() ?? 'Quittance de loyer - ';
+        $reference = ($config?->getReference() ?? 'QUITTANCE-') . $document->getId();
+
         // Créer une nouvelle écriture comptable
         $entry = new AccountingEntry();
         $entry->setEntryDate($payment->getPaidDate() ?? $payment->getDueDate());
-        $entry->setDescription('Quittance de loyer - ' . $document->getName());
+        $entry->setDescription($description . $document->getName());
         $entry->setAmount($payment->getAmount());
-        $entry->setType('CREDIT'); // Les quittances sont des crédits (revenus)
-        $entry->setCategory('LOYER');
-        $entry->setReference('QUITTANCE-' . $document->getId());
+        $entry->setType($entryType);
+        $entry->setCategory($category);
+        $entry->setReference($reference);
         $entry->setProperty($payment->getProperty());
         $entry->setOwner($payment->getProperty()?->getOwner());
         $entry->setPayment($payment);
@@ -578,14 +588,23 @@ class RentReceiptService
             return;
         }
 
+        // Récupérer la configuration comptable pour les avis d'échéance
+        $config = $this->accountingConfigService->getConfigurationForOperation('AVIS_ECHEANCE');
+
+        // Si aucune configuration n'est trouvée, utiliser les valeurs par défaut
+        $entryType = $config?->getEntryType() ?? 'CREDIT';
+        $category = $config?->getCategory() ?? 'LOYER_ATTENDU';
+        $description = $config?->getDescription() ?? 'Avis d\'échéance - ';
+        $reference = ($config?->getReference() ?? 'AVIS-') . $document->getId();
+
         // Créer une nouvelle écriture comptable pour l'avis d'échéance
         $entry = new AccountingEntry();
         $entry->setEntryDate($payment->getDueDate());
-        $entry->setDescription('Avis d\'échéance - ' . $document->getName());
+        $entry->setDescription($description . $document->getName());
         $entry->setAmount($payment->getAmount());
-        $entry->setType('CREDIT'); // Les avis d'échéance sont des crédits (revenus attendus)
-        $entry->setCategory('LOYER_ATTENDU');
-        $entry->setReference('AVIS-' . $document->getId());
+        $entry->setType($entryType);
+        $entry->setCategory($category);
+        $entry->setReference($reference);
         $entry->setProperty($payment->getProperty());
         $entry->setOwner($payment->getProperty()?->getOwner());
         $entry->setPayment($payment);
