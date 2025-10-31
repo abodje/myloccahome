@@ -96,12 +96,20 @@ class AdminController extends AbstractController
         $lastMonth = new \DateTime('first day of last month');
         $currentYear = new \DateTime('first day of January this year');
 
+        $monthlyRevenue = $paymentRepo->getTotalRevenueByPeriod($currentMonth, new \DateTime('last day of this month'));
+        $monthlyExpenses = $maintenanceRepo->getTotalCostByPeriod($currentMonth, new \DateTime('last day of this month'));
+        $propertyStats = $propertyRepo->getStatistics();
+
         $reports = [
-            'monthly_revenue' => $paymentRepo->getTotalRevenueByPeriod($currentMonth, new \DateTime('last day of this month')),
+            'monthly_revenue' => $monthlyRevenue,
             'last_month_revenue' => $paymentRepo->getTotalRevenueByPeriod($lastMonth, new \DateTime('last day of last month')),
             'yearly_revenue' => $paymentRepo->getTotalRevenueByPeriod($currentYear, new \DateTime('last day of December this year')),
-            'maintenance_costs' => $maintenanceRepo->getTotalCostByPeriod($currentMonth, new \DateTime('last day of this month')),
-            'occupancy_rate' => $propertyRepo->getStatistics()['occupancy_rate'] ?? 0,
+            'maintenance_costs' => $monthlyExpenses,
+            'monthly_expenses' => $monthlyExpenses, // Alias pour compatibilité
+            'net_income' => $monthlyRevenue - $monthlyExpenses,
+            'occupancy_rate' => $propertyStats['occupancy_rate'] ?? 0,
+            'occupied_properties' => ($propertyStats['total_properties'] ?? 0) - ($propertyStats['vacant_properties'] ?? 0),
+            'vacant_properties' => $propertyStats['vacant_properties'] ?? 0,
         ];
 
         return $this->render('admin/reports.html.twig', [
