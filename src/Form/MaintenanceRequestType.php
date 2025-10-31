@@ -5,7 +5,10 @@ namespace App\Form;
 use App\Entity\MaintenanceRequest;
 use App\Entity\Property;
 use App\Entity\Tenant;
+use App\Repository\PropertyRepository;
+use App\Repository\TenantRepository;
 use Symfony\Bridge\Doctrine\Form\Type\EntityType;
+use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 use Symfony\Component\Form\Extension\Core\Type\DateType;
@@ -19,20 +22,51 @@ use Symfony\Component\OptionsResolver\OptionsResolver;
 
 class MaintenanceRequestType extends AbstractType
 {
+    public function __construct(
+        private Security $security,
+        private PropertyRepository $propertyRepository,
+        private TenantRepository $tenantRepository
+    ) {}
+
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
         $isTenantView = $options['is_tenant_view'] ?? false;
         $tenantProperties = $options['tenant_properties'] ?? [];
 
-        $builder
-            ->add('property', EntityType::class, [
-                'class' => Property::class,
-                'choice_label' => 'fullAddress',
-                'label' => 'Propriété',
-                'placeholder' => 'Sélectionner une propriété',
-                'choices' => $isTenantView ? $tenantProperties : null,
-                'attr' => ['class' => 'form-select']
-            ]);
+        // Construire le champ property selon le contexte
+        $propertyFieldConfig = [
+            'class' => Property::class,
+            'choice_label' => 'fullAddress',
+            'label' => 'Propriété',
+            'placeholder' => 'Sélectionner une propriété',
+            'attr' => ['class' => 'form-select']
+        ];
+
+        if ($isTenantView) {
+            // Pour les locataires, utiliser la liste prédéfinie
+            $propertyFieldConfig['choices'] = $tenantProperties;
+        } else {
+            // Pour les admins/managers, filtrer par organisation/société
+            $propertyFieldConfig['query_builder'] = function (PropertyRepository $pr) {
+                $user = $this->security->getUser();
+                $organization = $user && method_exists($user, 'getOrganization') ? $user->getOrganization() : null;
+                $company = $user && method_exists($user, 'getCompany') ? $user->getCompany() : null;
+
+                $qb = $pr->createQueryBuilder('p');
+
+                if ($company) {
+                    $qb->where('p.company = :company')
+                       ->setParameter('company', $company);
+                } elseif ($organization) {
+                    $qb->where('p.organization = :organization')
+                       ->setParameter('organization', $organization);
+                }
+
+                return $qb->orderBy('p.address', 'ASC');
+            };
+        }
+
+        $builder->add('property', EntityType::class, $propertyFieldConfig);
 
         // Le champ tenant n'est affiché que pour les gestionnaires/admins
         if (!$isTenantView) {
@@ -42,6 +76,24 @@ class MaintenanceRequestType extends AbstractType
                 'label' => 'Locataire',
                 'placeholder' => 'Sélectionner un locataire',
                 'required' => false,
+                'query_builder' => function (TenantRepository $tr) {
+                    $user = $this->security->getUser();
+                    $organization = $user && method_exists($user, 'getOrganization') ? $user->getOrganization() : null;
+                    $company = $user && method_exists($user, 'getCompany') ? $user->getCompany() : null;
+
+                    $qb = $tr->createQueryBuilder('t');
+
+                    if ($company) {
+                        $qb->where('t.company = :company')
+                           ->setParameter('company', $company);
+                    } elseif ($organization) {
+                        $qb->where('t.organization = :organization')
+                           ->setParameter('organization', $organization);
+                    }
+
+                    return $qb->orderBy('t.lastName', 'ASC')
+                              ->addOrderBy('t.firstName', 'ASC');
+                },
                 'attr' => ['class' => 'form-select']
             ]);
         }
