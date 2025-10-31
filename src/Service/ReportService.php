@@ -48,18 +48,21 @@ class ReportService
         $expiringLeases = $this->leaseRepository->findExpiringSoon(new \DateTime(), 90);
 
         return [
-            'monthlyRevenue' => $monthlyRevenue,
-            'lastMonthRevenue' => $lastMonthRevenue,
-            'revenueGrowth' => $revenueGrowth,
-            'monthlyExpenses' => $monthlyExpenses,
-            'netIncome' => $netIncome,
-            'yearlyRevenue' => $yearlyRevenue,
-            'occupancyRate' => $occupancyRate,
-            'vacancyRate' => $vacancyRate,
-            'overduePaymentsCount' => count($overduePayments),
-            'totalOverdueAmount' => $totalOverdueAmount,
-            'expiringLeasesCount' => count($expiringLeases),
-            'expiringLeases' => $expiringLeases,
+            'monthly_revenue' => $monthlyRevenue,
+            'last_month_revenue' => $lastMonthRevenue,
+            'revenue_growth' => $revenueGrowth,
+            'monthly_expenses' => $monthlyExpenses,
+            'net_income' => $netIncome,
+            'yearly_revenue' => $yearlyRevenue,
+            'occupancy_rate' => $occupancyRate,
+            'vacancy_rate' => $vacancyRate,
+            'occupied_properties' => $propertyStats['total_properties'] - $propertyStats['vacant_properties'],
+            'vacant_properties' => $propertyStats['vacant_properties'],
+            'overdue_payments_count' => count($overduePayments),
+            'total_overdue_amount' => $totalOverdueAmount,
+            'overdue_payments' => $overduePayments,
+            'expiring_leases_count' => count($expiringLeases),
+            'expiring_leases' => $expiringLeases,
         ];
     }
 
@@ -68,6 +71,7 @@ class ReportService
         $labels = [];
         $revenueData = [];
         $expensesData = [];
+        $netIncomeData = [];
 
         for ($i = 11; $i >= 0; $i--) {
             $date = new \DateTime("first day of -$i month");
@@ -75,14 +79,19 @@ class ReportService
             $monthEnd = (clone $date)->modify('last day of this month');
 
             $labels[] = $date->format('M Y');
-            $revenueData[] = (float) $this->paymentRepository->getTotalRevenueByPeriod($monthStart, $monthEnd);
-            $expensesData[] = (float) $this->maintenanceRepository->getTotalCostByPeriod($monthStart, $monthEnd);
+            $revenue = (float) $this->paymentRepository->getTotalRevenueByPeriod($monthStart, $monthEnd);
+            $expenses = (float) $this->maintenanceRepository->getTotalCostByPeriod($monthStart, $monthEnd);
+
+            $revenueData[] = $revenue;
+            $expensesData[] = $expenses;
+            $netIncomeData[] = $revenue - $expenses;
         }
 
         return [
             'labels' => $labels,
             'revenue' => $revenueData,
             'expenses' => $expensesData,
+            'net_income' => $netIncomeData,
         ];
     }
 }
