@@ -98,7 +98,8 @@ class UserType extends AbstractType
         }
 
         // Champ organisation
-        if (!$currentUser || !$currentUser->getCompany()) {
+        // Seulement afficher si l'utilisateur connecté n'a pas d'organisation (Super Admin)
+        if (!$currentUser || !$currentUser->getOrganization()) {
             $builder->add('organization', EntityType::class, [
                 'class' => Organization::class,
                 'choice_label' => 'name',
@@ -110,7 +111,8 @@ class UserType extends AbstractType
         }
 
         // Champ société
-        if (!$currentUser || (!$currentUser->getCompany() && $currentUser->getOrganization())) {
+        // Afficher seulement si l'utilisateur a une organisation mais pas de société
+        if ($currentUser && $currentUser->getOrganization() && !$currentUser->getCompany()) {
             $builder->add('company', EntityType::class, [
                 'class' => Company::class,
                 'choice_label' => 'name',

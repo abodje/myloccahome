@@ -74,15 +74,22 @@ class UserController extends AbstractController
         }
 
         // Récupérer les organisations et sociétés disponibles
-        $organizations = $this->organizationRepository->findAll();
-        $companies = $this->companyRepository->findAll();
+        $organizations = [];
+        $companies = [];
 
-        // Si l'utilisateur a une société spécifique, filtrer les sociétés
+        // Si l'utilisateur a une société spécifique
         if ($currentUser->getCompany()) {
+            // Admin avec société : seulement cette organisation et société
+            $organizations = [$currentUser->getOrganization()];
             $companies = [$currentUser->getCompany()];
         } elseif ($currentUser->getOrganization()) {
-            // Filtrer les sociétés par organisation
+            // Admin sans société : seulement cette organisation
+            $organizations = [$currentUser->getOrganization()];
             $companies = $this->companyRepository->findBy(['organization' => $currentUser->getOrganization()]);
+        } else {
+            // Super admin sans organisation : toutes les organisations et sociétés
+            $organizations = $this->organizationRepository->findAll();
+            $companies = $this->companyRepository->findAll();
         }
 
         $form = $this->createForm(UserType::class, $user, [
@@ -131,15 +138,22 @@ class UserController extends AbstractController
         $currentUser = $this->getUser();
 
         // Récupérer les organisations et sociétés disponibles
-        $organizations = $this->organizationRepository->findAll();
-        $companies = $this->companyRepository->findAll();
+        $organizations = [];
+        $companies = [];
 
-        // Si l'utilisateur a une société spécifique, filtrer les sociétés
+        // Si l'utilisateur a une société spécifique
         if ($currentUser->getCompany()) {
+            // Admin avec société : seulement cette organisation et société
+            $organizations = [$currentUser->getOrganization()];
             $companies = [$currentUser->getCompany()];
         } elseif ($currentUser->getOrganization()) {
-            // Filtrer les sociétés par organisation
+            // Admin sans société : seulement cette organisation
+            $organizations = [$currentUser->getOrganization()];
             $companies = $this->companyRepository->findBy(['organization' => $currentUser->getOrganization()]);
+        } else {
+            // Super admin sans organisation : toutes les organisations et sociétés
+            $organizations = $this->organizationRepository->findAll();
+            $companies = $this->companyRepository->findAll();
         }
 
         $form = $this->createForm(UserType::class, $user, [
