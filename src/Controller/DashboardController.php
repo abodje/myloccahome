@@ -508,7 +508,9 @@ class DashboardController extends AbstractController
                 $stats['properties']['available'] = $propertyRepo->count(['company' => $company, 'status' => 'Libre']);
 
                 $stats['tenants']['total'] = $tenantRepo->count(['company' => $company]);
-                $stats['leases']['active'] = $leaseRepo->count(['status' => 'Actif']); // TODO: filtrer par company
+                
+                $allActiveLeases = $leaseRepo->findBy(['status' => 'Actif']);
+                $stats['leases']['active'] = count(array_filter($allActiveLeases, fn($l) => $l->getCompany() === $company));
 
                 error_log("DashboardController - Filtered by company: " . $company->getName());
             } elseif ($organization) {
@@ -518,7 +520,9 @@ class DashboardController extends AbstractController
                 $stats['properties']['available'] = $propertyRepo->count(['organization' => $organization, 'status' => 'Libre']);
 
                 $stats['tenants']['total'] = $tenantRepo->count(['organization' => $organization]);
-                $stats['leases']['active'] = $leaseRepo->count(['status' => 'Actif']); // TODO: filtrer par organization
+                
+                $allActiveLeases = $leaseRepo->findBy(['status' => 'Actif']);
+                $stats['leases']['active'] = count(array_filter($allActiveLeases, fn($l) => $l->getOrganization() === $organization));
 
                 error_log("DashboardController - Filtered by organization: " . $organization->getName());
             } else {
