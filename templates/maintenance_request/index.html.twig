@@ -303,14 +303,7 @@
                 card.addEventListener('click', function() {
                     const requestType = this.getAttribute('data-type');
 
-                    // Si c'est un type de demande de maintenance, rediriger vers le formulaire complet
-                    if (requestType === 'maintenance') {
-                        // Rediriger vers la page de création de demande de maintenance
-                        window.location.href = '{{ path("app_maintenance_request_new") }}';
-                        return;
-                    }
-
-                    // Pour les autres types de demandes, afficher le formulaire simple
+                    // Pour tous les types de demandes, afficher le formulaire simple
                     // Remove selected class from all cards
                     typeCards.forEach(c => c.classList.remove('selected'));
 

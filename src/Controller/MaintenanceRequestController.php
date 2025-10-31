@@ -178,6 +178,11 @@ class MaintenanceRequestController extends AbstractController
                         ], 400);
                     }
 
+                    // Assigner automatiquement l'organisation de l'utilisateur
+                    if ($user && method_exists($user, 'getOrganization') && $user->getOrganization()) {
+                        $maintenanceRequest->setOrganization($user->getOrganization());
+                    }
+
                     $maintenanceRequest->setCreatedAt(new \DateTime());
                     $maintenanceRequest->setStatus('En attente');
                     $maintenanceRequest->setPriority('Normale');
@@ -220,6 +225,11 @@ class MaintenanceRequestController extends AbstractController
                     // Définir automatiquement le locataire
                     $maintenanceRequest->setTenant($tenant);
                 }
+            }
+
+            // Assigner automatiquement l'organisation de l'utilisateur
+            if ($user && method_exists($user, 'getOrganization') && $user->getOrganization()) {
+                $maintenanceRequest->setOrganization($user->getOrganization());
             }
 
             $maintenanceRequest->setCreatedAt(new \DateTime());
