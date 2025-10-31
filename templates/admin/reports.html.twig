@@ -245,7 +245,7 @@
                             beginAtZero: true,
                             ticks: {
                                 callback: function(value) {
-                                    return value.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' });
+                                    return value.toLocaleString('fr-FR', { style: 'currency', currency: '{{ currencyCode }}' });
                                 }
                             }
                         }

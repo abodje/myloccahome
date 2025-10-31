@@ -11,6 +11,7 @@ use App\Repository\PaymentRepository;
 use App\Repository\MaintenanceRequestRepository;
 use App\Repository\DocumentRepository;
 use App\Service\AccountingService;
+use App\Service\CurrencyService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -87,14 +88,17 @@ class AdminController extends AbstractController
 
     #[Route('/rapports', name: 'app_admin_reports', methods: ['GET'])]
     public function reports(
-        \App\Service\ReportService $reportService
+        \App\Service\ReportService $reportService,
+        CurrencyService $currencyService
     ): Response {
         $reports = $reportService->generateMainReports();
         $chartData = $reportService->getChartData();
+        $activeCurrency = $currencyService->getActiveCurrency();
 
         return $this->render('admin/reports.html.twig', [
             'reports' => $reports,
             'chartData' => json_encode($chartData),
+            'currencyCode' => $activeCurrency->getCode(),
         ]);
     }
 
