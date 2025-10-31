@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
-import '../../theme/app_theme.dart';
+ import '../../theme/app_theme.dart';
 
 class PdfViewerScreen extends StatelessWidget {
   final String documentUrl;
@@ -21,11 +20,7 @@ class PdfViewerScreen extends StatelessWidget {
         foregroundColor: Colors.white,
         elevation: 0,
       ),
-      body: SfPdfViewer.network(
-        documentUrl,
-        // Vous pouvez ajouter des contrôles ou des fonctionnalités ici si nécessaire
-        // par exemple, controller: PdfViewerController(),
-      ),
+     
     );
   }
 }
