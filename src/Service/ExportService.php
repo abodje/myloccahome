@@ -8,12 +8,14 @@ use App\Entity\Property;
 use App\Entity\Lease;
 use App\Entity\Document;
 use App\Entity\MaintenanceRequest;
+use App\Entity\AccountingEntry;
 use App\Repository\PaymentRepository;
 use App\Repository\TenantRepository;
 use App\Repository\PropertyRepository;
 use App\Repository\LeaseRepository;
 use App\Repository\DocumentRepository;
 use App\Repository\MaintenanceRequestRepository;
+use App\Repository\AccountingEntryRepository;
 use App\Service\CurrencyService;
 use Doctrine\ORM\EntityManagerInterface;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
@@ -263,27 +265,56 @@ class ExportService
         }
     }
 
-    public function generateAccountingReport(string $startDate, string $endDate, string $format): string
+    public function generateAccountingReport(string $startDate, string $endDate, string $format, ?int $organizationId = null, ?int $companyId = null): string
     {
         $startDateTime = new \DateTime($startDate);
         $endDateTime = new \DateTime($endDate);
 
-        $payments = $this->entityManager->getRepository(Payment::class)
-            ->createQueryBuilder('p')
-            ->where('p.paidDate >= :startDate')
-            ->andWhere('p.paidDate <= :endDate')
+        $qb = $this->entityManager->getRepository(AccountingEntry::class)
+            ->createQueryBuilder('ae')
+            ->where('ae.entryDate >= :startDate')
+            ->andWhere('ae.entryDate <= :endDate')
             ->setParameter('startDate', $startDateTime)
-            ->setParameter('endDate', $endDateTime)
-            ->orderBy('p.paidDate', 'ASC')
+            ->setParameter('endDate', $endDateTime);
+
+        // Filtrage par organisation/société
+        if ($companyId) {
+            $qb->andWhere('ae.company = :companyId')
+               ->setParameter('companyId', $companyId);
+        } elseif ($organizationId) {
+            $qb->andWhere('ae.organization = :organizationId')
+               ->setParameter('organizationId', $organizationId);
+        }
+
+        $entries = $qb->orderBy('ae.entryDate', 'ASC')
+            ->addOrderBy('ae.createdAt', 'ASC')
             ->getQuery()
             ->getResult();
+
+        // Calculer les totaux
+        $totalCredits = 0;
+        $totalDebits = 0;
+        $runningBalance = 0;
+
+        foreach ($entries as $entry) {
+            $amount = (float)$entry->getAmount();
+            if ($entry->isCredit()) {
+                $totalCredits += $amount;
+                $runningBalance += $amount;
+            } else {
+                $totalDebits += $amount;
+                $runningBalance -= $amount;
+            }
+        }
 
         $data = [
             'title' => 'Rapport Comptable',
             'start_date' => $startDate,
             'end_date' => $endDate,
-            'payments' => $payments,
-            'total_revenue' => array_sum(array_map(fn($p) => $p->getAmount(), $payments)),
+            'entries' => $entries,
+            'total_credits' => $totalCredits,
+            'total_debits' => $totalDebits,
+            'net_balance' => $totalCredits - $totalDebits,
         ];
 
         if ($format === 'excel') {
@@ -577,33 +608,73 @@ class ExportService
         $sheet = $spreadsheet->getActiveSheet();
 
         $sheet->setCellValue('A1', $data['title']);
-        $sheet->mergeCells('A1:F1');
+        $sheet->mergeCells('A1:I1');
         $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(16);
 
         $sheet->setCellValue('A3', 'Période:');
         $sheet->setCellValue('B3', $data['start_date'] . ' - ' . $data['end_date']);
-        $sheet->setCellValue('A4', 'Total des revenus:');
-        $sheet->setCellValue('B4', number_format($data['total_revenue'], 2) . ' ' . $this->getDefaultCurrency());
+        $sheet->setCellValue('A4', 'Total CRÉDITS:');
+        $sheet->setCellValue('B4', number_format($data['total_credits'], 2) . ' ' . $this->getDefaultCurrency());
+        $sheet->setCellValue('D4', 'Total DÉBITS:');
+        $sheet->setCellValue('E4', number_format($data['total_debits'], 2) . ' ' . $this->getDefaultCurrency());
+        $sheet->setCellValue('G4', 'Solde NET:');
+        $sheet->setCellValue('H4', number_format($data['net_balance'], 2) . ' ' . $this->getDefaultCurrency());
 
-        $headers = ['Date', 'Référence', 'Locataire', 'Propriété', 'Montant', 'Statut'];
+        $headers = ['Date', 'Référence', 'Type', 'Catégorie', 'Description', 'DÉBIT', 'CRÉDIT', 'Solde', 'Organisation'];
         $col = 'A';
         foreach ($headers as $header) {
             $sheet->setCellValue($col . '6', $header);
+            $sheet->getStyle($col . '6')->getFont()->setBold(true);
             $col++;
         }
 
         $row = 7;
-        foreach ($data['payments'] as $payment) {
-            $sheet->setCellValue('A' . $row, $payment->getPaidDate() ? $payment->getPaidDate()->format('d/m/Y') : 'N/A');
-            $sheet->setCellValue('B' . $row, 'PAY-' . $payment->getId());
-            $sheet->setCellValue('C' . $row, $payment->getLease()?->getTenant()?->getFullName() ?? 'N/A');
-            $sheet->setCellValue('D' . $row, $payment->getLease()?->getProperty()?->getAddress() ?? 'N/A');
-            $sheet->setCellValue('E' . $row, number_format($payment->getAmount(), 2) . ' ' . $this->getDefaultCurrency());
-            $sheet->setCellValue('F' . $row, $payment->getStatus());
+        $runningBalance = 0;
+        foreach ($data['entries'] as $entry) {
+            $sheet->setCellValue('A' . $row, $entry->getEntryDate() ? $entry->getEntryDate()->format('d/m/Y') : 'N/A');
+            $sheet->setCellValue('B' . $row, $entry->getReference() ?? 'N/A');
+            $sheet->setCellValue('C' . $row, $entry->getType());
+            $sheet->setCellValue('D' . $row, $entry->getCategory());
+            $sheet->setCellValue('E' . $row, $entry->getDescription());
+            
+            // Calculer le solde
+            $amount = (float)$entry->getAmount();
+            if ($entry->isCredit()) {
+                $sheet->setCellValue('F' . $row, ''); // DÉBIT vide
+                $sheet->setCellValue('G' . $row, number_format($amount, 2)); // CRÉDIT
+                $runningBalance += $amount;
+            } else {
+                $sheet->setCellValue('F' . $row, number_format($amount, 2)); // DÉBIT
+                $sheet->setCellValue('G' . $row, ''); // CRÉDIT vide
+                $runningBalance -= $amount;
+            }
+            
+            $sheet->setCellValue('H' . $row, number_format($runningBalance, 2)); // Solde courant
+            $sheet->setCellValue('I' . $row, $entry->getOrganization()?->getName() ?? 'N/A');
+            
+            // Colorier les lignes selon le type
+            if ($entry->isCredit()) {
+                $sheet->getStyle('G' . $row)->getFont()->getColor()->setARGB(\PhpOffice\PhpSpreadsheet\Style\Color::COLOR_DARKGREEN);
+            } else {
+                $sheet->getStyle('F' . $row)->getFont()->getColor()->setARGB(\PhpOffice\PhpSpreadsheet\Style\Color::COLOR_DARKRED);
+            }
+            
             $row++;
         }
 
-        $this->applyExcelStyles($sheet, 1, 6, $row - 1, 6);
+        // Appliquer les styles
+        $this->applyExcelStyles($sheet, 1, 6, $row - 1, 9);
+        
+        // Ajuster la largeur des colonnes
+        $sheet->getColumnDimension('A')->setWidth(12);
+        $sheet->getColumnDimension('B')->setWidth(15);
+        $sheet->getColumnDimension('C')->setWidth(10);
+        $sheet->getColumnDimension('D')->setWidth(15);
+        $sheet->getColumnDimension('E')->setWidth(30);
+        $sheet->getColumnDimension('F')->setWidth(15);
+        $sheet->getColumnDimension('G')->setWidth(15);
+        $sheet->getColumnDimension('H')->setWidth(15);
+        $sheet->getColumnDimension('I')->setWidth(20);
 
         return $this->saveExcelFile($spreadsheet, 'rapport-comptable');
     }
@@ -1107,29 +1178,53 @@ class ExportService
         $pdf->Cell(0, 10, $data['title'], 0, 1, 'C');
         $pdf->Ln(5);
 
-        // Période
+        // Période et totaux
         $pdf->SetFont('helvetica', 'B', 10);
         $pdf->Cell(0, 6, 'Période: ' . $data['start_date'] . ' - ' . $data['end_date'], 0, 1, 'C');
-        $pdf->Cell(0, 6, 'Total des revenus: ' . number_format($data['total_revenue'], 2) . ' ' . $this->getDefaultCurrency(), 0, 1, 'C');
+        $pdf->Ln(3);
+        $pdf->Cell(0, 6, 'Total CRÉDITS: ' . number_format($data['total_credits'], 2) . ' ' . $this->getDefaultCurrency(), 0, 1, 'C');
+        $pdf->Cell(0, 6, 'Total DÉBITS: ' . number_format($data['total_debits'], 2) . ' ' . $this->getDefaultCurrency(), 0, 1, 'C');
+        $pdf->Cell(0, 6, 'Solde NET: ' . number_format($data['net_balance'], 2) . ' ' . $this->getDefaultCurrency(), 0, 1, 'C');
         $pdf->Ln(10);
 
-        // Tableau
-        $pdf->SetFont('helvetica', 'B', 8);
-        $pdf->Cell(25, 8, 'Date', 1, 0, 'C');
-        $pdf->Cell(30, 8, 'Référence', 1, 0, 'C');
-        $pdf->Cell(50, 8, 'Locataire', 1, 0, 'C');
-        $pdf->Cell(50, 8, 'Propriété', 1, 0, 'C');
-        $pdf->Cell(25, 8, 'Montant', 1, 0, 'C');
-        $pdf->Cell(20, 8, 'Statut', 1, 1, 'C');
+        // Tableau avec affichage bancaire
+        $pdf->SetFont('helvetica', 'B', 7);
+        $pdf->Cell(18, 8, 'Date', 1, 0, 'C');
+        $pdf->Cell(25, 8, 'Référence', 1, 0, 'C');
+        $pdf->Cell(10, 8, 'Type', 1, 0, 'C');
+        $pdf->Cell(20, 8, 'Catégorie', 1, 0, 'C');
+        $pdf->Cell(35, 8, 'Description', 1, 0, 'C');
+        $pdf->Cell(20, 8, 'DÉBIT', 1, 0, 'C');
+        $pdf->Cell(20, 8, 'CRÉDIT', 1, 0, 'C');
+        $pdf->Cell(20, 8, 'Solde', 1, 1, 'C');
 
-        $pdf->SetFont('helvetica', '', 7);
-        foreach ($data['payments'] as $payment) {
-            $pdf->Cell(25, 8, $payment->getPaidDate() ? $payment->getPaidDate()->format('d/m/Y') : 'N/A', 1, 0, 'C');
-            $pdf->Cell(30, 8, 'PAY-' . $payment->getId(), 1, 0, 'C');
-            $pdf->Cell(50, 8, substr($payment->getLease()?->getTenant()?->getFullName() ?? 'N/A', 0, 25), 1, 0, 'L');
-            $pdf->Cell(50, 8, substr($payment->getLease()?->getProperty()?->getAddress() ?? 'N/A', 0, 25), 1, 0, 'L');
-            $pdf->Cell(25, 8, number_format($payment->getAmount(), 2) . ' ' . $this->getDefaultCurrency(), 1, 0, 'R');
-            $pdf->Cell(20, 8, $payment->getStatus(), 1, 1, 'C');
+        $pdf->SetFont('helvetica', '', 6);
+        $runningBalance = 0;
+        foreach ($data['entries'] as $entry) {
+            $amount = (float)$entry->getAmount();
+            
+            $pdf->Cell(18, 7, $entry->getEntryDate() ? $entry->getEntryDate()->format('d/m/Y') : 'N/A', 1, 0, 'C');
+            $pdf->Cell(25, 7, substr($entry->getReference() ?? 'N/A', 0, 15), 1, 0, 'L');
+            $pdf->Cell(10, 7, substr($entry->getType(), 0, 5), 1, 0, 'C');
+            $pdf->Cell(20, 7, substr($entry->getCategory(), 0, 10), 1, 0, 'L');
+            $pdf->Cell(35, 7, substr($entry->getDescription(), 0, 20), 1, 0, 'L');
+            
+            // Colonnes DÉBIT et CRÉDIT
+            if ($entry->isCredit()) {
+                $pdf->Cell(20, 7, '', 1, 0, 'R'); // DÉBIT vide
+                $pdf->SetTextColor(0, 128, 0); // Vert pour CRÉDIT
+                $pdf->Cell(20, 7, number_format($amount, 2), 1, 0, 'R');
+                $pdf->SetTextColor(0, 0, 0); // Remettre noir
+                $runningBalance += $amount;
+            } else {
+                $pdf->SetTextColor(139, 0, 0); // Rouge pour DÉBIT
+                $pdf->Cell(20, 7, number_format($amount, 2), 1, 0, 'R');
+                $pdf->SetTextColor(0, 0, 0); // Remettre noir
+                $pdf->Cell(20, 7, '', 1, 0, 'R'); // CRÉDIT vide
+                $runningBalance -= $amount;
+            }
+            
+            $pdf->Cell(20, 7, number_format($runningBalance, 2), 1, 1, 'R');
         }
 
         return $this->savePdfFile($pdf, 'rapport-comptable');

@@ -152,8 +152,13 @@ class ExportController extends AbstractController
         $endDate = $request->query->get('end_date', date('Y-12-31'));
         $format = $request->query->get('format', 'excel');
 
+        // Récupérer l'organisation et société de l'utilisateur connecté
+        $user = $this->getUser();
+        $organizationId = $user && method_exists($user, 'getOrganization') && $user->getOrganization() ? $user->getOrganization()->getId() : null;
+        $companyId = $user && method_exists($user, 'getCompany') && $user->getCompany() ? $user->getCompany()->getId() : null;
+
         try {
-            $file = $this->exportService->generateAccountingReport($startDate, $endDate, $format);
+            $file = $this->exportService->generateAccountingReport($startDate, $endDate, $format, $organizationId, $companyId);
 
             $filename = "rapport-comptable-{$startDate}-{$endDate}.{$format}";
             return $this->file($file, $filename, ResponseHeaderBag::DISPOSITION_ATTACHMENT);
