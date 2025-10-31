@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:intl/intl.dart'; // For date formatting
 import '../../models/dashboard_model.dart';
 import '../../services/auth_service.dart';
 import '../../services/tenant_data_service.dart';
@@ -51,14 +53,23 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
   }
 
+  Future<void> _launchUri(Uri uri, String type) async {
+    try {
+      if (!await launchUrl(uri)) {
+        throw Exception('Impossible de lancer l\'action: $uri');
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Erreur lors de l\'action $type: $e')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final authService = Provider.of<AuthService>(context);
     final currencySymbol = authService.settings?.localization.defaultCurrency ?? '€';
-
-    final now = DateTime.now();
-    final formattedDate =
-        '${now.day.toString().padLeft(2, '0')}/${now.month.toString().padLeft(2, '0')}/${now.year}';
+    final formattedDate = DateFormat('dd/MM/yyyy').format(DateTime.now());
 
     return Scaffold(
       appBar: AppBar(
@@ -67,12 +78,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
         elevation: 0,
         title: const Text('Tableau de bord'),
         centerTitle: false,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.chat_bubble_outline),
-            onPressed: () {},
-          ),
-        ],
       ),
       drawer: const AppDrawer(),
       backgroundColor: AppTheme.backgroundGrey,
@@ -93,9 +98,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           const SizedBox(height: 16),
                           _buildTenantInfoCard(context, _dashboardData!),
                           const SizedBox(height: 16),
+                          _buildQuickActions(context),
+                          const SizedBox(height: 16),
                           _buildCardsRow(context, formattedDate, currencySymbol, _dashboardData!),
-                          const SizedBox(height: 24),
-                          // _buildRecentRequestsSection(context), // This needs to be adapted if recentRequests is part of the new model
                           const SizedBox(height: 24),
                         ],
                       ),
@@ -110,12 +115,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Text('Erreur: $_error', style: Theme.of(context).textTheme.bodyMedium),
+          const Icon(Icons.error_outline, color: Colors.red, size: 60),
           const SizedBox(height: 16),
-          ElevatedButton(
-            onPressed: _loadDashboard,
-            child: const Text('Réessayer'),
-          ),
+          Text('Erreur de chargement', style: Theme.of(context).textTheme.headlineSmall),
+          const SizedBox(height: 8),
+          Text(_error ?? 'Une erreur inconnue est survenue.', textAlign: TextAlign.center),
+          const SizedBox(height: 16),
+          ElevatedButton(onPressed: _loadDashboard, child: const Text('Réessayer')),
         ],
       ),
     );
@@ -124,6 +130,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Widget _buildTenantInfoCard(BuildContext context, DashboardModel data) {
     final tenant = data.tenant;
     final property = data.property;
+    final lease = data.currentLease;
+
     return Card(
       elevation: 2,
       shadowColor: Colors.black.withOpacity(0.05),
@@ -132,17 +140,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              tenant.fullName,
-              style: Theme.of(context).textTheme.headlineSmall,
-            ),
+            Text(tenant.fullName, style: Theme.of(context).textTheme.headlineSmall),
             const SizedBox(height: 8),
-            if (tenant.id != null) ...[
-              Text(
-                'Compte N°${tenant.id}',
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppTheme.textLight),
-              ),
-            ],
+            if (tenant.id != null) Text('Compte N°${tenant.id}', style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppTheme.textLight)),
             if (property != null) ...[
               const Divider(height: 32),
               Row(
@@ -151,34 +151,88 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          'Immeuble N°${property.reference}',
-                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppTheme.textLight),
+                        Text(property.fullAddress, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+                        const SizedBox(height: 12),
+                        Wrap(
+                          spacing: 16.0, // Horizontal space between items
+                          runSpacing: 8.0,  // Vertical space between lines
+                          children: [
+                            if (property.surface != null)
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(Icons.square_foot, size: 16, color: AppTheme.textLight),
+                                  const SizedBox(width: 4),
+                                  Text('${property.surface} m²', style: Theme.of(context).textTheme.bodyMedium),
+                                ],
+                              ),
+                            if (property.type != null)
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(Icons.home_work_outlined, size: 16, color: AppTheme.textLight),
+                                  const SizedBox(width: 4),
+                                  Text(property.type!, style: Theme.of(context).textTheme.bodyMedium),
+                                ],
+                              ),
+                          ],
                         ),
-                        const SizedBox(height: 4),
-                        Text(property.name, style: Theme.of(context).textTheme.bodyMedium),
-                        Text(
-                          property.fullAddress,
-                          style: Theme.of(context).textTheme.bodyMedium,
-                        ),
-                        const SizedBox(height: 8),
-                        Text('1 lot', style: Theme.of(context).textTheme.bodySmall),
                       ],
                     ),
                   ),
                   const SizedBox(width: 16),
-                  Container(
-                    width: 80,
-                    height: 80,
-                    decoration: BoxDecoration(
-                      color: AppTheme.lightBlue.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: const Icon(Icons.apartment, size: 40, color: AppTheme.primaryBlue),
-                  ),
+                  const Icon(Icons.apartment, size: 50, color: AppTheme.primaryBlue),
                 ],
               ),
             ],
+            if (lease != null) ...[
+              const Divider(height: 32),
+              Row(
+                children: [
+                  const Icon(Icons.event_available_outlined, color: AppTheme.textLight),
+                  const SizedBox(width: 8),
+                  Text('Fin du bail le', style: Theme.of(context).textTheme.bodyMedium),
+                  const Spacer(),
+                  Text(lease.endDate, style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold)),
+                ],
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildQuickActions(BuildContext context) {
+    return Card(
+      elevation: 2,
+      shadowColor: Colors.black.withOpacity(0.05),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8.0),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            _buildQuickActionButton(context, icon: Icons.description_outlined, label: 'Documents', onTap: () => context.go('/documents')),
+            _buildQuickActionButton(context, icon: Icons.request_page_outlined, label: 'Demandes', onTap: () => context.go('/requests')),
+            _buildQuickActionButton(context, icon: Icons.payment_outlined, label: 'Paiements', onTap: () => context.go('/payments')),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildQuickActionButton(BuildContext context, {required IconData icon, required String label, required VoidCallback onTap}) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(8),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, color: AppTheme.primaryBlue, size: 28),
+            const SizedBox(height: 6),
+            Text(label, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppTheme.primaryBlue, fontWeight: FontWeight.w600)),
           ],
         ),
       ),
@@ -192,7 +246,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Card Gestionnaire
         Expanded(
           child: Card(
             elevation: 2,
@@ -202,32 +255,29 @@ class _DashboardScreenState extends State<DashboardScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(
-                        child: Text(
-                          'Mon gestionnaire',
-                          style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-                        ),
-                      ),
-                      Container(
-                        width: 40,
-                        height: 40,
-                        decoration: BoxDecoration(
-                          color: AppTheme.lightBlue.withOpacity(0.1),
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(Icons.phone, color: AppTheme.primaryBlue, size: 20),
-                      ),
-                    ],
-                  ),
+                  Text('Mon gestionnaire', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
                   const SizedBox(height: 12),
                   if (manager != null) ...[
-                    Text(
-                      manager.name,
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
+                    Text(manager.name, style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600)),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        if (manager.phone != null && manager.phone!.isNotEmpty) ...[
+                          InkWell(
+                            onTap: () => _launchUri(Uri.parse('tel:${manager.phone}'), 'téléphone'),
+                            borderRadius: BorderRadius.circular(20),
+                            child: const Icon(Icons.phone, color: AppTheme.primaryBlue, size: 24),
+                          ),
+                          const SizedBox(width: 16),
+                        ],
+                        if (manager.email != null && manager.email!.isNotEmpty) ...[
+                          InkWell(
+                            onTap: () => _launchUri(Uri.parse('mailto:${manager.email}'), 'e-mail'),
+                            borderRadius: BorderRadius.circular(20),
+                            child: const Icon(Icons.email_outlined, color: AppTheme.primaryBlue, size: 24),
+                          ),
+                        ],
+                      ],
                     ),
                   ] else
                     Text('Non renseigné', style: Theme.of(context).textTheme.bodySmall),
@@ -237,7 +287,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
         ),
         const SizedBox(width: 16),
-        // Card Solde
         Expanded(
           child: Card(
             elevation: 2,
@@ -247,35 +296,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    'Solde au $formattedDate',
-                    style: Theme.of(context).textTheme.bodySmall,
-                  ),
+                  Text('Solde au $formattedDate', style: Theme.of(context).textTheme.bodySmall),
                   const SizedBox(height: 8),
-                  Text(
-                    '${balances.soldAt.toStringAsFixed(2)} $currencySymbol',
-                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                          color: AppTheme.primaryOrange,
-                          fontWeight: FontWeight.bold,
-                        ),
-                  ),
+                  Text('${balances.soldAt.toStringAsFixed(2)} $currencySymbol', style: Theme.of(context).textTheme.headlineSmall?.copyWith(color: AppTheme.primaryOrange, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 8),
                   Text('Solde à venir', style: Theme.of(context).textTheme.bodySmall),
-                  Text(
-                    '${balances.toPay.toStringAsFixed(2)} $currencySymbol',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppTheme.primaryBlue),
-                  ),
+                  Text('${balances.toPay.toStringAsFixed(2)} $currencySymbol', style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppTheme.primaryBlue)),
                   const SizedBox(height: 16),
                   SizedBox(
                     width: double.infinity,
-                    child: OutlinedButton(
-                      onPressed: () => context.go('/accounting'),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: AppTheme.primaryOrange,
-                        side: BorderSide(color: AppTheme.primaryOrange.withOpacity(0.5)),
-                      ),
-                      child: const Text('CONSULTER'),
-                    ),
+                    child: OutlinedButton(onPressed: () => context.go('/accounting'), child: const Text('CONSULTER')),
                   ),
                 ],
               ),

@@ -79,6 +79,7 @@ class _AccountingScreenState extends State<AccountingScreen> {
               ? _buildErrorView()
               : RefreshIndicator(
                   onRefresh: _loadAccountingData,
+                  color: AppTheme.primaryBlue,
                   child: _buildContent(currencySymbol),
                 ),
     );
@@ -89,12 +90,13 @@ class _AccountingScreenState extends State<AccountingScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Text(_error ?? 'Impossible de charger les données comptables.', style: Theme.of(context).textTheme.bodyMedium),
+          const Icon(Icons.error_outline, color: Colors.red, size: 60),
           const SizedBox(height: 16),
-          ElevatedButton(
-            onPressed: _loadAccountingData,
-            child: const Text('Réessayer'),
-          ),
+          Text('Erreur de chargement', style: Theme.of(context).textTheme.headlineSmall),
+          const SizedBox(height: 8),
+          Text(_error ?? 'Impossible de charger les données comptables.', textAlign: TextAlign.center),
+          const SizedBox(height: 16),
+          ElevatedButton(onPressed: _loadAccountingData, child: const Text('Réessayer')),
         ],
       ),
     );
@@ -113,14 +115,15 @@ class _AccountingScreenState extends State<AccountingScreen> {
 
   Widget _buildSummaryCard(BuildContext context, AccountingSummaryModel summary, String currencySymbol) {
     return Card(
-      elevation: 2,
-      shadowColor: Colors.black.withOpacity(0.05),
+      elevation: 4,
+      shadowColor: Colors.black.withOpacity(0.1),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
         padding: const EdgeInsets.all(20.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Solde actuel', style: Theme.of(context).textTheme.titleMedium),
+            Text('Solde actuel', style: Theme.of(context).textTheme.titleMedium?.copyWith(color: AppTheme.textLight)),
             const SizedBox(height: 8),
             Text(
               _formatAmount(summary.balance, currencySymbol),
@@ -131,10 +134,13 @@ class _AccountingScreenState extends State<AccountingScreen> {
             ),
             const Divider(height: 32),
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                _buildSummaryItem(context, 'Total dû', summary.totalDue, currencySymbol),
-                _buildSummaryItem(context, 'Total payé', summary.totalPaid, currencySymbol, isPositive: true),
+                Expanded(
+                  child: _buildSummaryItem(context, 'Total dû', summary.totalDue, currencySymbol, icon: Icons.arrow_downward, color: AppTheme.primaryOrange),
+                ),
+                Expanded(
+                  child: _buildSummaryItem(context, 'Total payé', summary.totalPaid, currencySymbol, icon: Icons.arrow_upward, color: Colors.green.shade700),
+                ),
               ],
             ),
           ],
@@ -143,18 +149,28 @@ class _AccountingScreenState extends State<AccountingScreen> {
     );
   }
 
-  Widget _buildSummaryItem(BuildContext context, String label, double amount, String currencySymbol, {bool isPositive = false}) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+  Widget _buildSummaryItem(BuildContext context, String label, double amount, String currencySymbol, {required IconData icon, required Color color}) {
+    return Row(
       children: [
-        Text(label, style: Theme.of(context).textTheme.bodySmall),
-        const SizedBox(height: 4),
-        Text(
-          _formatAmount(amount, currencySymbol),
-          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                color: isPositive ? Colors.green.shade700 : AppTheme.textDark,
-                fontWeight: FontWeight.w600,
+        Icon(icon, color: color, size: 20),
+        const SizedBox(width: 8),
+        Expanded( // This will make the Column take the remaining space
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(label, style: Theme.of(context).textTheme.bodySmall),
+              const SizedBox(height: 4),
+              Text(
+                _formatAmount(amount, currencySymbol),
+                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                      color: AppTheme.textDark,
+                      fontWeight: FontWeight.w600,
+                    ),
+                softWrap: false, // Prevent wrapping and let it overflow with ellipsis if needed
+                overflow: TextOverflow.ellipsis, // Handle long text gracefully
               ),
+            ],
+          ),
         ),
       ],
     );
@@ -195,55 +211,46 @@ class _AccountingScreenState extends State<AccountingScreen> {
     );
   }
 
+  IconData _getEntryIcon(String description) {
+    final desc = description.toLowerCase();
+    if (desc.contains('loyer')) return Icons.home_work_outlined;
+    if (desc.contains('paiement')) return Icons.payment;
+    if (desc.contains('charge')) return Icons.receipt_long;
+    if (desc.contains('facture')) return Icons.receipt;
+    return Icons.request_page_outlined;
+  }
+
   Widget _buildEntryItem(BuildContext context, AccountingEntryModel entry, String currencySymbol) {
     final isCredit = entry.isCredit;
     final color = isCredit ? Colors.green.shade700 : AppTheme.primaryOrange;
+    final icon = isCredit ? Icons.arrow_upward : Icons.arrow_downward;
 
     return Card(
       elevation: 2,
       shadowColor: Colors.black.withOpacity(0.05),
       margin: const EdgeInsets.only(bottom: 12),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Row(
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    DateFormat.yMMMd('fr_FR').format(DateTime.parse(entry.date)),
-                    style: Theme.of(context).textTheme.bodySmall,
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    entry.description,
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      child: ListTile(
+        leading: CircleAvatar(
+          backgroundColor: color.withOpacity(0.1),
+          child: Icon(icon, color: color, size: 20),
+        ),
+        title: Text(
+          entry.description,
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+        ),
+        subtitle: Text(
+          DateFormat.yMMMd('fr_FR').format(DateTime.parse(entry.date)),
+          style: Theme.of(context).textTheme.bodySmall,
+        ),
+        trailing: Text(
+          _formatAmount(entry.amount, currencySymbol),
+          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: color,
               ),
-            ),
-            const SizedBox(width: 16),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Text(
-                  _formatAmount(entry.amount, currencySymbol),
-                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: color,
-                      ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  isCredit ? 'Crédit' : 'Débit',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(color: color),
-                ),
-              ],
-            ),
-          ],
         ),
       ),
     );
