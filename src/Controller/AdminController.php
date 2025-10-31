@@ -89,7 +89,8 @@ class AdminController extends AbstractController
     public function reports(
         PropertyRepository $propertyRepo,
         PaymentRepository $paymentRepo,
-        MaintenanceRequestRepository $maintenanceRepo
+        MaintenanceRequestRepository $maintenanceRepo,
+        LeaseRepository $leaseRepo
     ): Response {
         // Données pour les rapports
         $currentMonth = new \DateTime('first day of this month');
@@ -99,6 +100,13 @@ class AdminController extends AbstractController
         $monthlyRevenue = $paymentRepo->getTotalRevenueByPeriod($currentMonth, new \DateTime('last day of this month'));
         $monthlyExpenses = $maintenanceRepo->getTotalCostByPeriod($currentMonth, new \DateTime('last day of this month'));
         $propertyStats = $propertyRepo->getStatistics();
+        
+        // Paiements en retard
+        $overduePayments = $paymentRepo->findOverdue();
+        $totalOverdueAmount = array_reduce($overduePayments, fn($sum, $p) => $sum + $p->getAmount(), 0);
+        
+        // Baux expirant bientôt
+        $expiringLeases = $leaseRepo->findExpiringSoon(90);
 
         $reports = [
             'monthly_revenue' => $monthlyRevenue,
@@ -110,6 +118,11 @@ class AdminController extends AbstractController
             'occupancy_rate' => $propertyStats['occupancy_rate'] ?? 0,
             'occupied_properties' => ($propertyStats['total_properties'] ?? 0) - ($propertyStats['vacant_properties'] ?? 0),
             'vacant_properties' => $propertyStats['vacant_properties'] ?? 0,
+            'overdue_payments_count' => count($overduePayments),
+            'total_overdue_amount' => $totalOverdueAmount,
+            'overdue_payments' => $overduePayments,
+            'expiring_leases_count' => count($expiringLeases),
+            'expiring_leases' => $expiringLeases,
         ];
 
         return $this->render('admin/reports.html.twig', [
