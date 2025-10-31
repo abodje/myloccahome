@@ -286,4 +286,53 @@ class FeatureAccessService
 
         return $requirements[$feature] ?? 'Professional';
     }
+
+    /**
+     * Retourne les informations de limite pour une ressource donnée
+     */
+    public function getLimitInfo(Organization $organization, string $resourceType): array
+    {
+        $limits = $this->getPlanLimits($organization);
+        $currentCount = 0;
+
+        // Convertir le type de ressource en clé de limite
+        $limitKeyMap = [
+            'properties' => 'max_properties',
+            'tenants' => 'max_tenants',
+            'users' => 'max_users',
+            'documents' => 'max_documents',
+        ];
+
+        $limitKey = $limitKeyMap[$resourceType] ?? null;
+        $max = $limitKey ? ($limits[$limitKey] ?? null) : null;
+
+        if ($limitKey) {
+            $currentCount = $this->getCurrentCount($organization, $limitKey);
+        }
+
+        $isUnlimited = $max === null || $max === -1;
+        $percentage = $isUnlimited || $max === 0 ? 0 : min(100, ($currentCount / $max) * 100);
+
+        return [
+            'current' => $currentCount,
+            'max' => $isUnlimited ? null : $max,
+            'is_unlimited' => $isUnlimited,
+            'percentage' => round($percentage, 1),
+        ];
+    }
+
+    /**
+     * Retourne les fonctionnalités de l'organisation avec leurs labels
+     */
+    public function getOrganizationFeatures(Organization $organization): array
+    {
+        $features = $this->getAvailableFeatures($organization);
+        $result = [];
+
+        foreach ($features as $feature) {
+            $result[$feature] = $this->getFeatureLabel($feature);
+        }
+
+        return $result;
+    }
 }
