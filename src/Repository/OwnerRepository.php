@@ -62,6 +62,38 @@ class OwnerRepository extends ServiceEntityRepository
     }
 
     /**
+     * Trouve tous les propriétaires avec filtres
+     */
+    public function findAllFiltered($organization = null, $company = null, ?string $search = null, ?string $type = null): array
+    {
+        $qb = $this->createQueryBuilder('o');
+
+        // Filtrer par société en priorité, puis par organisation
+        if ($company) {
+            $qb->where('o.company = :company')
+               ->setParameter('company', $company);
+        } elseif ($organization) {
+            $qb->where('o.organization = :organization')
+               ->setParameter('organization', $organization);
+        }
+
+        if ($search) {
+            $qb->andWhere('o.firstName LIKE :search OR o.lastName LIKE :search OR o.email LIKE :search')
+               ->setParameter('search', '%' . $search . '%');
+        }
+
+        if ($type) {
+            $qb->andWhere('o.ownerType = :type')
+               ->setParameter('type', $type);
+        }
+
+        return $qb->orderBy('o.lastName', 'ASC')
+                  ->addOrderBy('o.firstName', 'ASC')
+                  ->getQuery()
+                  ->getResult();
+    }
+
+    /**
      * Statistiques des propriétaires
      */
     public function getStatistics(): array

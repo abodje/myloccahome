@@ -23,31 +23,18 @@ class OwnerController extends AbstractController
         $search = $request->query->get('search');
         $type = $request->query->get('type');
 
-        // Filtrer par organisation de l'utilisateur si nécessaire
-        $queryBuilder = $ownerRepository->createQueryBuilder('o');
+        // Filtrer par organisation et société de l'utilisateur
+        $organization = $user ? $user->getOrganization() : null;
+        $company = $user ? $user->getCompany() : null;
 
-        // Filtrer par organisation de l'utilisateur connecté
-        if ($user && $user->getOrganization()) {
-            $queryBuilder->where('o.organization = :organization')
-                        ->setParameter('organization', $user->getOrganization());
-        }
+        $owners = $ownerRepository->findAllFiltered($organization, $company, $search, $type);
 
-        if ($search) {
-            $queryBuilder->andWhere('o.firstName LIKE :search OR o.lastName LIKE :search OR o.email LIKE :search')
-                        ->setParameter('search', '%' . $search . '%');
-        }
-
-        if ($type) {
-            $queryBuilder->andWhere('o.ownerType = :type')
-                        ->setParameter('type', $type);
-        }
-
-        $queryBuilder->orderBy('o.lastName', 'ASC')
-                    ->addOrderBy('o.firstName', 'ASC');
-
-        $owners = $queryBuilder->getQuery()->getResult();
-
-        $stats = $ownerRepository->getStatistics();
+        // Calculer les statistiques à partir des propriétaires filtrés
+        $stats = [
+            'total' => count($owners),
+            'particuliers' => count(array_filter($owners, fn($o) => $o->getOwnerType() === 'Particulier')),
+            'societes' => count(array_filter($owners, fn($o) => $o->getOwnerType() !== 'Particulier')),
+        ];
 
         return $this->render('owner/index.html.twig', [
             'owners' => $owners,
@@ -96,6 +83,14 @@ class OwnerController extends AbstractController
     #[Route('/{id}', name: 'app_owner_show', methods: ['GET'])]
     public function show(Owner $owner): Response
     {
+        /** @var \App\Entity\User|null $user */
+        $user = $this->getUser();
+        
+        // Vérifier l'accès au propriétaire selon l'organisation/société
+        if ($user && !$this->canAccessOwner($user, $owner)) {
+            throw $this->createAccessDeniedException('Vous n\'avez pas accès à ce propriétaire.');
+        }
+
         // Calculer les statistiques du propriétaire
         $stats = [
             'total_properties' => $owner->getProperties()->count(),
@@ -120,6 +115,14 @@ class OwnerController extends AbstractController
     #[Route('/{id}/modifier', name: 'app_owner_edit', methods: ['GET', 'POST'])]
     public function edit(Request $request, Owner $owner, EntityManagerInterface $entityManager): Response
     {
+        /** @var \App\Entity\User|null $user */
+        $user = $this->getUser();
+        
+        // Vérifier l'accès au propriétaire selon l'organisation/société
+        if ($user && !$this->canAccessOwner($user, $owner)) {
+            throw $this->createAccessDeniedException('Vous n\'avez pas accès à ce propriétaire.');
+        }
+
         $form = $this->createForm(OwnerType::class, $owner);
         $form->handleRequest($request);
 
@@ -145,6 +148,14 @@ class OwnerController extends AbstractController
     #[Route('/{id}/supprimer', name: 'app_owner_delete', methods: ['POST'])]
     public function delete(Request $request, Owner $owner, EntityManagerInterface $entityManager): Response
     {
+        /** @var \App\Entity\User|null $user */
+        $user = $this->getUser();
+        
+        // Vérifier l'accès au propriétaire selon l'organisation/société
+        if ($user && !$this->canAccessOwner($user, $owner)) {
+            throw $this->createAccessDeniedException('Vous n\'avez pas accès à ce propriétaire.');
+        }
+
         if ($this->isCsrfTokenValid('delete'.$owner->getId(), $request->getPayload()->getString('_token'))) {
             // Vérifier si le propriétaire a des biens
             if ($owner->getProperties()->count() > 0) {
@@ -169,6 +180,14 @@ class OwnerController extends AbstractController
     #[Route('/{id}/proprietes', name: 'app_owner_properties', methods: ['GET'])]
     public function properties(Owner $owner): Response
     {
+        /** @var \App\Entity\User|null $user */
+        $user = $this->getUser();
+        
+        // Vérifier l'accès au propriétaire selon l'organisation/société
+        if ($user && !$this->canAccessOwner($user, $owner)) {
+            throw $this->createAccessDeniedException('Vous n\'avez pas accès à ce propriétaire.');
+        }
+
         return $this->render('owner/properties.html.twig', [
             'owner' => $owner,
             'properties' => $owner->getProperties(),
@@ -178,13 +197,65 @@ class OwnerController extends AbstractController
     #[Route('/statistiques', name: 'app_owner_statistics', methods: ['GET'])]
     public function statistics(OwnerRepository $ownerRepository): Response
     {
-        $stats = $ownerRepository->getStatistics();
-        $ownersWithProperties = $ownerRepository->findWithActiveProperties();
+        /** @var \App\Entity\User|null $user */
+        $user = $this->getUser();
+        
+        // Filtrer par organisation et société de l'utilisateur
+        $organization = $user ? $user->getOrganization() : null;
+        $company = $user ? $user->getCompany() : null;
+
+        $owners = $ownerRepository->findAllFiltered($organization, $company);
+        
+        // Calculer les statistiques à partir des propriétaires filtrés
+        $stats = [
+            'total' => count($owners),
+            'particuliers' => count(array_filter($owners, fn($o) => $o->getOwnerType() === 'Particulier')),
+            'societes' => count(array_filter($owners, fn($o) => $o->getOwnerType() !== 'Particulier')),
+        ];
+        
+        // Filtrer les propriétaires avec propriétés actives
+        $allOwnersWithProperties = $ownerRepository->findWithActiveProperties();
+        $ownersWithProperties = [];
+        foreach ($allOwnersWithProperties as $owner) {
+            if ($company && $owner->getCompany() === $company) {
+                $ownersWithProperties[] = $owner;
+            } elseif ($organization && !$company && $owner->getOrganization() === $organization) {
+                $ownersWithProperties[] = $owner;
+            } elseif (!$organization && !$company) {
+                $ownersWithProperties[] = $owner;
+            }
+        }
 
         return $this->render('owner/statistics.html.twig', [
             'stats' => $stats,
             'owners_with_properties' => $ownersWithProperties,
         ]);
+    }
+
+    /**
+     * Vérifie si un utilisateur peut accéder à un propriétaire
+     */
+    private function canAccessOwner($user, Owner $owner): bool
+    {
+        $userCompany = $user->getCompany();
+        $userOrganization = $user->getOrganization();
+
+        // Super admin sans organisation/société peut tout voir
+        if (!$userOrganization && !$userCompany) {
+            return true;
+        }
+
+        // Vérifier par société en priorité
+        if ($userCompany && $owner->getCompany() === $userCompany) {
+            return true;
+        }
+
+        // Vérifier par organisation
+        if ($userOrganization && !$userCompany && $owner->getOrganization() === $userOrganization) {
+            return true;
+        }
+
+        return false;
     }
 }
 
