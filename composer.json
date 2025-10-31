@@ -50,6 +50,7 @@
         "symfony/yaml": "7.3.*",
         "tecnickcom/tcpdf": "^6.10",
         "twig/extra-bundle": "^2.12|^3.0",
+        "twig/intl-extra": "^3.22",
         "twig/twig": "^2.12|^3.0"
     },
     "config": {

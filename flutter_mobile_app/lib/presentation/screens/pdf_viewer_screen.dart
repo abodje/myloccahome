@@ -20,7 +20,7 @@ class PdfViewerScreen extends StatelessWidget {
         foregroundColor: Colors.white,
         elevation: 0,
       ),
-     
+
     );
   }
 }
