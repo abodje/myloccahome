@@ -91,7 +91,21 @@ class LeaseController extends AbstractController
             error_log("LeaseController - User without specific role, no access");
         }
 
-        $stats = $leaseRepository->getStatistics();
+        // Calculer les statistiques à partir des contrats filtrés
+        $stats = [
+            'total' => count($leases),
+            'active' => count(array_filter($leases, fn($l) => $l->getStatus() === 'Actif')),
+            'terminated' => count(array_filter($leases, fn($l) => $l->getStatus() === 'Terminé')),
+            'expiring_soon' => count(array_filter($leases, function($l) {
+                if ($l->getStatus() !== 'Actif' || !$l->getEndDate()) {
+                    return false;
+                }
+                $now = new \DateTime();
+                $endDate = $l->getEndDate();
+                $diff = $now->diff($endDate);
+                return $diff->days <= 90 && $endDate > $now;
+            })),
+        ];
 
         return $this->render('lease/index.html.twig', [
             'leases' => $leases,
