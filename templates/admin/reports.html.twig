@@ -124,7 +124,7 @@
                                 <li class="list-group-item d-flex justify-content-between align-items-center">
                                     <div>
                                         <a href="{{ path('app_tenant_show', {id: payment.lease.tenant.id}) }}" class="text-decoration-none">{{ payment.lease.tenant.fullName }}</a><br>
-                                        <small class="text-muted">Bien: {{ payment.lease.property.name }}</small>
+                                        <small class="text-muted">Bien: {{ payment.lease.property.address }}</small>
                                     </div>
                                     <div class="text-end">
                                         <strong class="text-danger">{{ payment.amount|format_currency('EUR', locale='fr') }}</strong><br>
@@ -159,7 +159,7 @@
                             {% for lease in reports.expiring_leases|slice(0, 5) %}
                                 <li class="list-group-item d-flex justify-content-between align-items-center">
                                     <div>
-                                        <a href="{{ path('app_property_show', {id: lease.property.id}) }}" class="text-decoration-none">{{ lease.property.name }}</a><br>
+                                        <a href="{{ path('app_property_show', {id: lease.property.id}) }}" class="text-decoration-none">{{ lease.property.address }}</a><br>
                                         <small class="text-muted">Locataire: {{ lease.tenant.fullName }}</small>
                                     </div>
                                     <div class="text-end">
