@@ -9,6 +9,7 @@ use App\Entity\Lease;
 use App\Entity\Document;
 use App\Entity\MaintenanceRequest;
 use App\Entity\AccountingEntry;
+use App\Entity\Organization;
 use App\Repository\PaymentRepository;
 use App\Repository\TenantRepository;
 use App\Repository\PropertyRepository;
@@ -16,6 +17,7 @@ use App\Repository\LeaseRepository;
 use App\Repository\DocumentRepository;
 use App\Repository\MaintenanceRequestRepository;
 use App\Repository\AccountingEntryRepository;
+use App\Repository\OrganizationRepository;
 use App\Service\CurrencyService;
 use Doctrine\ORM\EntityManagerInterface;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
@@ -64,6 +66,36 @@ class ExportService
         return $currency->getSymbol();
     }
 
+    /**
+     * Récupère le nom de l'organisation pour le branding (marque blanche)
+     */
+    private function getOrganizationName(?int $organizationId = null): string
+    {
+        if (!$organizationId) {
+            return 'LOKAPRO';
+        }
+
+        $organization = $this->entityManager->getRepository(Organization::class)->find($organizationId);
+        return $organization?->getName() ?? 'LOKAPRO';
+    }
+
+    /**
+     * Récupère l'ID de l'organisation depuis une collection d'entités
+     */
+    private function extractOrganizationId(array $entities): ?int
+    {
+        if (empty($entities)) {
+            return null;
+        }
+
+        $firstEntity = $entities[0];
+        if (method_exists($firstEntity, 'getOrganization') && $firstEntity->getOrganization()) {
+            return $firstEntity->getOrganization()->getId();
+        }
+
+        return null;
+    }
+
     public function generateFinancialReport(int $year, int $month, string $format): string
     {
         $startDate = new \DateTime("{$year}-{$month}-01");
@@ -78,12 +110,15 @@ class ExportService
             ->getQuery()
             ->getResult();
 
+        $organizationId = $this->extractOrganizationId($payments);
+
         $data = [
             'title' => "Rapport Financier {$year}-{$month}",
             'period' => "{$year}-{$month}",
             'payments' => $payments,
             'total_revenue' => array_sum(array_map(fn($p) => $p->getAmount(), $payments)),
             'total_payments' => count($payments),
+            'organization_id' => $organizationId,
         ];
 
         if ($format === 'excel') {
@@ -114,6 +149,8 @@ class ExportService
 
         $payments = $qb->orderBy('p.paidDate', 'DESC')->getQuery()->getResult();
 
+        $organizationId = $this->extractOrganizationId($payments);
+
         $data = [
             'title' => 'Export Paiements',
             'payments' => $payments,
@@ -122,6 +159,7 @@ class ExportService
                 'end_date' => $endDate,
                 'status' => $status,
             ],
+            'organization_id' => $organizationId,
         ];
 
         if ($format === 'excel') {
@@ -143,10 +181,13 @@ class ExportService
             ->getQuery()
             ->getResult();
 
+        $organizationId = $this->extractOrganizationId($overduePayments);
+
         $data = [
             'title' => 'Paiements Impayés',
             'payments' => $overduePayments,
             'total_overdue' => array_sum(array_map(fn($p) => $p->getAmount(), $overduePayments)),
+            'organization_id' => $organizationId,
         ];
 
         if ($format === 'excel') {
@@ -249,6 +290,7 @@ class ExportService
             ->getResult();
 
         $totalRevenue = array_sum(array_map(fn($p) => $p->getAmount(), $payments));
+        $organizationId = $this->extractOrganizationId($payments);
 
         $data = [
             'title' => "Déclaration Fiscale {$year}",
@@ -256,6 +298,7 @@ class ExportService
             'payments' => $payments,
             'total_revenue' => $totalRevenue,
             'tax_base' => $totalRevenue * 0.7, // Base imposable estimée
+            'organization_id' => $organizationId,
         ];
 
         if ($format === 'excel') {
@@ -315,6 +358,7 @@ class ExportService
             'total_credits' => $totalCredits,
             'total_debits' => $totalDebits,
             'net_balance' => $totalCredits - $totalDebits,
+            'organization_id' => $organizationId,
         ];
 
         if ($format === 'excel') {
@@ -811,8 +855,9 @@ class ExportService
         $pdf = new TCPDF(PDF_PAGE_ORIENTATION, PDF_UNIT, PDF_PAGE_FORMAT, true, 'UTF-8', false);
 
         // Configuration du document
-        $pdf->SetCreator('LOKAPRO');
-        $pdf->SetAuthor('LOKAPRO System');
+        $orgName = $this->getOrganizationName($data['organization_id'] ?? null);
+        $pdf->SetCreator($orgName);
+        $pdf->SetAuthor($orgName . ' System');
         $pdf->SetTitle($data['title']);
         $pdf->SetSubject('Rapport Financier');
 
@@ -860,8 +905,9 @@ class ExportService
     {
         $pdf = new TCPDF(PDF_PAGE_ORIENTATION, PDF_UNIT, PDF_PAGE_FORMAT, true, 'UTF-8', false);
 
-        $pdf->SetCreator('LOKAPRO');
-        $pdf->SetAuthor('LOKAPRO System');
+        $orgName = $this->getOrganizationName($data['organization_id'] ?? null);
+        $pdf->SetCreator($orgName);
+        $pdf->SetAuthor($orgName . ' System');
         $pdf->SetTitle($data['title']);
         $pdf->SetSubject('Export Paiements');
 
@@ -912,8 +958,9 @@ class ExportService
     {
         $pdf = new TCPDF(PDF_PAGE_ORIENTATION, PDF_UNIT, PDF_PAGE_FORMAT, true, 'UTF-8', false);
 
-        $pdf->SetCreator('LOKAPRO');
-        $pdf->SetAuthor('LOKAPRO System');
+        $orgName = $this->getOrganizationName($data['organization_id'] ?? null);
+        $pdf->SetCreator($orgName);
+        $pdf->SetAuthor($orgName . ' System');
         $pdf->SetTitle($data['title']);
         $pdf->SetSubject('Paiements Impayés');
 
@@ -959,8 +1006,9 @@ class ExportService
     {
         $pdf = new TCPDF(PDF_PAGE_ORIENTATION, PDF_UNIT, PDF_PAGE_FORMAT, true, 'UTF-8', false);
 
-        $pdf->SetCreator('LOKAPRO');
-        $pdf->SetAuthor('LOKAPRO System');
+        $orgName = $this->getOrganizationName($data['organization_id'] ?? null);
+        $pdf->SetCreator($orgName);
+        $pdf->SetAuthor($orgName . ' System');
         $pdf->SetTitle($data['title']);
         $pdf->SetSubject('Liste Locataires');
 
@@ -1005,8 +1053,9 @@ class ExportService
     {
         $pdf = new TCPDF(PDF_PAGE_ORIENTATION, PDF_UNIT, PDF_PAGE_FORMAT, true, 'UTF-8', false);
 
-        $pdf->SetCreator('LOKAPRO');
-        $pdf->SetAuthor('LOKAPRO System');
+        $orgName = $this->getOrganizationName($data['organization_id'] ?? null);
+        $pdf->SetCreator($orgName);
+        $pdf->SetAuthor($orgName . ' System');
         $pdf->SetTitle($data['title']);
         $pdf->SetSubject('Inventaire Biens');
 
@@ -1052,8 +1101,9 @@ class ExportService
     {
         $pdf = new TCPDF(PDF_PAGE_ORIENTATION, PDF_UNIT, PDF_PAGE_FORMAT, true, 'UTF-8', false);
 
-        $pdf->SetCreator('LOKAPRO');
-        $pdf->SetAuthor('LOKAPRO System');
+        $orgName = $this->getOrganizationName($data['organization_id'] ?? null);
+        $pdf->SetCreator($orgName);
+        $pdf->SetAuthor($orgName . ' System');
         $pdf->SetTitle($data['title']);
         $pdf->SetSubject('Export Baux');
 
@@ -1100,8 +1150,9 @@ class ExportService
     {
         $pdf = new TCPDF(PDF_PAGE_ORIENTATION, PDF_UNIT, PDF_PAGE_FORMAT, true, 'UTF-8', false);
 
-        $pdf->SetCreator('LOKAPRO');
-        $pdf->SetAuthor('LOKAPRO System');
+        $orgName = $this->getOrganizationName($data['organization_id'] ?? null);
+        $pdf->SetCreator($orgName);
+        $pdf->SetAuthor($orgName . ' System');
         $pdf->SetTitle($data['title']);
         $pdf->SetSubject('Déclaration Fiscale');
 
@@ -1162,8 +1213,9 @@ class ExportService
     {
         $pdf = new TCPDF(PDF_PAGE_ORIENTATION, PDF_UNIT, PDF_PAGE_FORMAT, true, 'UTF-8', false);
 
-        $pdf->SetCreator('LOKAPRO');
-        $pdf->SetAuthor('LOKAPRO System');
+        $orgName = $this->getOrganizationName($data['organization_id'] ?? null);
+        $pdf->SetCreator($orgName);
+        $pdf->SetAuthor($orgName . ' System');
         $pdf->SetTitle($data['title']);
         $pdf->SetSubject('Rapport Comptable');
 
