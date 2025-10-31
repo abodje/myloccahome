@@ -182,10 +182,10 @@ class MenuService
                 'roles' => ['ROLE_ADMIN', 'ROLE_SUPER_ADMIN'],
                 'order' => 9.5,
             ],
-            'divider_admin' => [
+            'divider_super_admin' => [
                 'type' => 'divider',
-                'label' => 'ADMINISTRATION',
-                'roles' => ['ROLE_MANAGER', 'ROLE_ADMIN', 'ROLE_SUPER_ADMIN'],
+                'label' => 'SUPER ADMINISTRATION',
+                'roles' => ['ROLE_SUPER_ADMIN'],
                 'order' => 100,
             ],
             'admin_organizations' => [
@@ -202,17 +202,16 @@ class MenuService
                 'roles' => ['ROLE_SUPER_ADMIN'],
                 'order' => 100.7,
             ],
+            'divider_admin' => [
+                'type' => 'divider',
+                'label' => 'ADMINISTRATION',
+                'roles' => ['ROLE_MANAGER', 'ROLE_ADMIN', 'ROLE_SUPER_ADMIN'],
+                'order' => 101,
+            ],
             'admin_dashboard' => [
                 'label' => 'Administration',
                 'icon' => 'bi-gear',
                 'route' => 'app_admin_dashboard',
-                'roles' => ['ROLE_ADMIN', 'ROLE_SUPER_ADMIN'],
-                'order' => 101,
-            ],
-            'admin_users' => [
-                'label' => 'Utilisateurs',
-                'icon' => 'bi-person-badge',
-                'route' => 'app_admin_users',
                 'roles' => ['ROLE_ADMIN', 'ROLE_SUPER_ADMIN'],
                 'order' => 102,
             ],
@@ -489,14 +488,23 @@ class MenuService
      */
     private function hasAccessibleChildren(array $menuStructure, int $dividerOrder): bool
     {
+        // Trouver le divider suivant (s'il existe)
+        $nextDividerOrder = PHP_INT_MAX;
+        foreach ($menuStructure as $menu) {
+            if (($menu['type'] ?? null) === 'divider' && ($menu['order'] ?? 0) > $dividerOrder) {
+                $nextDividerOrder = min($nextDividerOrder, $menu['order'] ?? PHP_INT_MAX);
+            }
+        }
+        
+        // Vérifier les éléments entre ce divider et le suivant
         foreach ($menuStructure as $key => $menu) {
             // Ignorer le divider lui-même
             if (($menu['type'] ?? null) === 'divider') {
                 continue;
             }
             
-            // Vérifier seulement les éléments juste après le divider (ordre suivant)
-            if (($menu['order'] ?? 999) > $dividerOrder && ($menu['order'] ?? 999) < $dividerOrder + 100) {
+            // Vérifier seulement les éléments juste après le divider (jusqu'au divider suivant)
+            if (($menu['order'] ?? 999) > $dividerOrder && ($menu['order'] ?? 999) < $nextDividerOrder) {
                 if ($this->canAccessMenuItem($menu, $menuStructure)) {
                     return true;
                 }
