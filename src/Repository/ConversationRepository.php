@@ -125,13 +125,29 @@ class ConversationRepository extends ServiceEntityRepository
         $roles = $user->getRoles();
 
         if (in_array('ROLE_ADMIN', $roles)) {
-            // Admins see all conversations
-            return $this->createQueryBuilder('c')
+            // Filtrer les conversations selon l'organisation/société de l'admin
+            $organization = $user->getOrganization();
+            $company = $user->getCompany();
+            
+            $qb = $this->createQueryBuilder('c')
+                ->join('c.participants', 'p')
                 ->andWhere('c.isActive = :isActive')
-                ->setParameter('isActive', true)
-                ->orderBy('c.lastMessageAt', 'DESC')
-                ->getQuery()
-                ->getResult();
+                ->setParameter('isActive', true);
+            
+            if ($company) {
+                // Admin avec société spécifique : conversations impliquant des utilisateurs de cette société
+                $qb->andWhere('p.company = :company')
+                   ->setParameter('company', $company);
+            } elseif ($organization) {
+                // Admin avec organisation : conversations impliquant des utilisateurs de cette organisation
+                $qb->andWhere('p.organization = :organization')
+                   ->setParameter('organization', $organization);
+            }
+            // Si pas d'organisation/société (Super Admin) : voir toutes les conversations
+            
+            return $qb->orderBy('c.lastMessageAt', 'DESC')
+                      ->getQuery()
+                      ->getResult();
         } elseif (in_array('ROLE_MANAGER', $roles)) {
             // Managers see conversations involving their tenants
             return $this->createQueryBuilder('c')
