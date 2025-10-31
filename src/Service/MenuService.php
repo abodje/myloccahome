@@ -202,6 +202,13 @@ class MenuService
                 'roles' => ['ROLE_SUPER_ADMIN'],
                 'order' => 100.7,
             ],
+            'admin_tasks' => [
+                'label' => 'Tâches automatisées',
+                'icon' => 'bi-clock-history',
+                'route' => 'app_admin_task_index',
+                'roles' => ['ROLE_SUPER_ADMIN'],
+                'order' => 100.9,
+            ],
             'divider_admin' => [
                 'type' => 'divider',
                 'label' => 'ADMINISTRATION',
@@ -212,35 +219,28 @@ class MenuService
                 'label' => 'Administration',
                 'icon' => 'bi-gear',
                 'route' => 'app_admin_dashboard',
-                'roles' => ['ROLE_ADMIN', 'ROLE_SUPER_ADMIN'],
+                'roles' => [ 'ROLE_SUPER_ADMIN'],
                 'order' => 102,
-            ],
-            'admin_tasks' => [
-                'label' => 'Tâches automatisées',
-                'icon' => 'bi-clock-history',
-                'route' => 'app_admin_task_index',
-                'roles' => ['ROLE_ADMIN', 'ROLE_SUPER_ADMIN'],
-                'order' => 103,
             ],
             'admin_audit' => [
                 'label' => 'Historique / Audit',
                 'icon' => 'bi-journal-text',
                 'route' => 'app_admin_audit_index',
-                'roles' => ['ROLE_ADMIN', 'ROLE_SUPER_ADMIN'],
+                'roles' => [  'ROLE_SUPER_ADMIN'],
                 'order' => 103.5,
             ],
             'admin_backups' => [
                 'label' => 'Sauvegardes',
                 'icon' => 'bi-shield-check',
                 'route' => 'app_admin_backup_index',
-                'roles' => ['ROLE_ADMIN', 'ROLE_SUPER_ADMIN'],
+                'roles' => [  'ROLE_SUPER_ADMIN'],
                 'order' => 103.7,
             ],
             'admin_import' => [
                 'label' => '📂 Import CSV',
                 'icon' => 'bi-file-earmark-arrow-up',
                 'route' => 'admin_import_index',
-                'roles' => ['ROLE_ADMIN', 'ROLE_SUPER_ADMIN'],
+                'roles' => [ 'ROLE_SUPER_ADMIN'],
                 'order' => 103.8,
                 'badge' => 'new',
                 'badge_type' => 'success',
@@ -291,7 +291,7 @@ class MenuService
                 'label' => '🚀 Environnements',
                 'icon' => 'bi-server',
                 'route' => 'app_admin_environment_index',
-                'roles' => ['ROLE_ADMIN', 'ROLE_SUPER_ADMIN'],
+                'roles' => ['ROLE_SUPER_ADMIN'],
                 'order' => 107,
                 'badge' => 'new',
                 'badge_type' => 'success',
@@ -301,7 +301,7 @@ class MenuService
                 'label' => 'Paramètres',
                 'icon' => 'bi-sliders',
                 'route' => 'app_admin_settings_index',
-                'roles' => ['ROLE_ADMIN', 'ROLE_SUPER_ADMIN'],
+                'roles' => [ 'ROLE_SUPER_ADMIN'],
                 'order' => 108,
                 'submenu' => [
                     'settings_app' => [
@@ -375,19 +375,19 @@ class MenuService
                     'demo_list' => [
                         'label' => 'Liste des démos',
                         'route' => 'demo_list',
-                        'roles' => ['ROLE_ADMIN', 'ROLE_SUPER_ADMIN'],
+                        'roles' => [ 'ROLE_SUPER_ADMIN'],
                         'icon' => 'bi-list-ul',
                     ],
                     'demo_create' => [
                         'label' => 'Créer une démo',
                         'route' => 'demo_create',
-                        'roles' => ['ROLE_ADMIN', 'ROLE_SUPER_ADMIN'],
+                        'roles' => [ 'ROLE_SUPER_ADMIN'],
                         'icon' => 'bi-plus-circle',
                     ],
                     'demo_stats' => [
                         'label' => 'Statistiques',
                         'route' => 'demo_stats',
-                        'roles' => ['ROLE_ADMIN', 'ROLE_SUPER_ADMIN'],
+                        'roles' => [ 'ROLE_SUPER_ADMIN'],
                         'icon' => 'bi-graph-up',
                     ],
                 ],
@@ -423,7 +423,7 @@ class MenuService
                     'ai_dashboard' => [
                         'label' => 'Tableau de bord IA',
                         'route' => 'app_ai_admin',
-                        'roles' => ['ROLE_ADMIN', 'ROLE_SUPER_ADMIN'],
+                        'roles' => [ 'ROLE_SUPER_ADMIN'],
                         'icon' => 'bi-speedometer2',
                     ],
                 ],
@@ -432,14 +432,14 @@ class MenuService
                 'label' => '📧 Configuration SMTP',
                 'icon' => 'bi-envelope-gear',
                 'route' => 'admin_smtp_configuration_index',
-                'roles' => ['ROLE_ADMIN', 'ROLE_SUPER_ADMIN'],
+                'roles' => [ 'ROLE_SUPER_ADMIN'],
                 'order' => 110,
             ],
             'admin_email_settings' => [
                 'label' => '📨 Paramètres Email',
                 'icon' => 'bi-envelope-at',
                 'route' => 'admin_email_settings_index',
-                'roles' => ['ROLE_ADMIN', 'ROLE_SUPER_ADMIN'],
+                'roles' => [ 'ROLE_SUPER_ADMIN'],
                 'order' => 111,
             ],
         ];
@@ -495,14 +495,14 @@ class MenuService
                 $nextDividerOrder = min($nextDividerOrder, $menu['order'] ?? PHP_INT_MAX);
             }
         }
-        
+
         // Vérifier les éléments entre ce divider et le suivant
         foreach ($menuStructure as $key => $menu) {
             // Ignorer le divider lui-même
             if (($menu['type'] ?? null) === 'divider') {
                 continue;
             }
-            
+
             // Vérifier seulement les éléments juste après le divider (jusqu'au divider suivant)
             if (($menu['order'] ?? 999) > $dividerOrder && ($menu['order'] ?? 999) < $nextDividerOrder) {
                 if ($this->canAccessMenuItem($menu, $menuStructure)) {
@@ -510,7 +510,7 @@ class MenuService
                 }
             }
         }
-        
+
         return false;
     }
 
@@ -525,7 +525,7 @@ class MenuService
                 return false;
             }
             // Vérifier s'il y a des éléments enfants accessibles après ce divider
-            return $this->hasAnyRole($menuItem['roles'] ?? []) && 
+            return $this->hasAnyRole($menuItem['roles'] ?? []) &&
                    $this->hasAccessibleChildren($allMenus, $menuItem['order'] ?? 0);
         }
 
