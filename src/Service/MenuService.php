@@ -455,12 +455,12 @@ class MenuService
         $authorizedMenus = [];
 
         foreach ($allMenus as $key => $menu) {
-            if ($this->canAccessMenuItem($menu)) {
+            if ($this->canAccessMenuItem($menu, $allMenus)) {
                 // Filtrer les sous-menus si présents
                 if (isset($menu['submenu'])) {
                     $authorizedSubmenu = [];
                     foreach ($menu['submenu'] as $subKey => $subItem) {
-                        if ($this->canAccessMenuItem($subItem)) {
+                        if ($this->canAccessMenuItem($subItem, $allMenus)) {
                             $authorizedSubmenu[$subKey] = $subItem;
                         }
                     }
@@ -485,13 +485,40 @@ class MenuService
     }
 
     /**
+     * Vérifie si un divider a des éléments enfants accessibles
+     */
+    private function hasAccessibleChildren(array $menuStructure, int $dividerOrder): bool
+    {
+        foreach ($menuStructure as $key => $menu) {
+            // Ignorer le divider lui-même
+            if (($menu['type'] ?? null) === 'divider') {
+                continue;
+            }
+            
+            // Vérifier seulement les éléments juste après le divider (ordre suivant)
+            if (($menu['order'] ?? 999) > $dividerOrder && ($menu['order'] ?? 999) < $dividerOrder + 100) {
+                if ($this->canAccessMenuItem($menu, $menuStructure)) {
+                    return true;
+                }
+            }
+        }
+        
+        return false;
+    }
+
+    /**
      * Vérifie si l'utilisateur peut accéder à un élément de menu
      */
-    public function canAccessMenuItem(array $menuItem): bool
+    public function canAccessMenuItem(array $menuItem, ?array $allMenus = null): bool
     {
-        // Les dividers sont toujours accessibles s'ils ont des éléments enfants accessibles
+        // Les dividers ne sont accessibles que s'ils ont des éléments enfants accessibles
         if (($menuItem['type'] ?? null) === 'divider') {
-            return $this->hasAnyRole($menuItem['roles'] ?? []);
+            if (!$allMenus) {
+                return false;
+            }
+            // Vérifier s'il y a des éléments enfants accessibles après ce divider
+            return $this->hasAnyRole($menuItem['roles'] ?? []) && 
+                   $this->hasAccessibleChildren($allMenus, $menuItem['order'] ?? 0);
         }
 
         // ✅ SUPER ADMIN : Accès complet à tous les menus
@@ -571,14 +598,14 @@ class MenuService
 
         foreach ($allMenus as $menu) {
             if (($menu['route'] ?? null) === $route) {
-                return $this->canAccessMenuItem($menu);
+                return $this->canAccessMenuItem($menu, $allMenus);
             }
 
             // Vérifier les sous-menus
             if (isset($menu['submenu'])) {
                 foreach ($menu['submenu'] as $subItem) {
                     if (($subItem['route'] ?? null) === $route) {
-                        return $this->canAccessMenuItem($subItem);
+                        return $this->canAccessMenuItem($subItem, $allMenus);
                     }
                 }
             }
