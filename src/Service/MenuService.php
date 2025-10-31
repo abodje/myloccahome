@@ -170,7 +170,7 @@ class MenuService
                 'label' => '🚀 Créer une démo',
                 'icon' => 'bi-play-circle',
                 'route' => 'demo_create',
-                'roles' => ['ROLE_USER', 'ROLE_TENANT', 'ROLE_MANAGER', 'ROLE_ADMIN', 'ROLE_SUPER_ADMIN'],
+                'roles' => ['ROLE_SUPER_ADMIN'],
                 'order' => 9.4,
                 'badge' => 'new',
                 'badge_type' => 'success',
