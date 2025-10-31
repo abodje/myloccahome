@@ -30,13 +30,15 @@
                         <i class="bi bi-cash-stack fs-1 text-success opacity-50"></i>
                     </div>
                     <div class="mt-auto pt-2">
-                        {% if reports.revenueGrowth > 0 %}
+                        {% set growth = reports.monthly_revenue - reports.last_month_revenue %}
+                        {% set revenueGrowth = (reports.last_month_revenue > 0) ? (growth / reports.last_month_revenue) * 100 : 0 %}
+                        {% if revenueGrowth > 0 %}
                             <span class="text-success small">
-                                <i class="bi bi-arrow-up-short"></i> {{ reports.revenueGrowth|number_format(1) }}% vs mois dernier
+                                <i class="bi bi-arrow-up-short"></i> {{ revenueGrowth|number_format(1) }}% vs mois dernier
                             </span>
-                        {% elseif reports.revenueGrowth < 0 %}
+                        {% elseif revenueGrowth < 0 %}
                             <span class="text-danger small">
-                                <i class="bi bi-arrow-down-short"></i> {{ reports.revenueGrowth|number_format(1) }}% vs mois dernier
+                                <i class="bi bi-arrow-down-short"></i> {{ revenueGrowth|number_format(1) }}% vs mois dernier
                             </span>
                         {% else %}
                             <span class="text-muted small">Stable</span>
@@ -52,12 +54,12 @@
                     <div class="d-flex justify-content-between align-items-start">
                         <div>
                             <small class="text-muted fw-bold">BÉNÉFICE NET (CE MOIS)</small>
-                            <h3 class="mb-0">{{ reports.netIncome|format_currency('EUR', locale='fr') }}</h3>
+                            <h3 class="mb-0">{{ reports.net_income|format_currency('EUR', locale='fr') }}</h3>
                         </div>
                         <i class="bi bi-piggy-bank fs-1 text-primary opacity-50"></i>
                     </div>
                     <div class="mt-auto pt-2">
-                        <small class="text-muted">Dépenses: {{ reports.monthlyExpenses|format_currency('EUR', locale='fr') }}</small>
+                        <small class="text-muted">Dépenses: {{ reports.monthly_expenses|format_currency('EUR', locale='fr') }}</small>
                     </div>
                 </div>
             </div>
@@ -69,12 +71,12 @@
                     <div class="d-flex justify-content-between align-items-start">
                         <div>
                             <small class="text-muted fw-bold">TAUX D'OCCUPATION</small>
-                            <h3 class="mb-0">{{ reports.occupancyRate|number_format(1) }}%</h3>
+                            <h3 class="mb-0">{{ reports.occupancy_rate|number_format(1) }}%</h3>
                         </div>
                         <i class="bi bi-house-check fs-1 text-info opacity-50"></i>
                     </div>
                     <div class="mt-auto pt-2">
-                        <small class="text-muted">{{ reports.occupiedProperties }} / {{ reports.occupiedProperties + reports.vacantProperties }} biens occupés</small>
+                        <small class="text-muted">{{ reports.occupied_properties }} / {{ reports.occupied_properties + reports.vacant_properties }} biens occupés</small>
                     </div>
                 </div>
             </div>
@@ -86,12 +88,12 @@
                     <div class="d-flex justify-content-between align-items-start">
                         <div>
                             <small class="text-muted fw-bold">PAIEMENTS EN RETARD</small>
-                            <h3 class="mb-0">{{ reports.overduePaymentsCount }}</h3>
+                            <h3 class="mb-0">{{ reports.overdue_payments_count }}</h3>
                         </div>
                         <i class="bi bi-calendar-x fs-1 text-danger opacity-50"></i>
                     </div>
                     <div class="mt-auto pt-2">
-                        <small class="text-muted">Total: {{ reports.totalOverdueAmount|format_currency('EUR', locale='fr') }}</small>
+                        <small class="text-muted">Total: {{ reports.total_overdue_amount|format_currency('EUR', locale='fr') }}</small>
                     </div>
                 </div>
             </div>
@@ -116,9 +118,9 @@
                     <h6 class="mb-0 text-danger"><i class="bi bi-exclamation-triangle-fill me-2"></i>Paiements en Retard</h6>
                 </div>
                 <div class="card-body p-0">
-                    {% if reports.overduePaymentsCount > 0 %}
+                    {% if reports.overdue_payments_count > 0 %}
                         <ul class="list-group list-group-flush">
-                            {% for payment in reports.overduePayments|slice(0, 5) %}
+                            {% for payment in reports.overdue_payments|slice(0, 5) %}
                                 <li class="list-group-item d-flex justify-content-between align-items-center">
                                     <div>
                                         <a href="{{ path('app_tenant_show', {id: payment.lease.tenant.id}) }}" class="text-decoration-none">{{ payment.lease.tenant.fullName }}</a><br>
@@ -138,9 +140,9 @@
                         </div>
                     {% endif %}
                 </div>
-                {% if reports.overduePaymentsCount > 5 %}
+                {% if reports.overdue_payments_count > 5 %}
                     <div class="card-footer text-center">
-                        <a href="{{ path('app_payment_index', {'status': 'OVERDUE'}) }}">Voir les {{ reports.overduePaymentsCount }} paiements en retard...</a>
+                        <a href="{{ path('app_payment_index', {'status': 'OVERDUE'}) }}">Voir les {{ reports.overdue_payments_count }} paiements en retard...</a>
                     </div>
                 {% endif %}
             </div>
@@ -152,9 +154,9 @@
                     <h6 class="mb-0 text-warning"><i class="bi bi-file-earmark-break-fill me-2"></i>Baux Expirant Bientôt (< 90 jours)</h6>
                 </div>
                 <div class="card-body p-0">
-                    {% if reports.expiringLeasesCount > 0 %}
+                    {% if reports.expiring_leases_count > 0 %}
                         <ul class="list-group list-group-flush">
-                            {% for lease in reports.expiringLeases|slice(0, 5) %}
+                            {% for lease in reports.expiring_leases|slice(0, 5) %}
                                 <li class="list-group-item d-flex justify-content-between align-items-center">
                                     <div>
                                         <a href="{{ path('app_property_show', {id: lease.property.id}) }}" class="text-decoration-none">{{ lease.property.name }}</a><br>
@@ -174,7 +176,7 @@
                         </div>
                     {% endif %}
                 </div>
-                {% if reports.expiringLeasesCount > 5 %}
+                {% if reports.expiring_leases_count > 5 %}
                     <div class="card-footer text-center">
                         <a href="{{ path('app_lease_index') }}">Voir tous les baux...</a>
                     </div>
