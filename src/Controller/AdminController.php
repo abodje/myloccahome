@@ -87,46 +87,14 @@ class AdminController extends AbstractController
 
     #[Route('/rapports', name: 'app_admin_reports', methods: ['GET'])]
     public function reports(
-        PropertyRepository $propertyRepo,
-        PaymentRepository $paymentRepo,
-        MaintenanceRequestRepository $maintenanceRepo,
-        LeaseRepository $leaseRepo
+        \App\Service\ReportService $reportService
     ): Response {
-        // Données pour les rapports
-        $currentMonth = new \DateTime('first day of this month');
-        $lastMonth = new \DateTime('first day of last month');
-        $currentYear = new \DateTime('first day of January this year');
-
-        $monthlyRevenue = $paymentRepo->getTotalRevenueByPeriod($currentMonth, new \DateTime('last day of this month'));
-        $monthlyExpenses = $maintenanceRepo->getTotalCostByPeriod($currentMonth, new \DateTime('last day of this month'));
-        $propertyStats = $propertyRepo->getStatistics();
-        
-        // Paiements en retard
-        $overduePayments = $paymentRepo->findOverdue();
-        $totalOverdueAmount = array_reduce($overduePayments, fn($sum, $p) => $sum + $p->getAmount(), 0);
-        
-        // Baux expirant bientôt
-        $expiringLeases = $leaseRepo->findExpiringSoon(90);
-
-        $reports = [
-            'monthly_revenue' => $monthlyRevenue,
-            'last_month_revenue' => $paymentRepo->getTotalRevenueByPeriod($lastMonth, new \DateTime('last day of last month')),
-            'yearly_revenue' => $paymentRepo->getTotalRevenueByPeriod($currentYear, new \DateTime('last day of December this year')),
-            'maintenance_costs' => $monthlyExpenses,
-            'monthly_expenses' => $monthlyExpenses, // Alias pour compatibilité
-            'net_income' => $monthlyRevenue - $monthlyExpenses,
-            'occupancy_rate' => $propertyStats['occupancy_rate'] ?? 0,
-            'occupied_properties' => ($propertyStats['total_properties'] ?? 0) - ($propertyStats['vacant_properties'] ?? 0),
-            'vacant_properties' => $propertyStats['vacant_properties'] ?? 0,
-            'overdue_payments_count' => count($overduePayments),
-            'total_overdue_amount' => $totalOverdueAmount,
-            'overdue_payments' => $overduePayments,
-            'expiring_leases_count' => count($expiringLeases),
-            'expiring_leases' => $expiringLeases,
-        ];
+        $reports = $reportService->generateMainReports();
+        $chartData = $reportService->getChartData();
 
         return $this->render('admin/reports.html.twig', [
             'reports' => $reports,
+            'chartData' => json_encode($chartData),
         ]);
     }
 

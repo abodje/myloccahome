@@ -39,13 +39,16 @@ class ReportService
         $propertyStats = $this->propertyRepository->getStatistics();
         $occupancyRate = $propertyStats['occupancy_rate'] ?? 0;
         $vacancyRate = 100 - $occupancyRate;
+        $totalProperties = $propertyStats['total'] ?? 0;
+        $occupiedProperties = $propertyStats['occupied'] ?? 0;
+        $vacantProperties = $propertyStats['available'] ?? 0;
 
         // Paiements en retard
         $overduePayments = $this->paymentRepository->findOverdue();
         $totalOverdueAmount = array_reduce($overduePayments, fn($sum, $p) => $sum + $p->getAmount(), 0);
 
-        // Baux arrivant à expiration
-        $expiringLeases = $this->leaseRepository->findExpiringSoon(new \DateTime(), 90);
+        // Baux arrivant à expiration (dans les 90 prochains jours)
+        $expiringLeases = $this->leaseRepository->findExpiringSoon(90);
 
         return [
             'monthly_revenue' => $monthlyRevenue,
@@ -56,8 +59,9 @@ class ReportService
             'yearly_revenue' => $yearlyRevenue,
             'occupancy_rate' => $occupancyRate,
             'vacancy_rate' => $vacancyRate,
-            'occupied_properties' => $propertyStats['total_properties'] - $propertyStats['vacant_properties'],
-            'vacant_properties' => $propertyStats['vacant_properties'],
+            'occupied_properties' => $occupiedProperties,
+            'vacant_properties' => $vacantProperties,
+            'total_properties' => $totalProperties,
             'overdue_payments_count' => count($overduePayments),
             'total_overdue_amount' => $totalOverdueAmount,
             'overdue_payments' => $overduePayments,
