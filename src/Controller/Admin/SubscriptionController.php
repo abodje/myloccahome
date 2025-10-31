@@ -147,6 +147,7 @@ class SubscriptionController extends AbstractController
     {
         return $this->render('admin/subscription/show.html.twig', [
             'subscription' => $subscription,
+            'now' => new \DateTime(),
         ]);
     }
 

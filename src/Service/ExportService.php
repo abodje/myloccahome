@@ -19,6 +19,7 @@ use App\Repository\MaintenanceRequestRepository;
 use App\Repository\AccountingEntryRepository;
 use App\Repository\OrganizationRepository;
 use App\Service\CurrencyService;
+use App\Service\SettingsService;
 use Doctrine\ORM\EntityManagerInterface;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
@@ -37,18 +38,21 @@ class ExportService
     private Environment $twig;
     private Filesystem $filesystem;
     private CurrencyService $currencyService;
+    private SettingsService $settingsService;
     private string $exportDir;
 
     public function __construct(
         EntityManagerInterface $entityManager,
         Environment $twig,
         Filesystem $filesystem,
-        CurrencyService $currencyService
+        CurrencyService $currencyService,
+        SettingsService $settingsService
     ) {
         $this->entityManager = $entityManager;
         $this->twig = $twig;
         $this->filesystem = $filesystem;
         $this->currencyService = $currencyService;
+        $this->settingsService = $settingsService;
         $this->exportDir = 'var/exports';
 
         // Créer le dossier d'export s'il n'existe pas
@@ -94,6 +98,45 @@ class ExportService
         }
 
         return null;
+    }
+
+    /**
+     * Récupère les labels PDF configurés dynamiquement
+     */
+    private function getPdfLabels(): array
+    {
+        return [
+            'organization_name' => $this->settingsService->get('pdf_organization_name', 'LOKAPRO'),
+            'date' => $this->settingsService->get('pdf_label_date', 'Date'),
+            'date_payment' => $this->settingsService->get('pdf_label_date_payment', 'Date Paiement'),
+            'date_due' => $this->settingsService->get('pdf_label_date_due', 'Date Échéance'),
+            'reference' => $this->settingsService->get('pdf_label_reference', 'Référence'),
+            'tenant' => $this->settingsService->get('pdf_label_tenant', 'Locataire'),
+            'property' => $this->settingsService->get('pdf_label_property', 'Propriété'),
+            'amount' => $this->settingsService->get('pdf_label_amount', 'Montant'),
+            'status' => $this->settingsService->get('pdf_label_status', 'Statut'),
+            'type' => $this->settingsService->get('pdf_label_type', 'Type'),
+            'category' => $this->settingsService->get('pdf_label_category', 'Catégorie'),
+            'description' => $this->settingsService->get('pdf_label_description', 'Description'),
+            'debit' => $this->settingsService->get('pdf_label_debit', 'DÉBIT'),
+            'credit' => $this->settingsService->get('pdf_label_credit', 'CRÉDIT'),
+            'balance' => $this->settingsService->get('pdf_label_balance', 'Solde'),
+            'total_credits' => $this->settingsService->get('pdf_label_total_credits', 'Total CRÉDITS'),
+            'total_debits' => $this->settingsService->get('pdf_label_total_debits', 'Total DÉBITS'),
+            'net_balance' => $this->settingsService->get('pdf_label_net_balance', 'Solde NET'),
+            'period' => $this->settingsService->get('pdf_label_period', 'Période'),
+            'organization' => $this->settingsService->get('pdf_label_organization', 'Organisation'),
+            'email' => $this->settingsService->get('pdf_label_email', 'Email'),
+            'phone' => $this->settingsService->get('pdf_label_phone', 'Téléphone'),
+            'address' => $this->settingsService->get('pdf_label_address', 'Adresse'),
+            'surface' => $this->settingsService->get('pdf_label_surface', 'Surface'),
+            'rent' => $this->settingsService->get('pdf_label_rent', 'Loyer'),
+            'start_date' => $this->settingsService->get('pdf_label_start_date', 'Début'),
+            'end_date' => $this->settingsService->get('pdf_label_end_date', 'Fin'),
+            'days_overdue' => $this->settingsService->get('pdf_label_days_overdue', 'Jours Retard'),
+            'total_revenue' => $this->settingsService->get('pdf_label_total_revenue', 'Total des revenus'),
+            'number_payments' => $this->settingsService->get('pdf_label_number_payments', 'Nombre de paiements'),
+        ];
     }
 
     public function generateFinancialReport(int $year, int $month, string $format): string
@@ -650,21 +693,22 @@ class ExportService
     {
         $spreadsheet = new Spreadsheet();
         $sheet = $spreadsheet->getActiveSheet();
+        $labels = $this->getPdfLabels();
 
         $sheet->setCellValue('A1', $data['title']);
         $sheet->mergeCells('A1:I1');
         $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(16);
 
-        $sheet->setCellValue('A3', 'Période:');
+        $sheet->setCellValue('A3', $labels['period'] . ':');
         $sheet->setCellValue('B3', $data['start_date'] . ' - ' . $data['end_date']);
-        $sheet->setCellValue('A4', 'Total CRÉDITS:');
+        $sheet->setCellValue('A4', $labels['total_credits'] . ':');
         $sheet->setCellValue('B4', number_format($data['total_credits'], 2) . ' ' . $this->getDefaultCurrency());
-        $sheet->setCellValue('D4', 'Total DÉBITS:');
+        $sheet->setCellValue('D4', $labels['total_debits'] . ':');
         $sheet->setCellValue('E4', number_format($data['total_debits'], 2) . ' ' . $this->getDefaultCurrency());
-        $sheet->setCellValue('G4', 'Solde NET:');
+        $sheet->setCellValue('G4', $labels['net_balance'] . ':');
         $sheet->setCellValue('H4', number_format($data['net_balance'], 2) . ' ' . $this->getDefaultCurrency());
 
-        $headers = ['Date', 'Référence', 'Type', 'Catégorie', 'Description', 'DÉBIT', 'CRÉDIT', 'Solde', 'Organisation'];
+        $headers = [$labels['date'], $labels['reference'], $labels['type'], $labels['category'], $labels['description'], $labels['debit'], $labels['credit'], $labels['balance'], $labels['organization']];
         $col = 'A';
         foreach ($headers as $header) {
             $sheet->setCellValue($col . '6', $header);
@@ -874,20 +918,23 @@ class ExportService
         $pdf->Cell(0, 10, $data['title'], 0, 1, 'C');
         $pdf->Ln(5);
 
+        // Labels dynamiques
+        $labels = $this->getPdfLabels();
+
         // Informations générales
         $pdf->SetFont('helvetica', 'B', 12);
-        $pdf->Cell(0, 8, 'Période: ' . $data['period'], 0, 1);
-        $pdf->Cell(0, 8, 'Total des revenus: ' . number_format($data['total_revenue'], 2) . ' ' . $this->getDefaultCurrency(), 0, 1);
-        $pdf->Cell(0, 8, 'Nombre de paiements: ' . $data['total_payments'], 0, 1);
+        $pdf->Cell(0, 8, $labels['period'] . ': ' . $data['period'], 0, 1);
+        $pdf->Cell(0, 8, $labels['total_revenue'] . ': ' . number_format($data['total_revenue'], 2) . ' ' . $this->getDefaultCurrency(), 0, 1);
+        $pdf->Cell(0, 8, $labels['number_payments'] . ': ' . $data['total_payments'], 0, 1);
         $pdf->Ln(10);
 
         // Tableau des paiements
         $pdf->SetFont('helvetica', 'B', 10);
-        $pdf->Cell(30, 8, 'Date', 1, 0, 'C');
-        $pdf->Cell(50, 8, 'Locataire', 1, 0, 'C');
-        $pdf->Cell(50, 8, 'Propriété', 1, 0, 'C');
-        $pdf->Cell(30, 8, 'Montant', 1, 0, 'C');
-        $pdf->Cell(30, 8, 'Statut', 1, 1, 'C');
+        $pdf->Cell(30, 8, $labels['date'], 1, 0, 'C');
+        $pdf->Cell(50, 8, $labels['tenant'], 1, 0, 'C');
+        $pdf->Cell(50, 8, $labels['property'], 1, 0, 'C');
+        $pdf->Cell(30, 8, $labels['amount'], 1, 0, 'C');
+        $pdf->Cell(30, 8, $labels['status'], 1, 1, 'C');
 
         $pdf->SetFont('helvetica', '', 9);
         foreach ($data['payments'] as $payment) {
@@ -1230,25 +1277,28 @@ class ExportService
         $pdf->Cell(0, 10, $data['title'], 0, 1, 'C');
         $pdf->Ln(5);
 
+        // Labels dynamiques
+        $labels = $this->getPdfLabels();
+
         // Période et totaux
         $pdf->SetFont('helvetica', 'B', 10);
-        $pdf->Cell(0, 6, 'Période: ' . $data['start_date'] . ' - ' . $data['end_date'], 0, 1, 'C');
+        $pdf->Cell(0, 6, $labels['period'] . ': ' . $data['start_date'] . ' - ' . $data['end_date'], 0, 1, 'C');
         $pdf->Ln(3);
-        $pdf->Cell(0, 6, 'Total CRÉDITS: ' . number_format($data['total_credits'], 2) . ' ' . $this->getDefaultCurrency(), 0, 1, 'C');
-        $pdf->Cell(0, 6, 'Total DÉBITS: ' . number_format($data['total_debits'], 2) . ' ' . $this->getDefaultCurrency(), 0, 1, 'C');
-        $pdf->Cell(0, 6, 'Solde NET: ' . number_format($data['net_balance'], 2) . ' ' . $this->getDefaultCurrency(), 0, 1, 'C');
+        $pdf->Cell(0, 6, $labels['total_credits'] . ': ' . number_format($data['total_credits'], 2) . ' ' . $this->getDefaultCurrency(), 0, 1, 'C');
+        $pdf->Cell(0, 6, $labels['total_debits'] . ': ' . number_format($data['total_debits'], 2) . ' ' . $this->getDefaultCurrency(), 0, 1, 'C');
+        $pdf->Cell(0, 6, $labels['net_balance'] . ': ' . number_format($data['net_balance'], 2) . ' ' . $this->getDefaultCurrency(), 0, 1, 'C');
         $pdf->Ln(10);
 
         // Tableau avec affichage bancaire
         $pdf->SetFont('helvetica', 'B', 7);
-        $pdf->Cell(18, 8, 'Date', 1, 0, 'C');
-        $pdf->Cell(25, 8, 'Référence', 1, 0, 'C');
-        $pdf->Cell(10, 8, 'Type', 1, 0, 'C');
-        $pdf->Cell(20, 8, 'Catégorie', 1, 0, 'C');
-        $pdf->Cell(35, 8, 'Description', 1, 0, 'C');
-        $pdf->Cell(20, 8, 'DÉBIT', 1, 0, 'C');
-        $pdf->Cell(20, 8, 'CRÉDIT', 1, 0, 'C');
-        $pdf->Cell(20, 8, 'Solde', 1, 1, 'C');
+        $pdf->Cell(18, 8, $labels['date'], 1, 0, 'C');
+        $pdf->Cell(25, 8, $labels['reference'], 1, 0, 'C');
+        $pdf->Cell(10, 8, $labels['type'], 1, 0, 'C');
+        $pdf->Cell(20, 8, $labels['category'], 1, 0, 'C');
+        $pdf->Cell(35, 8, $labels['description'], 1, 0, 'C');
+        $pdf->Cell(20, 8, $labels['debit'], 1, 0, 'C');
+        $pdf->Cell(20, 8, $labels['credit'], 1, 0, 'C');
+        $pdf->Cell(20, 8, $labels['balance'], 1, 1, 'C');
 
         $pdf->SetFont('helvetica', '', 6);
         $runningBalance = 0;
