@@ -1,4 +1,5 @@
 import '../models/accounting_model.dart';
+import '../models/profile_model.dart'; // Import ProfileModel
 import '../models/user_model.dart';
 import '../models/tenant_model.dart';
 import '../models/property_model.dart';
@@ -71,12 +72,19 @@ class TenantDataService {
   }
 
   // Profil
-  Future<Map<String, dynamic>> getProfile() async {
-    return await _authService.get('/api/tenant/profile');
+  Future<ProfileModel> getProfile() async {
+    final response = await _authService.get('/api/tenant/profile');
+    return ProfileModel.fromJson(response['profile']);
   }
 
-  // Mettre à jour le profil
-  Future<Map<String, dynamic>> updateProfile(Map<String, dynamic> data) async {
-    return await _authService.put('/api/tenant/profile', data);
+  Future<void> updateProfile(ProfileModel profile) async {
+    await _authService.put('/api/tenant/profile', profile.toJson());
+  }
+
+  Future<void> changePassword(String currentPassword, String newPassword) async {
+    await _authService.post('/api/tenant/profile/change-password', {
+      'currentPassword': currentPassword,
+      'newPassword': newPassword,
+    });
   }
 }
