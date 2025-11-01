@@ -178,10 +178,34 @@ class MaintenanceRequestController extends AbstractController
                         ], 400);
                     }
 
-                    // Assigner automatiquement l'organisation de l'utilisateur
-                    if ($user && method_exists($user, 'getOrganization') && $user->getOrganization()) {
-                        $maintenanceRequest->setOrganization($user->getOrganization());
+                    // Définir l'organisation en priorité depuis le tenant, puis l'utilisateur, puis la propriété
+                    $organization = null;
+                    if ($user && in_array('ROLE_TENANT', $user->getRoles())) {
+                        $tenantObj = $user->getTenant();
+                        if ($tenantObj) {
+                            $organization = $tenantObj->getOrganization();
+                        }
                     }
+
+                    if (!$organization && $user && method_exists($user, 'getOrganization')) {
+                        $organization = $user->getOrganization();
+                    }
+
+                    if (!$organization) {
+                        $property = $maintenanceRequest->getProperty();
+                        if ($property) {
+                            $organization = $property->getOrganization();
+                        }
+                    }
+
+                    if (!$organization) {
+                        return $this->json([
+                            'success' => false,
+                            'message' => 'Impossible de déterminer l\'organisation'
+                        ], 400);
+                    }
+
+                    $maintenanceRequest->setOrganization($organization);
 
                     $maintenanceRequest->setCreatedAt(new \DateTime());
                     $maintenanceRequest->setStatus('En attente');
@@ -227,10 +251,32 @@ class MaintenanceRequestController extends AbstractController
                 }
             }
 
-            // Assigner automatiquement l'organisation de l'utilisateur
-            if ($user && method_exists($user, 'getOrganization') && $user->getOrganization()) {
-                $maintenanceRequest->setOrganization($user->getOrganization());
+            // Définir l'organisation en priorité depuis le tenant, puis l'utilisateur, puis la propriété
+            $organization = null;
+            if ($user && in_array('ROLE_TENANT', $user->getRoles())) {
+                $tenantObj = $user->getTenant();
+                if ($tenantObj) {
+                    $organization = $tenantObj->getOrganization();
+                }
             }
+
+            if (!$organization && $user && method_exists($user, 'getOrganization')) {
+                $organization = $user->getOrganization();
+            }
+
+            if (!$organization) {
+                $property = $maintenanceRequest->getProperty();
+                if ($property) {
+                    $organization = $property->getOrganization();
+                }
+            }
+
+            if (!$organization) {
+                $this->addFlash('error', 'Impossible de déterminer l\'organisation');
+                return $this->redirectToRoute('app_maintenance_request_new');
+            }
+
+            $maintenanceRequest->setOrganization($organization);
 
             $maintenanceRequest->setCreatedAt(new \DateTime());
             $maintenanceRequest->setStatus('En attente');

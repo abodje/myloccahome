@@ -1,3 +1,22 @@
+import 'package:flutter/foundation.dart';
+
+class RequestListModel {
+  final List<RequestModel> requests;
+  final RequestStatisticsModel statistics;
+
+  RequestListModel({required this.requests, required this.statistics});
+
+  factory RequestListModel.fromJson(Map<String, dynamic> json) {
+    var requestList = json['requests'] as List;
+    List<RequestModel> requests = requestList.map((i) => RequestModel.fromJson(i)).toList();
+
+    return RequestListModel(
+      requests: requests,
+      statistics: RequestStatisticsModel.fromJson(json['statistics'] as Map<String, dynamic>),
+    );
+  }
+}
+
 class RequestModel {
   final int id;
   final String reference;
@@ -9,7 +28,7 @@ class RequestModel {
   final String reportedDate;
   final String? scheduledDate;
   final String? completedDate;
-  final Map<String, dynamic>? property;
+  final PropertyInfoModel property;
 
   RequestModel({
     required this.id,
@@ -22,27 +41,55 @@ class RequestModel {
     required this.reportedDate,
     this.scheduledDate,
     this.completedDate,
-    this.property,
+    required this.property,
   });
 
   factory RequestModel.fromJson(Map<String, dynamic> json) {
     return RequestModel(
-      id: json['id'] ?? 0,
-      reference: json['reference'] ?? '',
-      title: json['title'] ?? '',
-      category: json['category'] ?? '',
-      description: json['description'] ?? '',
-      status: json['status'] ?? '',
-      priority: json['priority'] ?? '',
-      reportedDate: json['reportedDate'] ?? '',
-      scheduledDate: json['scheduledDate'],
-      completedDate: json['completedDate'],
-      property: json['property'],
+      id: json['id'] as int,
+      reference: json['reference'] as String,
+      title: json['title'] as String,
+      category: json['category'] as String,
+      description: json['description'] as String,
+      status: json['status'] as String,
+      priority: json['priority'] as String,
+      reportedDate: json['reportedDate'] as String,
+      scheduledDate: json['scheduledDate'] as String?,
+      completedDate: json['completedDate'] as String?,
+      property: PropertyInfoModel.fromJson(json['property'] as Map<String, dynamic>),
     );
   }
+}
 
-  bool get isInProgress =>
-      status == 'En cours' || status == 'En attente' || status == 'Nouvelle';
-  bool get isClosed =>
-      status == 'Terminé' || status == 'Clôturée' || status == 'Clos';
+class PropertyInfoModel {
+  final String address;
+
+  PropertyInfoModel({required this.address});
+
+  factory PropertyInfoModel.fromJson(Map<String, dynamic> json) {
+    return PropertyInfoModel(address: json['address'] as String);
+  }
+}
+
+class RequestStatisticsModel {
+  final int total;
+  final int pending;
+  final int inProgress;
+  final int completed;
+
+  RequestStatisticsModel({
+    required this.total,
+    required this.pending,
+    required this.inProgress,
+    required this.completed,
+  });
+
+  factory RequestStatisticsModel.fromJson(Map<String, dynamic> json) {
+    return RequestStatisticsModel(
+      total: json['total'] as int,
+      pending: json['pending'] as int,
+      inProgress: json['inProgress'] as int,
+      completed: json['completed'] as int,
+    );
+  }
 }

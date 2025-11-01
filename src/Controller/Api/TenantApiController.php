@@ -675,7 +675,20 @@ class TenantApiController extends AbstractController
         $maintenance->setStatus('Nouvelle');
         $maintenance->setPriority($data['priority'] ?? 'Normale');
         $maintenance->setTenant($tenant);
-        $maintenance->setOrganization($activeLease->getProperty()->getOrganization());
+
+        // Définir l'organisation en priorité depuis le bail, puis le tenant, puis la propriété
+        $organization = $activeLease->getOrganization()
+            ?? $tenant->getOrganization()
+            ?? $activeLease->getProperty()->getOrganization();
+
+        if (!$organization) {
+            return $this->json([
+                'success' => false,
+                'message' => 'Impossible de déterminer l\'organisation'
+            ], Response::HTTP_BAD_REQUEST);
+        }
+
+        $maintenance->setOrganization($organization);
         $maintenance->setCreatedAt(new \DateTime());
         $maintenance->setRequestedDate(new \DateTime());
 

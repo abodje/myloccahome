@@ -11,6 +11,7 @@ import 'presentation/screens/dashboard_screen.dart';
 import 'presentation/screens/documents_screen.dart';
 import 'presentation/screens/payments_screen.dart';
 import 'presentation/screens/requests_screen.dart';
+import 'presentation/screens/create_request_screen.dart'; // Import the new screen
 import 'presentation/screens/property_screen.dart';
 import 'presentation/screens/profile_screen.dart';
 import 'presentation/screens/accounting_screen.dart';
@@ -102,6 +103,11 @@ final GoRouter _router = GoRouter(
     GoRoute(
       path: '/requests',
       builder: (context, state) => const RequestsScreen(),
+    ),
+    // Add the new route here
+    GoRoute(
+      path: '/create-request',
+      builder: (context, state) => const CreateRequestScreen(),
     ),
     GoRoute(
       path: '/property',
