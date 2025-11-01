@@ -57,6 +57,8 @@ class TenantApiController extends AbstractController
                 'login' => 'POST /api/tenant/login',
                 'dashboard' => 'GET /api/tenant/dashboard',
                 'profile' => 'GET /api/tenant/profile',
+                'profileUpdate' => 'PUT /api/tenant/profile',
+                'changePassword' => 'POST /api/tenant/profile/change-password',
                 'payments' => 'GET /api/tenant/payments',
                 'requests' => 'GET /api/tenant/requests',
                 'documents' => 'GET /api/tenant/documents',
@@ -301,6 +303,9 @@ class TenantApiController extends AbstractController
             ], Response::HTTP_UNAUTHORIZED);
         }
 
+        $user = $tenant->getUser();
+        $consents = $user ? $user->getConsents() : [];
+
         return $this->json([
             'success' => true,
             'profile' => [
@@ -312,7 +317,16 @@ class TenantApiController extends AbstractController
                 'address' => $tenant->getAddress(),
                 'city' => $tenant->getCity(),
                 'postalCode' => $tenant->getPostalCode(),
-                'birthDate' => $tenant->getBirthDate()?->format('d/m/Y')
+                'birthDate' => $tenant->getBirthDate()?->format('d/m/Y'),
+                'profession' => $tenant->getProfession(),
+                'emergencyContactName' => $tenant->getEmergencyContactName(),
+                'emergencyContactPhone' => $tenant->getEmergencyContactPhone(),
+                'notifications' => [
+                    'emailNotifications' => isset($consents['email_notifications']) && $consents['email_notifications'] === true,
+                    'paymentReminders' => isset($consents['payment_reminders']) && $consents['payment_reminders'] === true,
+                    'maintenanceUpdates' => isset($consents['maintenance_updates']) && $consents['maintenance_updates'] === true,
+                    'documentAlerts' => isset($consents['document_alerts']) && $consents['document_alerts'] === true,
+                ]
             ]
         ]);
     }
@@ -321,7 +335,7 @@ class TenantApiController extends AbstractController
      * Mettre à jour le profil
      * PUT /api/tenant/profile
      */
-    #[Route('/profile', name: 'profile_update', methods: ['PUT'])]
+    #[Route('/profile', name: 'profile_update', methods: ['PUT', 'PATCH'])]
     public function updateProfile(Request $request): JsonResponse
     {
         $tenant = $this->getAuthenticatedTenant($request);
@@ -334,16 +348,130 @@ class TenantApiController extends AbstractController
 
         $data = json_decode($request->getContent(), true);
 
+        // Mise à jour des informations de base du tenant
         if (isset($data['phone'])) $tenant->setPhone($data['phone']);
         if (isset($data['address'])) $tenant->setAddress($data['address']);
         if (isset($data['city'])) $tenant->setCity($data['city']);
         if (isset($data['postalCode'])) $tenant->setPostalCode($data['postalCode']);
+        if (isset($data['profession'])) $tenant->setProfession($data['profession']);
+        if (isset($data['emergencyContactName'])) $tenant->setEmergencyContactName($data['emergencyContactName']);
+        if (isset($data['emergencyContactPhone'])) $tenant->setEmergencyContactPhone($data['emergencyContactPhone']);
+
+        // Mise à jour de la date de naissance
+        if (isset($data['birthDate'])) {
+            try {
+                $birthDate = new \DateTime($data['birthDate']);
+                $tenant->setBirthDate($birthDate);
+            } catch (\Exception $e) {
+                return $this->json([
+                    'success' => false,
+                    'message' => 'Format de date invalide. Utilisez YYYY-MM-DD'
+                ], Response::HTTP_BAD_REQUEST);
+            }
+        }
+
+        // Mise à jour des notifications via le User (consents)
+        $user = $tenant->getUser();
+        if ($user && isset($data['notifications'])) {
+            $consents = $user->getConsents() ?? [];
+
+            if (isset($data['notifications']['emailNotifications'])) {
+                $consents['email_notifications'] = (bool) $data['notifications']['emailNotifications'];
+            }
+            if (isset($data['notifications']['paymentReminders'])) {
+                $consents['payment_reminders'] = (bool) $data['notifications']['paymentReminders'];
+            }
+            if (isset($data['notifications']['maintenanceUpdates'])) {
+                $consents['maintenance_updates'] = (bool) $data['notifications']['maintenanceUpdates'];
+            }
+            if (isset($data['notifications']['documentAlerts'])) {
+                $consents['document_alerts'] = (bool) $data['notifications']['documentAlerts'];
+            }
+
+            $user->setConsents($consents);
+        }
 
         $this->entityManager->flush();
 
         return $this->json([
             'success' => true,
-            'message' => 'Profil mis à jour avec succès'
+            'message' => 'Profil mis à jour avec succès',
+            'profile' => [
+                'id' => $tenant->getId(),
+                'firstName' => $tenant->getFirstName(),
+                'lastName' => $tenant->getLastName(),
+                'email' => $tenant->getEmail(),
+                'phone' => $tenant->getPhone(),
+                'address' => $tenant->getAddress(),
+                'city' => $tenant->getCity(),
+                'postalCode' => $tenant->getPostalCode(),
+                'birthDate' => $tenant->getBirthDate()?->format('Y-m-d'),
+                'profession' => $tenant->getProfession(),
+                'emergencyContactName' => $tenant->getEmergencyContactName(),
+                'emergencyContactPhone' => $tenant->getEmergencyContactPhone(),
+            ]
+        ]);
+    }
+
+    /**
+     * Changer le mot de passe
+     * POST /api/tenant/profile/change-password
+     */
+    #[Route('/profile/change-password', name: 'profile_change_password', methods: ['POST'])]
+    public function changePassword(Request $request): JsonResponse
+    {
+        $tenant = $this->getAuthenticatedTenant($request);
+        if (!$tenant) {
+            return $this->json([
+                'success' => false,
+                'message' => 'Non autorisé - Token invalide ou expiré'
+            ], Response::HTTP_UNAUTHORIZED);
+        }
+
+        $data = json_decode($request->getContent(), true);
+        $currentPassword = $data['currentPassword'] ?? null;
+        $newPassword = $data['newPassword'] ?? null;
+
+        if (!$currentPassword || !$newPassword) {
+            return $this->json([
+                'success' => false,
+                'message' => 'Le mot de passe actuel et le nouveau mot de passe sont requis'
+            ], Response::HTTP_BAD_REQUEST);
+        }
+
+        $user = $tenant->getUser();
+        if (!$user) {
+            return $this->json([
+                'success' => false,
+                'message' => 'Utilisateur associé introuvable'
+            ], Response::HTTP_BAD_REQUEST);
+        }
+
+        // Vérifier le mot de passe actuel
+        if (!password_verify($currentPassword, $user->getPassword())) {
+            return $this->json([
+                'success' => false,
+                'message' => 'Mot de passe actuel incorrect'
+            ], Response::HTTP_UNAUTHORIZED);
+        }
+
+        // Vérifier que le nouveau mot de passe respecte les critères
+        if (strlen($newPassword) < 8) {
+            return $this->json([
+                'success' => false,
+                'message' => 'Le nouveau mot de passe doit contenir au moins 8 caractères'
+            ], Response::HTTP_BAD_REQUEST);
+        }
+
+        // Hacher et sauvegarder le nouveau mot de passe
+        $hashedPassword = password_hash($newPassword, PASSWORD_BCRYPT);
+        $user->setPassword($hashedPassword);
+
+        $this->entityManager->flush();
+
+        return $this->json([
+            'success' => true,
+            'message' => 'Mot de passe modifié avec succès'
         ]);
     }
 

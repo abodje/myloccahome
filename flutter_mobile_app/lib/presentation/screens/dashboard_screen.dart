@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:intl/intl.dart'; // For date formatting
+import 'package:intl/intl.dart';
 import '../../models/dashboard_model.dart';
 import '../../services/auth_service.dart';
 import '../../services/tenant_data_service.dart';
@@ -69,7 +69,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Widget build(BuildContext context) {
     final authService = Provider.of<AuthService>(context);
     final currencySymbol = authService.settings?.localization.defaultCurrency ?? '€';
-    final formattedDate = DateFormat('dd/MM/yyyy').format(DateTime.now());
 
     return Scaffold(
       appBar: AppBar(
@@ -95,12 +94,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
+                          const SizedBox(height: 24),
+                          _buildWelcomeMessage(context, _dashboardData!),
                           const SizedBox(height: 16),
                           _buildTenantInfoCard(context, _dashboardData!),
                           const SizedBox(height: 16),
                           _buildQuickActions(context),
                           const SizedBox(height: 16),
-                          _buildCardsRow(context, formattedDate, currencySymbol, _dashboardData!),
+                          _buildBalanceCard(context, currencySymbol, _dashboardData!),
+                          const SizedBox(height: 16),
+                          _buildManagerCard(context, _dashboardData!),
                           const SizedBox(height: 24),
                         ],
                       ),
@@ -110,7 +113,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
+  Widget _buildWelcomeMessage(BuildContext context, DashboardModel data) {
+    return Text(
+      'Bonjour, ${data.tenant.fullName.split(' ').first}',
+      style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+    );
+  }
+
   Widget _buildErrorView() {
+    // ... (no changes needed here)
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -128,6 +139,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Widget _buildTenantInfoCard(BuildContext context, DashboardModel data) {
+    // ... (no changes needed here)
     final tenant = data.tenant;
     final property = data.property;
     final lease = data.currentLease;
@@ -154,8 +166,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         Text(property.fullAddress, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
                         const SizedBox(height: 12),
                         Wrap(
-                          spacing: 16.0, // Horizontal space between items
-                          runSpacing: 8.0,  // Vertical space between lines
+                          spacing: 16.0,
+                          runSpacing: 8.0,
                           children: [
                             if (property.surface != null)
                               Row(
@@ -204,6 +216,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Widget _buildQuickActions(BuildContext context) {
+    // ... (no changes needed here)
     return Card(
       elevation: 2,
       shadowColor: Colors.black.withOpacity(0.05),
@@ -222,6 +235,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Widget _buildQuickActionButton(BuildContext context, {required IconData icon, required String label, required VoidCallback onTap}) {
+    // ... (no changes needed here)
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(8),
@@ -239,80 +253,110 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  Widget _buildCardsRow(BuildContext context, String formattedDate, String currencySymbol, DashboardModel data) {
-    final manager = data.manager;
+  Widget _buildBalanceCard(BuildContext context, String currencySymbol, DashboardModel data) {
     final balances = data.balances;
+    final balancePercentage = (balances.totalDue > 0) ? balances.toPay / balances.totalDue : 0.0;
 
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Expanded(
-          child: Card(
-            elevation: 2,
-            shadowColor: Colors.black.withOpacity(0.05),
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+    return Card(
+      elevation: 2,
+      shadowColor: Colors.black.withOpacity(0.05),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Votre situation financière', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+            const SizedBox(height: 16),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text('Solde actuel', style: Theme.of(context).textTheme.bodyMedium),
+                Text(
+                  '${balances.soldAt.toStringAsFixed(2)} $currencySymbol',
+                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: AppTheme.primaryOrange, fontWeight: FontWeight.bold),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(10),
+              child: LinearProgressIndicator(
+                value: balancePercentage,
+                minHeight: 10,
+                backgroundColor: AppTheme.backgroundGrey,
+                color: AppTheme.primaryBlue,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text('Solde à venir', style: Theme.of(context).textTheme.bodySmall),
+                Text('${balances.toPay.toStringAsFixed(2)} $currencySymbol', style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppTheme.primaryBlue)),
+              ],
+            ),
+            const Divider(height: 32),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: () => context.go('/accounting'),
+                icon: const Icon(Icons.account_balance_wallet_outlined),
+                label: const Text('CONSULTER MON COMPTE'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: AppTheme.primaryOrange,
+                  side: BorderSide(color: AppTheme.primaryOrange.withOpacity(0.5)),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildManagerCard(BuildContext context, DashboardModel data) {
+    final manager = data.manager;
+    return Card(
+      elevation: 2,
+      shadowColor: Colors.black.withOpacity(0.05),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Votre gestionnaire', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+            const SizedBox(height: 12),
+            if (manager != null) ...[
+              Row(
                 children: [
-                  Text('Mon gestionnaire', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 12),
-                  if (manager != null) ...[
-                    Text(manager.name, style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600)),
-                    const SizedBox(height: 8),
-                    Row(
+                  const CircleAvatar(
+                    radius: 24,
+                    backgroundColor: AppTheme.lightBlue,
+                    child: Icon(Icons.person_outline, color: AppTheme.primaryBlue, size: 28),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        if (manager.phone != null && manager.phone!.isNotEmpty) ...[
-                          InkWell(
-                            onTap: () => _launchUri(Uri.parse('tel:${manager.phone}'), 'téléphone'),
-                            borderRadius: BorderRadius.circular(20),
-                            child: const Icon(Icons.phone, color: AppTheme.primaryBlue, size: 24),
-                          ),
-                          const SizedBox(width: 16),
-                        ],
-                        if (manager.email != null && manager.email!.isNotEmpty) ...[
-                          InkWell(
-                            onTap: () => _launchUri(Uri.parse('mailto:${manager.email}'), 'e-mail'),
-                            borderRadius: BorderRadius.circular(20),
-                            child: const Icon(Icons.email_outlined, color: AppTheme.primaryBlue, size: 24),
-                          ),
-                        ],
+                        Text(manager.name, style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600)),
+                        if (manager.email != null) Text(manager.email!, style: Theme.of(context).textTheme.bodySmall),
                       ],
                     ),
-                  ] else
-                    Text('Non renseigné', style: Theme.of(context).textTheme.bodySmall),
-                ],
-              ),
-            ),
-          ),
-        ),
-        const SizedBox(width: 16),
-        Expanded(
-          child: Card(
-            elevation: 2,
-            shadowColor: Colors.black.withOpacity(0.05),
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Solde au $formattedDate', style: Theme.of(context).textTheme.bodySmall),
-                  const SizedBox(height: 8),
-                  Text('${balances.soldAt.toStringAsFixed(2)} $currencySymbol', style: Theme.of(context).textTheme.headlineSmall?.copyWith(color: AppTheme.primaryOrange, fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 8),
-                  Text('Solde à venir', style: Theme.of(context).textTheme.bodySmall),
-                  Text('${balances.toPay.toStringAsFixed(2)} $currencySymbol', style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppTheme.primaryBlue)),
-                  const SizedBox(height: 16),
-                  SizedBox(
-                    width: double.infinity,
-                    child: OutlinedButton(onPressed: () => context.go('/accounting'), child: const Text('CONSULTER')),
                   ),
+                  if (manager.phone != null && manager.phone!.isNotEmpty)
+                    IconButton(
+                      icon: const Icon(Icons.phone, color: AppTheme.primaryBlue, size: 28),
+                      onPressed: () => _launchUri(Uri.parse('tel:${manager.phone}'), 'téléphone'),
+                      tooltip: 'Appeler le gestionnaire',
+                    ),
                 ],
               ),
-            ),
-          ),
+            ] else
+              Text('Non renseigné', style: Theme.of(context).textTheme.bodySmall),
+          ],
         ),
-      ],
+      ),
     );
   }
 }

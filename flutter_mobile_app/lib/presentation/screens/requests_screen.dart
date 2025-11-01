@@ -53,7 +53,6 @@ class _RequestsScreenState extends State<RequestsScreen> {
 
   void _navigateToCreateRequest() {
     context.push('/create-request').then((_) {
-      // After returning from create screen, refresh the list
       _loadRequests();
     });
   }
@@ -125,23 +124,25 @@ class _RequestsScreenState extends State<RequestsScreen> {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
-            _buildStatItem(context, 'Total', stats.total, AppTheme.primaryBlue),
-            _buildStatItem(context, 'En attente', stats.pending, Colors.orange.shade700),
-            _buildStatItem(context, 'En cours', stats.inProgress, Colors.blue.shade700),
-            _buildStatItem(context, 'Terminé', stats.completed, Colors.green.shade700),
+            _buildStatItem(context, 'Total', stats.total, AppTheme.primaryBlue, Icons.list_alt_outlined),
+            _buildStatItem(context, 'En attente', stats.pending, Colors.orange.shade700, Icons.hourglass_top_outlined),
+            _buildStatItem(context, 'En cours', stats.inProgress, Colors.blue.shade700, Icons.sync_outlined),
+            _buildStatItem(context, 'Terminé', stats.completed, Colors.green.shade700, Icons.check_circle_outline),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildStatItem(BuildContext context, String label, int count, Color color) {
+  Widget _buildStatItem(BuildContext context, String label, int count, Color color, IconData icon) {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
+        Icon(icon, color: color, size: 28),
+        const SizedBox(height: 8),
         Text(
           count.toString(),
-          style: Theme.of(context).textTheme.headlineSmall?.copyWith(color: color, fontWeight: FontWeight.bold),
+          style: Theme.of(context).textTheme.titleLarge?.copyWith(color: color, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 4),
         Text(label, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppTheme.textLight)),
@@ -186,38 +187,73 @@ class _RequestsScreenState extends State<RequestsScreen> {
 
   Widget _buildRequestItem(RequestModel request) {
     final statusInfo = _getStatusInfo(request.status);
+    final priorityInfo = _getPriorityInfo(request.priority);
 
     return Card(
       elevation: 2,
       shadowColor: Colors.black.withOpacity(0.05),
       margin: const EdgeInsets.only(bottom: 12),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-      child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
-        leading: CircleAvatar(
-          backgroundColor: statusInfo.color.withOpacity(0.1),
-          child: Icon(statusInfo.icon, color: statusInfo.color, size: 24),
-        ),
-        title: Text(
-          request.title,
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-        ),
-        subtitle: Padding(
-          padding: const EdgeInsets.only(top: 4.0),
-          child: Text(
-            '${request.reference} - ${request.reportedDate}',
-            style: Theme.of(context).textTheme.bodySmall,
-          ),
-        ),
-        trailing: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-          decoration: BoxDecoration(
-            color: statusInfo.color,
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: Text(
-            request.status,
-            style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+      child: InkWell(
+        onTap: () { /* TODO: Navigate to request details screen */ },
+        borderRadius: BorderRadius.circular(10),
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    request.reference,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppTheme.textLight),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                    decoration: BoxDecoration(
+                      color: statusInfo.color.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      request.status.toUpperCase(),
+                      style: TextStyle(color: statusInfo.color, fontSize: 12, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Text(
+                request.title,
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Icon(priorityInfo.icon, color: priorityInfo.color, size: 16),
+                  const SizedBox(width: 4),
+                  Text(request.priority, style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: priorityInfo.color)),
+                  const SizedBox(width: 12),
+                  const Icon(Icons.calendar_today_outlined, color: AppTheme.textLight, size: 16),
+                  const SizedBox(width: 4),
+                  Text(request.reportedDate, style: Theme.of(context).textTheme.bodyMedium),
+                ],
+              ),
+              const Divider(height: 24),
+              Row(
+                children: [
+                  const Icon(Icons.location_on_outlined, color: AppTheme.textLight, size: 16),
+                  const SizedBox(width: 4),
+                  Expanded(
+                    child: Text(
+                      request.property.address,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppTheme.textLight),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ),
         ),
       ),
@@ -234,6 +270,19 @@ class _RequestsScreenState extends State<RequestsScreen> {
         return (icon: Icons.check_circle_outline, color: Colors.green.shade700);
       default:
         return (icon: Icons.help_outline, color: AppTheme.textLight);
+    }
+  }
+
+  ({IconData icon, Color color}) _getPriorityInfo(String priority) {
+    switch (priority.toLowerCase()) {
+      case 'haute':
+        return (icon: Icons.keyboard_arrow_up_outlined, color: AppTheme.primaryOrange);
+      case 'normale':
+        return (icon: Icons.remove_outlined, color: Colors.blue.shade700);
+      case 'basse':
+        return (icon: Icons.keyboard_arrow_down_outlined, color: Colors.grey.shade600);
+      default:
+        return (icon: Icons.remove_outlined, color: AppTheme.textLight);
     }
   }
 }
