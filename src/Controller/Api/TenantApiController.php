@@ -676,15 +676,26 @@ class TenantApiController extends AbstractController
         $maintenance->setPriority($data['priority'] ?? 'Normale');
         $maintenance->setTenant($tenant);
 
-        // Définir l'organisation en priorité depuis le bail, puis le tenant, puis la propriété
+        // Définir l'organisation en priorité depuis le bail, puis le tenant, puis le user, puis la propriété
         $organization = $activeLease->getOrganization()
             ?? $tenant->getOrganization()
+            ?? ($tenant->getUser() ? $tenant->getUser()->getOrganization() : null)
             ?? $activeLease->getProperty()->getOrganization();
 
         if (!$organization) {
+            // Log les informations pour debug
+            $debugInfo = [
+                'lease_has_org' => $activeLease->getOrganization() !== null,
+                'tenant_has_org' => $tenant->getOrganization() !== null,
+                'tenant_has_user' => $tenant->getUser() !== null,
+                'user_has_org' => $tenant->getUser() ? $tenant->getUser()->getOrganization() !== null : false,
+                'property_has_org' => $activeLease->getProperty()->getOrganization() !== null,
+            ];
+
             return $this->json([
                 'success' => false,
-                'message' => 'Impossible de déterminer l\'organisation'
+                'message' => 'Impossible de déterminer l\'organisation. Données manquantes.',
+                'debug' => $debugInfo
             ], Response::HTTP_BAD_REQUEST);
         }
 
